@@ -31,7 +31,7 @@ public class HexDigest {
 			builder.append(chunk);
 		return createFromString(builder.toString());
 	}
-	
+
 	public static HexDigest createFromString(String fingerprint) {
 		final String[] parts = fingerprint.split(" ");
 		if(parts.length > 1)
@@ -39,7 +39,7 @@ public class HexDigest {
 		final byte[] digestData = Hex.decode(fingerprint);
 		return new HexDigest(digestData);
 	}
-	
+
 	public static HexDigest createFromDigestBytes(byte[] data) {
 		return new HexDigest(data);
 	}
@@ -49,20 +49,24 @@ public class HexDigest {
 		digest.update(data);
 		return new HexDigest(digest.getDigestBytes());
 	}
-	
+
 	private final byte[] digestBytes = new byte[TorMessageDigest.TOR_DIGEST_SIZE];
-	
+
 	private HexDigest(byte[] data) {
 		if(data.length != TorMessageDigest.TOR_DIGEST_SIZE) {
 			throw new TorException("Digest data is not the correct length "+ data.length +" != " + TorMessageDigest.TOR_DIGEST_SIZE);
 		}
 		System.arraycopy(data, 0, digestBytes, 0, TorMessageDigest.TOR_DIGEST_SIZE);
 	}
-	
+
+	public byte[] getRawBytes() {
+		return digestBytes;
+	}
+
 	public String toString() {
 		return new String(Hex.encode(digestBytes));
 	}
-	
+
 	/**
 	 * Return a spaced fingerprint representation of this HexDigest. 
 	 * 
@@ -82,14 +86,14 @@ public class HexDigest {
 		}
 		return builder.toString();
 	}
-	
+
 	public boolean equals(Object o) {
 		if(!(o instanceof HexDigest))
 			return false;
 		final HexDigest other = (HexDigest)o;
 		return Arrays.equals(other.digestBytes, this.digestBytes);
 	}
-	
+
 	public int hashCode() {
 		int hash = 0;
 		for(int i = 0; i < 4; i++) {
