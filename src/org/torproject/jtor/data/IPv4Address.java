@@ -36,7 +36,7 @@ public class IPv4Address {
 	
 	private final int addressData;
 	
-	private IPv4Address(int addressData) {
+	public IPv4Address(int addressData) {
 		this.addressData = addressData;
 	
 	}
