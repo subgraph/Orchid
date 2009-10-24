@@ -27,7 +27,7 @@ public class TorPublicKey {
 		final PEMReader pemReader = new PEMReader( new StringReader(buffer));
 		return new TorPublicKey(readPEMPublicKey(pemReader));
 	}
-	
+
 	static private RSAPublicKey readPEMPublicKey(PEMReader reader) {
 		try {
 			final Object ob = reader.readObject();
@@ -36,21 +36,21 @@ public class TorPublicKey {
 			throw new TorException(e);
 		}
 	}
-	
+
 	static private RSAPublicKey verifyObjectAsKey(Object ob) {
 		if(ob instanceof RSAPublicKey)
 			return ((RSAPublicKey) ob);
 		else
 			throw new TorParsingException("Failed to extract PEM public key.");
 	}
-	
+
 	private final RSAPublicKey key;
 	private HexDigest keyFingerprint = null;
-	
+
 	public TorPublicKey(RSAPublicKey key) {
 		this.key = key;
 	}
-	
+
 	private byte[] toASN1Raw() {
 		byte[] encoded = key.getEncoded();
 		ASN1InputStream asn1input = new ASN1InputStream(encoded);
@@ -61,13 +61,13 @@ public class TorPublicKey {
 			throw new TorException(e);
 		}
 	}
-	
+
 	public HexDigest getFingerprint() {
 		if(keyFingerprint == null)
 			keyFingerprint = HexDigest.createDigestForData(toASN1Raw());
 		return keyFingerprint;
 	}
-	
+
 	public boolean verifySignature(TorSignature signature, TorMessageDigest digest) {
 		final Cipher cipher = createCipherInstance();
 		try {
@@ -79,7 +79,7 @@ public class TorPublicKey {
 			throw new TorException(e);
 		}
 	}
-	
+
 	private boolean constantTimeArrayEquals(byte[] a1, byte[] a2) {
 		if(a1.length != a2.length)
 			return false;
@@ -89,6 +89,7 @@ public class TorPublicKey {
 		return result == 0;
 		
 	}
+
 	private Cipher createCipherInstance() {
 		try {
 			final Cipher cipher = Cipher.getInstance("RSA/None/PKCS1Padding", "BC");
@@ -104,11 +105,23 @@ public class TorPublicKey {
 			throw new TorException(e);
 		}
 	}
+
 	public RSAPublicKey getRSAPublicKey() {
 		return key;
 	}
-	
+
 	public String toString() {
 		return "Tor Public Key: " + getFingerprint();
+	}
+
+	public boolean equals(Object o) {
+		if(!(o instanceof TorPublicKey))
+			return false;
+		final TorPublicKey other = (TorPublicKey) o;
+		return other.getFingerprint().equals(getFingerprint());
+	}
+
+	public int hashCode() {
+		return getFingerprint().hashCode();
 	}
 }
