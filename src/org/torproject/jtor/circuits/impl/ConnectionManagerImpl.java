@@ -39,7 +39,6 @@ public class ConnectionManagerImpl {
 			public X509Certificate[] getAcceptedIssuers() {
 				return empty;
 			}
-			
 		}
 	};
 	
