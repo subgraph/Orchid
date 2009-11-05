@@ -13,6 +13,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.net.ssl.SSLSocket;
 
+import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.ConnectionClosedException;
 import org.torproject.jtor.circuits.ConnectionConnectException;
@@ -82,7 +83,6 @@ public class ConnectionImpl implements Connection {
 		}
 		manager.addActiveConnection(this);
 		isConnected = true;
-		System.out.println("CONNECT FINISHED");
 	}
 	
 	private void doConnect() throws IOException, InterruptedException {
@@ -114,7 +114,7 @@ public class ConnectionImpl implements Connection {
 	
 	private Cell recvCell() {
 		try {
-			return Cell.readFromInputStream(input);
+			return CellImpl.readFromInputStream(input);
 		} catch (IOException e) {
 			closeSocket();
 			manager.removeActiveConnection(this);
@@ -146,6 +146,9 @@ public class ConnectionImpl implements Connection {
 			} catch(ConnectionClosedException e) {
 				notifyCircuitsLinkClosed();
 				return;
+			} catch(TorException e) {
+				System.out.println("Unhandled tor exception");
+				e.printStackTrace();
 			}
 		}
 	}
@@ -195,7 +198,7 @@ public class ConnectionImpl implements Connection {
 			// XXX no circuit for relay cell
 			return;
 		}
-		circuit.queueRelayCell(cell);
+		circuit.deliverRelayCell(cell);
 	}
 	
 	private void processControlCell(Cell cell) {
@@ -205,6 +208,6 @@ public class ConnectionImpl implements Connection {
 			// XXX no circuit found
 			return;
 		}
-		circuit.queueControlCell(cell);
+		circuit.deliverControlCell(cell);
 	}
 }

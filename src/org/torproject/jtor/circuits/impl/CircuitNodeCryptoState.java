@@ -70,7 +70,7 @@ class CircuitNodeCryptoState {
 	}
 	
 	private boolean isRecognizedCell(Cell cell) {
-		if(cell.getShortAt(RelayCell.RELAY_RECOGNIZED_OFFSET) != 0) 
+		if(cell.getShortAt(RelayCell.RECOGNIZED_OFFSET) != 0) 
 			return false;
 	
 		final byte[] digest = extractRelayDigest(cell);
@@ -88,15 +88,15 @@ class CircuitNodeCryptoState {
 	private byte[] extractRelayDigest(Cell cell) {
 		final byte[] digest = new byte[4];
 		for(int i = 0; i < 4; i++) {
-			digest[i] = (byte) cell.getByteAt(i + RelayCell.RELAY_DIGEST_OFFSET);
-			cell.putByteAt(i + RelayCell.RELAY_DIGEST_OFFSET, 0);
+			digest[i] = (byte) cell.getByteAt(i + RelayCell.DIGEST_OFFSET);
+			cell.putByteAt(i + RelayCell.DIGEST_OFFSET, 0);
 		}
 		return digest;
 	}
 	
 	private void replaceRelayDigest(Cell cell, byte[] digest) {
 		for(int i = 0; i < 4; i++)
-			cell.putByteAt(i + RelayCell.RELAY_DIGEST_OFFSET, digest[i] & 0xFF);	
+			cell.putByteAt(i + RelayCell.DIGEST_OFFSET, digest[i] & 0xFF);	
 	}
 	
 	

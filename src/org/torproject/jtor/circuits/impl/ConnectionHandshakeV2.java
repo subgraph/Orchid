@@ -98,7 +98,7 @@ public class ConnectionHandshakeV2 {
 	}
 	
 	private  void sendVersions() throws IOException {
-		final Cell cell = Cell.createVarCell(0, Cell.VERSIONS, SUPPORTED_CONNECTION_VERSIONS.length * 2);
+		final Cell cell = CellImpl.createVarCell(0, Cell.VERSIONS, SUPPORTED_CONNECTION_VERSIONS.length * 2);
 		for(int v: SUPPORTED_CONNECTION_VERSIONS)
 			cell.putShort(v);
 
@@ -119,7 +119,7 @@ public class ConnectionHandshakeV2 {
 	}
 	
 	private void sendNetinfo() throws IOException {
-		final Cell cell = Cell.createCell(0, Cell.NETINFO);
+		final Cell cell = CellImpl.createCell(0, Cell.NETINFO);
 		// XXX this is a mess
 		Date now = new Date();
 		cell.putInt((int)(now.getTime() / 1000));

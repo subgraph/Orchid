@@ -1,6 +1,5 @@
 package org.torproject.jtor.circuits.impl;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,8 +9,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.Circuit;
+import org.torproject.jtor.circuits.CircuitBuildHandler;
+import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.ConnectionClosedException;
+import org.torproject.jtor.circuits.ConnectionConnectException;
+import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.directory.RouterDescriptor;
@@ -21,12 +24,11 @@ import org.torproject.jtor.directory.RouterDescriptor;
  *
  */
 public class CircuitImpl implements Circuit {
-	public static CircuitImpl create(ConnectionManagerImpl connectionManager, List<RouterDescriptor> routerPath) {
+	static CircuitImpl create(ConnectionManagerImpl connectionManager, List<RouterDescriptor> routerPath) {
 		if(routerPath.isEmpty())
 			throw new IllegalArgumentException("Path must contain at least one router to create a circuit.");
 		final ConnectionImpl entryConnection = createEntryConnection(connectionManager, routerPath.get(0));
 		return new CircuitImpl(entryConnection, routerPath);
-		
 	}
 	
 	private static ConnectionImpl createEntryConnection(ConnectionManagerImpl connectionManager, RouterDescriptor router) {
@@ -39,31 +41,55 @@ public class CircuitImpl implements Circuit {
 	
 	private final ConnectionImpl entryConnection;
 	private final int circuitId;
+	private boolean isConnected;
 	private final CircuitBuilder circuitBuilder;
-	private final Map<RouterDescriptor, CircuitNode> circuitNodes;
-	private final List<CircuitNode> nodeList;
-	private final BlockingQueue<Cell> relayCellQueue;
-	private final BlockingQueue<Cell> controlCellQueue;
-	
+	private final Map<RouterDescriptor, CircuitNodeImpl> circuitNodes;
+	private final List<CircuitNodeImpl> nodeList;
+	private final BlockingQueue<RelayCell> relayCellResponseQueue;
+	private final BlockingQueue<Cell> controlCellResponseQueue;
+	private final Map<Integer, StreamImpl> streamMap;
+	private int currentStreamId;
+	private boolean truncateRequested = false;
+	// XXX implement control relay lock
 	private CircuitImpl(ConnectionImpl entryConnection, List<RouterDescriptor> circuitPath) {
-		circuitNodes = new HashMap<RouterDescriptor, CircuitNode>();
-		nodeList = new ArrayList<CircuitNode>();
+		circuitNodes = new HashMap<RouterDescriptor, CircuitNodeImpl>();
+		nodeList = new ArrayList<CircuitNodeImpl>();
 		circuitId = entryConnection.allocateCircuitId(this);
 		this.entryConnection = entryConnection;
 		this.circuitBuilder = new CircuitBuilder(this, circuitPath);
-		this.relayCellQueue = new LinkedBlockingQueue<Cell>();
-		this.controlCellQueue = new LinkedBlockingQueue<Cell>();
+		this.relayCellResponseQueue = new LinkedBlockingQueue<RelayCell>();
+		this.controlCellResponseQueue = new LinkedBlockingQueue<Cell>();
+		this.streamMap = new HashMap<Integer, StreamImpl>();
 	}
 	
-	public void openCircuit()  {
+	public boolean isConnected() {
+		return isConnected;
+	}
+	
+	public boolean openCircuit(CircuitBuildHandler handler)  {
 		if(!entryConnection.isConnected()) {
-			System.out.println("Connecting...");
-			entryConnection.connect();
+			try {
+				entryConnection.connect();
+			} catch(ConnectionConnectException e) {
+				handler.connectionFailed(e.getMessage());
+				return false;
+			}
 		}
-		circuitBuilder.build();
+		
+		if(handler != null)
+			handler.connectionCompleted(entryConnection);
+		
+		if(circuitBuilder.build(handler)) {
+			isConnected = true;
+			return true;
+		}
+		return false;
+			
 	}
 	
 	public void extendCircuit(RouterDescriptor router) {
+		if(!isConnected)
+			throw new TorException("Cannot extend an unconnected circuit");
 		circuitBuilder.extendTo(router);
 	}
 	
@@ -75,7 +101,15 @@ public class CircuitImpl implements Circuit {
 		return circuitId;
 	}
 	
-	public void sendRelayCell(RelayCell cell, CircuitNode targetNode) {
+	public void sendRelayCell(RelayCell cell) {
+		sendRelayCellTo(cell, cell.getCircuitNode());
+	}
+	
+	public void sendRelayCellToFinalNode(RelayCell cell) {
+		sendRelayCellTo(cell, getFinalCircuitNode());
+	}
+	
+	private void sendRelayCellTo(RelayCell cell, CircuitNode targetNode) {
 		System.out.println("Sending relay cell to --> "+ targetNode.getRouter().getNickname());
 		cell.setLength();
 		targetNode.updateForwardDigest(cell);
@@ -87,10 +121,6 @@ public class CircuitImpl implements Circuit {
 		sendCell(cell);
 	}
 	
-	public void sendRelayCellToFinalNode(RelayCell cell) {
-		sendRelayCell(cell, getFinalCircuitNode());
-	}
-	
 	public void sendCell(Cell cell) {
 		try {
 			entryConnection.sendCell(cell);
@@ -99,8 +129,7 @@ public class CircuitImpl implements Circuit {
 		}
 	}
 	
-	
-	void appendNode(CircuitNode node) {
+	void appendNode(CircuitNodeImpl node) {
 		circuitNodes.put(node.getRouter(), node);
 		nodeList.add(node);
 	}
@@ -109,32 +138,45 @@ public class CircuitImpl implements Circuit {
 		return nodeList.size();
 	}
 	
-	CircuitNode getFinalCircuitNode() {
+	CircuitNodeImpl getFinalCircuitNode() {
 		if(nodeList.isEmpty())
 			throw new TorException("getFinalCircuitNode() called on empty circuit");
 		return nodeList.get( getCircuitLength() - 1);
 		
 	}
 	
-	public Cell receiveRelayCell(int expectedType) throws IOException {
-		while(true) {
-			final Cell cell = dequeueRelayCell();
-			final CircuitNode node = decryptRelayCell(cell);
-			if(node == null)
-				throw new TorException("Node not found for received cell");
-		
-			final int command = cell.getByte();
-			if(command == expectedType)
-				return cell;
-		
-			processRelayCell(command, cell);
-		}
-		
+	public RelayCell createRelayCell(int relayCommand, int streamId, CircuitNode targetNode) {
+		return new RelayCellImpl(targetNode, circuitId, streamId, relayCommand);
 	}
 	
-	private Cell dequeueRelayCell() {
+	public RelayCell receiveRelayResponse(int expectedType) {
+		final RelayCell relayCell = dequeueRelayResponseCell();
+		if(relayCell.getRelayCommand() == expectedType)
+			return relayCell;
+		throw new TorException("Received unexpected relay response type: "+ relayCell.getRelayCommand());
+	}
+	
+	private RelayCell dequeueRelayResponseCell() {
 		try {
-			return relayCellQueue.take();
+			return relayCellResponseQueue.take();
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new TorException("Interrupted while waiting for relay response");
+		}
+	}
+	
+	private RelayCell decryptRelayCell(Cell cell) {
+		for(CircuitNodeImpl node: nodeList) {
+			if(node.decryptBackwardCell(cell)) {
+				return RelayCellImpl.createFromCell(node, cell);
+			}
+		}
+		throw new TorException("Could not decrypt relay cell");
+	}
+	
+	Cell receiveControlCellResponse() {
+		try {
+			return controlCellResponseQueue.take();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -142,43 +184,96 @@ public class CircuitImpl implements Circuit {
 		}
 	}
 	
-	private CircuitNode decryptRelayCell(Cell cell) {
-		for(CircuitNode node: nodeList) {
-			if(node.decryptBackwardCell(cell))
-				return node;
-		}
-		return null;
+	/*
+	 * Should only be CREATED or CREATED_FAST
+	 */
+	void deliverControlCell(Cell cell) {
+		controlCellResponseQueue.add(cell);
+	}
+	
+	/* Runs in the context of the connection cell reading thread */
+	void deliverRelayCell(Cell cell) {
+		final RelayCell relayCell = decryptRelayCell(cell);
 		
-	}
-	
-	Cell receiveControlCell() {
-		try {
-			return controlCellQueue.take();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
-		}
-	}
-	
-	private void processRelayCell(int command, Cell cell) {
-		switch(command) {
+		System.out.println("Delivering relay cell: "+ relayCell.getRelayCommand());
+		switch(relayCell.getRelayCommand()) {
+		
+		case RelayCell.RELAY_EXTENDED:
+		case RelayCell.RELAY_RESOLVED:
+		case RelayCell.RELAY_CONNECTED:
+			relayCellResponseQueue.add(relayCell);
+			break;	
+		case RelayCell.RELAY_DATA:
+			processRelayDataCell(relayCell);
+			break;
+		case RelayCell.RELAY_END:
+			processRelayEndCell(relayCell);
+			break;
 		case RelayCell.RELAY_TRUNCATED:
-			System.out.println("recog: "+ cell.getShort()); // recognized
-			System.out.println("stearm: "+ cell.getShort()); // stream
-			System.out.println("digest: "+ cell.getInt()); // digest;
-			System.out.println("length: "+ cell.getShort()); // length
-			final int reason = cell.getByte();
-			System.out.println("Truncated for reason: "+ reason);
-			throw new TorException("Oh no");
+			if(truncateRequested)
+				relayCellResponseQueue.add(relayCell);
+			else
+				processGratuitousRelayTruncatedCell(relayCell);
+			break;
+		case RelayCell.RELAY_BEGIN:
+		case RelayCell.RELAY_BEGIN_DIR:
+		case RelayCell.RELAY_EXTEND:
+		case RelayCell.RELAY_RESOLVE:
+		case RelayCell.RELAY_TRUNCATE:
+		case RelayCell.RELAY_SENDME:
+			throw new TorException("Unexpected 'forward' direction relay cell type: "+ relayCell.getRelayCommand());
+		}
+		
+	}
+	
+	/* Runs in the context of the connection cell reading thread */
+	private void processRelayDataCell(RelayCell cell) {
+		final StreamImpl stream = streamMap.get(cell.getStreamId());
+		if(stream == null) 
+			throw new TorException("Stream not found for data cell with stream id: "+ cell.getStreamId());
+		stream.addInputCell(cell);
+	}
+	
+	/* Runs in the context of the connection cell reading thread */
+	private void processRelayEndCell(RelayCell cell) {
+		System.out.println("RELAY END [implement me]");
+	}
+	
+	/* Runs in the context of the connection cell reading thread */
+	private void processGratuitousRelayTruncatedCell(RelayCell cell) {
+		System.out.println("(Gratuitous) RELAY TRUNCATED [implement me]");
+	}
+	
+	public Stream openDirectoryStream() {
+		final StreamImpl stream = createNewStream();
+		stream.openDirectory();
+		return stream;
+	}
+
+	boolean isFinalNodeDirectory() {
+		return getFinalCircuitNode().getRouter().getDirectoryPort() != 0;
+	}
+	
+	private StreamImpl createNewStream() {
+		synchronized(streamMap) {
+			final int streamId = allocateStreamId();
+			final StreamImpl stream = new StreamImpl(this, getFinalCircuitNode(), streamId);
+			streamMap.put(streamId, stream);
+			return stream;
 		}
 	}
-	
-	void queueControlCell(Cell cell) {
-		controlCellQueue.add(cell);
+
+	private int allocateStreamId() {
+		currentStreamId++;
+		if(currentStreamId > 0xFFFF)
+			currentStreamId = 1;
+		return currentStreamId;
 	}
 	
-	void queueRelayCell(Cell cell) {
-		relayCellQueue.add(cell);
+	void removeStream(StreamImpl stream) {
+		synchronized(streamMap) {
+			streamMap.remove(stream.getStreamId());
+		}
 	}
+
 }
