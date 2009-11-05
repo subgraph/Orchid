@@ -3,11 +3,15 @@ package org.torproject.jtor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
 import java.util.zip.InflaterInputStream;
 
+import org.torproject.jtor.circuits.Circuit;
+import org.torproject.jtor.circuits.CircuitBuildHandler;
+import org.torproject.jtor.circuits.CircuitNode;
+import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.directory.Directory;
-import org.torproject.jtor.directory.DirectoryServer;
 import org.torproject.jtor.directory.KeyCertificate;
 import org.torproject.jtor.directory.RouterDescriptor;
 import org.torproject.jtor.directory.StatusDocument;
@@ -63,7 +67,7 @@ public class TorTest {
 			final InputStream in = new FileInputStream(ROUTER_FILE);
 			final InputStream inflater = new InflaterInputStream(in);
 			DocumentParser<RouterDescriptor> parser = tor.getDocumentParserFactory().createRouterDescriptorParser(inflater);
-			parser.parse();
+			parser.parseAndAddToDirectory(directory);
 			List<RouterDescriptor> documents = parser.getDocuments();
 			System.out.println("Parser returned "+ documents.size() +" router descriptors.");
 		} catch (FileNotFoundException e) {
@@ -73,22 +77,43 @@ public class TorTest {
 		}
 	}
 	
-	void randomAuthority() {
-		DirectoryServer randomAuthority = directory.getRandomDirectoryAuthority();
-		System.out.println("Random authority: "+ randomAuthority);
-		KeyCertificate cert = directory.findCertificate(randomAuthority.getFingerprint());
-		System.out.println("Random authority certificate: " + cert);
-	}
-	
-	void runTests() {
-		loadConsensus();
-		loadRouters();
-		loadCertificates();
-		randomAuthority();
+	void circuitTest()  {
+		
+		String[] path = {  "AnonymousRelay", "CodeGnomeTor1", "bambi", "TorVidalia"};
+		
+		Circuit c = tor.createCircuitFromNicknames(Arrays.asList(path));
+		
+		c.openCircuit(new CircuitBuildHandler() {
+			
+			public void nodeAdded(CircuitNode node) {
+				System.out.println("Node added: "+ node.getRouter().getNickname());				
+			}
+			
+			public void connectionFailed(String reason) {
+				System.out.println("Connect to entry router failed: "+ reason);				
+			}
+			
+			public void connectionCompleted(Connection connection) {
+				System.out.println("Connected to entry router: "+ connection.getRouter().getNickname());				
+			}
+			
+			public void circuitBuildFailed(String reason) {
+				System.out.println("Circuit creation failed: "+ reason);				
+			}
+
+			public void circuitBuildCompleted(Circuit circuit) {
+				System.out.println("Circuit creation completed successfully");
+				
+			}
+		});
+		//c.extendCircuit(tor.getDirectory().getRouterByName("bambi"));
+		
+		System.out.println("DONE");
 	}
 	
 	public static void main(String[] args) {
 		TorTest test = new TorTest();
-		test.runTests();
+		test.loadRouters();
+		test.circuitTest();
 	}
 }
