@@ -88,6 +88,14 @@ public class DirectoryServerImpl implements DirectoryServer {
 		return v3Ident;
 	}
 	
+	public IPv4Address getAddress() {
+		return address;
+	}
+	
+	public int getDirectoryPort() {
+		return port;
+	}
+	
 	public String toString() {
 		if(v3Ident != null) 
 			return "(Directory: "+ nickname +" "+ address +":"+ port +" fingerprint="+ fingerprint +" v3ident="+ 
