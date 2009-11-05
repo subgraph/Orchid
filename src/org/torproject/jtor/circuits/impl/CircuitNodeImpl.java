@@ -3,34 +3,36 @@ package org.torproject.jtor.circuits.impl;
 import java.math.BigInteger;
 
 import org.torproject.jtor.TorException;
+import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.cells.Cell;
+import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.crypto.HybridEncryption;
 import org.torproject.jtor.crypto.TorKeyAgreement;
 import org.torproject.jtor.crypto.TorMessageDigest;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.directory.RouterDescriptor;
 
-class CircuitNode {
-	static CircuitNode createForRouter(RouterDescriptor router) {
-		return new CircuitNode(router);
+class CircuitNodeImpl implements CircuitNode {
+	static CircuitNodeImpl createForRouter(RouterDescriptor router) {
+		return new CircuitNodeImpl(router);
 	}
 	
 	private final TorKeyAgreement dhContext;
 	private final RouterDescriptor routerDescriptor;
 	private CircuitNodeCryptoState cryptoState;
-	private final CircuitNode previousNode;
+	private final CircuitNodeImpl previousNode;
 	
-	private CircuitNode(RouterDescriptor router) {
+	private CircuitNodeImpl(RouterDescriptor router) {
 		this(router, null);
 	}
 	
-	CircuitNode(RouterDescriptor router, CircuitNode previous) {
+	CircuitNodeImpl(RouterDescriptor router, CircuitNodeImpl previous) {
 		previousNode = previous;
 		this.routerDescriptor = router;
 		this.dhContext = new TorKeyAgreement();
 	}
 	
-	RouterDescriptor getRouter() {
+	public RouterDescriptor getRouter() {
 		return routerDescriptor;
 	}
 	
@@ -44,11 +46,11 @@ class CircuitNode {
 			throw new TorException("Digest verification failed!");
 	}
 	
-	CircuitNode getPreviousNode() {
+	public CircuitNodeImpl getPreviousNode() {
 		return previousNode;
 	}
 	
-	void encryptForwardCell(Cell cell) {
+	public void encryptForwardCell(RelayCell cell) {
 		cryptoState.encryptForwardCell(cell);
 	}
 	
@@ -56,11 +58,11 @@ class CircuitNode {
 		return cryptoState.decryptBackwardCell(cell);
 	}
 	
-	void updateForwardDigest(Cell cell) {
+	public void updateForwardDigest(RelayCell cell) {
 		cryptoState.updateForwardDigest(cell);
 	}
 	
-	byte[] getForwardDigestBytes() {
+	public byte[] getForwardDigestBytes() {
 		return cryptoState.getForwardDigestBytes();
 	}
 	
