@@ -14,6 +14,7 @@ import org.torproject.jtor.data.HexDigest;
 public interface Directory {
 	Collection<DirectoryServer> getDirectoryAuthorities();
 	DirectoryServer getRandomDirectoryAuthority();
+	RouterDescriptor getRandomDirectoryServer();
 	void addCertificate(KeyCertificate certificate);
 	void addRouterDescriptor(RouterDescriptor router);
 	void addConsensusDocument(StatusDocument consensus);
