@@ -35,6 +35,10 @@ public class Timestamp {
 		return date.before(now);
 	}
 	
+	public boolean isBefore(Timestamp ts) {
+		return date.before(ts.getDate());
+	}
+	
 	public String toString() {
 		return  date.toString();
 	}
