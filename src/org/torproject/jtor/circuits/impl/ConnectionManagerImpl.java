@@ -5,8 +5,8 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
@@ -16,7 +16,7 @@ import javax.net.ssl.X509TrustManager;
 
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.directory.RouterDescriptor;
+import org.torproject.jtor.directory.Router;
 
 public class ConnectionManagerImpl {
 	private static final String[] MANDATORY_CIPHERS = {
@@ -42,7 +42,7 @@ public class ConnectionManagerImpl {
 		}
 	};
 	
-	private final Map<RouterDescriptor, ConnectionImpl> activeConnections;
+	private final Map<Router, ConnectionImpl> activeConnections;
 	X509V3CertificateGenerator b;
 
 	private final SSLContext sslContext;
@@ -58,10 +58,10 @@ public class ConnectionManagerImpl {
 			throw new TorException(e);
 		}
 		socketFactory = sslContext.getSocketFactory();
-		activeConnections = new HashMap<RouterDescriptor, ConnectionImpl>();
+		activeConnections = new HashMap<Router, ConnectionImpl>();
 	}
 	
-	public ConnectionImpl createConnection(RouterDescriptor router) {
+	public ConnectionImpl createConnection(Router router) {
 		final SSLSocket socket = createSocket();
 		socket.setEnabledCipherSuites(MANDATORY_CIPHERS);
 		socket.setUseClientMode(true);
@@ -88,7 +88,7 @@ public class ConnectionManagerImpl {
 		}
 	}
 	
-	public ConnectionImpl findActiveLinkForRouter(RouterDescriptor router) {
+	public ConnectionImpl findActiveLinkForRouter(Router router) {
 		synchronized(activeConnections) {
 			return activeConnections.get(router);
 		}

@@ -18,7 +18,7 @@ import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.ConnectionClosedException;
 import org.torproject.jtor.circuits.ConnectionConnectException;
 import org.torproject.jtor.circuits.cells.Cell;
-import org.torproject.jtor.directory.RouterDescriptor;
+import org.torproject.jtor.directory.Router;
 
 /**
  * This class represents a transport link between two onion routers or
@@ -33,14 +33,14 @@ public class ConnectionImpl implements Connection {
 	private final ConnectionManagerImpl manager;
 	private InputStream input;
 	private OutputStream output;
-	private final RouterDescriptor router;
+	private final Router router;
 	private final Map<Integer, CircuitImpl> circuitMap;
 	private final BlockingQueue<Cell> connectionControlCells;
 	private int currentId = 1;
 	private boolean isConnected;
 	private final Thread readCellsThread;
 	
-	ConnectionImpl(ConnectionManagerImpl manager, SSLSocket socket, RouterDescriptor router) {
+	ConnectionImpl(ConnectionManagerImpl manager, SSLSocket socket, Router router) {
 		this.manager = manager;
 		this.socket = socket;	
 		this.router = router;
@@ -50,7 +50,7 @@ public class ConnectionImpl implements Connection {
 		this.connectionControlCells = new LinkedBlockingQueue<Cell>();
 	}
 	
-	public RouterDescriptor getRouter() {
+	public Router getRouter() {
 		return router;
 	}
 
@@ -96,9 +96,9 @@ public class ConnectionImpl implements Connection {
 	}
 	
 	
-	private SocketAddress routerToSocketAddress(RouterDescriptor router) {
+	private SocketAddress routerToSocketAddress(Router router) {
 		final InetAddress address = router.getAddress().toInetAddress();
-		return new InetSocketAddress(address, router.getRouterPort());
+		return new InetSocketAddress(address, router.getOnionPort());
 	}
 	
 	

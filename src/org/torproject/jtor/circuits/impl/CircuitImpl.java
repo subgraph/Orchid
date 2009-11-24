@@ -17,21 +17,21 @@ import org.torproject.jtor.circuits.ConnectionConnectException;
 import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
-import org.torproject.jtor.directory.RouterDescriptor;
+import org.torproject.jtor.directory.Router;
 
 /**
  * This class represents an established circuit through the Tor network.
  *
  */
 public class CircuitImpl implements Circuit {
-	static CircuitImpl create(ConnectionManagerImpl connectionManager, List<RouterDescriptor> routerPath) {
+	static CircuitImpl create(ConnectionManagerImpl connectionManager, List<Router> routerPath) {
 		if(routerPath.isEmpty())
 			throw new IllegalArgumentException("Path must contain at least one router to create a circuit.");
 		final ConnectionImpl entryConnection = createEntryConnection(connectionManager, routerPath.get(0));
 		return new CircuitImpl(entryConnection, routerPath);
 	}
 	
-	private static ConnectionImpl createEntryConnection(ConnectionManagerImpl connectionManager, RouterDescriptor router) {
+	private static ConnectionImpl createEntryConnection(ConnectionManagerImpl connectionManager, Router router) {
 		final ConnectionImpl existingConnection = connectionManager.findActiveLinkForRouter(router);
 		if(existingConnection != null)
 			return existingConnection;
@@ -43,7 +43,7 @@ public class CircuitImpl implements Circuit {
 	private final int circuitId;
 	private boolean isConnected;
 	private final CircuitBuilder circuitBuilder;
-	private final Map<RouterDescriptor, CircuitNodeImpl> circuitNodes;
+	private final Map<Router, CircuitNodeImpl> circuitNodes;
 	private final List<CircuitNodeImpl> nodeList;
 	private final BlockingQueue<RelayCell> relayCellResponseQueue;
 	private final BlockingQueue<Cell> controlCellResponseQueue;
@@ -51,8 +51,8 @@ public class CircuitImpl implements Circuit {
 	private int currentStreamId;
 	private boolean truncateRequested = false;
 	// XXX implement control relay lock
-	private CircuitImpl(ConnectionImpl entryConnection, List<RouterDescriptor> circuitPath) {
-		circuitNodes = new HashMap<RouterDescriptor, CircuitNodeImpl>();
+	private CircuitImpl(ConnectionImpl entryConnection, List<Router> circuitPath) {
+		circuitNodes = new HashMap<Router, CircuitNodeImpl>();
 		nodeList = new ArrayList<CircuitNodeImpl>();
 		circuitId = entryConnection.allocateCircuitId(this);
 		this.entryConnection = entryConnection;
@@ -87,7 +87,7 @@ public class CircuitImpl implements Circuit {
 			
 	}
 	
-	public void extendCircuit(RouterDescriptor router) {
+	public void extendCircuit(Router router) {
 		if(!isConnected)
 			throw new TorException("Cannot extend an unconnected circuit");
 		circuitBuilder.extendTo(router);

@@ -10,30 +10,30 @@ import org.torproject.jtor.crypto.HybridEncryption;
 import org.torproject.jtor.crypto.TorKeyAgreement;
 import org.torproject.jtor.crypto.TorMessageDigest;
 import org.torproject.jtor.data.HexDigest;
-import org.torproject.jtor.directory.RouterDescriptor;
+import org.torproject.jtor.directory.Router;
 
 class CircuitNodeImpl implements CircuitNode {
-	static CircuitNodeImpl createForRouter(RouterDescriptor router) {
+	static CircuitNodeImpl createForRouter(Router router) {
 		return new CircuitNodeImpl(router);
 	}
 	
 	private final TorKeyAgreement dhContext;
-	private final RouterDescriptor routerDescriptor;
+	private final Router router;
 	private CircuitNodeCryptoState cryptoState;
 	private final CircuitNodeImpl previousNode;
 	
-	private CircuitNodeImpl(RouterDescriptor router) {
+	private CircuitNodeImpl(Router router) {
 		this(router, null);
 	}
 	
-	CircuitNodeImpl(RouterDescriptor router, CircuitNodeImpl previous) {
+	CircuitNodeImpl(Router router, CircuitNodeImpl previous) {
 		previousNode = previous;
-		this.routerDescriptor = router;
+		this.router = router;
 		this.dhContext = new TorKeyAgreement();
 	}
 	
-	public RouterDescriptor getRouter() {
-		return routerDescriptor;
+	public Router getRouter() {
+		return router;
 	}
 	
 	void setSharedSecret(BigInteger peerPublic, HexDigest packetDigest) {
@@ -69,7 +69,7 @@ class CircuitNodeImpl implements CircuitNode {
 	byte[] createOnionSkin() {
 		final byte[] yBytes = dhContext.getPublicKeyBytes();
 		final HybridEncryption hybrid = new HybridEncryption();
-		return hybrid.encrypt(yBytes, routerDescriptor.getOnionKey());
+		return hybrid.encrypt(yBytes, router.getOnionKey());
 	}
 	
 	private void deriveKeys(byte[] sharedSecret) {

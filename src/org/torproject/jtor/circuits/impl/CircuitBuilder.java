@@ -12,7 +12,7 @@ import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.crypto.TorKeyAgreement;
 import org.torproject.jtor.crypto.TorMessageDigest;
 import org.torproject.jtor.data.HexDigest;
-import org.torproject.jtor.directory.RouterDescriptor;
+import org.torproject.jtor.directory.Router;
 
 /*
  * Utility class used by CircuitImpl that manages setting up a circuit 
@@ -20,10 +20,10 @@ import org.torproject.jtor.directory.RouterDescriptor;
  */
 class CircuitBuilder {
 	
-	private final List<RouterDescriptor> circuitPath;
+	private final List<Router> circuitPath;
 	private final CircuitImpl circuit;
 	
-	CircuitBuilder(CircuitImpl circuit, List<RouterDescriptor> path) {
+	CircuitBuilder(CircuitImpl circuit, List<Router> path) {
 		this.circuit = circuit;
 		this.circuitPath = path;	
 	}
@@ -43,7 +43,7 @@ class CircuitBuilder {
 	}
 	
 	private void runCircuitBuild(CircuitBuildHandler handler) {
-		final RouterDescriptor entryRouter = circuitPath.get(0);
+		final Router entryRouter = circuitPath.get(0);
 		final CircuitNode firstNode = createTo(entryRouter);
 		if(handler != null)
 			handler.nodeAdded(firstNode);
@@ -55,7 +55,7 @@ class CircuitBuilder {
 		}
 	}
 	
-	CircuitNode createTo(RouterDescriptor targetRouter) {
+	CircuitNode createTo(Router targetRouter) {
 		final CircuitNodeImpl newNode = new CircuitNodeImpl(targetRouter, null);
 		sendCreateCell(newNode);
 		receiveAndProcessCreateResponse(newNode);
@@ -89,7 +89,7 @@ class CircuitBuilder {
 		node.setSharedSecret(peerPublic, HexDigest.createFromDigestBytes(hash));
 	}
 	
-	CircuitNode extendTo(RouterDescriptor targetRouter) {
+	CircuitNode extendTo(Router targetRouter) {
 		System.out.println("Extending circuit to "+ targetRouter.getNickname());
 		if(circuit.getCircuitLength() == 0)
 			throw new TorException("Cannot EXTEND an empty circuit");
@@ -107,15 +107,15 @@ class CircuitBuilder {
 		}
 	}
 	
-	private CircuitNodeImpl createExtendNode(RouterDescriptor router) {
+	private CircuitNodeImpl createExtendNode(Router router) {
 		return new CircuitNodeImpl(router, circuit.getFinalCircuitNode());
 	}
 	
 	private RelayCell createRelayExtendCell(CircuitNodeImpl newNode) {
 		final RelayCell cell = new RelayCellImpl(circuit.getFinalCircuitNode(), circuit.getCircuitId(), 0, RelayCell.RELAY_EXTEND);
-		final RouterDescriptor router = newNode.getRouter();
+		final Router router = newNode.getRouter();
 		cell.putByteArray(router.getAddress().getAddressDataBytes());
-		cell.putShort(router.getRouterPort());
+		cell.putShort(router.getOnionPort());
 		cell.putByteArray( newNode.createOnionSkin());
 		cell.putByteArray(router.getIdentityKey().getFingerprint().getRawBytes());
 		return cell;

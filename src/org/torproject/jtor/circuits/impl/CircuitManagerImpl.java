@@ -6,7 +6,7 @@ import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.directory.Directory;
-import org.torproject.jtor.directory.RouterDescriptor;
+import org.torproject.jtor.directory.Router;
 
 public class CircuitManagerImpl implements CircuitManager {
 
@@ -19,11 +19,11 @@ public class CircuitManagerImpl implements CircuitManager {
 	}
 	
 	public Circuit createCircuitFromNicknames(List<String> nicknamePath) {
-		final List<RouterDescriptor> path = directory.getRouterListByNames(nicknamePath);
+		final List<Router> path = directory.getRouterListByNames(nicknamePath);
 		return createCircuitFromPath(path);
 	}
 
-	public Circuit createCircuitFromPath(List<RouterDescriptor> path) {
+	public Circuit createCircuitFromPath(List<Router> path) {
 		return CircuitImpl.create(connectionManager, path);
 	}
 

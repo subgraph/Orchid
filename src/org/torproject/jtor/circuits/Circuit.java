@@ -1,7 +1,7 @@
 package org.torproject.jtor.circuits;
 
 import org.torproject.jtor.circuits.cells.RelayCell;
-import org.torproject.jtor.directory.RouterDescriptor;
+import org.torproject.jtor.directory.Router;
 
 public interface Circuit {
 	/**
@@ -9,7 +9,7 @@ public interface Circuit {
 	 * @throws ConnectionConnectException Network connection to the first router in the chain failed.
 	 */
 	boolean openCircuit(CircuitBuildHandler callback);
-	void extendCircuit(RouterDescriptor router);
+	void extendCircuit(Router router);
 	boolean isConnected();
 	Connection getConnection();
 	int getCircuitId();
