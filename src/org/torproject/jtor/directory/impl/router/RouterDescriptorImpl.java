@@ -51,6 +51,9 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 	private boolean allowSingleHopExits = false;
 	private boolean hasValidSignature = false;
 
+	private HexDigest descriptorDigest;
+	private String rawDocumentData;
+	
 	public void setNickname(String nickname) { this.nickname = nickname; }
 	public void setAddress(IPv4Address address) { this.address = address; }
 	public void setRouterPort(int port) { this.routerPort = port; }
@@ -71,6 +74,8 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 	void setReadHistory(BandwidthHistory history) { this.readHistory= history; }
 	void setWriteHistory(BandwidthHistory history) { this.writeHistory = history; }
 	void setValidSignature() { hasValidSignature = true; }
+	void setDescriptorHash(HexDigest digest) { descriptorDigest = digest; }
+	void setRawDocumentData(String rawData) { rawDocumentData = rawData; }
 
 	void addAcceptRule(String rule) {
 		exitPolicy.addAcceptRule(rule);
@@ -108,7 +113,8 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 		// verify required fields exist, see dirspec.txt section 2.1
 		return hasValidSignature && (nickname != null) && (address != null) &&
 			(averageBandwidth != -1) && (routerPort != 0 || directoryPort != 0) &&
-			(published != null) && (onionKey != null) && (identityKey != null);
+			(published != null) && (onionKey != null) && (identityKey != null) &&
+			(descriptorDigest != null);
 	}
 
 	public String getNickname() {
@@ -235,19 +241,31 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 		return writeHistory;
 	}
 
+	public boolean isNewerThan(RouterDescriptor other) {
+		return other.getPublishedTime().isBefore(published);
+	}
+	
+	public HexDigest getDescriptorDigest() {
+		return descriptorDigest;
+	}
+	
+	public String getRawDocumentData() {
+		return rawDocumentData;
+	}
+	
 	public boolean equals(Object o) {
 		if(!(o instanceof RouterDescriptorImpl)) 
 			return false;
 		final RouterDescriptorImpl other = (RouterDescriptorImpl) o;
-		if(other.getIdentityKey() == null || getIdentityKey() == null)
+		if(other.getDescriptorDigest() == null || descriptorDigest == null)
 			return false;
 
-		return other.getIdentityKey().equals(getIdentityKey());
+		return other.getDescriptorDigest().equals(descriptorDigest);
 	}
 
 	public int hashCode() {
-		if(getIdentityKey() == null)
+		if(descriptorDigest == null)
 			return 0;
-		return getIdentityKey().hashCode();
+		return descriptorDigest.hashCode();
 	}
 }

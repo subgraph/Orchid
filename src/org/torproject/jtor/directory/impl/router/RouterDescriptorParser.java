@@ -1,35 +1,28 @@
 package org.torproject.jtor.directory.impl.router;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.torproject.jtor.TorParsingException;
 import org.torproject.jtor.crypto.TorSignature;
 import org.torproject.jtor.data.BandwidthHistory;
 import org.torproject.jtor.data.Timestamp;
-import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.RouterDescriptor;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParsingHandler;
+import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
 
 public class RouterDescriptorParser implements DocumentParser<RouterDescriptor>{
 	private final DocumentFieldParser fieldParser;
-	private final List<RouterDescriptor> descriptorList;
 	private RouterDescriptorImpl currentDescriptor;
-	
+	private DocumentParsingResultHandler<RouterDescriptor> resultHandler;
 	public RouterDescriptorParser(DocumentFieldParser fieldParser) {
 		this.fieldParser = fieldParser;
 		this.fieldParser.setHandler(createParsingHandler());
 		this.fieldParser.setRecognizeOpt();
-		descriptorList = new ArrayList<RouterDescriptor>();		
 	}
 	
 	private DocumentParsingHandler createParsingHandler() {
 		return new DocumentParsingHandler() {
 			public void endOfDocument() {
-				fieldParser.logDebug("Added "+ descriptorList.size() +" routers.");				
 			}
 			public void parseKeywordLine() {
 				processKeywordLine();				
@@ -49,20 +42,23 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor>{
 	}
 	
 	private void startNewDescriptor() {
+		fieldParser.resetRawDocument();
 		fieldParser.startSignedEntity();
 		currentDescriptor = new RouterDescriptorImpl();
 	}
 	
-	public void parse() {
+	public boolean parse(DocumentParsingResultHandler<RouterDescriptor> resultHandler) {
+		this.resultHandler = resultHandler;
 		startNewDescriptor();
-		fieldParser.processDocument();
+		try {
+			fieldParser.processDocument();
+			return true;
+		} catch(TorParsingException e) {
+			resultHandler.parsingError(e.getMessage());
+			return false;
+		}
 	}
 	
-	public void parseAndAddToDirectory(Directory directory) {
-		parse();
-		for(RouterDescriptor router: descriptorList)
-			directory.addRouterDescriptor(router);
-	}
 	private void processKeyword(RouterDescriptorKeyword keyword) {
 		fieldParser.verifyExpectedArgumentCount(keyword.getKeyword(), keyword.getArgumentCount());
 
@@ -162,17 +158,17 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor>{
 	
 	private boolean verifyCurrentDescriptor(TorSignature signature) {
 		if(!fieldParser.verifySignedEntity(currentDescriptor.getIdentityKey(), signature)) {
+			resultHandler.documentInvalid(currentDescriptor, "Signature failed.");
 			fieldParser.logWarn("Signature failed for router: " + currentDescriptor.getNickname());
+			System.out.println("XX"+ currentDescriptor.getRawDocumentData());
 			return false;
 		}
 		currentDescriptor.setValidSignature();
-		if(!currentDescriptor.isValidDocument())
+		if(!currentDescriptor.isValidDocument()) {
+			resultHandler.documentInvalid(currentDescriptor, "Router data invalid");
 			fieldParser.logWarn("Router data invalid for router: " + currentDescriptor.getNickname());
+		}
 		return currentDescriptor.isValidDocument();
-	}
-	
-	private void saveCurrentDescriptor() {
-		descriptorList.add(currentDescriptor);
 	}
 	
 	private void processBandwidth() {
@@ -199,12 +195,11 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor>{
 	
 	private void processSignature() {
 		fieldParser.endSignedEntity();
-		if(verifyCurrentDescriptor(fieldParser.parseSignature()))
-			saveCurrentDescriptor();
+		currentDescriptor.setDescriptorHash(fieldParser.getSignatureMessageDigest().getHexDigest());
+		final TorSignature signature = fieldParser.parseSignature();
+		currentDescriptor.setRawDocumentData(fieldParser.getRawDocument());
+		if(verifyCurrentDescriptor(signature))
+			resultHandler.documentParsed(currentDescriptor);
 		startNewDescriptor();
-	}
-
-	public List<RouterDescriptor> getDocuments() {
-		return Collections.unmodifiableList(descriptorList);
 	}
 }

@@ -1,28 +1,23 @@
 package org.torproject.jtor.directory.impl.certificate;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.torproject.jtor.TorParsingException;
 import org.torproject.jtor.crypto.TorSignature;
 import org.torproject.jtor.data.IPv4Address;
-import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.KeyCertificate;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParsingHandler;
+import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
 
 public class KeyCertificateParser implements DocumentParser<KeyCertificate> {
 	private final static int CURRENT_CERTIFICATE_VERSION = 3;
 	private final DocumentFieldParser fieldParser;
-	private final List<KeyCertificate> certificates;
 	private KeyCertificateImpl currentCertificate;
+	private DocumentParsingResultHandler<KeyCertificate> resultHandler;
 	
 	public KeyCertificateParser(DocumentFieldParser fieldParser) {
 		this.fieldParser = fieldParser;
 		this.fieldParser.setHandler(createParsingHandler());
-		certificates = new ArrayList<KeyCertificate>();
 	}
 	
 	private DocumentParsingHandler createParsingHandler() {
@@ -30,8 +25,8 @@ public class KeyCertificateParser implements DocumentParser<KeyCertificate> {
 			public void parseKeywordLine() {
 				processKeywordLine();
 			}
+			
 			public void endOfDocument() {
-				fieldParser.logDebug("Added "+ certificates.size() +" certificates.");				
 			}
 		};
 	}
@@ -48,19 +43,20 @@ public class KeyCertificateParser implements DocumentParser<KeyCertificate> {
 	}
 	
 	private void startNewCertificate() {
+		fieldParser.resetRawDocument();
 		fieldParser.startSignedEntity();
 		currentCertificate = new KeyCertificateImpl();
 	}
 	
-	public void parse() {
+	public boolean parse(DocumentParsingResultHandler<KeyCertificate> resultHandler) {
+		this.resultHandler = resultHandler;
 		startNewCertificate();
-		fieldParser.processDocument();
-	}
-	
-	public void parseAndAddToDirectory(Directory directory) {
-		parse();
-		for(KeyCertificate cert: certificates) {
-			directory.addCertificate(cert);
+		try {
+			fieldParser.processDocument();
+			return true;
+		} catch(TorParsingException e) {
+			resultHandler.parsingError(e.getMessage());
+			return false;
 		}
 	}
 	
@@ -114,24 +110,25 @@ public class KeyCertificateParser implements DocumentParser<KeyCertificate> {
 	
 	private boolean verifyCurrentCertificate(TorSignature signature) {
 		if(!fieldParser.verifySignedEntity(currentCertificate.getAuthorityIdentityKey(), signature)) {
+			resultHandler.documentInvalid(currentCertificate, "Signature failed");
 			fieldParser.logWarn("Signature failed for certificate with fingerprint: "+ currentCertificate.getAuthorityFingerprint());
 			return false;
 		}
 		currentCertificate.setValidSignature();
 		final boolean isValid = currentCertificate.isValidDocument();
-		if(!isValid)
+		if(!isValid) {
+			resultHandler.documentInvalid(currentCertificate, "Certificate data is invalid");
 			fieldParser.logWarn("Certificate data is invalid for certificate with fingerprint: "+ currentCertificate.getAuthorityFingerprint());
+		}
 		return isValid;
 	}
 	
 	private void processCertificateSignature() {
 		fieldParser.endSignedEntity();
-		if(verifyCurrentCertificate(fieldParser.parseSignature()))
-			certificates.add(currentCertificate);
+		if(verifyCurrentCertificate(fieldParser.parseSignature())) {
+			currentCertificate.setRawDocumentData(fieldParser.getRawDocument());
+			resultHandler.documentParsed(currentCertificate);
+		}
 		startNewCertificate();
-	}
-
-	public List<KeyCertificate> getDocuments() {
-		return Collections.unmodifiableList(certificates);
 	}
 }

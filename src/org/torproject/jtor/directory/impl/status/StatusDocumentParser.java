@@ -1,13 +1,11 @@
 package org.torproject.jtor.directory.impl.status;
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.torproject.jtor.directory.Directory;
+import org.torproject.jtor.TorParsingException;
 import org.torproject.jtor.directory.StatusDocument;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParsingHandler;
+import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
 
 public class StatusDocumentParser implements DocumentParser<StatusDocument> {
 	public enum DocumentSection { NO_SECTION, PREAMBLE, AUTHORITY, ROUTER_STATUS, SIGNATURE };
@@ -25,6 +23,8 @@ public class StatusDocumentParser implements DocumentParser<StatusDocument> {
 	private DocumentSection currentSection = DocumentSection.PREAMBLE;
 	private final StatusDocumentImpl document;
 	
+	private DocumentParsingResultHandler<StatusDocument> resultHandler;
+	
 	public StatusDocumentParser(DocumentFieldParser fieldParser) {
 		this.fieldParser = fieldParser;
 		initializeParser();
@@ -37,25 +37,30 @@ public class StatusDocumentParser implements DocumentParser<StatusDocument> {
 	}
 	
 	private void initializeParser() {
+		fieldParser.resetRawDocument();
 		fieldParser.setHandler(createParsingHandler());
 		fieldParser.setDelimiter(ITEM_DELIMITER);
 		fieldParser.setSignatureIgnoreToken("directory-signature");
 		fieldParser.startSignedEntity();
 	}
 	
-	public void parse() {
-		fieldParser.processDocument();
+	public boolean parse(DocumentParsingResultHandler<StatusDocument> resultHandler) {
+		this.resultHandler = resultHandler;
+		try {
+			fieldParser.processDocument();
+			return true;
+		} catch(TorParsingException e) {
+			resultHandler.parsingError(e.getMessage());
+			return false;
+		}
 	}
 	
-	public void parseAndAddToDirectory(Directory directory) {
-		parse();
-		if(document.isConsensusDocument())
-			directory.addConsensusDocument(document);
-	}
 	private DocumentParsingHandler createParsingHandler() {
 		return new DocumentParsingHandler() {
 
 			public void endOfDocument() {
+				document.setRawDocumentData(fieldParser.getRawDocument());
+				resultHandler.documentParsed(document);
 				fieldParser.logDebug("Finished parsing status document.");				
 			}
 			public void parseKeywordLine() {
@@ -88,7 +93,4 @@ public class StatusDocumentParser implements DocumentParser<StatusDocument> {
 		}	
 	}
 	
-	public List<StatusDocument> getDocuments() {
-		return Arrays.asList((StatusDocument)document);
-	}
 }

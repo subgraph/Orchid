@@ -1,6 +1,7 @@
 package org.torproject.jtor.directory.impl.status;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.Set;
 
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.Timestamp;
+import org.torproject.jtor.directory.RouterStatus;
 import org.torproject.jtor.directory.StatusDocument;
 import org.torproject.jtor.directory.VoteAuthorityEntry;
 
@@ -26,8 +28,9 @@ public class StatusDocumentImpl implements StatusDocument {
 	
 	private HexDigest signingHash;
 	private Map<HexDigest, VoteAuthorityEntry> voteAuthorityEntries;
-	private List<RouterStatusImpl> routerStatusEntries;
+	private List<RouterStatus> routerStatusEntries;
 	private List<DirectorySignature> signatures;
+	private String rawDocumentData;
 	
 	void setConsensusMethod(int method) { consensusMethod = method; }
 	void setValidAfter(Timestamp ts) { validAfter = ts; }
@@ -39,13 +42,14 @@ public class StatusDocumentImpl implements StatusDocument {
 	void addServerVersion(String version) { serverVersions.add(version); }
 	void addSignature(DirectorySignature signature) { signatures.add(signature); }
 	void setSigningHash(HexDigest hash) { signingHash = hash; }
+	void setRawDocumentData(String rawData) { rawDocumentData = rawData; }
 	
 	StatusDocumentImpl() {
 		clientVersions = new HashSet<String>();
 		serverVersions = new HashSet<String>();
 		knownFlags = new HashSet<String>();
 		voteAuthorityEntries = new HashMap<HexDigest, VoteAuthorityEntry>();
-		routerStatusEntries = new ArrayList<RouterStatusImpl>();
+		routerStatusEntries = new ArrayList<RouterStatus>();
 		signatures = new ArrayList<DirectorySignature>();
 	}
 	
@@ -101,8 +105,32 @@ public class StatusDocumentImpl implements StatusDocument {
 		return true;
 	}
 	
+	public List<RouterStatus> getRouterStatusEntries() {
+		return Collections.unmodifiableList(routerStatusEntries);
+	}
+	
+	public String getRawDocumentData() {
+		return rawDocumentData;
+	}
+	
+	public boolean isValidDocument() {
+		// XXX implement me
+		return true;
+	}
+	
 	public HexDigest getSigningHash() {
 		return signingHash;
+	}
+	
+	public boolean equals(Object o) {
+		if(!(o instanceof StatusDocumentImpl))
+			return false;
+		final StatusDocumentImpl other = (StatusDocumentImpl) o;
+		return other.getSigningHash().equals(signingHash);
+	}
+	
+	public int hashCode() {
+		return signingHash.hashCode();
 	}
 	
 
