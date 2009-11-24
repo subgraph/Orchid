@@ -1,15 +1,10 @@
 package org.torproject.jtor.directory.impl;
 
 import java.io.StringReader;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import org.torproject.jtor.Logger;
-import org.torproject.jtor.TorException;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.DirectoryServer;
@@ -34,10 +29,8 @@ public class TrustedAuthorities {
 	};
 
 	private List<DirectoryServer> directoryServers = new ArrayList<DirectoryServer>();
-    private final SecureRandom random;
 	
     TrustedAuthorities(Logger logger) {
-    	random = createRandom();
     	initialize(logger);
     }
     
@@ -58,59 +51,58 @@ public class TrustedAuthorities {
 	}
 	
 	private void processKeywordLine(DocumentFieldParser fieldParser) {
-		final DirectoryServerImpl server = new DirectoryServerImpl(fieldParser.parseNickname());
-		
+		final DirectoryAuthorityStatus status = new DirectoryAuthorityStatus();
+		status.setNickname(fieldParser.parseNickname());
 		while(fieldParser.argumentsRemaining() > 0) 
-			processArgument(fieldParser, server);
-		
+			processArgument(fieldParser, status);
 	}
 	
-	private void processArgument(DocumentFieldParser fieldParser, DirectoryServerImpl server) {
+	private void processArgument(DocumentFieldParser fieldParser, DirectoryAuthorityStatus status) {
 		final String item = fieldParser.parseString();
 		if(Character.isDigit(item.charAt(0))) {
-			parseAddressPort(fieldParser, item, server);
-			server.setFingerprint(fieldParser.parseFingerprint());
+			parseAddressPort(fieldParser, item, status);
+			status.setIdentity(fieldParser.parseFingerprint());
+			DirectoryServerImpl server = new DirectoryServerImpl(status);
+			if(status.getV3Ident() != null) {
+				server.setV3Ident(status.getV3Ident());
+			}
 			fieldParser.logDebug("Adding trusted authority: " + server);
 			directoryServers.add(server);
 			return;
 		} else {
-			parseFlag(fieldParser, item, server);
+			parseFlag(fieldParser, item, status);
 		}
 	}
 	
-	private void parseAddressPort(DocumentFieldParser parser, String item, DirectoryServerImpl server) {
+	private void parseAddressPort(DocumentFieldParser parser, String item, DirectoryAuthorityStatus status) {
 		final String[] args = item.split(":");
-		server.setAddress(IPv4Address.createFromString(args[0]));
-		server.setPort(parser.parsePort(args[1]));	
+		status.setAddress(IPv4Address.createFromString(args[0]));
+		status.setDirectoryPort(parser.parsePort(args[1]));	
 	}
 	
-	private SecureRandom createRandom() {
-		try {
-			return SecureRandom.getInstance("SHA1PRNG");
-		} catch (NoSuchAlgorithmException e) {
-			throw new TorException();
-		}
-	}
-	
-	private void parseFlag(DocumentFieldParser parser, String flag, DirectoryServerImpl server) {
+	private void parseFlag(DocumentFieldParser parser, String flag, DirectoryAuthorityStatus status) {
 		if(flag.equals("v1")) {
-			server.setV1Authority();
-			server.setHiddenServiceAuthority();
+			status.setV1Authority();
+			status.setHiddenServiceAuthority();
 		} else if(flag.equals("hs")) {
-			server.setHiddenServiceAuthority();
+			status.setHiddenServiceAuthority();
 		} else if(flag.equals("no-hs")) {
-			server.unsetHiddenServiceAuthority();
+			status.unsetHiddenServiceAuthority();
 		} else if(flag.equals("bridge")) {
-			server.setBridgeAuthority();
+			status.setBridgeAuthority();
 		} else if(flag.equals("no-v2")) {
-			server.unsetV2Authority();
+			status.unsetV2Authority();
 		} else if(flag.startsWith("orport=")) {
-			server.setORPort( parser.parsePort(flag.substring(7)));
+			status.setRouterPort( parser.parsePort(flag.substring(7)));
 		} else if(flag.startsWith("v3ident=")) {
-			server.setV3Ident(HexDigest.createFromString(flag.substring(8)));
+			status.setV3Ident(HexDigest.createFromString(flag.substring(8)));
 		}
 	}
 	
+	public List<DirectoryServer> getAuthorityServers() {
+		return directoryServers;
+	}
+	/*
 	public DirectoryServer getRandomAuthorityServer() {
 		int idx = random.nextInt(directoryServers.size());
 		return directoryServers.get(idx);
@@ -119,5 +111,6 @@ public class TrustedAuthorities {
 	public Collection<DirectoryServer> getAuthorityServers() {
 		return Collections.unmodifiableCollection(directoryServers);
 	}
+	*/
 	
 }
