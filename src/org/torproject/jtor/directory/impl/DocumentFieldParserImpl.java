@@ -39,6 +39,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
  	private String signatureIgnoreToken;
 	private boolean isProcessingSignedEntity = false;
 	private TorMessageDigest signatureDigest;
+	private StringBuilder rawDocumentBuffer;
 	
 	private DocumentParsingHandler callbackHandler;
 	
@@ -49,6 +50,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 			throw new TorException(e);
 		}
 		this.logger = logger;
+		rawDocumentBuffer = new StringBuilder();
 	}
 	
 	public DocumentFieldParserImpl(Reader reader, Logger logger) {
@@ -58,6 +60,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 			this.reader = new BufferedReader(reader);
 		}
 		this.logger = logger;
+		rawDocumentBuffer = new StringBuilder();
 	}
 	
 	public String parseNickname() {
@@ -218,7 +221,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 		while(true) {
 			final String line = readLine();
 			if(line == null) {
-				throw new TorParsingException("EOF reached before end of object.");
+				throw new TorParsingException("EOF reached before end of '"+ keyword +"' object.");
 			}
 			if(line.equals(endTag)) {
 				object.addContent(line);
@@ -268,6 +271,19 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 		return signatureDigest;
 	}
 	
+	private void updateRawDocument(String line) {
+		rawDocumentBuffer.append(line);
+		rawDocumentBuffer.append('\n');
+	}
+	
+	public String getRawDocument() {
+		return rawDocumentBuffer.toString();
+	}
+	
+	public void resetRawDocument() {
+		rawDocumentBuffer = new StringBuilder();
+	}
+	
 	public boolean verifySignedEntity(TorPublicKey publicKey, TorSignature signature) {
 		isProcessingSignedEntity = false;
 		return publicKey.verifySignature(signature, signatureDigest);
@@ -276,7 +292,10 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 	private String readLine() {
 		try {
 			final String line = reader.readLine();
-			updateCurrentSignature(line);
+			if(line != null) {
+				updateCurrentSignature(line);
+				updateRawDocument(line);
+			}
 			return line;
 		} catch (IOException e) {
 			throw new TorParsingException("I/O error parsing document: " + e.getMessage(), e);

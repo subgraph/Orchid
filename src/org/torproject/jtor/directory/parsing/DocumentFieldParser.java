@@ -198,6 +198,19 @@ public interface DocumentFieldParser {
 	String getCurrentKeyword();
 	
 	/**
+	 * Return all lines from the current document as a single String.
+	 * 
+	 * @return The raw data from the current document.
+	 */
+	String getRawDocument();
+	
+	/**
+	 * Empty the internal buffer which is capturing the raw data from
+	 * the document which is being parsed. 
+	 */
+	void resetRawDocument();
+	
+	/**
 	 * Reset the document signing state.  Any lines read after calling this method will be included 
 	 * in the current signature hash.
 	 */
