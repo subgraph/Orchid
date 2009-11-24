@@ -56,7 +56,7 @@ public class RouterStatusSectionParser extends StatusDocumentSectionParser {
 		currentEntry.setIdentity(parseBase64Digest());
 		currentEntry.setDigest(parseBase64Digest());
 		currentEntry.setPublicationTime(fieldParser.parseTimestamp());
-		currentEntry.setAddress(fieldParser.parseString());
+		currentEntry.setAddress(fieldParser.parseAddress());
 		currentEntry.setRouterPort(fieldParser.parsePort());
 		currentEntry.setDirectoryPort(fieldParser.parsePort());
 	}

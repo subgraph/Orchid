@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.torproject.jtor.data.HexDigest;
+import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.Timestamp;
 import org.torproject.jtor.data.exitpolicy.ExitPorts;
 import org.torproject.jtor.directory.RouterStatus;
@@ -14,7 +15,7 @@ public class RouterStatusImpl implements RouterStatus {
 	private HexDigest identity;
 	private HexDigest digest;
 	private Timestamp publicationTime;
-	private String address;
+	private IPv4Address address;
 	private int routerPort;
 	private int directoryPort;
 	private Set<String> flags = new HashSet<String>();
@@ -27,7 +28,7 @@ public class RouterStatusImpl implements RouterStatus {
 	void setIdentity(HexDigest identity) { this.identity = identity; }
 	void setDigest(HexDigest digest) { this.digest = digest; }
 	void setPublicationTime(Timestamp timestamp) { this.publicationTime = timestamp; }
-	void setAddress(String address) { this.address = address; }
+	void setAddress(IPv4Address address) { this.address = address; }
 	void setRouterPort(int port) { this.routerPort = port; }
 	void setDirectoryPort(int port) { this.directoryPort = port; }
 	void addFlag(String flag) { this.flags.add(flag); }
@@ -57,7 +58,7 @@ public class RouterStatusImpl implements RouterStatus {
 		return publicationTime;
 	}
 	
-	String getAddress() {
+	public IPv4Address getAddress() {
 		return address;
 	}
 	
