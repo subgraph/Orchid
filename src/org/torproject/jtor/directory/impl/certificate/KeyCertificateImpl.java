@@ -15,6 +15,7 @@ public class KeyCertificateImpl implements KeyCertificate {
 	private Timestamp keyPublished;
 	private Timestamp keyExpires;
 	private TorPublicKey signingKey;
+	private String rawDocumentData;
 	
 	// XXX Cross signature not implemented
 	
@@ -28,6 +29,7 @@ public class KeyCertificateImpl implements KeyCertificate {
 	void setKeyPublishedTime(Timestamp time) { this.keyPublished = time; }
 	void setKeyExpiryTime(Timestamp time) { this.keyExpires = time; }
 	void setValidSignature() { hasValidSignature = true;}
+	void setRawDocumentData(String rawData) { rawDocumentData = rawData; }
 	
 	public boolean isValidDocument() {
 		return hasValidSignature && (fingerprint != null) && (identityKey != null) &&
@@ -64,6 +66,10 @@ public class KeyCertificateImpl implements KeyCertificate {
 	
 	public boolean isExpired() {
 		return keyExpires.hasPassed();
+	}
+	
+	public String getRawDocumentData() {
+		return rawDocumentData;
 	}
 	
 	public String toString() {

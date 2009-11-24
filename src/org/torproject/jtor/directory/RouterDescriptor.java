@@ -10,7 +10,7 @@ import org.torproject.jtor.data.Timestamp;
  * provides access to the fields of a router descriptor document which
  * has been published through to Tor directory system.  
  */
-public interface RouterDescriptor {
+public interface RouterDescriptor extends Document {
 	/**
 	 * Returns the nickname of this router.
 	 * 
@@ -191,6 +191,17 @@ public interface RouterDescriptor {
 	 * @return True if this router allows single-hop circuits to make exit connections.
 	 */
 	boolean allowsSingleHopExits();
+	
+	/**
+	 * Compare two router descriptors and return true if this router descriptor was published
+	 * at a later time than the <code>other</code> descriptor.
+	 * 
+	 * @param other Another router descriptor to compare.
+	 * @return True if this descriptor was published later than <code>other</code>
+	 */
+	boolean isNewerThan(RouterDescriptor other);
+	
+	HexDigest getDescriptorDigest();
 	
 
 }

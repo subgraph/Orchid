@@ -11,7 +11,7 @@ import org.torproject.jtor.data.Timestamp;
  * directory authorities and bind a long-term identity key to a
  * more temporary signing key. 
  */
-public interface KeyCertificate {
+public interface KeyCertificate extends Document {
 	/**
 	 * Return the network address of this directory authority
 	 * or <code>null</code> if no address was specified in the certificate.
