@@ -1,13 +1,10 @@
 package org.torproject.jtor.control.impl;
 
-import java.net.Socket;
-
-import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.control.ControlConnectionHandler;
 
 /**
  *
- * @author merlijn
+ * @author Merlijn Hofstra
  */
 public class ControlCommandParser {
 
@@ -32,12 +29,12 @@ public class ControlCommandParser {
     			for (int i = 0; i < confs.length; i++) {
     				String key = confs[i].substring(0, confs[i].indexOf("="));
     				String value = confs[i].substring(confs[i].indexOf("=")+1);
-    				cch.getControlServer().getTorConfig().setConf(key, value);
+    				//cch.getControlServer().getTorConfig().setConf(key, value);
     			}
     			cch.write("250 configuration values set");
     		}
-    		
-    		if (command.equals("getconf")) {
+    		/*
+    		else if (command.equals("getconf")) {
     			String[] confs = args.split(" ");
     			for (int i = 0; i < confs.length; i++) {
     				String[] values = cch.getControlServer().getTorConfig().getConfArray(confs[i]);
@@ -45,9 +42,24 @@ public class ControlCommandParser {
     					cch.write("250 " + confs[i] + "=" + values[j]);
     				}
     			}
+    		}   */
+    		
+    		else if (command.equals("resetconf")) {
+    			String[] confs = args.split(" ");
+    			for (int i = 0; i < confs.length; i++) {
+    				if (confs[i].indexOf("=") == -1) {
+    					//cch.getControlServer().getTorConfig().resetConf(confs[i]);
+    				} else {
+    					String key = confs[i].substring(0, confs[i].indexOf("="));
+        				String value = confs[i].substring(confs[i].indexOf("=")+1);
+        				//cch.getControlServer().getTorConfig().setConf(key, value);
+    				}
+    			}
     		}
+    		
+    		return true;
     	}
-    	return true;
+    	return false;
     }
     
     /** Removes any unescaped quotes from a given string */

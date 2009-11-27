@@ -25,7 +25,7 @@ public abstract class ControlServer extends Thread {
 
     public ControlServer(TorConfig tc) {
         this.tc = tc;
-        if (tc.getConf("CookieAuthentication") != null && !tc.getConf("CookieAuthentication").equals("0")) {
+        if (tc.isCookieAuthentication()) {
         	// write out a cookie file
         	File cookie = new File(tc.getDataDirectory(), "control_auth_cookie");
         	cookie.delete();
@@ -54,7 +54,7 @@ public abstract class ControlServer extends Thread {
         
         String auth = input.substring(13);
         
-        if (tc.getConf("CookieAuthentication") != null && !tc.getConf("CookieAuthentication").equals("0") ) {
+        if (tc.isCookieAuthentication()) {
         	try {
         		File cookie = new File(tc.getDataDirectory(), "control_auth_cookie");
 				BufferedReader reader = new BufferedReader(new FileReader(cookie));
@@ -66,9 +66,9 @@ public abstract class ControlServer extends Thread {
 			}
         }
         
-        if (tc.getConf("HashedControlPassword") != null) {
+        if (tc.getHashedControlPassword() != null) {
             // generate our control password
-            PasswordDigest cp = new PasswordDigest(tc.getConf("HashedControlPassword"));
+            PasswordDigest cp = new PasswordDigest(tc.getHashedControlPassword());
             return cp.verifyPassword(auth);
         }
 

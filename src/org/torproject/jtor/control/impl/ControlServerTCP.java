@@ -25,7 +25,7 @@ public class ControlServerTCP extends ControlServer {
 
     @Override
     public void startServer() {
-        port = Integer.parseInt(tc.getConf("ControlPort"));
+        port = tc.getControlPort();
         running = true;
         this.start();
     }
