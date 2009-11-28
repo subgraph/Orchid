@@ -1,5 +1,6 @@
 package org.torproject.jtor.control.impl;
 
+import org.torproject.jtor.config.impl.TorConfigParserImpl;
 import org.torproject.jtor.control.ControlConnectionHandler;
 
 /**
@@ -29,7 +30,10 @@ public class ControlCommandParser {
     			for (int i = 0; i < confs.length; i++) {
     				String key = confs[i].substring(0, confs[i].indexOf("="));
     				String value = confs[i].substring(confs[i].indexOf("=")+1);
-    				//cch.getControlServer().getTorConfig().setConf(key, value);
+    				boolean success = TorConfigParserImpl.setConf(cch.getControlServer().getTorConfig(), key, value);
+    				if (!success) {
+    					//restore all settings done by this command because one has failed
+    				}
     			}
     			cch.write("250 configuration values set");
     		}

@@ -157,6 +157,149 @@ public class TorConfigParserImpl {
 			else if (key.equals("statusfetchperiod")) {
 				tc.setStatusFetchPeriod(Long.parseLong(value));
 			}
+			
+			else if (key.equals("user")) {
+				tc.setUser(value);
+			}
+			
+			else if (key.equals("hardwareaccel")) {
+				tc.setHardwareAccel(isTrue(value));
+			}
+			
+			else if (key.equals("allowunverifiednodes")) {
+				tc.setAllowUnverifiedNodes(value);
+			}
+			
+			else if (key.equals("clientonly")) {
+				tc.setClientOnly(isTrue(value));
+			}
+			
+			else if (key.equals("entrynodes")) {
+				String[] newar = addToStringArray(tc.getEntryNodes(), value);
+				tc.setEntryNodes(newar);
+			}
+			
+			else if (key.equals("exitnodes")) {
+				String[] newar = addToStringArray(tc.getExitNodes(), value);
+				tc.setExitNodes(newar);
+			}
+			
+			else if (key.equals("excludenodes")) {
+				String[] newar = addToStringArray(tc.getExcludeNodes(), value);
+				tc.setExcludeNodes(newar);
+			}
+			
+			else if (key.equals("strictexitnodes")) {
+				tc.setStrictExitNodes(isTrue(value));
+			}
+			
+			else if (key.equals("strictentrynodes")) {
+				tc.setStrictEntryNodes(isTrue(value));
+			}
+			
+			else if (key.equals("fascistfirewall")) {
+				tc.setFascistFirewall(isTrue(value));
+			}
+			
+			else if (key.equals("firewallports")) { // needs splitting TODO
+				short[] newar = addToShortArray(tc.getFirewallPorts(), Short.parseShort(value));
+				tc.setFirewallPorts(newar);
+			}
+			
+			else if (key.equals("firewallips")) {
+				String[] newar = addToStringArray(tc.getFirewallIPs(), value);
+				tc.setExcludeNodes(newar);
+			}
+			
+			else if (key.equals("longlivedports")) { // needs splitting TODO
+				short[] newar = addToShortArray(tc.getLongLivedPorts(), Short.parseShort(value));
+				tc.setLongLivedPorts(newar);
+			}
+			
+			else if (key.equals("mapaddress")) {
+				String[] newar = addToStringArray(tc.getMapAddress(), value);
+				tc.setMapAddress(newar);
+			}
+			
+			else if (key.equals("newcircuitperiod")) {
+				tc.setNewCircuitPeriod(Long.parseLong(value));
+			}
+			
+			else if (key.equals("maxcircuitdirtiness")) {
+				tc.setMaxCircuitDirtiness(Long.parseLong(value));
+			}
+			
+			else if (key.equals("nodefamily")) {
+				String[] newar = addToStringArray(tc.getNodeFamily(), value);
+				tc.setNodeFamily(newar);
+			}
+			
+			else if (key.equals("rendnodes")) {
+				String[] newar = addToStringArray(tc.getRendNodes(), value);
+				tc.setRendNodes(newar);
+			}
+			
+			else if (key.equals("rendexcludenodes")) {
+				String[] newar = addToStringArray(tc.getRendExcludeNodes(), value);
+				tc.setRendExcludeNodes(newar);
+			}
+			
+			else if (key.equals("socksport")) {
+				tc.setSocksPort(Short.parseShort(value));
+			}
+			
+			else if (key.equals("socksbindaddress")) {
+				tc.setSocksBindAddress(value);
+			}
+			
+			else if (key.equals("sockspolicy")) {
+				tc.setSocksPolicy(value);
+			}
+			
+			else if (key.equals("trackhostexits")) {
+				String[] newar = addToStringArray(tc.getTrackHostExits(), value);
+				tc.setTrackHostExits(newar);
+			}
+			
+			else if (key.equals("trackhostexitsexpire")) {
+				tc.setTrackHostExitsExpire(Long.parseLong(value));
+			}
+			
+			else if (key.equals("usehelpernodes")) {
+				tc.setUseHelperNodes(isTrue(value));
+			}
+			
+			else if (key.equals("numhelpernodes")) {
+				tc.setNumHelperNodes(Integer.parseInt(value));
+			}
+			
+			else if (key.equals("hiddenservicedir")) {
+				String[] newar = addToStringArray(tc.getHiddenServiceDir(), value);
+				tc.setHiddenServiceDir(newar);
+			}
+			
+			else if (key.equals("hiddenserviceport")) { // needs splitting?
+				String[] newar = addToStringArray(tc.getHiddenServicePort(), value);
+				tc.setHiddenServicePort(newar);
+			}
+			
+			else if (key.equals("hiddenservicenodes")) {
+				String[] newar = addToStringArray(tc.getHiddenServiceNodes(), value);
+				tc.setHiddenServiceNodes(newar);
+			}
+			
+			else if (key.equals("hiddenserviceexcludenodes")) {
+				String[] newar = addToStringArray(tc.getHiddenServiceExcludeNodes(), value);
+				tc.setHiddenServiceExcludeNodes(newar);
+			}
+			
+			else if (key.equals("hiddenserviceversion")) {
+				tc.setHiddenServiceVersion(value);
+			}
+			
+			else if (key.equals("rendpostperiod")) {
+				tc.setRendPostPeriod(Long.parseLong(value));
+			}
 
 			else { // key was not found
 				return false;
