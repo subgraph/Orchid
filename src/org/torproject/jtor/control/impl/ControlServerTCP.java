@@ -16,7 +16,6 @@ import org.torproject.jtor.control.ControlServer;
  */
 public class ControlServerTCP extends ControlServer {
 
-    private int port;
     private Vector connections = new Vector();
 
     public ControlServerTCP(TorConfig tc) {
@@ -25,7 +24,6 @@ public class ControlServerTCP extends ControlServer {
 
     @Override
     public void startServer() {
-        port = tc.getControlPort();
         running = true;
         this.start();
     }
@@ -35,9 +33,9 @@ public class ControlServerTCP extends ControlServer {
         ServerSocket ss = null;
         try {
             if (host != null) {
-                ss = new ServerSocket(port, 0, host);
+                ss = new ServerSocket(tc.getControlPort(), 0, host);
             } else {
-                ss = new ServerSocket(port);
+                ss = new ServerSocket(tc.getControlPort());
             }
         } catch (IOException ex) {
             running = false;
