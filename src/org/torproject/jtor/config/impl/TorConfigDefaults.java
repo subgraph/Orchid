@@ -85,9 +85,9 @@ public class TorConfigDefaults {
     private String[] hiddenServiceDir;
     private String[] hiddenServicePort;
     private String[] hiddenServiceNodes;
-    private String[] HiddenServiceExcludeNodes;
-    private String HiddenServiceVersion = "0,2";
-    private long RendPostPeriod = 1200;
+    private String[] hiddenServiceExcludeNodes;
+    private String hiddenServiceVersion = "0,2";
+    private long rendPostPeriod = 1200;
     
     public TorConfigDefaults() {}
 
@@ -304,14 +304,14 @@ public class TorConfigDefaults {
 	}
 
 	public String[] getHiddenServiceExcludeNodes() {
-		return HiddenServiceExcludeNodes;
+		return hiddenServiceExcludeNodes;
 	}
 
 	public String getHiddenServiceVersion() {
-		return HiddenServiceVersion;
+		return hiddenServiceVersion;
 	}
 
 	public long getRendPostPeriod() {
-		return RendPostPeriod;
+		return rendPostPeriod;
 	}
 }
