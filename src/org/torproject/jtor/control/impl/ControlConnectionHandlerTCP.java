@@ -12,7 +12,7 @@ import org.torproject.jtor.control.ControlServer;
 
 /**
  *
- * @author merlijn
+ * @author Merlijn Hofstra
  */
 public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
 
@@ -51,7 +51,7 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
                 } else if (recv.toLowerCase().startsWith("protocolinfo")) {
                     if (!requestedProtocolinfo || authenticated) {
                         requestedProtocolinfo = !authenticated;
-                        // send protocol info
+                        // send protocol info TODO
                     } else {
                         //error out
                         disconnect();
