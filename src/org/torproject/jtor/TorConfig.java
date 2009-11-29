@@ -143,7 +143,7 @@ public interface TorConfig {
 	 */
 	public void setDisableAllSwap(boolean disableAllSwap);
 
-	public void setDisableAllSwap();
+	public void setDefaultDisableAllSwap();
 
 	/* (non-Javadoc)
 	 * @see org.torproject.jtor.config.impl.TorConfig#getGroup()

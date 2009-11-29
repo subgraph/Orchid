@@ -302,7 +302,7 @@ public class TorConfigImpl implements TorConfig {
 		this.disableAllSwap = disableAllSwap;
 	}
 
-	public void setDisableAllSwap() {
+	public void setDefaultDisableAllSwap() {
 		this.disableAllSwap = new TorConfigDefaults().isDisableAllSwap();
 	}
 
