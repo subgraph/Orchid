@@ -16,66 +16,71 @@ import org.torproject.jtor.control.ControlServer;
  */
 public class ControlServerTCP extends ControlServer {
 
-    private Vector connections = new Vector();
+	@SuppressWarnings("unchecked")
+	private Vector connections = new Vector();
 
-    public ControlServerTCP(TorConfig tc) {
-        super(tc);
-    }
+	public ControlServerTCP(TorConfig tc) {
+		super(tc);
+	}
 
-    @Override
-    public void startServer() {
-        running = true;
-        this.start();
-    }
+	@Override
+	public void startServer() {
+		if (tc.getControlPort() > 0) {
+			running = true;
+			this.start();
+		}
+	}
 
-    @Override
-    public void run() {
-        ServerSocket ss = null;
-        try {
-            if (host != null) {
-                ss = new ServerSocket(tc.getControlPort(), 0, host);
-            } else {
-                ss = new ServerSocket(tc.getControlPort());
-            }
-        } catch (IOException ex) {
-            running = false;
-        }
-        while (running) {
-            try {
-                Socket s = ss.accept();
-                ControlConnectionHandler cch = new ControlConnectionHandlerTCP(this, s);
-                connections.add(cch);
-            } catch (Throwable t) {}
-        }
+	@SuppressWarnings("unchecked")
+	@Override
+	public void run() {
+		ServerSocket ss = null;
+		try {
+			if (host != null) {
+				ss = new ServerSocket(tc.getControlPort(), 0, host);
+			} else {
+				ss = new ServerSocket(tc.getControlPort());
+			}
+		} catch (IOException ex) {
+			running = false;
+		}
+		while (running) {
+			try {
+				Socket s = ss.accept();
+				ControlConnectionHandler cch = new ControlConnectionHandlerTCP(this, s);
+				connections.add(cch);
+			} catch (Throwable t) {}
+		}
 
-    }
+	}
 
-    @Override
-    public void stopServer() {
-        running = false;
-        this.interrupt();
-        Iterator i = connections.iterator();
-        while (i.hasNext()) {
-            ((ControlConnectionHandler)i.next()).disconnect();
-        }
-    }
+	@SuppressWarnings("unchecked")
+	@Override
+	public void stopServer() {
+		running = false;
+		this.interrupt();
+		Iterator i = connections.iterator();
+		while (i.hasNext()) {
+			((ControlConnectionHandler)i.next()).disconnect();
+		}
+	}
 
-    public void disconnectHandler(ControlConnectionHandler cch) {
-        if (connections.remove(cch)) {
-            cch.disconnect();
-        }
-    }
+	public void disconnectHandler(ControlConnectionHandler cch) {
+		if (connections.remove(cch)) {
+			cch.disconnect();
+		}
+	}
 
-    @Override
-    public String getProtocol() {
-        return "TCP";
-    }
+	@Override
+	public String getProtocol() {
+		return "TCP";
+	}
 
-    public static void main (String[] arg) {
-        TorConfig tc = new TorConfigImpl();
-        tc.loadConf();
-        ControlServer cs = new ControlServerTCP(tc);
-        cs.startServer();
-    }
+	public static void main (String[] arg) {
+		TorConfig tc = new TorConfigImpl();
+		tc.loadConf();
+		ControlServer cs = new ControlServerTCP(tc);
+		cs.startServer();
+	}
 
 }

@@ -44,6 +44,8 @@ public class Tor {
 	public void start() {
 		directory.loadFromStore();
 		statusManager.startDownloadingDocuments();
+		config.loadDefaults();
+		config.loadConf();
 	}
 	
 	public Circuit createCircuitFromNicknames(List<String> nicknamePath) {
