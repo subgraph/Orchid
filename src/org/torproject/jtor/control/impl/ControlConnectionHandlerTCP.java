@@ -9,6 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.torproject.jtor.control.ControlConnectionHandler;
 import org.torproject.jtor.control.ControlServer;
+import org.torproject.jtor.control.auth.ControlAuthenticator;
 
 /**
  *
@@ -36,12 +37,12 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
             while (running) {
                 String recv = in.readLine();
                 
-                System.out.println("recieved: " + recv);
+                System.out.println("recieved: " + recv); // TODO remove
 
                 if (recv.toLowerCase().startsWith("quit")) {
                     disconnect();
                 } else if (recv.toLowerCase().startsWith("authenticate")) {
-                    if (cs.authenticate(recv)) {
+                    if (ControlAuthenticator.authenticate(cs.getTorConfig(), recv)) {
                         authenticated = true;
                         write("250 OK");
                     } else {
@@ -83,7 +84,7 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
         try {
             OutputStreamWriter out = new OutputStreamWriter(s.getOutputStream());
 
-            System.out.println("sending: " + w);
+            System.out.println("sending: " + w); // TODO remove
 
             out.write(w + "\r\n");
             out.flush();

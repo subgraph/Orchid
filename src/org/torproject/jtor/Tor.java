@@ -9,6 +9,8 @@ import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.impl.CircuitManagerImpl;
 import org.torproject.jtor.circuits.impl.ConnectionManagerImpl;
 import org.torproject.jtor.config.impl.TorConfigImpl;
+import org.torproject.jtor.control.ControlServer;
+import org.torproject.jtor.control.impl.ControlServerTCP;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.directory.impl.DirectoryImpl;
@@ -24,6 +26,7 @@ public class Tor {
 	private final Logger logger;
 	private final TorConfig config;
 	private final NetworkStatusManager statusManager;
+	private final ControlServer controlServer;
 	
 	public Tor() {
 		this(new ConsoleLogger());
@@ -38,6 +41,7 @@ public class Tor {
 		connectionManager = new ConnectionManagerImpl();
 		circuitManager = new CircuitManagerImpl(directory, connectionManager);
 		statusManager = new NetworkStatusManager(directory, logger);
+		controlServer = new ControlServerTCP(config);
 	}
 	
 	
@@ -46,6 +50,9 @@ public class Tor {
 		statusManager.startDownloadingDocuments();
 		config.loadDefaults();
 		config.loadConf();
+		if (config.getControlPort() > 0) {
+			controlServer.startServer();
+		}
 	}
 	
 	public Circuit createCircuitFromNicknames(List<String> nicknamePath) {

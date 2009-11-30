@@ -6,7 +6,6 @@ import java.net.Socket;
 import java.util.Iterator;
 import java.util.Vector;
 import org.torproject.jtor.TorConfig;
-import org.torproject.jtor.config.impl.TorConfigImpl;
 import org.torproject.jtor.control.ControlConnectionHandler;
 import org.torproject.jtor.control.ControlServer;
 
@@ -74,13 +73,6 @@ public class ControlServerTCP extends ControlServer {
 	@Override
 	public String getProtocol() {
 		return "TCP";
-	}
-
-	public static void main (String[] arg) {
-		TorConfig tc = new TorConfigImpl();
-		tc.loadConf();
-		ControlServer cs = new ControlServerTCP(tc);
-		cs.startServer();
 	}
 
 }

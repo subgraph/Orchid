@@ -5,95 +5,95 @@ import java.net.InetAddress;
 import org.torproject.jtor.TorConfig;
 
 public class TorConfigImpl implements TorConfig {
-    
-    private String configFile;
-    private File dataDirectory;
-    
-    private long bandwidthRate;
-    private long bandwidthBurst;
-    private long maxAdvertisedBandwidth;
-    
-    private short controlPort;
-    private String hashedControlPassword;
-    private boolean cookieAuthentication;
-    
-    private long dirFetchPeriod;
-    private String[] dirServer;
-    
-    private boolean disableAllSwap;
-    private String group;
-    
-    private String httpProxy;
-    private String httpProxyAuthenticator;
-    private String httpsProxy;
-    private String httpsProxyAuthenticator;
-    
-    private int keepalivePeriod;
-    
-    private String[] log;
-    
-    private int maxConn;
-    private InetAddress outboundBindAddress;
-    private String pidFile;
-    private boolean runAsDaemon;
-    
-    private boolean safeLogging;
-    
-    private long statusFetchPeriod;
-    
-    private String user;
-    
-    private boolean hardwareAccel;
-    
-    private String allowUnverifiedNodes;
-    private boolean clientOnly;
-    
-    private String[] entryNodes;
-    private String[] exitNodes;
-    private String[] excludeNodes;
-    private boolean strictExitNodes;
-    private boolean strictEntryNodes;
-    
-    private boolean fascistFirewall;
-    private short[] firewallPorts;
-    private String[] firewallIPs;
-    
-    private short[] longLivedPorts;
-    
-    private String[] mapAddress;
-    
-    private long newCircuitPeriod;
-    private long maxCircuitDirtiness;
-    
-    private String[] nodeFamily;
-    private String[] rendNodes;
-    private String[] rendExcludeNodes;
-    
-    private short socksPort;
-    private String socksBindAddress;
-    private String socksPolicy;
-    
-    private String[] trackHostExits;
-    private long trackHostExitsExpire;
-    
-    private boolean useHelperNodes;
-    private int numHelperNodes;
-    
-    private String[] hiddenServiceDir;
-    private String[] hiddenServicePort;
-    private String[] hiddenServiceNodes;
-    private String[] hiddenServiceExcludeNodes;
-    private String hiddenServiceVersion;
-    private long rendPostPeriod;
 
-        public TorConfigImpl() {
-            createDataDirectory();
-        }
+	private String configFile;
+	private File dataDirectory;
+
+	private long bandwidthRate;
+	private long bandwidthBurst;
+	private long maxAdvertisedBandwidth;
+
+	private short controlPort;
+	private String hashedControlPassword;
+	private boolean cookieAuthentication;
+
+	private long dirFetchPeriod;
+	private String[] dirServer;
+
+	private boolean disableAllSwap;
+	private String group;
+
+	private String httpProxy;
+	private String httpProxyAuthenticator;
+	private String httpsProxy;
+	private String httpsProxyAuthenticator;
+
+	private int keepalivePeriod;
+
+	private String[] log;
+
+	private int maxConn;
+	private InetAddress outboundBindAddress;
+	private String pidFile;
+	private boolean runAsDaemon;
+
+	private boolean safeLogging;
+
+	private long statusFetchPeriod;
+
+	private String user;
+
+	private boolean hardwareAccel;
+
+	private String allowUnverifiedNodes;
+	private boolean clientOnly;
+
+	private String[] entryNodes;
+	private String[] exitNodes;
+	private String[] excludeNodes;
+	private boolean strictExitNodes;
+	private boolean strictEntryNodes;
+
+	private boolean fascistFirewall;
+	private short[] firewallPorts;
+	private String[] firewallIPs;
+
+	private short[] longLivedPorts;
+
+	private String[] mapAddress;
+
+	private long newCircuitPeriod;
+	private long maxCircuitDirtiness;
+
+	private String[] nodeFamily;
+	private String[] rendNodes;
+	private String[] rendExcludeNodes;
+
+	private short socksPort;
+	private String socksBindAddress;
+	private String socksPolicy;
+
+	private String[] trackHostExits;
+	private long trackHostExitsExpire;
+
+	private boolean useHelperNodes;
+	private int numHelperNodes;
+
+	private String[] hiddenServiceDir;
+	private String[] hiddenServicePort;
+	private String[] hiddenServiceNodes;
+	private String[] hiddenServiceExcludeNodes;
+	private String hiddenServiceVersion;
+	private long rendPostPeriod;
+
+	public TorConfigImpl() {
+		createDataDirectory();
+	}
 
 	/* (non-Javadoc)
 	 * @see org.torproject.jtor.config.impl.TorConfig#getDataDirectory()
 	 */
-	public String getDataDirectory() {
+	 public String getDataDirectory() {
 		return dataDirectory.getAbsolutePath();
 	}
 
@@ -102,89 +102,91 @@ public class TorConfigImpl implements TorConfig {
 			dataDirectory.mkdirs();
 		return dataDirectory;
 	}
-	
-    /* (non-Javadoc)
+
+	/* (non-Javadoc)
 	 * @see org.torproject.jtor.config.impl.TorConfig#loadConf()
 	 */
-    public void loadConf() {
-        boolean success = TorConfigParserImpl.parseFile(this, new File(dataDirectory, configFile));
-        if (!success) {
-        	System.err.println("Unable to parse config file - Quitting");
-        	System.exit(1);
-        }
-    }
-    
-    /* (non-Javadoc)
+	public void loadConf() {
+		boolean success = TorConfigParserImpl.parseFile(this, new File(dataDirectory, configFile));
+		if (!success) {
+			System.err.println("Unable to parse config file - Quitting");
+			System.exit(1);
+		}
+	}
+
+	/* (non-Javadoc)
 	 * @see org.torproject.jtor.config.impl.TorConfig#loadDefaults()
 	 */
-    public void loadDefaults() {
-    	TorConfigDefaults tcd = new TorConfigDefaults();
-    	allowUnverifiedNodes = tcd.getAllowUnverifiedNodes();
-    	bandwidthBurst = tcd.getBandwidthBurst();
-    	bandwidthRate = tcd.getBandwidthRate();
-    	clientOnly = tcd.isClientOnly();
-    	configFile = tcd.getConfigFile();
-    	controlPort = tcd.getControlPort();
-    	cookieAuthentication = tcd.isCookieAuthentication();
-    	dataDirectory = tcd.getDataDirectory();
-    	dirFetchPeriod = tcd.getDirFetchPeriod();
-    	dirServer = tcd.getDirServer();
-    	disableAllSwap = tcd.isDisableAllSwap();
-    	entryNodes = tcd.getEntryNodes();
-    	excludeNodes = tcd.getExcludeNodes();
-    	exitNodes = tcd.getExitNodes();
-    	fascistFirewall = tcd.isFascistFirewall();
-    	firewallIPs = tcd.getFirewallIPs();
-    	firewallPorts = tcd.getFirewallPorts();
-    	group = tcd.getGroup();
-    	hardwareAccel = tcd.isHardwareAccel();
-    	hashedControlPassword = tcd.getHashedControlPassword();
-    	hiddenServiceDir = tcd.getHiddenServiceDir();
-    	hiddenServiceExcludeNodes = tcd.getHiddenServiceExcludeNodes();
-    	hiddenServiceNodes = tcd.getHiddenServiceNodes();
-    	hiddenServicePort = tcd.getHiddenServicePort();
-    	hiddenServiceVersion = tcd.getHiddenServiceVersion();
-    	httpProxy = tcd.getHttpProxy();
-    	httpProxyAuthenticator = tcd.getHttpProxyAuthenticator();
-    	httpsProxy = tcd.getHttpsProxy();
-    	httpsProxyAuthenticator = tcd.getHttpsProxyAuthenticator();
-    	keepalivePeriod = tcd.getKeepalivePeriod();
-    	log = tcd.getLog();
-    	longLivedPorts = tcd.getLongLivedPorts();
-    	mapAddress = tcd.getMapAddress();
-    	maxAdvertisedBandwidth = tcd.getMaxAdvertisedBandwidth();
-    	maxCircuitDirtiness = tcd.getMaxCircuitDirtiness();
-    	maxConn = tcd.getMaxConn();
-    	newCircuitPeriod = tcd.getNewCircuitPeriod();
-    	nodeFamily = tcd.getNodeFamily();
-    	numHelperNodes = tcd.getNumHelperNodes();
-    	outboundBindAddress = tcd.getOutboundBindAddress();
-    	pidFile = tcd.getPidFile();
-    	rendExcludeNodes = tcd.getRendExcludeNodes();
-    	rendNodes = tcd.getRendNodes();
-    	rendPostPeriod = tcd.getRendPostPeriod();
-    	runAsDaemon = tcd.isRunAsDaemon();
-    	safeLogging = tcd.isSafeLogging();
-    	socksBindAddress = tcd.getSocksBindAddress();
-    	socksPolicy = tcd.getSocksPolicy();
-    	socksPort = tcd.getSocksPort();
-    	statusFetchPeriod = tcd.getStatusFetchPeriod();
-    	strictEntryNodes = tcd.isStrictEntryNodes();
-    	strictExitNodes = tcd.isStrictExitNodes();
-    	trackHostExits = tcd.getTrackHostExits();
-    	trackHostExitsExpire = tcd.getTrackHostExitsExpire();
-    	useHelperNodes = tcd.isUseHelperNodes();
-    	user = tcd.getUser();
-    }
-	 
+	public void loadDefaults() {
+		TorConfigDefaults tcd = new TorConfigDefaults();
+		allowUnverifiedNodes = tcd.getAllowUnverifiedNodes();
+		bandwidthBurst = tcd.getBandwidthBurst();
+		bandwidthRate = tcd.getBandwidthRate();
+		clientOnly = tcd.isClientOnly();
+		configFile = tcd.getConfigFile();
+		controlPort = tcd.getControlPort();
+		cookieAuthentication = tcd.isCookieAuthentication();
+		dataDirectory = tcd.getDataDirectory();
+		dirFetchPeriod = tcd.getDirFetchPeriod();
+		dirServer = tcd.getDirServer();
+		disableAllSwap = tcd.isDisableAllSwap();
+		entryNodes = tcd.getEntryNodes();
+		excludeNodes = tcd.getExcludeNodes();
+		exitNodes = tcd.getExitNodes();
+		fascistFirewall = tcd.isFascistFirewall();
+		firewallIPs = tcd.getFirewallIPs();
+		firewallPorts = tcd.getFirewallPorts();
+		group = tcd.getGroup();
+		hardwareAccel = tcd.isHardwareAccel();
+		hashedControlPassword = tcd.getHashedControlPassword();
+		hiddenServiceDir = tcd.getHiddenServiceDir();
+		hiddenServiceExcludeNodes = tcd.getHiddenServiceExcludeNodes();
+		hiddenServiceNodes = tcd.getHiddenServiceNodes();
+		hiddenServicePort = tcd.getHiddenServicePort();
+		hiddenServiceVersion = tcd.getHiddenServiceVersion();
+		httpProxy = tcd.getHttpProxy();
+		httpProxyAuthenticator = tcd.getHttpProxyAuthenticator();
+		httpsProxy = tcd.getHttpsProxy();
+		httpsProxyAuthenticator = tcd.getHttpsProxyAuthenticator();
+		keepalivePeriod = tcd.getKeepalivePeriod();
+		log = tcd.getLog();
+		longLivedPorts = tcd.getLongLivedPorts();
+		mapAddress = tcd.getMapAddress();
+		maxAdvertisedBandwidth = tcd.getMaxAdvertisedBandwidth();
+		maxCircuitDirtiness = tcd.getMaxCircuitDirtiness();
+		maxConn = tcd.getMaxConn();
+		newCircuitPeriod = tcd.getNewCircuitPeriod();
+		nodeFamily = tcd.getNodeFamily();
+		numHelperNodes = tcd.getNumHelperNodes();
+		outboundBindAddress = tcd.getOutboundBindAddress();
+		pidFile = tcd.getPidFile();
+		rendExcludeNodes = tcd.getRendExcludeNodes();
+		rendNodes = tcd.getRendNodes();
+		rendPostPeriod = tcd.getRendPostPeriod();
+		runAsDaemon = tcd.isRunAsDaemon();
+		safeLogging = tcd.isSafeLogging();
+		socksBindAddress = tcd.getSocksBindAddress();
+		socksPolicy = tcd.getSocksPolicy();
+		socksPort = tcd.getSocksPort();
+		statusFetchPeriod = tcd.getStatusFetchPeriod();
+		strictEntryNodes = tcd.isStrictEntryNodes();
+		strictExitNodes = tcd.isStrictExitNodes();
+		trackHostExits = tcd.getTrackHostExits();
+		trackHostExitsExpire = tcd.getTrackHostExitsExpire();
+		useHelperNodes = tcd.isUseHelperNodes();
+		user = tcd.getUser();
+	}
 
-    public void saveConf() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 
-    public void resetConf() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+	public void saveConf() {
+		TorConfigSaver.save(new File(dataDirectory, configFile), this);
+		
+	}
+
+	public void resetConf() {
+		loadDefaults();
+		loadConf();
+	}
 
 	public String getConfigFile() {
 		return configFile;

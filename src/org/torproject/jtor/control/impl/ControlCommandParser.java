@@ -49,6 +49,7 @@ public class ControlCommandParser {
 					}
 				} catch (KeyNotFoundException e) {
 					cch.write("552 unknown configuration keyword");
+					return;
 				}
 			}
 
@@ -83,8 +84,19 @@ public class ControlCommandParser {
 		
 		else if (command.equals("mapaddress")) {
 			String[] maps = args.split(" ");
+			
+			// check syntax
 			for (int i = 0; i < maps.length; i++) {
-				ControlCommandMapAddress.handleMapAddress(cch, maps[i]);
+				if (maps[i].indexOf("=") == -1) {
+					cch.write("512 syntax error in command argument");
+					return;
+				}
+			}
+			
+			for (int i = 0; i < maps.length; i++) {
+				if (ControlCommandMapAddress.handleMapAddress(cch, maps[i])) {
+					cch.write("250 " + maps[i]);
+				}
 			}
 		}
 	}

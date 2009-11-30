@@ -6,18 +6,26 @@ import org.torproject.jtor.control.ControlConnectionHandler;
 
 public class ControlCommandMapAddress {
 
-	public static void handleMapAddress(ControlConnectionHandler cch, String in) {
+	public static boolean handleMapAddress(ControlConnectionHandler cch, String in) {
 		String host = in.substring(0, in.indexOf("="));
 		String dest = in.substring(in.indexOf("=")+1);
 		TorConfig tc = cch.getControlServer().getTorConfig();
 
+		if (in.indexOf("=") == -1) {
+			return false;
+		}
+		
 		String[] maps = tc.getMapAddress();
 		if (maps == null) {
 			maps = new String[0];
 		}
 
+		boolean reset = false;
 		for (int i = 0; i < maps.length; i++) { // reset any mappings with the hostname so it can be redefined
-			if(maps[i].substring(0, in.indexOf("=")).equalsIgnoreCase(host)) {
+			if (maps[i].substring(0, in.indexOf("=")).equalsIgnoreCase(host)) {
+				if (maps[i].substring(in.indexOf("=")+1).equalsIgnoreCase(dest)) {
+					reset = true;
+				}
 				maps[i] = null;
 			}
 		}
@@ -27,6 +35,11 @@ public class ControlCommandMapAddress {
 			if (maps[i] != null) {
 				newmaps = TorConfigParserImpl.addToStringArray(newmaps, maps[i]);
 			}
+		}
+		
+		if (reset) { // address is removed, set new value and return
+			tc.setMapAddress(newmaps);
+			return true;
 		}
 
 		if (host.equals(".") || host.equals("0.0.0.0") || host.equals("::0")) { // null host
@@ -53,5 +66,7 @@ public class ControlCommandMapAddress {
 			newmaps = TorConfigParserImpl.addToStringArray(newmaps, host + "=" + dest);
 			tc.setMapAddress(newmaps);
 		}
+		
+		return true;
 	}
 }
