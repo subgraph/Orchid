@@ -2,6 +2,7 @@ package org.torproject.jtor.config.impl;
 
 import java.io.File;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class TorConfigDefaults {
 
@@ -89,7 +90,11 @@ public class TorConfigDefaults {
     private String hiddenServiceVersion = "0,2";
     private long rendPostPeriod = 1200;
     
-    public TorConfigDefaults() {}
+    public TorConfigDefaults() {
+    	try {
+			outboundBindAddress = InetAddress.getLocalHost();
+		} catch (UnknownHostException e) {}
+    }
 
 	public String getConfigFile() {
 		return configFile;

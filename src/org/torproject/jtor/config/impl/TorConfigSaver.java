@@ -188,7 +188,7 @@ public class TorConfigSaver {
 		HashMap hm = new HashMap();
 
 		hm.put("configfile", tcd.getConfigFile());
-		hm.put("datadirectory", tcd.getDataDirectory());
+		hm.put("datadirectory", tcd.getDataDirectory().getAbsolutePath());
 		hm.put("bandwidthrate", "" + tcd.getBandwidthRate());
 		hm.put("bandwidthburst", "" + tcd.getBandwidthBurst());
 		hm.put("maxadvertisedbandwidth", "" + tcd.getMaxAdvertisedBandwidth());
@@ -266,6 +266,10 @@ public class TorConfigSaver {
 	}
 
 	public static String arrayToString(String[] in) {
+		if (in == null) {
+			return "";
+		}
+		
 		String ret = "";
 		for (int i = 0; i < in.length; i++) {
 			ret += in[i] + "\n";
@@ -275,6 +279,10 @@ public class TorConfigSaver {
 	}
 
 	public static String arrayToString(short[] in) {
+		if (in == null) {
+			return "";
+		}
+		
 		String ret = "";
 		for (int i = 0; i < in.length; i++) {
 			ret += in[i] + ", ";

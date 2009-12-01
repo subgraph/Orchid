@@ -37,10 +37,12 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
             while (running) {
                 String recv = in.readLine();
                 
+                recv.length(); // trigger NullPointerException
                 System.out.println("recieved: " + recv); // TODO remove
 
                 if (recv.toLowerCase().startsWith("quit")) {
                     disconnect();
+                    
                 } else if (recv.toLowerCase().startsWith("authenticate")) {
                     if (ControlAuthenticator.authenticate(cs.getTorConfig(), recv)) {
                         authenticated = true;
@@ -49,6 +51,7 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
                         write("515 Bad authentication");
                         disconnect();
                     }
+                    
                 } else if (recv.toLowerCase().startsWith("protocolinfo")) {
                     if (!requestedProtocolinfo || authenticated) {
                         requestedProtocolinfo = !authenticated;
@@ -58,8 +61,8 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
                         disconnect();
                     }
                 } else if (authenticated) { // execute command
-                	ControlCommandParser ccp = new ControlCommandParser(this);
-                	ccp.execute(recv);	
+                	ControlCommandParser.execute(this, recv);
+                	
                 } else { // user is trying something illegal
                 	disconnect();
                 }

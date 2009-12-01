@@ -262,6 +262,10 @@ public class ControlCommandGetConf {
 			return tc.getSocksBindAddress();
 		}
 
+		else if (key.equals("sockslistenaddress")) {
+			return tc.getSocksBindAddress();
+		}
+
 		else if (key.equals("sockspolicy")) {
 			return tc.getSocksPolicy();
 		}

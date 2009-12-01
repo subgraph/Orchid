@@ -80,6 +80,8 @@ public class ControlServerTCP extends ControlServer {
 		TorConfig tc = new TorConfigImpl();
 		tc.loadDefaults();
 		tc.loadConf();
+		tc.setControlPort((short)9051);
+		tc.saveConf();
 		ControlServer cs = new ControlServerTCP(tc);
 		cs.startServer();
 	}

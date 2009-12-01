@@ -237,6 +237,10 @@ public class ControlCommandSetConf {
 			tc.setDefaultSocksBindAddress();
 		}
 
+		else if (key.equals("sockslistenaddress")) {
+			tc.setDefaultSocksBindAddress();
+		}
+
 		else if (key.equals("sockspolicy")) {
 			tc.setDefaultSocksPolicy();
 		}

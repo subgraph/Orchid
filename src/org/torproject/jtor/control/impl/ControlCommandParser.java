@@ -13,14 +13,10 @@ import org.torproject.jtor.control.commands.*;
  */
 public class ControlCommandParser {
 
-	private ControlConnectionHandler cch;
-
-	public ControlCommandParser(ControlConnectionHandler cch) {
-		this.cch = cch;
-	}
+	private ControlCommandParser() {}
 
 	@SuppressWarnings("unchecked")
-	public void execute(String in) {
+	public static void execute(ControlConnectionHandler cch, String in) {
 		String command = in.substring(0, in.indexOf(" ")).toLowerCase();
 		String args = in.substring(in.indexOf(" ", 0)+1);
 		args = removeQuotes(args);
@@ -103,8 +99,8 @@ public class ControlCommandParser {
 
 	/** Removes any unescaped quotes from a given string */
 	public static String removeQuotes(String in) {
-		int index = 0;
-		while (index < in.length()) {
+		int index = in.indexOf("\"");
+		while (index < in.length() && index != -1) {
 			index = in.indexOf("\"", index);
 			if (!in.substring(index-1, index).equals("\\")) {
 				//remove the quote as it's not escaped
