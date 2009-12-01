@@ -86,9 +86,7 @@ public class TorConfigImpl implements TorConfig {
 	private String hiddenServiceVersion;
 	private long rendPostPeriod;
 
-	public TorConfigImpl() {
-		createDataDirectory();
-	}
+	public TorConfigImpl() {}
 
 	/* (non-Javadoc)
 	 * @see org.torproject.jtor.config.impl.TorConfig#getDataDirectory()
@@ -179,6 +177,7 @@ public class TorConfigImpl implements TorConfig {
 
 
 	public void saveConf() {
+		createDataDirectory();
 		TorConfigSaver.save(new File(dataDirectory, configFile), this);
 		
 	}

@@ -22,6 +22,7 @@ public class TorConfigParserImpl {
 			BufferedReader reader = new BufferedReader(new FileReader(in));
 			String line = null;
 			while ((line=reader.readLine()) != null) {
+				
 				if (line.startsWith("#") || line.matches("^\\s*$")) { // skip comments and empty lines
 					continue;
 				}
@@ -41,6 +42,7 @@ public class TorConfigParserImpl {
 
 				if (!setConf(tc, key, value)) {
 					// syntax error in file
+					System.err.println("torrc: Could not parse this line: " + line);
 					return false;
 				}
 
@@ -249,6 +251,10 @@ public class TorConfigParserImpl {
 			}
 			
 			else if (key.equals("socksbindaddress")) {
+				tc.setSocksBindAddress(value);
+			}
+			
+			else if (key.equals("sockslistenaddress")) {
 				tc.setSocksBindAddress(value);
 			}
 			

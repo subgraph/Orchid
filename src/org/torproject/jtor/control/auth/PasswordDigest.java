@@ -70,16 +70,26 @@ public class PasswordDigest {
         return hashedKey;
     }
 
-    /** Verifies if a key matches the set password, may be plaintext or hashed. */
+    /** Verifies if a key matches the set password, may be plain text or hashed. */
     public boolean verifyPassword(String in) {
-        if (in.startsWith("16:")) {
-            //return hashedKey.equals(in);
+        if (in.startsWith("16:")) { // hashed password
+        	if (secret == null) { // can't authenticate this without the secret
+        		return false;
+        	}
         	byte[] salt = hexStringToByteArray(in.substring(3, 21));
         	PasswordDigest pwd = new PasswordDigest(secret, salt);
         	return pwd.getHashedPassword().equals(in);
-        } else {
+        	
+        } else if (in.startsWith("\"") && in.endsWith("\"")) { // plain text password
+        	byte[] salt = hexStringToByteArray(hashedKey.substring(3, 21));
+        	byte[] key = in.substring(1, in.length()-1).getBytes();
+            PasswordDigest pwd = new PasswordDigest(key, salt);
+            return hashedKey.equals(pwd.getHashedPassword());
+        	
+        } else { // hex encoded string
             byte[] salt = hexStringToByteArray(hashedKey.substring(3, 21));
-            PasswordDigest pwd = new PasswordDigest(in.getBytes(), salt);
+            byte[] key = hexStringToByteArray(in);
+            PasswordDigest pwd = new PasswordDigest(key, salt);
             return hashedKey.equals(pwd.getHashedPassword());
         }
     }

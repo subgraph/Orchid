@@ -46,10 +46,10 @@ public class Tor {
 	
 	
 	public void start() {
-		directory.loadFromStore();
-		statusManager.startDownloadingDocuments();
 		config.loadDefaults();
 		config.loadConf();
+		directory.loadFromStore();
+		statusManager.startDownloadingDocuments();
 		if (config.getControlPort() > 0) {
 			controlServer.startServer();
 		}
