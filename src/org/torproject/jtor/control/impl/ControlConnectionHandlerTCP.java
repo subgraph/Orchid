@@ -7,7 +7,6 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import org.torproject.jtor.control.ControlConnectionHandler;
 import org.torproject.jtor.control.ControlServer;
-import org.torproject.jtor.control.auth.ControlAuthenticator;
 
 /**
  *
@@ -30,42 +29,16 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
         BufferedReader in = null;
         try {
             in = new BufferedReader(new InputStreamReader(s.getInputStream()));
-            boolean requestedProtocolinfo = false;
             
             while (running) {
                 String recv = in.readLine();
                 
                 recv.length(); // trigger NullPointerException
                 cs.getLogger().debug("Control Connection TCP: received " + recv);
-
-                if (recv.toLowerCase().startsWith("quit")) {
-                    disconnect();
-                    
-                } else if (recv.toLowerCase().startsWith("authenticate")) {
-                    if (ControlAuthenticator.authenticate(cs.getTorConfig(), recv)) {
-                        authenticated = true;
-                        write("250 OK");
-                    } else {
-                        write("515 Bad authentication");
-                        disconnect();
-                    }
-                    
-                } else if (recv.toLowerCase().startsWith("protocolinfo")) {
-                    if (!requestedProtocolinfo || authenticated) {
-                        requestedProtocolinfo = !authenticated;
-                        // send protocol info TODO
-                    } else {
-                        //error out
-                        disconnect();
-                    }
-                } else if (authenticated) { // execute command
-                	ControlCommandParser.execute(this, recv);
-                	
-                } else { // user is trying something illegal
-                	disconnect();
-                }
                 
+                ControlCommandParser.execute(this, recv);
             }
+            
         } catch (IOException ex) {
         	cs.getLogger().debug("Control Connection TCP: IOException during receiving");
         } catch (NullPointerException e) {
@@ -88,7 +61,7 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
             out.write(w + "\r\n");
             out.flush();
         } catch (IOException ex) {
-        	cs.getLogger().debug("Control Connection TCP: IOException during write");
+        	cs.getLogger().debug("Control Connection TCP: IOException during sending");
         	disconnect();
         }
 

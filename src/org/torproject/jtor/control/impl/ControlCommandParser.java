@@ -5,6 +5,7 @@ import java.util.Iterator;
 
 import org.torproject.jtor.control.ControlConnectionHandler;
 import org.torproject.jtor.control.KeyNotFoundException;
+import org.torproject.jtor.control.auth.ControlAuthenticator;
 import org.torproject.jtor.control.commands.*;
 
 /**
@@ -20,8 +21,38 @@ public class ControlCommandParser {
 		String command = in.substring(0, in.indexOf(" ")).toLowerCase();
 		String args = in.substring(in.indexOf(" ", 0)+1);
 		args = removeQuotes(args);
+		
+		if (command.startsWith("quit")) {
+            cch.disconnect();
+        } 
+		
+		else if (command.startsWith("authenticate")) {
+            if (ControlAuthenticator.authenticate(cch.getControlServer().getTorConfig(), args)) {
+                cch.setAuthenticated(true);
+                cch.write("250 OK");
+            } else {
+                cch.write("515 Bad authentication");
+                cch.disconnect();
+            }
+            
+        } 
+        
+        else if (command.startsWith("protocolinfo")) {
+            if (!cch.isRequestedProtocolinfo() || cch.isAuthenticated()) {
+                cch.setRequestedProtocolinfo(!cch.isAuthenticated());
+                ControlCommandProtocolInfo.handleProtocolInfo(cch);
+            } else {
+                //error out
+            	cch.getControlServer().getLogger().debug("Control command: refused repeated protocolinfo to unauthenticated client");
+                cch.disconnect();
+            }
+        } 
+        
+        else if (!cch.isAuthenticated()) { // user is trying something illegal
+        	cch.disconnect();
+        }
 
-		if (command.equals("setconf")) {
+        else if (command.equals("setconf")) {
 			ControlCommandSetConf.handleSetConf(cch, args);
 		}
 

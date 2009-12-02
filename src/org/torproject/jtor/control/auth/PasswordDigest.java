@@ -30,7 +30,7 @@ public class PasswordDigest {
         if (in.startsWith("16:")) {
             hashedKey = in;
         } else {
-            secret = in.getBytes();
+            secret = removeQuotes(in).getBytes();
             specifier = new byte[9];
             SecureRandom rng = new SecureRandom();
             rng.nextBytes(specifier);
@@ -151,6 +151,19 @@ public class PasswordDigest {
         }
         return data;
     }
+    
+    /** Removes any unescaped quotes from a given string */
+	private String removeQuotes(String in) {
+		int index = in.indexOf("\"");
+		while (index < in.length() && index != -1) {
+			index = in.indexOf("\"", index);
+			if (!in.substring(index-1, index).equals("\\")) {
+				//remove the quote as it's not escaped
+				in = in.substring(0, index) + in.substring(index+1);
+			}
+		}
+		return in;
+	}
 
 
 }

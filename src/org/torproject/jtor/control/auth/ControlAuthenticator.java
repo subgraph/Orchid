@@ -14,7 +14,11 @@ public class ControlAuthenticator {
 			return false;
 		}
 
-		String auth = input.substring(13);
+		String auth;
+		if (input.toLowerCase().startsWith("authenticate"))
+			auth = input.substring(13);
+		else
+			auth = input;
 
 		if (tc.isCookieAuthentication()) {
 			try {
