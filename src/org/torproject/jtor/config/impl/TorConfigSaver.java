@@ -15,7 +15,7 @@ import org.torproject.jtor.TorConfig;
 public class TorConfigSaver {
 
 	@SuppressWarnings("unchecked")
-	public static void save(File torrc, TorConfig tc) {
+	public static boolean save(File torrc, TorConfig tc) {
 		BufferedReader reader;
 		String output = "";
 		Map opts = configToHash(tc);
@@ -25,6 +25,9 @@ public class TorConfigSaver {
 			String line = null;
 			while ((line=reader.readLine()) != null) {
 				if (line.startsWith("#") || line.matches("^\\s*$")) { // copy comments directly
+					
+					// TODO check comments for values that have changed and inject them here instead of the end of file
+					
 					output += line + "\n";
 					continue;
 				}
@@ -60,15 +63,16 @@ public class TorConfigSaver {
 			}
 		} catch (FileNotFoundException e) {
 			torrc.setWritable(true);
-		}catch (IOException e) {
-
-		}
+		} catch (IOException e) {}
 		
 		Map defaults = defaultConfigToHash(new TorConfigDefaults());
 		
 		Iterator it = opts.keySet().iterator();
 		while (it.hasNext()) {
 			String key = (String)it.next();
+			if (key.startsWith("__")) // values with __ should never be stored
+				continue;
+			
 			if (written.get(key) == null && opts.get(key) != null) {
 				String val = (String)opts.get(key);
 				
@@ -96,9 +100,12 @@ public class TorConfigSaver {
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return false;
 		} catch (IOException e) {
-			
+			return false;
 		}
+		
+		return true;
 	}
 
 	@SuppressWarnings("unchecked")

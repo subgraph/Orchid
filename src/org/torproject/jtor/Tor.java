@@ -41,7 +41,7 @@ public class Tor {
 		connectionManager = new ConnectionManagerImpl();
 		circuitManager = new CircuitManagerImpl(directory, connectionManager);
 		statusManager = new NetworkStatusManager(directory, logger);
-		controlServer = new ControlServerTCP(config);
+		controlServer = new ControlServerTCP(config, logger);
 	}
 	
 	

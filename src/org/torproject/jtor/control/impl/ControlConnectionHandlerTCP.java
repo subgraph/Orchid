@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.torproject.jtor.control.ControlConnectionHandler;
 import org.torproject.jtor.control.ControlServer;
 import org.torproject.jtor.control.auth.ControlAuthenticator;
@@ -38,7 +36,7 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
                 String recv = in.readLine();
                 
                 recv.length(); // trigger NullPointerException
-                System.out.println("recieved: " + recv); // TODO remove
+                cs.getLogger().debug("Control Connection TCP: received " + recv);
 
                 if (recv.toLowerCase().startsWith("quit")) {
                     disconnect();
@@ -69,16 +67,14 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
                 
             }
         } catch (IOException ex) {
-            Logger.getLogger(ControlConnectionHandlerTCP.class.getName()).log(Level.SEVERE, null, ex);
+        	cs.getLogger().debug("Control Connection TCP: IOException during receiving");
         } catch (NullPointerException e) {
             // may happen upon disconnect
         } finally {
             try {
                 disconnect();
                 in.close();
-            } catch (IOException ex) {
-                Logger.getLogger(ControlConnectionHandlerTCP.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            } catch (IOException ex) {}
         }
         
     }
@@ -87,12 +83,13 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
         try {
             OutputStreamWriter out = new OutputStreamWriter(s.getOutputStream());
 
-            System.out.println("sending: " + w); // TODO remove
+            cs.getLogger().debug("Control Connection TCP: sending " + w);
 
             out.write(w + "\r\n");
             out.flush();
         } catch (IOException ex) {
-            Logger.getLogger(ControlConnectionHandlerTCP.class.getName()).log(Level.SEVERE, null, ex);
+        	cs.getLogger().debug("Control Connection TCP: IOException during write");
+        	disconnect();
         }
 
     }

@@ -5,6 +5,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Iterator;
 import java.util.Vector;
+
+import org.torproject.jtor.ConsoleLogger;
+import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.config.impl.TorConfigImpl;
 import org.torproject.jtor.control.ControlConnectionHandler;
@@ -19,8 +22,8 @@ public class ControlServerTCP extends ControlServer {
 	@SuppressWarnings("unchecked")
 	private Vector connections = new Vector();
 
-	public ControlServerTCP(TorConfig tc) {
-		super(tc);
+	public ControlServerTCP(TorConfig tc, Logger logger) {
+		super(tc, logger);
 	}
 
 	@Override
@@ -49,6 +52,8 @@ public class ControlServerTCP extends ControlServer {
 				Socket s = ss.accept();
 				ControlConnectionHandler cch = new ControlConnectionHandlerTCP(this, s);
 				connections.add(cch);
+				
+				logger.debug("Opening new TCP Control Connection on port " + s.getLocalPort());
 			} catch (Throwable t) {}
 		}
 
@@ -82,7 +87,7 @@ public class ControlServerTCP extends ControlServer {
 		tc.loadConf();
 		tc.setControlPort((short)9051);
 		tc.saveConf();
-		ControlServer cs = new ControlServerTCP(tc);
+		ControlServer cs = new ControlServerTCP(tc, new ConsoleLogger());
 		cs.startServer();
 	}
 

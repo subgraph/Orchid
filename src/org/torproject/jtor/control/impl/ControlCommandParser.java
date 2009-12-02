@@ -45,6 +45,7 @@ public class ControlCommandParser {
 					}
 				} catch (KeyNotFoundException e) {
 					cch.write("552 unknown configuration keyword");
+					cch.getControlServer().getLogger().warn("Control command: key not found: " + confs[i]);
 					return;
 				}
 			}
@@ -75,6 +76,7 @@ public class ControlCommandParser {
 				cch.write("250 OK");
 			} else {
 				cch.write("552 Unrecognized signal");
+				cch.getControlServer().getLogger().warn("Control command: unrecognized signal: " + args);
 			}
 		}
 		
@@ -93,6 +95,16 @@ public class ControlCommandParser {
 				if (ControlCommandMapAddress.handleMapAddress(cch, maps[i])) {
 					cch.write("250 " + maps[i]);
 				}
+			}
+		}
+		
+		else if (command.equals("saveconf")) {
+			if(cch.getControlServer().getTorConfig().saveConf()) {
+				cch.write("250 OK");
+				cch.getControlServer().getLogger().debug("Control command: saving config");
+			} else {
+				cch.write("551 Unable to write configuration to disk");
+				cch.getControlServer().getLogger().error("Control command: could not save config file");
 			}
 		}
 	}

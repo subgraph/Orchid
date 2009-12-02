@@ -176,10 +176,9 @@ public class TorConfigImpl implements TorConfig {
 	}
 
 
-	public void saveConf() {
+	public boolean saveConf() {
 		createDataDirectory();
-		TorConfigSaver.save(new File(dataDirectory, configFile), this);
-		
+		return TorConfigSaver.save(new File(dataDirectory, configFile), this);
 	}
 
 	public void resetConf() {

@@ -23,7 +23,7 @@ public interface TorConfig {
 	/* (non-Javadoc)
 	 * @see org.torproject.jtor.config.impl.TorConfig#saveConf()
 	 */
-	public void saveConf();
+	public boolean saveConf();
 
 	/* (non-Javadoc)
 	 * @see org.torproject.jtor.config.impl.TorConfig#getConfigFile()
