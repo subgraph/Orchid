@@ -306,6 +306,26 @@ public class TorConfigParserImpl {
 			else if (key.equals("rendpostperiod")) {
 				tc.setRendPostPeriod(Long.parseLong(value));
 			}
+			
+			else if (key.equals("__alldiroptionsprivate")) {
+				tc.set__AllDirOptionsPrivate(isTrue(value));
+			}
+			
+			else if (key.equals("__disablepredictedcircuits")) {
+				tc.set__DisablePredictedCircuits(isTrue(value));
+			}
+			
+			else if (key.equals("__leavestreamsunattached")) {
+				tc.set__LeaveStreamsUnattached(isTrue(value));
+			}
+			
+			else if (key.equals("__hashedcontrolsessionpassword")) {
+				tc.set__HashedControlSessionPassword(value);
+			}
+			
+			else if (key.equals("__reloadtorrconsighup")) {
+				tc.set__ReloadTorrcOnSIGHUP(isTrue(value));
+			}
 
 			else { // key was not found
 				return false;

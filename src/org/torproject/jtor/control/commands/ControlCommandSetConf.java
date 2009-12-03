@@ -284,6 +284,26 @@ public class ControlCommandSetConf {
 		else if (key.equals("rendpostperiod")) {
 			tc.setDefaultRendPostPeriod();
 		}
+		
+		else if (key.equals("__alldiroptionsprivate")) {
+			tc.setDefault__AllDirOptionsPrivate();
+		}
+		
+		else if (key.equals("__disablepredictedcircuits")) {
+			tc.setDefault__DisablePredictedCircuits();
+		}
+		
+		else if (key.equals("__leavestreamsunattached")) {
+			tc.setDefault__LeaveStreamsUnattached();
+		}
+		
+		else if (key.equals("__hashedcontrolsessionpassword")) {
+			tc.setDefault__HashedControlSessionPassword();
+		}
+		
+		else if (key.equals("__reloadtorrconsighup")) {
+			tc.setDefault__ReloadTorrcOnSIGHUP();
+		}
 
 		else {
 			throw new KeyNotFoundException();

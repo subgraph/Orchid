@@ -90,11 +90,38 @@ public class TorConfigDefaults {
     private String hiddenServiceVersion = "0,2";
     private long rendPostPeriod = 1200;
     
-    public TorConfigDefaults() {
+    // hidden (not saved) options
+	private boolean __AllDirOptionsPrivate = false;
+	private boolean __DisablePredictedCircuits = false;
+	private boolean __LeaveStreamsUnattached = false;
+	private String __HashedControlSessionPassword;
+	private boolean __ReloadTorrcOnSIGHUP = true;
+
+	public TorConfigDefaults() {
     	try {
 			outboundBindAddress = InetAddress.getLocalHost();
 		} catch (UnknownHostException e) {}
     }
+    
+    public boolean is__AllDirOptionsPrivate() {
+		return __AllDirOptionsPrivate;
+	}
+
+	public boolean is__DisablePredictedCircuits() {
+		return __DisablePredictedCircuits;
+	}
+
+	public boolean is__LeaveStreamsUnattached() {
+		return __LeaveStreamsUnattached;
+	}
+
+	public String get__HashedControlSessionPassword() {
+		return __HashedControlSessionPassword;
+	}
+
+	public boolean is__ReloadTorrcOnSIGHUP() {
+		return __ReloadTorrcOnSIGHUP;
+	}
 
 	public String getConfigFile() {
 		return configFile;

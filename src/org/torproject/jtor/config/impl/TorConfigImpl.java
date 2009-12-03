@@ -77,6 +77,7 @@ public class TorConfigImpl implements TorConfig {
 	private long trackHostExitsExpire;
 
 	private boolean useHelperNodes;
+
 	private int numHelperNodes;
 
 	private String[] hiddenServiceDir;
@@ -85,6 +86,15 @@ public class TorConfigImpl implements TorConfig {
 	private String[] hiddenServiceExcludeNodes;
 	private String hiddenServiceVersion;
 	private long rendPostPeriod;
+	
+	// hidden (not saved) options
+	private boolean __AllDirOptionsPrivate;
+	private boolean __DisablePredictedCircuits;
+	private boolean __LeaveStreamsUnattached;
+	private String __HashedControlSessionPassword;
+	private boolean __ReloadTorrcOnSIGHUP;
+
+
 
 	public TorConfigImpl() {}
 
@@ -173,6 +183,12 @@ public class TorConfigImpl implements TorConfig {
 		trackHostExitsExpire = tcd.getTrackHostExitsExpire();
 		useHelperNodes = tcd.isUseHelperNodes();
 		user = tcd.getUser();
+		
+		__AllDirOptionsPrivate = tcd.is__AllDirOptionsPrivate();
+		__DisablePredictedCircuits = tcd.is__DisablePredictedCircuits();
+		__HashedControlSessionPassword = tcd.get__HashedControlSessionPassword();
+		__LeaveStreamsUnattached = tcd.is__LeaveStreamsUnattached();
+		__ReloadTorrcOnSIGHUP = tcd.is__ReloadTorrcOnSIGHUP();
 	}
 
 
@@ -184,6 +200,67 @@ public class TorConfigImpl implements TorConfig {
 	public void resetConf() {
 		loadDefaults();
 		loadConf();
+	}
+	
+	public boolean is__AllDirOptionsPrivate() {
+		return __AllDirOptionsPrivate;
+	}
+
+	public void set__AllDirOptionsPrivate(boolean allDirOptionsPrivate) {
+		__AllDirOptionsPrivate = allDirOptionsPrivate;
+	}
+
+	public void setDefault__AllDirOptionsPrivate() {
+		__AllDirOptionsPrivate = new TorConfigDefaults().is__AllDirOptionsPrivate();
+	}
+
+	public boolean is__DisablePredictedCircuits() {
+		return __DisablePredictedCircuits;
+	}
+
+	public void set__DisablePredictedCircuits(boolean disablePredictedCircuits) {
+		__DisablePredictedCircuits = disablePredictedCircuits;
+	}
+
+	public void setDefault__DisablePredictedCircuits() {
+		__DisablePredictedCircuits = new TorConfigDefaults().is__DisablePredictedCircuits();
+	}
+
+	public boolean is__LeaveStreamsUnattached() {
+		return __LeaveStreamsUnattached;
+	}
+
+	public void set__LeaveStreamsUnattached(boolean leaveStreamsUnattached) {
+		__LeaveStreamsUnattached = leaveStreamsUnattached;
+	}
+
+	public void setDefault__LeaveStreamsUnattached() {
+		__LeaveStreamsUnattached = new TorConfigDefaults().is__LeaveStreamsUnattached();
+	}
+
+	public String get__HashedControlSessionPassword() {
+		return __HashedControlSessionPassword;
+	}
+
+	public void set__HashedControlSessionPassword(
+			String hashedControlSessionPassword) {
+		__HashedControlSessionPassword = hashedControlSessionPassword;
+	}
+
+	public void setDefault__HashedControlSessionPassword() {
+		__HashedControlSessionPassword = new TorConfigDefaults().get__HashedControlSessionPassword();
+	}
+
+	public boolean is__ReloadTorrcOnSIGHUP() {
+		return __ReloadTorrcOnSIGHUP;
+	}
+
+	public void set__ReloadTorrcOnSIGHUP(boolean reloadTorrcOnSIGHUP) {
+		__ReloadTorrcOnSIGHUP = reloadTorrcOnSIGHUP;
+	}
+
+	public void setDefault__ReloadTorrcOnSIGHUP() {
+		__ReloadTorrcOnSIGHUP = new TorConfigDefaults().is__ReloadTorrcOnSIGHUP();
 	}
 
 	public String getConfigFile() {

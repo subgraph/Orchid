@@ -15,8 +15,10 @@ public class ControlCommandSignal {
 		TorConfig tc = cch.getControlServer().getTorConfig();
 
 		if (in.equals("reload")) {
-			tc.loadDefaults();
-			tc.loadConf();
+			if (tc.is__ReloadTorrcOnSIGHUP()) {
+				tc.loadDefaults();
+				tc.loadConf();
+			}
 		}
 
 		else if (in.equals("shutdown")) {

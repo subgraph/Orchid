@@ -17,6 +17,7 @@ import org.torproject.jtor.directory.impl.DirectoryImpl;
 import org.torproject.jtor.directory.impl.DocumentParserFactoryImpl;
 import org.torproject.jtor.directory.impl.NetworkStatusManager;
 import org.torproject.jtor.directory.parsing.DocumentParserFactory;
+import org.torproject.jtor.logging.ConsoleLogger;
 
 public class Tor {
 	private final Directory directory;

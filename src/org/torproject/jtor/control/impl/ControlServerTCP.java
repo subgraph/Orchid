@@ -6,12 +6,12 @@ import java.net.Socket;
 import java.util.Iterator;
 import java.util.Vector;
 
-import org.torproject.jtor.ConsoleLogger;
 import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.config.impl.TorConfigImpl;
 import org.torproject.jtor.control.ControlConnectionHandler;
 import org.torproject.jtor.control.ControlServer;
+import org.torproject.jtor.logging.ConsoleLogger;
 
 /**
  *

@@ -42,7 +42,6 @@ public class ControlCommandParser {
                 cch.setRequestedProtocolinfo(!cch.isAuthenticated());
                 ControlCommandProtocolInfo.handleProtocolInfo(cch);
             } else {
-                //error out
             	cch.getControlServer().getLogger().debug("Control command: refused repeated protocolinfo to unauthenticated client");
                 cch.disconnect();
             }
@@ -144,11 +143,11 @@ public class ControlCommandParser {
 	public static String removeQuotes(String in) {
 		int index = in.indexOf("\"");
 		while (index < in.length() && index != -1) {
-			index = in.indexOf("\"", index);
 			if (!in.substring(index-1, index).equals("\\")) {
 				//remove the quote as it's not escaped
 				in = in.substring(0, index) + in.substring(index+1);
 			}
+			index = in.indexOf("\"", index);
 		}
 		return in;
 	}

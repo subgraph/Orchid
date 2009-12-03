@@ -31,6 +31,11 @@ public class ControlAuthenticator {
 				return false;
 			}
 		}
+		
+		if (tc.get__HashedControlSessionPassword() != null) {
+			PasswordDigest cp = new PasswordDigest(tc.get__HashedControlSessionPassword());
+			return cp.verifyPassword(auth);
+		}
 
 		if (tc.getHashedControlPassword() != null) {
 			// generate our control password
