@@ -36,7 +36,7 @@ public class Tor {
 	public Tor(Logger logger) {
 		Security.addProvider(new BouncyCastleProvider());
 		this.logger = logger;
-		this.config = new TorConfigImpl();
+		this.config = new TorConfigImpl(logger);
 		this.directory = new DirectoryImpl(logger, config);
 		parserFactory = new DocumentParserFactoryImpl(logger);
 		connectionManager = new ConnectionManagerImpl();

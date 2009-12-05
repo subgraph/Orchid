@@ -82,12 +82,13 @@ public class ControlServerTCP extends ControlServer {
 	}
 	
 	public static void main(String[] arg) {
-		TorConfig tc = new TorConfigImpl();
+		Logger logger = new ConsoleLogger();
+		TorConfig tc = new TorConfigImpl(logger);
 		tc.loadDefaults();
 		tc.loadConf();
 		tc.setControlPort((short)9051);
 		tc.saveConf();
-		ControlServer cs = new ControlServerTCP(tc, new ConsoleLogger());
+		ControlServer cs = new ControlServerTCP(tc, logger);
 		cs.startServer();
 	}
 

@@ -15,7 +15,7 @@ public class ControlCommandProtocolInfo {
 		}
 		
 		else if (tc.isCookieAuthentication()) {
-			authline += "COOKIE COOKIEFILE=\"" + tc.getDataDirectory() + "control_auth_cookie\"";
+			authline += "COOKIE COOKIEFILE=\"" + tc.getDataDirectory() + "/control_auth_cookie\"";
 		}
 		
 		else {
@@ -25,5 +25,7 @@ public class ControlCommandProtocolInfo {
 		cch.write(authline);
 		
 		cch.write("250-VERSION Tor=\"JTor 0.0.0\"");
+		
+		cch.write("250 OK");
 	}
 }

@@ -155,12 +155,12 @@ public class PasswordDigest {
     /** Removes any unescaped quotes from a given string */
 	private String removeQuotes(String in) {
 		int index = in.indexOf("\"");
-		while (index < in.length() && index != -1) {
-			index = in.indexOf("\"", index);
+		while (index < in.length() && index > 0) {
 			if (!in.substring(index-1, index).equals("\\")) {
 				//remove the quote as it's not escaped
 				in = in.substring(0, index) + in.substring(index+1);
 			}
+			index = in.indexOf("\"", index);
 		}
 		return in;
 	}

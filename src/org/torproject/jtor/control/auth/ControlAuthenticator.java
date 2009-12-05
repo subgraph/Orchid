@@ -26,6 +26,8 @@ public class ControlAuthenticator {
 				BufferedReader reader = new BufferedReader(new FileReader(cookie));
 				String magic = reader.readLine();
 				reader.close();
+				
+				auth = new String(PasswordDigest.hexStringToByteArray(auth));
 				return magic.equals(auth);
 			} catch (Throwable t) {
 				return false;

@@ -142,7 +142,7 @@ public class ControlCommandParser {
 	/** Removes any unescaped quotes from a given string */
 	public static String removeQuotes(String in) {
 		int index = in.indexOf("\"");
-		while (index < in.length() && index != -1) {
+		while (index < in.length() && index > 0) {
 			if (!in.substring(index-1, index).equals("\\")) {
 				//remove the quote as it's not escaped
 				in = in.substring(0, index) + in.substring(index+1);

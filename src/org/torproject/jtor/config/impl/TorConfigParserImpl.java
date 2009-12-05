@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 
+import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorConfig;
 
 /**
@@ -17,7 +18,7 @@ public class TorConfigParserImpl {
 
 	private TorConfigParserImpl() {}
 
-	public static boolean parseFile(TorConfig tc, File in) {
+	public static boolean parseFile(TorConfig tc, Logger logger, File in) {
 		try {
 			BufferedReader reader = new BufferedReader(new FileReader(in));
 			String line = null;
@@ -42,7 +43,7 @@ public class TorConfigParserImpl {
 
 				if (!setConf(tc, key, value)) {
 					// syntax error in file
-					System.err.println("torrc: Could not parse this line: " + line);
+					logger.error("torrc: Could not parse this line: " + line);
 					return false;
 				}
 

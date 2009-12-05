@@ -2,6 +2,8 @@ package org.torproject.jtor.config.impl;
 
 import java.io.File;
 import java.net.InetAddress;
+
+import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorConfig;
 
 public class TorConfigImpl implements TorConfig {
@@ -94,9 +96,11 @@ public class TorConfigImpl implements TorConfig {
 	private String __HashedControlSessionPassword;
 	private boolean __ReloadTorrcOnSIGHUP;
 
+	protected Logger logger;
 
-
-	public TorConfigImpl() {}
+	public TorConfigImpl(Logger logger) {
+		this.logger = logger;
+	}
 
 	/* (non-Javadoc)
 	 * @see org.torproject.jtor.config.impl.TorConfig#getDataDirectory()
@@ -115,7 +119,7 @@ public class TorConfigImpl implements TorConfig {
 	 * @see org.torproject.jtor.config.impl.TorConfig#loadConf()
 	 */
 	public void loadConf() {
-		boolean success = TorConfigParserImpl.parseFile(this, new File(dataDirectory, configFile));
+		boolean success = TorConfigParserImpl.parseFile(this, logger, new File(dataDirectory, configFile));
 		if (!success) {
 			System.err.println("Unable to parse config file - Quitting");
 			System.exit(1);
