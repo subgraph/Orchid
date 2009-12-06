@@ -20,6 +20,9 @@ import org.torproject.jtor.directory.parsing.DocumentParserFactory;
 import org.torproject.jtor.logging.ConsoleLogger;
 
 public class Tor {
+	
+	public final static String version = "JTor 0.0.0";
+	
 	private final Directory directory;
 	private final DocumentParserFactory parserFactory;
 	private final ConnectionManagerImpl connectionManager;

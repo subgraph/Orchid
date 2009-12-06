@@ -72,15 +72,15 @@ public class TorConfigParserImpl {
 			}
 
 			else if (key.equals("bandwidthrate")) {
-				tc.setBandwidthRate(Long.parseLong(value));
+				tc.setBandwidthRate(toBytes(value));
 			}
 			
 			else if (key.equals("bandwidthburst")) {
-				tc.setBandwidthBurst(Long.parseLong(value));
+				tc.setBandwidthBurst(toBytes(value));
 			}
 			
 			else if (key.equals("maxadvertisedbandwidth")) {
-				tc.setMaxAdvertisedBandwidth(Long.parseLong(value));
+				tc.setMaxAdvertisedBandwidth(toBytes(value));
 			}
 			
 			else if (key.equals("controlport")) {
@@ -96,7 +96,7 @@ public class TorConfigParserImpl {
 			}
 			
 			else if (key.equals("dirfetchperiod")) {
-				tc.setDirFetchPeriod(Long.parseLong(value));
+				tc.setDirFetchPeriod(toSeconds(value));
 			}
 			
 			else if (key.equals("dirserver")) {
@@ -129,7 +129,7 @@ public class TorConfigParserImpl {
 			}
 			
 			else if (key.equals("keepaliveperiod")) {
-				tc.setKeepalivePeriod(Integer.parseInt(value));
+				tc.setKeepalivePeriod((int)toSeconds(value));
 			}
 			
 			else if (key.equals("log")) {
@@ -158,7 +158,7 @@ public class TorConfigParserImpl {
 			}
 			
 			else if (key.equals("statusfetchperiod")) {
-				tc.setStatusFetchPeriod(Long.parseLong(value));
+				tc.setStatusFetchPeriod(toSeconds(value));
 			}
 			
 			else if (key.equals("user")) {
@@ -225,11 +225,11 @@ public class TorConfigParserImpl {
 			}
 			
 			else if (key.equals("newcircuitperiod")) {
-				tc.setNewCircuitPeriod(Long.parseLong(value));
+				tc.setNewCircuitPeriod(toSeconds(value));
 			}
 			
 			else if (key.equals("maxcircuitdirtiness")) {
-				tc.setMaxCircuitDirtiness(Long.parseLong(value));
+				tc.setMaxCircuitDirtiness(toSeconds(value));
 			}
 			
 			else if (key.equals("nodefamily")) {
@@ -269,7 +269,7 @@ public class TorConfigParserImpl {
 			}
 			
 			else if (key.equals("trackhostexitsexpire")) {
-				tc.setTrackHostExitsExpire(Long.parseLong(value));
+				tc.setTrackHostExitsExpire(toSeconds(value));
 			}
 			
 			else if (key.equals("usehelpernodes")) {
@@ -305,7 +305,7 @@ public class TorConfigParserImpl {
 			}
 			
 			else if (key.equals("rendpostperiod")) {
-				tc.setRendPostPeriod(Long.parseLong(value));
+				tc.setRendPostPeriod(toSeconds(value));
 			}
 			
 			else if (key.equals("__alldiroptionsprivate")) {
@@ -337,6 +337,64 @@ public class TorConfigParserImpl {
 		}
 
 		return true;
+	}
+	
+	/**
+	 * convert a human readable timestamp to seconds
+	 * @param in - a String like '2 minutes' or '4 weeks'
+	 * @return - value in seconds or 0 if arg cannot be parsed
+	 */
+	public static long toSeconds(String in) {
+		if (in.matches("^\\d+$")) {
+			return Long.parseLong(in);
+		}
+		
+		String mp = in.replaceAll("^\\d+ ?(\\w+)$", "$1");
+		long num = Long.parseLong(in.replaceAll("^(\\d+) ?\\w*$", "$1"));
+		
+		if (mp.equalsIgnoreCase("seconds")) {
+			return num;
+		}
+		
+		if (mp.equalsIgnoreCase("minutes")) {
+			return num * 60;
+		}
+		
+		if (mp.equalsIgnoreCase("hours")) {
+			return num * 60 * 60;
+		}
+		
+		if (mp.equalsIgnoreCase("days")) {
+			return num * 60 * 60 * 24;
+		}
+		
+		if (mp.equalsIgnoreCase("weeks")) {
+			return num * 60 * 60 * 24 * 7;
+		}
+		
+		return 0;
+	}
+	
+	/**
+	 * convert a human readable size format to bytes
+	 * @param in - a String in the format of 5MB or 10GB
+	 * @return - value as bytes or 0 if arg cannot be parsed
+	 */
+	public static long toBytes(String in) {
+		if (in.matches("^\\d+$")) {
+			return Long.parseLong(in);
+		}
+		
+		String[] map = { "b", "kb", "mb", "gb", "tb" };
+		String mp = in.replaceAll("^\\d+ ?(\\w+)$", "$1");
+		long num = Long.parseLong(in.replaceAll("^(\\d+) ?\\w*$", "$1"));
+		for (int i = 0; i < map.length; i++) {
+			if (mp.equalsIgnoreCase(map[i])) {
+				return num * (long)Math.pow(1024, i);
+			}
+		}
+		
+		return 0;
 	}
 
 	public static String[] addToStringArray(String[] ar, String val) {

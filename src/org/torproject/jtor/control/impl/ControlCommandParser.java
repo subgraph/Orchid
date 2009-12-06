@@ -137,6 +137,41 @@ public class ControlCommandParser {
 				cch.getControlServer().getLogger().error("Control command: could not save config file");
 			}
 		}
+		
+		else if (command.equals("getinfo")) {
+			String[] confs = args.split(" ");
+			HashMap pairs = new HashMap(); 
+			for (int i = 0; i < confs.length; i++) {
+				try {
+					String value = ControlCommandGetInfo.handleGetInfo(cch, confs[i]);
+					pairs.put(confs[i], value);
+				} catch (KeyNotFoundException e) {
+					cch.write("552 unknown configuration keyword");
+					cch.getControlServer().getLogger().warn("Control command: key not found: " + confs[i]);
+					return;
+				}
+			}
+
+			// reply with key=value pairs
+			Iterator it = pairs.keySet().iterator();
+			while (it.hasNext()) {
+				String key = (String)it.next();
+				String val = ((String)pairs.get(key));
+
+				if (val.indexOf("\n") > 0) {
+					cch.write("250+" + key + "=");
+					
+					String[] vals = val.split("\n");
+					for (int i = 0; i < vals.length; i++) {
+						cch.write(vals[i]);
+					}
+					
+					cch.write(".");
+				} else {
+					cch.write("250 " + key + "=" + val);
+				}
+			}
+		}
 	}
 
 	/** Removes any unescaped quotes from a given string */
