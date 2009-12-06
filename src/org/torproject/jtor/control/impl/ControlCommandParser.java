@@ -172,6 +172,10 @@ public class ControlCommandParser {
 				}
 			}
 		}
+		
+		else if (command.equals("usefeature")) {
+			ControlCommandUseFeature.handleUseFeature(cch, args);
+		}
 	}
 
 	/** Removes any unescaped quotes from a given string */
