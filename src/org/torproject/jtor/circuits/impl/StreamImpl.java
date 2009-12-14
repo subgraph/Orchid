@@ -5,6 +5,7 @@ import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.circuits.cells.RelayCell;
+import org.torproject.jtor.data.IPv4Address;
 
 public class StreamImpl implements Stream {
 	private final CircuitImpl circuit;
@@ -51,5 +52,25 @@ public class StreamImpl implements Stream {
 			circuit.removeStream(this);
 			throw new TorException("Did not receive expected stream id");
 		}			
+	}
+
+	public IPv4Address getExitAddress() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public String getExitHost() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public int getExitPort() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public boolean isExitStream() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }
