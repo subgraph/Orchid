@@ -217,6 +217,10 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 		return exitPolicy.acceptsDestination(address, port);
 	}
 
+	public boolean exitPolicyAccepts(int port) {
+		return exitPolicy.acceptsPort(port);
+	}
+
 	public HexDigest getExtraInfoDigest() {
 		return extraInfoDigest;
 	}

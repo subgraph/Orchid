@@ -136,6 +136,16 @@ public interface RouterDescriptor extends Document {
 	boolean exitPolicyAccepts(IPv4Address address, int port);
 	
 	/**
+	 * Return true if the exit policy of this router accepts most connections
+	 * to the specified destination port.
+	 *
+	 * @param port The destination port.
+	 * @return True if an exit connection to the specified destination port is generally allowed
+	 *         or false otherwise.
+	 */
+	boolean exitPolicyAccepts(int port);
+
+	/**
 	 * Return true if this router is a member of the specified family name.
 	 * 
 	 * @param family The name of a router family.
