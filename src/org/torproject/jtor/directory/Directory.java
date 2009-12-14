@@ -12,6 +12,7 @@ import org.torproject.jtor.data.HexDigest;
  *
  */
 public interface Directory {
+	boolean haveMinimumRouterInfo();
 	void loadFromStore();
 	void storeCertificates();
 	void storeConsensus();
@@ -27,6 +28,7 @@ public interface Directory {
 	Router getRouterByName(String name);
 	List<Router> getRouterListByNames(List<String> names);
 	List<Router> getRoutersWithDownloadableDescriptors();
+	List<Router> getAllRouters();
 	void markDescriptorInvalid(RouterDescriptor descriptor);
 
 }
