@@ -19,17 +19,16 @@ import org.torproject.jtor.directory.Router;
  * through a specified path of router nodes. 
  */
 class CircuitBuilder {
-	
+
 	private final List<Router> circuitPath;
 	private final CircuitImpl circuit;
-	
+
 	CircuitBuilder(CircuitImpl circuit, List<Router> path) {
 		this.circuit = circuit;
 		this.circuitPath = path;	
 	}
-	
+
 	boolean build(CircuitBuildHandler handler) {
-		System.out.println("Building "+ circuitPath.size() +" node circuit");
 		try {
 			runCircuitBuild(handler);
 		} catch(TorException e) {
@@ -37,11 +36,12 @@ class CircuitBuilder {
 				handler.circuitBuildFailed(e.getMessage());
 			return false;
 		}
+		circuit.setConnected();
 		if(handler != null)
 			handler.circuitBuildCompleted(circuit);
 		return true;
 	}
-	
+
 	private void runCircuitBuild(CircuitBuildHandler handler) {
 		final Router entryRouter = circuitPath.get(0);
 		final CircuitNode firstNode = createTo(entryRouter);
@@ -54,26 +54,29 @@ class CircuitBuilder {
 				handler.nodeAdded(extendedNode);
 		}
 	}
-	
+
 	CircuitNode createTo(Router targetRouter) {
 		final CircuitNodeImpl newNode = new CircuitNodeImpl(targetRouter, null);
 		sendCreateCell(newNode);
 		receiveAndProcessCreateResponse(newNode);
 		return newNode;
 	}
-	
+
 	private void sendCreateCell(CircuitNodeImpl node) {
 		final Cell cell = CellImpl.createCell(circuit.getCircuitId(), Cell.CREATE);
 		cell.putByteArray(node.createOnionSkin());
 		circuit.sendCell(cell);
 	}
-	
+
 	private void receiveAndProcessCreateResponse(CircuitNodeImpl node) {
 		final Cell cell = circuit.receiveControlCellResponse();
+		if(cell == null) 
+			throw new TorException("Timeout building circuit");
+			
 		processCreatedCell(node, cell);
 		circuit.appendNode(node);
 	}
-	
+
 	private void processCreatedCell(CircuitNodeImpl node, Cell cell) {
 		final byte[] cellBytes = cell.getCellBytes();
 		final byte[] dhData = new byte[TorKeyAgreement.DH_LEN];
@@ -88,9 +91,8 @@ class CircuitBuilder {
 		BigInteger peerPublic = new BigInteger(1, dhData);
 		node.setSharedSecret(peerPublic, HexDigest.createFromDigestBytes(hash));
 	}
-	
+
 	CircuitNode extendTo(Router targetRouter) {
-		System.out.println("Extending circuit to "+ targetRouter.getNickname());
 		if(circuit.getCircuitLength() == 0)
 			throw new TorException("Cannot EXTEND an empty circuit");
 		final CircuitNodeImpl newNode = createExtendNode(targetRouter);
@@ -106,11 +108,11 @@ class CircuitBuilder {
 			return null;
 		}
 	}
-	
+
 	private CircuitNodeImpl createExtendNode(Router router) {
 		return new CircuitNodeImpl(router, circuit.getFinalCircuitNode());
 	}
-	
+
 	private RelayCell createRelayExtendCell(CircuitNodeImpl newNode) {
 		final RelayCell cell = new RelayCellImpl(circuit.getFinalCircuitNode(), circuit.getCircuitId(), 0, RelayCell.RELAY_EXTEND);
 		final Router router = newNode.getRouter();
@@ -120,9 +122,8 @@ class CircuitBuilder {
 		cell.putByteArray(router.getIdentityKey().getFingerprint().getRawBytes());
 		return cell;
 	}
-	
+
 	private void receiveExtendResponse(CircuitNodeImpl newNode) throws IOException {
-		System.out.println("Waiting for response");
 		final RelayCell cell = circuit.receiveRelayResponse(RelayCell.RELAY_EXTENDED);
 		
 		byte[] dhPublic = new byte[TorKeyAgreement.DH_LEN];

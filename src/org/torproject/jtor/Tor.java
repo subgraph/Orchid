@@ -8,6 +8,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.impl.CircuitManagerImpl;
 import org.torproject.jtor.circuits.impl.ConnectionManagerImpl;
+import org.torproject.jtor.circuits.impl.StreamManager;
 import org.torproject.jtor.config.impl.TorConfigImpl;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.Router;
@@ -21,6 +22,7 @@ public class Tor {
 	private final DocumentParserFactory parserFactory;
 	private final ConnectionManagerImpl connectionManager;
 	private final CircuitManagerImpl circuitManager;
+	private final StreamManager streamManager;
 	private final Logger logger;
 	private final TorConfig config;
 	private final NetworkStatusManager statusManager;
@@ -36,7 +38,8 @@ public class Tor {
 		this.directory = new DirectoryImpl(logger, config);
 		parserFactory = new DocumentParserFactoryImpl(logger);
 		connectionManager = new ConnectionManagerImpl();
-		circuitManager = new CircuitManagerImpl(directory, connectionManager);
+		streamManager = new StreamManager();
+		circuitManager = new CircuitManagerImpl(directory, connectionManager, streamManager, logger);
 		statusManager = new NetworkStatusManager(directory, logger);
 	}
 	
@@ -44,6 +47,7 @@ public class Tor {
 	public void start() {
 		directory.loadFromStore();
 		statusManager.startDownloadingDocuments();
+		circuitManager.startBuildingCircuits();
 	}
 	
 	public Circuit createCircuitFromNicknames(List<String> nicknamePath) {
