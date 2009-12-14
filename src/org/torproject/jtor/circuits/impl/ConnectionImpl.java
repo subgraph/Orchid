@@ -26,7 +26,7 @@ import org.torproject.jtor.directory.Router;
  *
  */
 public class ConnectionImpl implements Connection {
-	
+
 	private final static int DEFAULT_CONNECT_TIMEOUT = 30000;
 
 	private final SSLSocket socket;
@@ -39,7 +39,7 @@ public class ConnectionImpl implements Connection {
 	private int currentId = 1;
 	private boolean isConnected;
 	private final Thread readCellsThread;
-	
+
 	ConnectionImpl(ConnectionManagerImpl manager, SSLSocket socket, Router router) {
 		this.manager = manager;
 		this.socket = socket;	
@@ -49,7 +49,7 @@ public class ConnectionImpl implements Connection {
 		this.readCellsThread.setDaemon(true);
 		this.connectionControlCells = new LinkedBlockingQueue<Cell>();
 	}
-	
+
 	public Router getRouter() {
 		return router;
 	}
@@ -62,17 +62,17 @@ public class ConnectionImpl implements Connection {
 			return currentId;
 		}
 	}
-	
+
 	private void incrementNextId() {
 		currentId++;
 		if(currentId > 0xFFFF)
 			currentId = 1;
 	}
-	
+
 	public boolean isConnected() {
 		return isConnected;
 	}
-	
+
 	public void connect() {
 		try {
 			doConnect();
@@ -84,7 +84,7 @@ public class ConnectionImpl implements Connection {
 		manager.addActiveConnection(this);
 		isConnected = true;
 	}
-	
+
 	private void doConnect() throws IOException, InterruptedException {
 		socket.connect(routerToSocketAddress(router), DEFAULT_CONNECT_TIMEOUT);
 		input = socket.getInputStream();
@@ -94,14 +94,12 @@ public class ConnectionImpl implements Connection {
 		
 		handshake.runHandshake();
 	}
-	
-	
+
 	private SocketAddress routerToSocketAddress(Router router) {
 		final InetAddress address = router.getAddress().toInetAddress();
 		return new InetSocketAddress(address, router.getOnionPort());
 	}
-	
-	
+
 	public void sendCell(Cell cell)  {
 		try {
 			output.write(cell.getCellBytes());
@@ -111,7 +109,7 @@ public class ConnectionImpl implements Connection {
 			throw new ConnectionClosedException();
 		}
 	}
-	
+
 	private Cell recvCell() {
 		try {
 			return CellImpl.readFromInputStream(input);
@@ -121,7 +119,7 @@ public class ConnectionImpl implements Connection {
 			throw new ConnectionClosedException();
 		}
 	}
-	
+
 	private void closeSocket() {
 		try {
 			socket.close();
@@ -131,7 +129,7 @@ public class ConnectionImpl implements Connection {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private Runnable createReadCellsRunnable() {
 		return new Runnable() {
 			public void run() {
@@ -152,11 +150,11 @@ public class ConnectionImpl implements Connection {
 			}
 		}
 	}
-	
+
 	private void notifyCircuitsLinkClosed() {
 		
 	}
-	
+
 	Cell readConnectionControlCell() {
 		try {
 			return connectionControlCells.take();
@@ -177,7 +175,7 @@ public class ConnectionImpl implements Connection {
 		case Cell.VERSIONS:
 			connectionControlCells.add(cell);
 			break;
-		
+
 		case Cell.CREATED:
 		case Cell.CREATED_FAST:
 			processControlCell(cell);
@@ -189,9 +187,8 @@ public class ConnectionImpl implements Connection {
 			break;
 		}
 	}
-	
+
 	private void processRelayCell(Cell cell) {
-		
 		final CircuitImpl circuit = circuitMap.get(cell.getCircuitId());
 		if(circuit == null) {
 			System.out.println("NO CIRCUIT");
@@ -200,7 +197,7 @@ public class ConnectionImpl implements Connection {
 		}
 		circuit.deliverRelayCell(cell);
 	}
-	
+
 	private void processControlCell(Cell cell) {
 		final CircuitImpl circuit = circuitMap.get(cell.getCircuitId());
 		if(circuit == null) {
@@ -209,5 +206,9 @@ public class ConnectionImpl implements Connection {
 			return;
 		}
 		circuit.deliverControlCell(cell);
+	}
+
+	public String toString() {
+		return "!" + router.getNickname() + "!";
 	}
 }
