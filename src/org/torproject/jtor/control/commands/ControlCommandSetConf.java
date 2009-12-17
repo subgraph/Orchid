@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import org.torproject.jtor.TorConfig;
-import org.torproject.jtor.config.impl.TorConfigParserImpl;
+import org.torproject.jtor.config.impl.TorConfigParser;
 import org.torproject.jtor.control.ControlConnectionHandler;
 import org.torproject.jtor.control.KeyNotFoundException;
 
@@ -30,7 +30,7 @@ public class ControlCommandSetConf {
 					success = true;
 				} else {
 					//replace with new value
-					success = TorConfigParserImpl.setConf(cch.getControlServer().getTorConfig(), key, value);
+					success = TorConfigParser.setConf(cch.getControlServer().getTorConfig(), key, value);
 				}
 
 
@@ -43,7 +43,7 @@ public class ControlCommandSetConf {
 				while (it.hasNext()) {
 					String oldkey = (String)it.next();
 					String oldval = (String)oldvals.get(oldkey);
-					TorConfigParserImpl.setConf(cch.getControlServer().getTorConfig(), oldkey, oldval);
+					TorConfigParser.setConf(cch.getControlServer().getTorConfig(), oldkey, oldval);
 				}
 				cch.write("552 Unrecognized option");
 				return false;

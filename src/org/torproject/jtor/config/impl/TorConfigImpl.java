@@ -119,7 +119,7 @@ public class TorConfigImpl implements TorConfig {
 	 * @see org.torproject.jtor.config.impl.TorConfig#loadConf()
 	 */
 	public void loadConf() {
-		boolean success = TorConfigParserImpl.parseFile(this, logger, new File(dataDirectory, configFile));
+		boolean success = TorConfigParser.parseFile(this, logger, new File(dataDirectory, configFile));
 		if (!success) {
 			System.err.println("Unable to parse config file - Quitting");
 			System.exit(1);

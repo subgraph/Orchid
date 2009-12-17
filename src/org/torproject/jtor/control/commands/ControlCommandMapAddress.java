@@ -1,7 +1,7 @@
 package org.torproject.jtor.control.commands;
 
 import org.torproject.jtor.TorConfig;
-import org.torproject.jtor.config.impl.TorConfigParserImpl;
+import org.torproject.jtor.config.impl.TorConfigParser;
 import org.torproject.jtor.control.ControlConnectionHandler;
 
 public class ControlCommandMapAddress {
@@ -33,7 +33,7 @@ public class ControlCommandMapAddress {
 		String[] newmaps = null;
 		for (int i = 0; i < maps.length; i++) { // remove null values
 			if (maps[i] != null) {
-				newmaps = TorConfigParserImpl.addToStringArray(newmaps, maps[i]);
+				newmaps = TorConfigParser.addToStringArray(newmaps, maps[i]);
 			}
 		}
 		
@@ -60,10 +60,10 @@ public class ControlCommandMapAddress {
 				}
 			}
 
-			newmaps = TorConfigParserImpl.addToStringArray(newmaps, ip + "=" + dest);
+			newmaps = TorConfigParser.addToStringArray(newmaps, ip + "=" + dest);
 			tc.setMapAddress(newmaps);
 		} else {
-			newmaps = TorConfigParserImpl.addToStringArray(newmaps, host + "=" + dest);
+			newmaps = TorConfigParser.addToStringArray(newmaps, host + "=" + dest);
 			tc.setMapAddress(newmaps);
 		}
 		

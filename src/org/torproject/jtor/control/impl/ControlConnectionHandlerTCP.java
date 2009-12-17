@@ -36,6 +36,8 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
                 recv.length(); // trigger NullPointerException
                 cs.getLogger().debug("Control Connection TCP: received " + recv);
                 
+                eq.writeQueue(this);
+                
                 ControlCommandParser.execute(this, recv);
             }
             
@@ -52,7 +54,7 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
         
     }
 
-    public void write(String w) {
+	public void write(String w) {
         try {
             OutputStreamWriter out = new OutputStreamWriter(s.getOutputStream());
 

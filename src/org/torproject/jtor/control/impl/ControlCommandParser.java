@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import org.torproject.jtor.control.ControlConnectionHandler;
+import org.torproject.jtor.control.FeatureNotSupportedException;
 import org.torproject.jtor.control.KeyNotFoundException;
 import org.torproject.jtor.control.auth.ControlAuthenticator;
 import org.torproject.jtor.control.commands.*;
@@ -148,6 +149,9 @@ public class ControlCommandParser {
 				} catch (KeyNotFoundException e) {
 					cch.write("552 unknown configuration keyword");
 					cch.getControlServer().getLogger().warn("Control command: key not found: " + confs[i]);
+					return;
+				} catch (FeatureNotSupportedException e) {
+					cch.write("551 feature not supported");
 					return;
 				}
 			}

@@ -19,8 +19,7 @@ import org.torproject.jtor.logging.ConsoleLogger;
  */
 public class ControlServerTCP extends ControlServer {
 
-	@SuppressWarnings("unchecked")
-	private Vector connections = new Vector();
+	private Vector<ControlConnectionHandler> connections = new Vector<ControlConnectionHandler>();
 
 	public ControlServerTCP(TorConfig tc, Logger logger) {
 		super(tc, logger);
@@ -34,7 +33,6 @@ public class ControlServerTCP extends ControlServer {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void run() {
 		ServerSocket ss = null;
