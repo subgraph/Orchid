@@ -21,6 +21,9 @@ import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.directory.RouterDescriptor;
 import org.torproject.jtor.directory.RouterStatus;
 import org.torproject.jtor.directory.StatusDocument;
+import org.torproject.jtor.events.Event;
+import org.torproject.jtor.events.EventHandler;
+import org.torproject.jtor.events.EventManager;
 
 public class DirectoryImpl implements Directory {
 	private final DirectoryStore store;
@@ -30,7 +33,8 @@ public class DirectoryImpl implements Directory {
 	private final Map<String, RouterImpl> routersByNickname;
 	private final RandomSet<RouterImpl> directoryCaches;
 	private List<DirectoryServer> directoryAuthorities;
-
+	private boolean haveMinimumRouterInfo;
+	private final EventManager consensusChangedManager;
 	private final SecureRandom random;
 	private StatusDocument currentConsensus;
 	private boolean descriptorsDirty;
@@ -42,6 +46,7 @@ public class DirectoryImpl implements Directory {
 		routersByIdentity = new HashMap<HexDigest, RouterImpl>();
 		routersByNickname = new HashMap<String, RouterImpl>();
 		directoryCaches = new RandomSet<RouterImpl>();
+		consensusChangedManager = new EventManager();
 		random = createRandom();
 		loadAuthorityServers();
 	}
@@ -58,13 +63,33 @@ public class DirectoryImpl implements Directory {
 		final TrustedAuthorities trusted = new TrustedAuthorities(logger);
 		directoryAuthorities = trusted.getAuthorityServers();
 	}
-	
+
+	public boolean haveMinimumRouterInfo() {
+		return haveMinimumRouterInfo;
+	}
+
+	private synchronized void checkMinimumRouterInfo() {
+		if(currentConsensus == null) {
+			haveMinimumRouterInfo = false;
+			return;
+		}
+
+		int routerCount = 0;
+		int descriptorCount = 0;
+		for(Router r: routersByIdentity.values()) {
+			routerCount++;
+			if(!r.isDescriptorDownloadable())
+				descriptorCount++;
+		}
+		haveMinimumRouterInfo = (descriptorCount * 4 > routerCount);
+	}
+
 	public void loadFromStore() {
 		store.loadCertificates(this);
 		store.loadConsensus(this);
 		store.loadRouterDescriptors(this);
 	}
-	
+
 	public Collection<DirectoryServer> getDirectoryAuthorities() {
 		return directoryAuthorities;
 	}
@@ -79,15 +104,15 @@ public class DirectoryImpl implements Directory {
 			return getRandomDirectoryAuthority();
 		return directoryCaches.getRandomElement();
 	}
-	
+
 	public void addCertificate(KeyCertificate certificate) {
 		certificates.put(certificate.getAuthorityFingerprint(), certificate);
 	}
-	
+
 	public KeyCertificate findCertificate(HexDigest authorityFingerprint) {
 		return certificates.get(authorityFingerprint);
 	}
-	
+
 	public void storeCertificates() {
 		final List<KeyCertificate> certs = new ArrayList<KeyCertificate>(); 
 		for(KeyCertificate c: certificates.values()) 
@@ -98,12 +123,12 @@ public class DirectoryImpl implements Directory {
 	public void addRouterDescriptor(RouterDescriptor router) {
 		addDescriptor(router);
 	}
-	
+
 	public void storeConsensus() {
 		if(currentConsensus != null)
 			store.saveConsensus(currentConsensus);
 	}
-	
+
 	public synchronized void storeDescriptors() {
 		if(!descriptorsDirty)
 			return;
@@ -116,19 +141,19 @@ public class DirectoryImpl implements Directory {
 		store.saveRouterDescriptors(descriptors);
 		descriptorsDirty = false;
 	}
-	
+
 	public void addConsensusDocument(StatusDocument consensus) {
 		if(consensus.equals(currentConsensus))
 			return;
-		
+
 		if(currentConsensus != null && consensus.getValidAfterTime().isBefore(currentConsensus.getValidAfterTime())) {
 			logger.warn("New consensus document is older than current consensus document");
 			return;
 		}
-		
+
 		final Map<HexDigest, RouterImpl> oldRouterByIdentity = new HashMap<HexDigest, RouterImpl>(routersByIdentity);
 		clearAll();
-		
+
 		for(RouterStatus status: consensus.getRouterStatusEntries()) {
 			if(status.hasFlag("Running") && status.hasFlag("Valid")) {
 				final RouterImpl router = updateOrCreateRouter(status, oldRouterByIdentity);
@@ -139,7 +164,9 @@ public class DirectoryImpl implements Directory {
 		logger.debug("Loaded "+ routersByIdentity.size() +" routers from consensus document");
 		currentConsensus = consensus;
 		store.saveConsensus(consensus);
+		consensusChangedManager.fireEvent(new Event() {});
 	}
+
 	private RouterImpl updateOrCreateRouter(RouterStatus status, Map<HexDigest, RouterImpl> knownRouters) {
 		final RouterImpl router = knownRouters.get(status.getIdentity());
 		if(router == null)
@@ -147,20 +174,20 @@ public class DirectoryImpl implements Directory {
 		router.updateStatus(status);
 		return router;
 	}
-	
+
 	private void clearAll() {
 		routersByIdentity.clear();
 		routersByNickname.clear();
 		directoryCaches.clear();
 	}
-	
+
 	private void classifyRouter(RouterImpl router) {
 		if(isValidDirectoryCache(router)) 
 			directoryCaches.add(router);
 		else
 			directoryCaches.remove(router);
 	}
-	
+
 	private boolean isValidDirectoryCache(RouterImpl router) {
 		if(router.getDirectoryPort() == 0)
 			return false;
@@ -168,25 +195,25 @@ public class DirectoryImpl implements Directory {
 			return false;
 		return router.hasFlag("V2Dir");
 	}
-	
+
 	private void addRouter(RouterImpl router) {
 		routersByIdentity.put(router.getIdentityHash(), router);
 		addRouterByNickname(router);
 		if(router.getDirectoryPort() != 0)
 			directoryCaches.add(router);
 	}
-	
+
 	private void addRouterByNickname(RouterImpl router) {
 		final String name = router.getNickname();
 		if(name == null || name.equals("Unnamed"))
 			return;
 		if(routersByNickname.containsKey(router.getNickname())) {
-			logger.warn("Duplicate router nickname: "+ router.getNickname());
+			//logger.warn("Duplicate router nickname: "+ router.getNickname());
 			return;
 		}
 		routersByNickname.put(name, router);
 	}
-	
+
 	synchronized void addDescriptor(RouterDescriptor descriptor) {
 		final HexDigest identity = descriptor.getIdentityKey().getFingerprint();
 		if(!routersByIdentity.containsKey(identity)) {
@@ -205,15 +232,16 @@ public class DirectoryImpl implements Directory {
 		descriptorsDirty = true;
 		router.updateDescriptor(descriptor);
 		classifyRouter(router);
+		checkMinimumRouterInfo();
 	}
-	
+
 	synchronized public List<Router> getRoutersWithDownloadableDescriptors() {
 		final List<Router> routers = new ArrayList<Router>();
 		for(RouterImpl router: routersByIdentity.values()) {
 			if(router.isDescriptorDownloadable())
 				routers.add(router);
 		}
-		
+
 		for(int i = 0; i < routers.size(); i++) {
 			final Router a = routers.get(i);
 			final int swapIdx = random.nextInt(routers.size());
@@ -221,14 +249,14 @@ public class DirectoryImpl implements Directory {
 			routers.set(i, b);
 			routers.set(swapIdx, a);
 		}
-		
+
 		return routers;
 	}
-	
+
 	synchronized public void markDescriptorInvalid(RouterDescriptor descriptor) {
 		removeRouterByIdentity(descriptor.getIdentityKey().getFingerprint());	
 	}
-	
+
 	private void removeRouterByIdentity(HexDigest identity) {
 		logger.debug("Removing: "+ identity);
 		final RouterImpl router = routersByIdentity.remove(identity);
@@ -242,6 +270,14 @@ public class DirectoryImpl implements Directory {
 
 	public StatusDocument getCurrentConsensusDocument() {
 		return currentConsensus;
+	}
+
+	public void registerConsensusChangedHandler(EventHandler handler) {
+		consensusChangedManager.addListener(handler);
+	}
+
+	public void unregisterConsensusChangedHandler(EventHandler handler) {
+		consensusChangedManager.removeListener(handler);
 	}
 
 	public Router getRouterByName(String name) {
@@ -264,5 +300,10 @@ public class DirectoryImpl implements Directory {
 	Logger getLogger() {
 		return logger;
 	}
-	
+
+	public List<Router> getAllRouters() {
+		synchronized(routersByIdentity) {
+			return new ArrayList<Router>(routersByIdentity.values());
+		}
+	}
 }

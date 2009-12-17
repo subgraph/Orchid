@@ -57,10 +57,13 @@ public class Tor {
 		config.loadConf();
 		directory.loadFromStore();
 		statusManager.startDownloadingDocuments();
-		circuitManager.startBuildingCircuits();
+<<<<<<< HEAD
 		if (config.getControlPort() > 0) {
 			controlServer.startServer();
 		}
+=======
+		circuitManager.startBuildingCircuits();
+>>>>>>> 5ce4a329867697d77ceeab76b704defc47caf0c7
 	}
 	
 	public Circuit createCircuitFromNicknames(List<String> nicknamePath) {

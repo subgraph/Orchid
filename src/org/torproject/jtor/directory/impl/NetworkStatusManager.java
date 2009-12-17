@@ -69,7 +69,7 @@ public class NetworkStatusManager {
 	private void checkConsensus() {
 		final StatusDocument consensus = directory.getCurrentConsensusDocument();
 		if(consensus != null && consensus.isLive()) {
-			logger.debug("Have live consensus");
+			//logger.debug("Have live consensus");
 			return;
 		}
 		requestConsensusDocument();
@@ -122,8 +122,7 @@ public class NetworkStatusManager {
 		}
 		if(!neededCertificates.isEmpty())
 			requestCertificates(neededCertificates);
-		else 
-			logger.debug("No certificates needed");
+		
 	}
 	
 	private void requestCertificates(final List<HexDigest> certificates) {
@@ -170,7 +169,6 @@ public class NetworkStatusManager {
 			return;
 		final List<Router> downloadables = directory.getRoutersWithDownloadableDescriptors();
 		if(downloadables.isEmpty()) {
-			logger.debug("No descriptors to download");
 			return;
 		}
 		if(!canDownloadDescriptors(downloadables.size())) 
