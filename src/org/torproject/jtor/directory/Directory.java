@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.torproject.jtor.data.HexDigest;
+import org.torproject.jtor.events.EventHandler;
 
 /**
  * 
@@ -24,6 +25,8 @@ public interface Directory {
 	void addRouterDescriptor(RouterDescriptor router);
 	void addConsensusDocument(StatusDocument consensus);
 	StatusDocument getCurrentConsensusDocument();
+	void registerConsensusChangedHandler(EventHandler handler);
+	void unregisterConsensusChangedHandler(EventHandler handler);
 	KeyCertificate findCertificate(HexDigest authorityFingerprint);
 	Router getRouterByName(String name);
 	List<Router> getRouterListByNames(List<String> names);

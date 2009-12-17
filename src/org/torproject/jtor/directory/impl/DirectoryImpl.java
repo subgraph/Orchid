@@ -21,6 +21,9 @@ import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.directory.RouterDescriptor;
 import org.torproject.jtor.directory.RouterStatus;
 import org.torproject.jtor.directory.StatusDocument;
+import org.torproject.jtor.events.Event;
+import org.torproject.jtor.events.EventHandler;
+import org.torproject.jtor.events.EventManager;
 
 public class DirectoryImpl implements Directory {
 	private final DirectoryStore store;
@@ -31,7 +34,7 @@ public class DirectoryImpl implements Directory {
 	private final RandomSet<RouterImpl> directoryCaches;
 	private List<DirectoryServer> directoryAuthorities;
 	private boolean haveMinimumRouterInfo;
-
+	private final EventManager consensusChangedManager;
 	private final SecureRandom random;
 	private StatusDocument currentConsensus;
 	private boolean descriptorsDirty;
@@ -43,6 +46,7 @@ public class DirectoryImpl implements Directory {
 		routersByIdentity = new HashMap<HexDigest, RouterImpl>();
 		routersByNickname = new HashMap<String, RouterImpl>();
 		directoryCaches = new RandomSet<RouterImpl>();
+		consensusChangedManager = new EventManager();
 		random = createRandom();
 		loadAuthorityServers();
 	}
@@ -160,7 +164,9 @@ public class DirectoryImpl implements Directory {
 		logger.debug("Loaded "+ routersByIdentity.size() +" routers from consensus document");
 		currentConsensus = consensus;
 		store.saveConsensus(consensus);
+		consensusChangedManager.fireEvent(new Event() {});
 	}
+
 	private RouterImpl updateOrCreateRouter(RouterStatus status, Map<HexDigest, RouterImpl> knownRouters) {
 		final RouterImpl router = knownRouters.get(status.getIdentity());
 		if(router == null)
@@ -264,6 +270,14 @@ public class DirectoryImpl implements Directory {
 
 	public StatusDocument getCurrentConsensusDocument() {
 		return currentConsensus;
+	}
+
+	public void registerConsensusChangedHandler(EventHandler handler) {
+		consensusChangedManager.addListener(handler);
+	}
+
+	public void unregisterConsensusChangedHandler(EventHandler handler) {
+		consensusChangedManager.removeListener(handler);
 	}
 
 	public Router getRouterByName(String name) {
