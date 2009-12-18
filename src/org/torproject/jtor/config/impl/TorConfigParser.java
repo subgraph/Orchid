@@ -104,6 +104,14 @@ public class TorConfigParser {
 				tc.setDirServer(newar);
 			}
 			
+			else if (key.equals("tunneldirconns")) {
+				tc.setTunnelDirConns(isTrue(value));
+			}
+			
+			else if (key.equals("prefertunneleddirconns")) {
+				tc.setPreferTunneledDirConns(isTrue(value));
+			}
+			
 			else if (key.equals("disableallswap")) {
 				tc.setDisableAllSwap(isTrue(value));
 			}
@@ -212,6 +220,10 @@ public class TorConfigParser {
 			else if (key.equals("firewallips")) {
 				String[] newar = addToStringArray(tc.getFirewallIPs(), value);
 				tc.setExcludeNodes(newar);
+			}
+			
+			else if (key.equals("reachableaddresses")) {
+				tc.setReachableAddresses(value);
 			}
 			
 			else if (key.equals("longlivedports")) { // needs splitting TODO

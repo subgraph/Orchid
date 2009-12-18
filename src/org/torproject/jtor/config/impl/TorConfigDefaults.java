@@ -23,8 +23,11 @@ public class TorConfigDefaults {
     		"moria2 v1 18.244.0.114:80 719B E45D E224 B607 C537 07D0 E214 3E2D 423E 74CF",
     		"tor26 v1 86.59.21.38:80 847B 1F85 0344 D787 6491 A548 92F9 0493 4E4E B85D",
     };
-    
-    private boolean disableAllSwap = false;
+
+	private boolean tunnelDirConns = true;
+	private boolean preferTunneledDirConns = true;
+
+	private boolean disableAllSwap = false;
     private String group;
     
     private String httpProxy;
@@ -61,6 +64,7 @@ public class TorConfigDefaults {
     private boolean fascistFirewall = false;
     private short[] firewallPorts = { 80, 443 };
     private String[] firewallIPs = new String[0];
+    private String reachableAddresses = "accept *:*";
     
     private short[] longLivedPorts = { 21, 22, 706, 1863, 5050, 5190, 5222, 5223, 6667, 8300, 8888 };
     
@@ -102,6 +106,14 @@ public class TorConfigDefaults {
 			outboundBindAddress = InetAddress.getLocalHost();
 		} catch (UnknownHostException e) {}
     }
+    
+    public boolean isTunnelDirConns() {
+		return tunnelDirConns;
+	}
+
+	public boolean isPreferTunneledDirConns() {
+		return preferTunneledDirConns;
+	}
     
     public boolean is__AllDirOptionsPrivate() {
 		return __AllDirOptionsPrivate;
@@ -265,6 +277,10 @@ public class TorConfigDefaults {
 
 	public String[] getFirewallIPs() {
 		return firewallIPs;
+	}
+
+	public String getReachableAddresses() {
+		return reachableAddresses;
 	}
 
 	public short[] getLongLivedPorts() {

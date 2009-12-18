@@ -10,12 +10,11 @@ import org.torproject.jtor.control.KeyNotFoundException;
 
 public class ControlCommandSetConf {
 
-	@SuppressWarnings("unchecked")
 	public static boolean handleSetConf(ControlConnectionHandler cch, String in) {
 		String[] confs = in.split(" ");
-		HashMap oldvals = new HashMap();
+		HashMap<String, String> oldvals = new HashMap<String, String>();
 		for (int i = 0; i < confs.length; i++) {
-			String key, value = null;
+			String key, value = "";
 			if (confs[i].indexOf("=") < 0) { // only a key
 				key = confs[i];
 			} else {
@@ -41,11 +40,13 @@ public class ControlCommandSetConf {
 
 
 			} catch (KeyNotFoundException e) {
+				cch.getControlServer().getLogger().warn("Control command setconf key not found: " + key);
+				
 				success = false;
 			}
 			if (!success) {
 				//restore all settings done by this command because one has failed
-				Iterator it = oldvals.keySet().iterator();
+				Iterator<String> it = oldvals.keySet().iterator();
 				while (it.hasNext()) {
 					String oldkey = (String)it.next();
 					String oldval = (String)oldvals.get(oldkey);
@@ -101,6 +102,14 @@ public class ControlCommandSetConf {
 
 		else if (key.equals("dirserver")) {
 			tc.setDefaultDirServer();
+		}
+		
+		else if (key.equals("tunneldirconns")) {
+			tc.setDefaultTunnelDirConns();
+		}
+		
+		else if (key.equals("prefertunneleddirconns")) {
+			tc.setDefaultPreferTunneledDirConns();
 		}
 
 		else if (key.equals("disableallswap")) {
@@ -205,6 +214,10 @@ public class ControlCommandSetConf {
 
 		else if (key.equals("firewallips")) {
 			tc.setDefaultFirewallIPs();
+		}
+		
+		else if (key.equals("reachableaddresses")) {
+			tc.setDefaultReachableAddresses();
 		}
 
 		else if (key.equals("longlivedports")) {

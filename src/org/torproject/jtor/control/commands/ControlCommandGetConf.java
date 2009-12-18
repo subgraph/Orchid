@@ -55,6 +55,14 @@ public class ControlCommandGetConf {
 			ret = ret.replaceAll("\\s*$", "");
 			return ret;
 		}
+		
+		else if (key.equals("tunneldirconns")) {
+			return "" + (tc.isTunnelDirConns() ? "1" : "0");
+		}
+		
+		else if (key.equals("prefertunneleddirconns")) {
+			return "" + (tc.isPreferTunneledDirConns() ? "1" : "0");
+		}
 
 		else if (key.equals("disableallswap")) {
 			return "" + (tc.isDisableAllSwap() ? "1" : "0");
@@ -194,6 +202,10 @@ public class ControlCommandGetConf {
 			}
 			ret = ret.replaceAll("\\s*$", "");
 			return ret;
+		}
+		
+		else if (key.equals("reachableaddresses")) {
+			return tc.getReachableAddresses();
 		}
 
 		else if (key.equals("longlivedports")) {

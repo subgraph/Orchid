@@ -26,6 +26,8 @@ public class TorConfigImpl implements TorConfig {
 
 	private long dirFetchPeriod;
 	private String[] dirServer;
+	private boolean tunnelDirConns;
+	private boolean preferTunneledDirConns;
 
 	private boolean disableAllSwap;
 	private String group;
@@ -64,6 +66,7 @@ public class TorConfigImpl implements TorConfig {
 	private boolean fascistFirewall;
 	private short[] firewallPorts;
 	private String[] firewallIPs;
+	private String reachableAddresses;
 
 	private short[] longLivedPorts;
 
@@ -179,6 +182,8 @@ public class TorConfigImpl implements TorConfig {
 		numHelperNodes = tcd.getNumHelperNodes();
 		outboundBindAddress = tcd.getOutboundBindAddress();
 		pidFile = tcd.getPidFile();
+		preferTunneledDirConns = tcd.isPreferTunneledDirConns();
+		reachableAddresses = tcd.getReachableAddresses();
 		rendExcludeNodes = tcd.getRendExcludeNodes();
 		rendNodes = tcd.getRendNodes();
 		rendPostPeriod = tcd.getRendPostPeriod();
@@ -192,6 +197,7 @@ public class TorConfigImpl implements TorConfig {
 		strictExitNodes = tcd.isStrictExitNodes();
 		trackHostExits = tcd.getTrackHostExits();
 		trackHostExitsExpire = tcd.getTrackHostExitsExpire();
+		tunnelDirConns = tcd.isTunnelDirConns();
 		useHelperNodes = tcd.isUseHelperNodes();
 		user = tcd.getUser();
 
@@ -409,6 +415,34 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setDefaultDirServer() {
 		this.dirServer = new TorConfigDefaults().getDirServer();
+		setConfigChanged(true);
+	}
+
+	public boolean isTunnelDirConns() {
+		return tunnelDirConns;
+	}
+
+	public void setTunnelDirConns(boolean tunnelDirConns) {
+		this.tunnelDirConns = tunnelDirConns;
+		setConfigChanged(true);
+	}
+
+	public void setDefaultTunnelDirConns() {
+		this.tunnelDirConns = new TorConfigDefaults().isTunnelDirConns();
+		setConfigChanged(true);
+	}
+
+	public boolean isPreferTunneledDirConns() {
+		return preferTunneledDirConns;
+	}
+
+	public void setPreferTunneledDirConns(boolean preferTunneledDirConns) {
+		this.preferTunneledDirConns = preferTunneledDirConns;
+		setConfigChanged(true);
+	}
+
+	public void setDefaultPreferTunneledDirConns() {
+		this.preferTunneledDirConns = new TorConfigDefaults().isPreferTunneledDirConns();
 		setConfigChanged(true);
 	}
 
@@ -773,6 +807,20 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setDefaultFirewallIPs() {
 		this.firewallIPs = new TorConfigDefaults().getFirewallIPs();
+		setConfigChanged(true);
+	}
+
+	public String getReachableAddresses() {
+		return reachableAddresses;
+	}
+
+	public void setReachableAddresses(String ReachableAddresses) {
+		this.reachableAddresses = ReachableAddresses;
+		setConfigChanged(true);
+	}
+
+	public void setDefaultReachableAddresses() {
+		this.reachableAddresses = new TorConfigDefaults().getReachableAddresses();
 		setConfigChanged(true);
 	}
 

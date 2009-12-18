@@ -58,6 +58,24 @@ public interface TorConfig {
 	public void setConfigFile(String configFile);
 
 	public void setDefaultConfigFile();
+	
+	public String getReachableAddresses();
+	
+	public void setReachableAddresses(String ReachableAddresses);
+	
+	public void setDefaultReachableAddresses();
+	
+	public void setDefaultPreferTunneledDirConns();
+	
+	public void setPreferTunneledDirConns(boolean preferTunneledDirConns);
+	
+	public boolean isPreferTunneledDirConns();
+	
+	public void setTunnelDirConns(boolean tunnelDirConns);
+	
+	public void setDefaultTunnelDirConns();
+	
+	public boolean isTunnelDirConns();
 
 	public long getBandwidthRate();
 
