@@ -3,6 +3,8 @@ package org.torproject.jtor;
 import java.io.File;
 import java.net.InetAddress;
 
+import org.torproject.jtor.events.EventHandler;
+
 public interface TorConfig {
 
 	public String getDataDirectory();
@@ -16,6 +18,10 @@ public interface TorConfig {
 	public void loadDefaults();
 
 	public boolean saveConf();
+	
+	public void registerConfigChangedHandler(EventHandler eh);
+	
+	public void unregisterConfigChangedHandler(EventHandler eh);
 		
 	public boolean is__AllDirOptionsPrivate();
 

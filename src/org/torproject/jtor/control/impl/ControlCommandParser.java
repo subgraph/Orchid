@@ -183,7 +183,7 @@ public class ControlCommandParser {
 		
 		else if (command.equals("setevents")) {
 			try {
-				ControlCommandSetEvent.handleSetEvent(cch, args);
+				ControlCommandSetEvents.handleSetEvent(cch, args);
 				cch.write("250 OK");
 			} catch (KeyNotFoundException e) {
 				cch.write("552 Unrecognized event");

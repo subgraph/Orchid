@@ -48,7 +48,7 @@ public class ControlCommandGetInfo {
 		
 		else if (key.equals("events/names")) {
 			String ret = "";
-			for (String event : ControlCommandSetEvent.supportedEvents) {
+			for (String event : ControlCommandSetEvents.supportedEvents) {
 				ret += event + " ";
 			}
 			return ret.replaceAll("(.*)\\s+$", "$1"); // strip trailing whitespace

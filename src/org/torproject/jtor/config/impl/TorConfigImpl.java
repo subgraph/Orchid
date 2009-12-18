@@ -5,8 +5,13 @@ import java.net.InetAddress;
 
 import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorConfig;
+import org.torproject.jtor.events.EventHandler;
+import org.torproject.jtor.events.EventManager;
 
 public class TorConfigImpl implements TorConfig {
+
+	private EventManager configChangedManager = new EventManager();
+	private boolean configChanged = false;
 
 	private String configFile;
 	private File dataDirectory;
@@ -88,7 +93,7 @@ public class TorConfigImpl implements TorConfig {
 	private String[] hiddenServiceExcludeNodes;
 	private String hiddenServiceVersion;
 	private long rendPostPeriod;
-	
+
 	// hidden (not saved) options
 	private boolean __AllDirOptionsPrivate;
 	private boolean __DisablePredictedCircuits;
@@ -100,12 +105,13 @@ public class TorConfigImpl implements TorConfig {
 
 	public TorConfigImpl(Logger logger) {
 		this.logger = logger;
+		new TorConfigEventThread(this);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.torproject.jtor.config.impl.TorConfig#getDataDirectory()
 	 */
-	 public String getDataDirectory() {
+	public String getDataDirectory() {
 		return dataDirectory.getAbsolutePath();
 	}
 
@@ -124,6 +130,7 @@ public class TorConfigImpl implements TorConfig {
 			System.err.println("Unable to parse config file - Quitting");
 			System.exit(1);
 		}
+		setConfigChanged(true);
 	}
 
 	/* (non-Javadoc)
@@ -187,12 +194,14 @@ public class TorConfigImpl implements TorConfig {
 		trackHostExitsExpire = tcd.getTrackHostExitsExpire();
 		useHelperNodes = tcd.isUseHelperNodes();
 		user = tcd.getUser();
-		
+
 		__AllDirOptionsPrivate = tcd.is__AllDirOptionsPrivate();
 		__DisablePredictedCircuits = tcd.is__DisablePredictedCircuits();
 		__HashedControlSessionPassword = tcd.get__HashedControlSessionPassword();
 		__LeaveStreamsUnattached = tcd.is__LeaveStreamsUnattached();
 		__ReloadTorrcOnSIGHUP = tcd.is__ReloadTorrcOnSIGHUP();
+
+		setConfigChanged(true);
 	}
 
 
@@ -205,17 +214,19 @@ public class TorConfigImpl implements TorConfig {
 		loadDefaults();
 		loadConf();
 	}
-	
+
 	public boolean is__AllDirOptionsPrivate() {
 		return __AllDirOptionsPrivate;
 	}
 
 	public void set__AllDirOptionsPrivate(boolean allDirOptionsPrivate) {
 		__AllDirOptionsPrivate = allDirOptionsPrivate;
+		setConfigChanged(true);
 	}
 
 	public void setDefault__AllDirOptionsPrivate() {
 		__AllDirOptionsPrivate = new TorConfigDefaults().is__AllDirOptionsPrivate();
+		setConfigChanged(true);
 	}
 
 	public boolean is__DisablePredictedCircuits() {
@@ -224,10 +235,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void set__DisablePredictedCircuits(boolean disablePredictedCircuits) {
 		__DisablePredictedCircuits = disablePredictedCircuits;
+		setConfigChanged(true);
 	}
 
 	public void setDefault__DisablePredictedCircuits() {
 		__DisablePredictedCircuits = new TorConfigDefaults().is__DisablePredictedCircuits();
+		setConfigChanged(true);
 	}
 
 	public boolean is__LeaveStreamsUnattached() {
@@ -236,10 +249,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void set__LeaveStreamsUnattached(boolean leaveStreamsUnattached) {
 		__LeaveStreamsUnattached = leaveStreamsUnattached;
+		setConfigChanged(true);
 	}
 
 	public void setDefault__LeaveStreamsUnattached() {
 		__LeaveStreamsUnattached = new TorConfigDefaults().is__LeaveStreamsUnattached();
+		setConfigChanged(true);
 	}
 
 	public String get__HashedControlSessionPassword() {
@@ -248,11 +263,13 @@ public class TorConfigImpl implements TorConfig {
 
 	public void set__HashedControlSessionPassword(
 			String hashedControlSessionPassword) {
+		setConfigChanged(true);
 		__HashedControlSessionPassword = hashedControlSessionPassword;
 	}
 
 	public void setDefault__HashedControlSessionPassword() {
 		__HashedControlSessionPassword = new TorConfigDefaults().get__HashedControlSessionPassword();
+		setConfigChanged(true);
 	}
 
 	public boolean is__ReloadTorrcOnSIGHUP() {
@@ -261,10 +278,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void set__ReloadTorrcOnSIGHUP(boolean reloadTorrcOnSIGHUP) {
 		__ReloadTorrcOnSIGHUP = reloadTorrcOnSIGHUP;
+		setConfigChanged(true);
 	}
 
 	public void setDefault__ReloadTorrcOnSIGHUP() {
 		__ReloadTorrcOnSIGHUP = new TorConfigDefaults().is__ReloadTorrcOnSIGHUP();
+		setConfigChanged(true);
 	}
 
 	public String getConfigFile() {
@@ -273,10 +292,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setConfigFile(String configFile) {
 		this.configFile = configFile;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultConfigFile() {
 		this.configFile = new TorConfigDefaults().getConfigFile();
+		setConfigChanged(true);
 	}
 
 	public long getBandwidthRate() {
@@ -285,10 +306,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setBandwidthRate(long bandwidthRate) {
 		this.bandwidthRate = bandwidthRate;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultBandwidthRate() {
 		this.bandwidthRate = new TorConfigDefaults().getBandwidthRate();
+		setConfigChanged(true);
 	}
 
 	public long getBandwidthBurst() {
@@ -297,10 +320,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setBandwidthBurst(long bandwidthBurst) {
 		this.bandwidthBurst = bandwidthBurst;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultBandwidthBurst() {
 		this.bandwidthBurst = new TorConfigDefaults().getBandwidthBurst();
+		setConfigChanged(true);
 	}
 
 	public long getMaxAdvertisedBandwidth() {
@@ -309,10 +334,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setMaxAdvertisedBandwidth(long maxAdvertisedBandwidth) {
 		this.maxAdvertisedBandwidth = maxAdvertisedBandwidth;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultMaxAdvertisedBandwidth() {
 		this.maxAdvertisedBandwidth = new TorConfigDefaults().getMaxAdvertisedBandwidth();
+		setConfigChanged(true);
 	}
 
 	public short getControlPort() {
@@ -321,10 +348,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setControlPort(short controlPort) {
 		this.controlPort = controlPort;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultControlPort() {
 		this.controlPort = new TorConfigDefaults().getControlPort();
+		setConfigChanged(true);
 	}
 
 	public String getHashedControlPassword() {
@@ -333,10 +362,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setHashedControlPassword(String hashedControlPassword) {
 		this.hashedControlPassword = hashedControlPassword;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultHashedControlPassword() {
 		this.hashedControlPassword = new TorConfigDefaults().getHashedControlPassword();
+		setConfigChanged(true);
 	}
 
 	public boolean isCookieAuthentication() {
@@ -345,10 +376,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setCookieAuthentication(boolean cookieAuthentication) {
 		this.cookieAuthentication = cookieAuthentication;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultCookieAuthentication() {
 		this.cookieAuthentication = new TorConfigDefaults().isCookieAuthentication();
+		setConfigChanged(true);
 	}
 
 	public long getDirFetchPeriod() {
@@ -357,10 +390,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setDirFetchPeriod(long dirFetchPeriod) {
 		this.dirFetchPeriod = dirFetchPeriod;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultDirFetchPeriod() {
 		this.dirFetchPeriod = new TorConfigDefaults().getDirFetchPeriod();
+		setConfigChanged(true);
 	}
 
 	public String[] getDirServer() {
@@ -369,10 +404,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setDirServer(String[] dirServer) {
 		this.dirServer = dirServer;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultDirServer() {
 		this.dirServer = new TorConfigDefaults().getDirServer();
+		setConfigChanged(true);
 	}
 
 	public boolean isDisableAllSwap() {
@@ -381,10 +418,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setDisableAllSwap(boolean disableAllSwap) {
 		this.disableAllSwap = disableAllSwap;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultDisableAllSwap() {
 		this.disableAllSwap = new TorConfigDefaults().isDisableAllSwap();
+		setConfigChanged(true);
 	}
 
 	public String getGroup() {
@@ -393,10 +432,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setGroup(String group) {
 		this.group = group;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultGroup() {
 		this.group = new TorConfigDefaults().getGroup();
+		setConfigChanged(true);
 	}
 
 	public String getHttpProxy() {
@@ -405,10 +446,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setHttpProxy(String httpProxy) {
 		this.httpProxy = httpProxy;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultHttpProxy() {
 		this.httpProxy = new TorConfigDefaults().getHttpProxy();
+		setConfigChanged(true);
 	}
 
 	public String getHttpProxyAuthenticator() {
@@ -417,10 +460,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setHttpProxyAuthenticator(String httpProxyAuthenticator) {
 		this.httpProxyAuthenticator = httpProxyAuthenticator;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultHttpProxyAuthenticator() {
 		this.httpProxyAuthenticator = new TorConfigDefaults().getHttpProxyAuthenticator();
+		setConfigChanged(true);
 	}
 
 	public String getHttpsProxy() {
@@ -429,10 +474,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setHttpsProxy(String httpsProxy) {
 		this.httpsProxy = httpsProxy;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultHttpsProxy() {
 		this.httpsProxy = new TorConfigDefaults().getHttpsProxy();
+		setConfigChanged(true);
 	}
 
 	public String getHttpsProxyAuthenticator() {
@@ -441,10 +488,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setHttpsProxyAuthenticator(String httpsProxyAuthenticator) {
 		this.httpsProxyAuthenticator = httpsProxyAuthenticator;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultHttpsProxyAuthenticator() {
 		this.httpsProxyAuthenticator = new TorConfigDefaults().getHttpsProxyAuthenticator();
+		setConfigChanged(true);
 	}
 
 	public int getKeepalivePeriod() {
@@ -453,10 +502,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setKeepalivePeriod(int keepalivePeriod) {
 		this.keepalivePeriod = keepalivePeriod;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultKeepalivePeriod() {
 		this.keepalivePeriod = new TorConfigDefaults().getKeepalivePeriod();
+		setConfigChanged(true);
 	}
 
 	public String[] getLog() {
@@ -465,10 +516,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setLog(String[] log) {
 		this.log = log;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultLog() {
 		this.log = new TorConfigDefaults().getLog();
+		setConfigChanged(true);
 	}
 
 	public int getMaxConn() {
@@ -477,10 +530,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setMaxConn(int maxConn) {
 		this.maxConn = maxConn;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultMaxConn() {
 		this.maxConn = new TorConfigDefaults().getMaxConn();
+		setConfigChanged(true);
 	}
 
 	public InetAddress getOutboundBindAddress() {
@@ -489,10 +544,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setOutboundBindAddress(InetAddress outboundBindAddress) {
 		this.outboundBindAddress = outboundBindAddress;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultOutboundBindAddress() {
 		this.outboundBindAddress = new TorConfigDefaults().getOutboundBindAddress();
+		setConfigChanged(true);
 	}
 
 	public String getPidFile() {
@@ -501,10 +558,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setPidFile(String pidFile) {
 		this.pidFile = pidFile;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultPidFile() {
 		this.pidFile = new TorConfigDefaults().getPidFile();
+		setConfigChanged(true);
 	}
 
 	public boolean isRunAsDaemon() {
@@ -513,10 +572,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setRunAsDaemon(boolean runAsDaemon) {
 		this.runAsDaemon = runAsDaemon;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultRunAsDaemon() {
 		this.runAsDaemon = new TorConfigDefaults().isRunAsDaemon();
+		setConfigChanged(true);
 	}
 
 	public boolean isSafeLogging() {
@@ -525,10 +586,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setSafeLogging(boolean safeLogging) {
 		this.safeLogging = safeLogging;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultSafeLogging() {
 		this.safeLogging = new TorConfigDefaults().isSafeLogging();
+		setConfigChanged(true);
 	}
 
 	public long getStatusFetchPeriod() {
@@ -537,10 +600,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setStatusFetchPeriod(long statusFetchPeriod) {
 		this.statusFetchPeriod = statusFetchPeriod;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultStatusFetchPeriod() {
 		this.statusFetchPeriod = new TorConfigDefaults().getStatusFetchPeriod();
+		setConfigChanged(true);
 	}
 
 	public String getUser() {
@@ -549,10 +614,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setUser(String user) {
 		this.user = user;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultUser() {
 		this.user = new TorConfigDefaults().getUser();
+		setConfigChanged(true);
 	}
 
 	public boolean isHardwareAccel() {
@@ -561,10 +628,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setHardwareAccel(boolean hardwareAccel) {
 		this.hardwareAccel = hardwareAccel;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultHardwareAccel() {
 		this.hardwareAccel = new TorConfigDefaults().isHardwareAccel();
+		setConfigChanged(true);
 	}
 
 	public String getAllowUnverifiedNodes() {
@@ -573,10 +642,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setAllowUnverifiedNodes(String allowUnverifiedNodes) {
 		this.allowUnverifiedNodes = allowUnverifiedNodes;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultAllowUnverifiedNodes() {
 		this.allowUnverifiedNodes = new TorConfigDefaults().getAllowUnverifiedNodes();
+		setConfigChanged(true);
 	}
 
 	public boolean isClientOnly() {
@@ -585,10 +656,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setClientOnly(boolean clientOnly) {
 		this.clientOnly = clientOnly;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultClientOnly() {
 		this.clientOnly = new TorConfigDefaults().isClientOnly();
+		setConfigChanged(true);
 	}
 
 	public String[] getEntryNodes() {
@@ -597,10 +670,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setEntryNodes(String[] entryNodes) {
 		this.entryNodes = entryNodes;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultEntryNodes() {
 		this.entryNodes = new TorConfigDefaults().getEntryNodes();
+		setConfigChanged(true);
 	}
 
 	public String[] getExitNodes() {
@@ -609,10 +684,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setExitNodes(String[] exitNodes) {
 		this.exitNodes = exitNodes;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultExitNodes() {
 		this.exitNodes = new TorConfigDefaults().getExitNodes();
+		setConfigChanged(true);
 	}
 
 	public String[] getExcludeNodes() {
@@ -621,10 +698,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setExcludeNodes(String[] excludeNodes) {
 		this.excludeNodes = excludeNodes;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultExcludeNodes() {
 		this.excludeNodes = new TorConfigDefaults().getExcludeNodes();
+		setConfigChanged(true);
 	}
 
 	public boolean isStrictExitNodes() {
@@ -633,10 +712,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setStrictExitNodes(boolean strictExitNodes) {
 		this.strictExitNodes = strictExitNodes;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultStrictExitNodes() {
 		this.strictExitNodes = new TorConfigDefaults().isStrictExitNodes();
+		setConfigChanged(true);
 	}
 
 	public boolean isStrictEntryNodes() {
@@ -645,10 +726,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setStrictEntryNodes(boolean strictEntryNodes) {
 		this.strictEntryNodes = strictEntryNodes;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultStrictEntryNodes() {
 		this.strictEntryNodes = new TorConfigDefaults().isStrictEntryNodes();
+		setConfigChanged(true);
 	}
 
 	public boolean isFascistFirewall() {
@@ -657,10 +740,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setFascistFirewall(boolean fascistFirewall) {
 		this.fascistFirewall = fascistFirewall;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultFascistFirewall() {
 		this.fascistFirewall = new TorConfigDefaults().isFascistFirewall();
+		setConfigChanged(true);
 	}
 
 	public short[] getFirewallPorts() {
@@ -669,10 +754,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setFirewallPorts(short[] firewallPorts) {
 		this.firewallPorts = firewallPorts;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultFirewallPorts() {
 		this.firewallPorts = new TorConfigDefaults().getFirewallPorts();
+		setConfigChanged(true);
 	}
 
 	public String[] getFirewallIPs() {
@@ -681,10 +768,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setFirewallIPs(String[] firewallIPs) {
 		this.firewallIPs = firewallIPs;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultFirewallIPs() {
 		this.firewallIPs = new TorConfigDefaults().getFirewallIPs();
+		setConfigChanged(true);
 	}
 
 	public short[] getLongLivedPorts() {
@@ -693,10 +782,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setLongLivedPorts(short[] longLivedPorts) {
 		this.longLivedPorts = longLivedPorts;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultLongLivedPorts() {
 		this.longLivedPorts = new TorConfigDefaults().getLongLivedPorts();
+		setConfigChanged(true);
 	}
 
 	public String[] getMapAddress() {
@@ -705,10 +796,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setMapAddress(String[] mapAddress) {
 		this.mapAddress = mapAddress;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultMapAddress() {
 		this.mapAddress = new TorConfigDefaults().getMapAddress();
+		setConfigChanged(true);
 	}
 
 	public long getNewCircuitPeriod() {
@@ -717,10 +810,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setNewCircuitPeriod(long newCircuitPeriod) {
 		this.newCircuitPeriod = newCircuitPeriod;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultNewCircuitPeriod() {
 		this.newCircuitPeriod = new TorConfigDefaults().getNewCircuitPeriod();
+		setConfigChanged(true);
 	}
 
 	public long getMaxCircuitDirtiness() {
@@ -729,10 +824,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setMaxCircuitDirtiness(long maxCircuitDirtiness) {
 		this.maxCircuitDirtiness = maxCircuitDirtiness;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultMaxCircuitDirtiness() {
 		this.maxCircuitDirtiness = new TorConfigDefaults().getMaxCircuitDirtiness();
+		setConfigChanged(true);
 	}
 
 	public String[] getNodeFamily() {
@@ -741,10 +838,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setNodeFamily(String[] nodeFamily) {
 		this.nodeFamily = nodeFamily;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultNodeFamily() {
 		this.nodeFamily = new TorConfigDefaults().getNodeFamily();
+		setConfigChanged(true);
 	}
 
 	public String[] getRendNodes() {
@@ -753,10 +852,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setRendNodes(String[] rendNodes) {
 		this.rendNodes = rendNodes;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultRendNodes() {
 		this.rendNodes = new TorConfigDefaults().getRendNodes();
+		setConfigChanged(true);
 	}
 
 	public String[] getRendExcludeNodes() {
@@ -765,10 +866,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setRendExcludeNodes(String[] rendExcludeNodes) {
 		this.rendExcludeNodes = rendExcludeNodes;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultRendExcludeNodes() {
 		this.rendExcludeNodes = new TorConfigDefaults().getRendExcludeNodes();
+		setConfigChanged(true);
 	}
 
 	public short getSocksPort() {
@@ -777,10 +880,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setSocksPort(short socksPort) {
 		this.socksPort = socksPort;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultSocksPort() {
 		this.socksPort = new TorConfigDefaults().getSocksPort();
+		setConfigChanged(true);
 	}
 
 	public String getSocksBindAddress() {
@@ -789,10 +894,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setSocksBindAddress(String socksBindAddress) {
 		this.socksBindAddress = socksBindAddress;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultSocksBindAddress() {
 		this.socksBindAddress = new TorConfigDefaults().getSocksBindAddress();
+		setConfigChanged(true);
 	}
 
 	public String getSocksPolicy() {
@@ -801,10 +908,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setSocksPolicy(String socksPolicy) {
 		this.socksPolicy = socksPolicy;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultSocksPolicy() {
 		this.socksPolicy = new TorConfigDefaults().getSocksPolicy();
+		setConfigChanged(true);
 	}
 
 	public String[] getTrackHostExits() {
@@ -813,10 +922,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setTrackHostExits(String[] trackHostExits) {
 		this.trackHostExits = trackHostExits;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultTrackHostExits() {
 		this.trackHostExits = new TorConfigDefaults().getTrackHostExits();
+		setConfigChanged(true);
 	}
 
 	public long getTrackHostExitsExpire() {
@@ -825,10 +936,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setTrackHostExitsExpire(long trackHostExitsExpire) {
 		this.trackHostExitsExpire = trackHostExitsExpire;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultTrackHostExitsExpire() {
 		this.trackHostExitsExpire = new TorConfigDefaults().getTrackHostExitsExpire();
+		setConfigChanged(true);
 	}
 
 	public boolean isUseHelperNodes() {
@@ -837,10 +950,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setUseHelperNodes(boolean useHelperNodes) {
 		this.useHelperNodes = useHelperNodes;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultUseHelperNodes() {
 		this.useHelperNodes = new TorConfigDefaults().isUseHelperNodes();
+		setConfigChanged(true);
 	}
 
 	public int getNumHelperNodes() {
@@ -849,10 +964,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setNumHelperNodes(int numHelperNodes) {
 		this.numHelperNodes = numHelperNodes;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultNumHelperNodes() {
 		this.numHelperNodes = new TorConfigDefaults().getNumHelperNodes();
+		setConfigChanged(true);
 	}
 
 	public String[] getHiddenServiceDir() {
@@ -861,10 +978,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setHiddenServiceDir(String[] hiddenServiceDir) {
 		this.hiddenServiceDir = hiddenServiceDir;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultHiddenServiceDir() {
 		this.hiddenServiceDir = new TorConfigDefaults().getHiddenServiceDir();
+		setConfigChanged(true);
 	}
 
 	public String[] getHiddenServicePort() {
@@ -873,10 +992,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setHiddenServicePort(String[] hiddenServicePort) {
 		this.hiddenServicePort = hiddenServicePort;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultHiddenServicePort() {
 		this.hiddenServicePort = new TorConfigDefaults().getHiddenServicePort();
+		setConfigChanged(true);
 	}
 
 	public String[] getHiddenServiceNodes() {
@@ -885,10 +1006,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setHiddenServiceNodes(String[] hiddenServiceNodes) {
 		this.hiddenServiceNodes = hiddenServiceNodes;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultHiddenServiceNodes() {
 		this.hiddenServiceNodes = new TorConfigDefaults().getHiddenServiceNodes();
+		setConfigChanged(true);
 	}
 
 	public String[] getHiddenServiceExcludeNodes() {
@@ -897,10 +1020,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setHiddenServiceExcludeNodes(String[] hiddenServiceExcludeNodes) {
 		this.hiddenServiceExcludeNodes = hiddenServiceExcludeNodes;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultHiddenServiceExcludeNodes() {
 		this.hiddenServiceExcludeNodes = new TorConfigDefaults().getHiddenServiceExcludeNodes();
+		setConfigChanged(true);
 	}
 
 	public String getHiddenServiceVersion() {
@@ -909,10 +1034,12 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setHiddenServiceVersion(String hiddenServiceVersion) {
 		this.hiddenServiceVersion = hiddenServiceVersion;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultHiddenServiceVersion() {
 		this.hiddenServiceVersion = new TorConfigDefaults().getHiddenServiceVersion();
+		setConfigChanged(true);
 	}
 
 	public long getRendPostPeriod() {
@@ -921,17 +1048,45 @@ public class TorConfigImpl implements TorConfig {
 
 	public void setRendPostPeriod(long rendPostPeriod) {
 		this.rendPostPeriod = rendPostPeriod;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultRendPostPeriod() {
 		this.rendPostPeriod = new TorConfigDefaults().getRendPostPeriod();
+		setConfigChanged(true);
 	}
 
 	public void setDataDirectory(File dataDirectory) {
 		this.dataDirectory = dataDirectory;
+		setConfigChanged(true);
 	}
 
 	public void setDefaultDataDirectory() {
 		this.dataDirectory = new TorConfigDefaults().getDataDirectory();
+		setConfigChanged(true);
+	}
+
+	public void registerConfigChangedHandler(EventHandler eh) {
+		configChangedManager.addListener(eh);
+	}
+
+	public void unregisterConfigChangedHandler(EventHandler eh) {
+		configChangedManager.removeListener(eh);
+	}
+
+	public boolean isConfigChanged() {
+		synchronized (this) {
+			return configChanged;
+		}
+	}
+
+	public EventManager getConfigChangedManager() {
+		return configChangedManager;
+	}
+
+	public void setConfigChanged(boolean configChanged) {
+		synchronized (this) {
+			this.configChanged = configChanged;
+		}
 	}
 }
