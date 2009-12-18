@@ -180,6 +180,15 @@ public class ControlCommandParser {
 		else if (command.equals("usefeature")) {
 			ControlCommandUseFeature.handleUseFeature(cch, args);
 		}
+		
+		else if (command.equals("setevents")) {
+			try {
+				ControlCommandSetEvent.handleSetEvent(cch, args);
+				cch.write("250 OK");
+			} catch (KeyNotFoundException e) {
+				cch.write("552 Unrecognized event");
+			}
+		}
 	}
 
 	/** Removes any unescaped quotes from a given string */

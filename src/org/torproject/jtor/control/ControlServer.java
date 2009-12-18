@@ -3,6 +3,7 @@ package org.torproject.jtor.control;
 import java.net.InetAddress;
 
 import org.torproject.jtor.Logger;
+import org.torproject.jtor.Tor;
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.control.auth.ControlAuthenticator;
 
@@ -14,6 +15,7 @@ public abstract class ControlServer extends Thread {
 
     protected InetAddress host;
     protected TorConfig tc;
+    protected Tor tor;
     protected Logger logger;
     protected boolean running = false;
 
@@ -22,7 +24,8 @@ public abstract class ControlServer extends Thread {
     public abstract void disconnectHandler(ControlConnectionHandler cch);
     public abstract String getProtocol();
 
-    public ControlServer(TorConfig tc, Logger logger) {
+    public ControlServer(Tor tor, TorConfig tc, Logger logger) {
+    	this.tor = tor;
         this.tc = tc;
         this.logger = logger;
         if (tc.isCookieAuthentication()) {
@@ -44,6 +47,10 @@ public abstract class ControlServer extends Thread {
     
     public Logger getLogger() {
     	return logger;
+    }
+    
+    public Tor getTor() {
+    	return tor;
     }
 
 }

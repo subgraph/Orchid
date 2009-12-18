@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.Vector;
 
 import org.torproject.jtor.Logger;
+import org.torproject.jtor.Tor;
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.config.impl.TorConfigImpl;
 import org.torproject.jtor.control.ControlConnectionHandler;
@@ -21,8 +22,8 @@ public class ControlServerTCP extends ControlServer {
 
 	private Vector<ControlConnectionHandler> connections = new Vector<ControlConnectionHandler>();
 
-	public ControlServerTCP(TorConfig tc, Logger logger) {
-		super(tc, logger);
+	public ControlServerTCP(Tor tor, TorConfig tc, Logger logger) {
+		super(tor, tc, logger);
 	}
 
 	@Override
@@ -86,7 +87,7 @@ public class ControlServerTCP extends ControlServer {
 		tc.loadConf();
 		tc.setControlPort((short)9051);
 		tc.saveConf();
-		ControlServer cs = new ControlServerTCP(tc, logger);
+		ControlServer cs = new ControlServerTCP(new Tor(), tc, logger);
 		cs.startServer();
 	}
 

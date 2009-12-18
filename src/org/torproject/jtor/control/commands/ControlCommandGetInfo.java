@@ -46,6 +46,18 @@ public class ControlCommandGetInfo {
 			throw new FeatureNotSupportedException();
 		}
 		
+		else if (key.equals("events/names")) {
+			String ret = "";
+			for (String event : ControlCommandSetEvent.supportedEvents) {
+				ret += event + " ";
+			}
+			return ret.replaceAll("(.*)\\s+$", "$1"); // strip trailing whitespace
+		}
+		
+		else if (key.equals("features/names")) {
+			return ""; // TODO this probably needs a better solution
+		}
+		
 		throw new KeyNotFoundException();
 	}
 }

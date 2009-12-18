@@ -1,18 +1,33 @@
 package org.torproject.jtor.control.commands;
 
+import org.torproject.jtor.Tor;
 import org.torproject.jtor.control.ControlConnectionHandler;
 import org.torproject.jtor.control.KeyNotFoundException;
 
 public class ControlCommandSetEvent {
 	
 	public static void handleSetEvent(ControlConnectionHandler cch, String in) throws KeyNotFoundException {
-		String [] eventtypes = in.toLowerCase().split(" ");
+		String[] eventtypes = in.toLowerCase().split(" ");
+		if (eventtypes[0].equals("extended")) {
+			String[] temp = new String[eventtypes.length-1];
+			System.arraycopy(eventtypes, 1, temp, 0, temp.length);
+			eventtypes = temp;
+		}
+		
 		for (String event : eventtypes) {
 			if (!verifyEvent(event)) {
 				throw new KeyNotFoundException();
 			}
 		}
 		
+		Tor tor = cch.getControlServer().getTor();
+		cch.getEventQueue().resetAllHandlers(tor.getDirectory());
+		
+		for (String event : eventtypes) {
+			if (event.equals("newconsensus")) {
+				cch.getEventQueue().addNewConsensusHandler(tor.getDirectory());
+			}
+		}
 		
 	}
 	

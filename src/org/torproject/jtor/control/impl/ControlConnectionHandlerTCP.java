@@ -58,7 +58,7 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
         try {
             OutputStreamWriter out = new OutputStreamWriter(s.getOutputStream());
 
-            cs.getLogger().debug("Control Connection TCP: sending " + w);
+            cs.getLogger().debug("Control Connection TCP:  sending " + w);
 
             out.write(w + "\r\n");
             out.flush();

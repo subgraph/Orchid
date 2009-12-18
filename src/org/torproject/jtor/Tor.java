@@ -48,7 +48,7 @@ public class Tor {
 		streamManager = new StreamManager();
 		circuitManager = new CircuitManagerImpl(directory, connectionManager, streamManager, logger);
 		statusManager = new NetworkStatusManager(directory, logger);
-		controlServer = new ControlServerTCP(config, logger);
+		controlServer = new ControlServerTCP(this, config, logger);
 	}
 	
 	
@@ -58,9 +58,7 @@ public class Tor {
 		directory.loadFromStore();
 		statusManager.startDownloadingDocuments();
 		circuitManager.startBuildingCircuits();
-		if (config.getControlPort() > 0) {
-			controlServer.startServer();
-		}
+		controlServer.startServer();
 	}
 	
 	public Circuit createCircuitFromNicknames(List<String> nicknamePath) {
