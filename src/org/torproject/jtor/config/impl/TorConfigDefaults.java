@@ -34,7 +34,7 @@ public class TorConfigDefaults {
     
     private int keepalivePeriod = 300;
     
-    private String[] log;
+    private String[] log = new String[0];
     
     private int maxConn = 1024;
     private InetAddress outboundBindAddress;
@@ -52,41 +52,41 @@ public class TorConfigDefaults {
     private String allowUnverifiedNodes = "middle,rendezvous";
     private boolean clientOnly = false;
     
-    private String[] entryNodes;
-    private String[] exitNodes;
-    private String[] excludeNodes;
+    private String[] entryNodes = new String[0];
+    private String[] exitNodes = new String[0];
+    private String[] excludeNodes = new String[0];
     private boolean strictExitNodes = false;
     private boolean strictEntryNodes = false;
     
     private boolean fascistFirewall = false;
     private short[] firewallPorts = { 80, 443 };
-    private String[] firewallIPs;
+    private String[] firewallIPs = new String[0];
     
     private short[] longLivedPorts = { 21, 22, 706, 1863, 5050, 5190, 5222, 5223, 6667, 8300, 8888 };
     
-    private String[] mapAddress;
+    private String[] mapAddress = new String[0];
     
     private long newCircuitPeriod = 30;
     private long maxCircuitDirtiness = 600;
     
-    private String[] nodeFamily;
-    private String[] rendNodes;
-    private String[] rendExcludeNodes;
+    private String[] nodeFamily = new String[0];
+    private String[] rendNodes = new String[0];
+    private String[] rendExcludeNodes = new String[0];
     
     private short socksPort = 9050;
     private String socksBindAddress = "127.0.0.1";
     private String socksPolicy;
     
-    private String[] trackHostExits;
+    private String[] trackHostExits = new String[0];
     private long trackHostExitsExpire = 1800;
     
     private boolean useHelperNodes = true;
     private int numHelperNodes = 3;
     
-    private String[] hiddenServiceDir;
-    private String[] hiddenServicePort;
-    private String[] hiddenServiceNodes;
-    private String[] hiddenServiceExcludeNodes;
+    private String[] hiddenServiceDir = new String[0];
+    private String[] hiddenServicePort = new String[0];
+    private String[] hiddenServiceNodes = new String[0];
+    private String[] hiddenServiceExcludeNodes = new String[0];
     private String hiddenServiceVersion = "0,2";
     private long rendPostPeriod = 1200;
     

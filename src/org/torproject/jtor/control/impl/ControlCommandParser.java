@@ -70,8 +70,8 @@ public class ControlCommandParser {
 						pairs.put("HiddenServicePort", ControlCommandGetConf.handleGetConf(cch, "HiddenServicePort"));
 						pairs.put("HiddenServiceNodes", ControlCommandGetConf.handleGetConf(cch, "HiddenServiceNodes"));
 						pairs.put("HiddenServiceExcludeNodes", ControlCommandGetConf.handleGetConf(cch, "HiddenServiceExcludeNodes"));
-					} else {
-						String value = ControlCommandGetConf.handleGetConf(cch, confs[i]);
+					} else {						
+						String value = ControlCommandGetConf.handleGetConf(cch, confs[i]);						
 						pairs.put(confs[i], value);
 					}
 				} catch (KeyNotFoundException e) {
@@ -87,9 +87,11 @@ public class ControlCommandParser {
 				String key = (String)it.next();
 				String val = ((String)pairs.get(key));
 
-				if (val == null) {
+				if (val == null || val.equals("")) {
 					cch.write("250 " + key);
+					continue;
 				}
+				
 				String[] vals = val.split("\n");
 				for (int i = 0; i < vals.length; i++) {
 					if (vals[i] == null || vals[i].equals("")) {
