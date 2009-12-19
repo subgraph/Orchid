@@ -12,16 +12,19 @@ import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.config.impl.TorConfigImpl;
 import org.torproject.jtor.control.ControlConnectionHandler;
 import org.torproject.jtor.control.ControlServer;
+import org.torproject.jtor.events.Event;
+import org.torproject.jtor.events.EventHandler;
 import org.torproject.jtor.logging.ConsoleLogger;
 
 /**
  *
  * @author Merlijn Hofstra
  */
-public class ControlServerTCP extends ControlServer {
+public class ControlServerTCP extends ControlServer implements EventHandler {
 
 	private Vector<ControlConnectionHandler> connections = new Vector<ControlConnectionHandler>();
-
+	private ServerSocket ss;
+	
 	public ControlServerTCP(Tor tor, TorConfig tc, Logger logger) {
 		super(tor, tc, logger);
 	}
@@ -36,7 +39,6 @@ public class ControlServerTCP extends ControlServer {
 
 	@Override
 	public void run() {
-		ServerSocket ss = null;
 		try {
 			if (host != null) {
 				ss = new ServerSocket(tc.getControlPort(), 0, host);
@@ -46,6 +48,9 @@ public class ControlServerTCP extends ControlServer {
 		} catch (IOException ex) {
 			running = false;
 		}
+		
+		tc.registerConfigChangedHandler(this);
+		
 		while (running) {
 			try {
 				Socket s = ss.accept();
@@ -67,6 +72,7 @@ public class ControlServerTCP extends ControlServer {
 		while (i.hasNext()) {
 			((ControlConnectionHandler)i.next()).disconnect();
 		}
+		tc.unregisterConfigChangedHandler(this);
 	}
 
 	public void disconnectHandler(ControlConnectionHandler cch) {
@@ -78,6 +84,18 @@ public class ControlServerTCP extends ControlServer {
 	@Override
 	public String getProtocol() {
 		return "TCP";
+	}
+
+	/*
+	 * Catches configuration updates
+	 * (non-Javadoc)
+	 * @see org.torproject.jtor.events.EventHandler#handleEvent(org.torproject.jtor.events.Event)
+	 */
+	public void handleEvent(Event event) {
+		if (tc.getControlPort() != ss.getLocalPort()) {
+			stopServer();
+			startServer();
+		}
 	}
 	
 	public static void main(String[] arg) {
