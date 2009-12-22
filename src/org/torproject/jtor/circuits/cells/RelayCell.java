@@ -26,6 +26,20 @@ public interface RelayCell extends Cell {
 	final static int RELAY_RESOLVED = 12;
 	final static int RELAY_BEGIN_DIR = 13;
 	
+	final static int REASON_MISC = 1;
+	final static int REASON_RESOLVEFAILED = 2;
+	final static int REASON_CONNECTREFUSED = 3;
+	final static int REASON_EXITPOLICY = 4;
+	final static int REASON_DESTROY = 5;
+	final static int REASON_DONE = 6;
+	final static int REASON_TIMEOUT = 7;
+	final static int REASON_HIBERNATING = 9;
+	final static int REASON_INTERNAL = 10;
+	final static int REASON_RESOURCELIMIT = 11;
+	final static int REASON_CONNRESET = 12;
+	final static int REASON_TORPROTOCOL = 13;
+	final static int REASON_NOTDIRECTORY = 14;
+
 	int getStreamId();
 	int getRelayCommand();
 	CircuitNode getCircuitNode();

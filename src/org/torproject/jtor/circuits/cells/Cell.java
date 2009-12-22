@@ -32,6 +32,21 @@ public interface Cell {
 	/** Command constant for a RELAY_EARLY type cell. */
 	final static int RELAY_EARLY = 9;
 
+	final static int ERROR_NONE = 0;
+	final static int ERROR_PROTOCOL = 1;
+	final static int ERROR_INTERNAL = 2;
+	final static int ERROR_REQUESTED = 3;
+	final static int ERROR_HIBERNATING = 4;
+	final static int ERROR_RESOURCELIMIT = 5;
+	final static int ERROR_CONNECTFAILED = 6;
+	final static int ERROR_OR_IDENTITY = 7;
+	final static int ERROR_OR_CONN_CLOSED = 8;
+	final static int ERROR_FINISHED = 9;
+	final static int ERROR_TIMEOUT = 10;
+	final static int ERROR_DESTROYED = 11;
+	final static int ERROR_NOSUCHSERVICE = 12;
+
+
 	/**
 	 * The fixed size of a standard cell.
 	 */
@@ -201,4 +216,6 @@ public interface Cell {
 	 * @return The cell data as an array of bytes.
 	 */
 	byte[] getCellBytes();
+
+	void putString(String string);
 }
