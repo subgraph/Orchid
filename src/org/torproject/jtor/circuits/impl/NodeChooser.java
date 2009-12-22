@@ -9,22 +9,21 @@ import java.util.List;
 import java.util.Set;
 
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.Router;
 
 public class NodeChooser {
-	final private StreamManager streamManager;
+	final private StreamManagerImpl streamManager;
 	final private Directory directory;
 	private final SecureRandom random;
-	
-	NodeChooser(StreamManager streamManager, Directory directory) {
+
+	NodeChooser(StreamManagerImpl streamManager, Directory directory) {
 		this.streamManager = streamManager;
 		this.directory = directory;
 		this.random = createRandom();
 	}
-	
+
 	private static SecureRandom createRandom() {
 		try {
 			return SecureRandom.getInstance("SHA1PRNG");
@@ -32,8 +31,7 @@ public class NodeChooser {
 			throw new TorException(e);
 		}
 	}
-	
-	
+
 	Router chooseEntryNode(NodeChoiceConstraints ncc) {
 		ncc.setNeedGuard(true);
 		ncc.setWeightAsGuard(true);
@@ -42,40 +40,41 @@ public class NodeChooser {
 				ncc.getExcludedRouters());
 		return chooseRandomRouterByBandwidth(filteredRouters, ncc);
 	}
-	
+
 	Router chooseMiddleNode(NodeChoiceConstraints ncc) {
 		final List<Router> filteredRouters = filterForRouterList(directory.getAllRouters(), ncc.getExcludedRouters());
 		return chooseRandomRouterByBandwidth(filteredRouters, ncc);
 	}
-	
+
 	private List<Router> filterForRouterList(List<Router> routers, List<Router> excludedRouters) {
 		final List<Router> resultRouters = new ArrayList<Router>();
 		final Set<Router> excludedSet = routerListToSet(excludedRouters);
-		
+
 		for(Router r : routers) { 
 			if(!excludedSet.contains(r))
 				resultRouters.add(r);
 		}
-		
+
 		return resultRouters;
 	}
-	
+
 	private Set<Router> routerListToSet(List<Router> routers) {
 		final Set<Router> routerSet = new HashSet<Router>();
 		for(Router r : routers)
 			routerSet.add(r);
 		return routerSet;
 	}
+
 	Router chooseExitNodeForPort(int port, NodeChoiceConstraints ncc) {
-		final List<Stream> pendingExitStreams = streamManager.getPendingExitStreams();
+		final List<StreamExitRequest> pendingExitStreams = streamManager.getPendingExitStreams();
 		final List<Router> allRouters = directory.getAllRouters();
 		final List<Router> exitRouters = filterForExitDestination(allRouters, null, port);
 		final List<Router> filteredPending = filterForPendingStreams(exitRouters, pendingExitStreams);
-		
+
 		return chooseRandomRouterByBandwidth(filteredPending, ncc);
-				
+
 	}
-	
+
 	private List<Router> filterForConstraintFlags(List<Router> routers, NodeChoiceConstraints ncc) {
 		final List<Router> resultRouters = new ArrayList<Router>();
 		for(Router r : routers) {
@@ -83,7 +82,7 @@ public class NodeChooser {
 		}
 		return resultRouters;
 	}
-	
+
 	private boolean testConstraintFlags(Router router, NodeChoiceConstraints ncc) {
 		if(ncc.getNeedCapacity() && !router.isFast())
 			return false;
@@ -91,10 +90,10 @@ public class NodeChooser {
 			return false;
 		if(ncc.getNeedGuard() && !router.isPossibleGuard())
 			return false;
-		
+
 		return true;
 	}
-	
+
 	private List<Router> filterForExitDestination(List<Router> routers, IPv4Address address, int port) {
 		final List<Router> resultRouters = new ArrayList<Router>();
 		for(Router r : routers) {
@@ -105,7 +104,7 @@ public class NodeChooser {
 		return resultRouters;
 	}
 
-	private List<Router> filterForPendingStreams(List<Router> routers, List<Stream> pendingStreams) {
+	private List<Router> filterForPendingStreams(List<Router> routers, List<StreamExitRequest> pendingStreams) {
 		int bestSupport = 0;
 		if(pendingStreams.isEmpty())
 			return routers;
@@ -113,16 +112,21 @@ public class NodeChooser {
 		final int[] nSupport = new int[routers.size()];
 		for(int i = 0; i < routers.size(); i++) {
 			final Router r = routers.get(i);
-			for(Stream s: pendingStreams) {
-				if(r.exitPolicyAccepts(s.getExitAddress(), s.getExitPort()))
-					nSupport[i]++;
+			for(StreamExitRequest request: pendingStreams) {
+				if(request.isAddressRequest()) {
+					if(r.exitPolicyAccepts(request.getAddress(), request.getPort()))
+						nSupport[i]++;
+				} else {
+					if(r.exitPolicyAccepts(request.getPort()))
+						nSupport[i]++;
+				}
 			}
 			if(nSupport[i] > bestSupport)
 				bestSupport = nSupport[i];
 		}
 		if(bestSupport == 0)
 			return routers;
-		
+
 		final List<Router> results = new ArrayList<Router>();
 		for(int i = 0; i < routers.size(); i++) {
 			if(nSupport[i] == bestSupport)
@@ -130,14 +134,14 @@ public class NodeChooser {
 		}
 		return results;
 	}
-	
+
 	private boolean routerAcceptsDestination(Router router, IPv4Address address, int port) {
 		if(address == null)
 			return router.exitPolicyAccepts(port);
 		else
 			return router.exitPolicyAccepts(address, port);
 	}
-	
+
 	private Router chooseRandomRouterByBandwidth(List<Router> routers, NodeChoiceConstraints ncc) {
 		//final boolean exitWeighted = true;
 		//final boolean guardWeighted = false;
@@ -176,7 +180,7 @@ public class NodeChooser {
 					totalGuardBandwidth += thisBandwidth;
 				else
 					totalNonguardBandwidth += thisBandwidth;
-				
+
 				if(isExit)
 					totalExitBandwidth += thisBandwidth;
 				else
@@ -186,7 +190,7 @@ public class NodeChooser {
 				bandwidths[i] = -flags;
 			}
 		}
-		
+
 		if(nUnknown > 0) {
 			long avgFast, avgSlow;
 			if(totalExitBandwidth + totalNonexitBandwidth > 0) {
@@ -214,15 +218,15 @@ public class NodeChooser {
 					totalNonguardBandwidth += bandwidths[i];
 			}
 		}
-		
+
 		if(totalExitBandwidth + totalNonexitBandwidth == 0) {
 			return routers.get(random.nextInt(routers.size()));
 		}
-		
+
 		double allBandwidth = (double) (totalExitBandwidth + totalNonexitBandwidth);
 		double exitBandwidth = (double) (totalExitBandwidth);
 		double guardBandwidth = (double) totalGuardBandwidth;
-		
+
 		double exitWeight;
 		double guardWeight;
 		if(ncc.getWeightAsExit())
@@ -233,13 +237,13 @@ public class NodeChooser {
 			guardWeight = 1.0;
 		else
 			guardWeight = 1.0 - allBandwidth / (3.0 * guardBandwidth);
-		
+
 		if(exitWeight <= 0.0)
 			exitWeight = 0.0;
 		if(guardWeight <= 0.0)
 			guardWeight = 0.0;
 		totalBandwidth = 0;
-		
+
 		for(int i = 0; i < routers.size(); i++) {
 			long bw;
 			boolean isExit = exitBits.get(i);
@@ -272,15 +276,12 @@ public class NodeChooser {
 				return routers.get(i);
 			
 		}
-		
+
 		return routers.get(routers.size() - 1);
 	}
-	
+
 	private int kbToBytes(int bw) {
 		return (bw > (Integer.MAX_VALUE / 1000) ? Integer.MAX_VALUE : bw * 1000);
 	}
-	
-	
-	
 
 }
