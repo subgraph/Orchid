@@ -1,5 +1,6 @@
 package org.torproject.jtor.circuits.impl;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -22,14 +23,14 @@ public class CircuitManagerImpl implements CircuitManager {
 	private final Directory directory;
 	private final ConnectionManagerImpl connectionManager;
 	private final Logger logger;
-	private final StreamManager streamManager;
+	private final StreamManagerImpl streamManager;
 	private final Set<Circuit> pendingCircuits;
 	private final Set<Circuit> activeCircuits;
 	private final Set<Circuit> cleanCircuits;
 	private final Thread circuitCreationThread;
 	private final NodeChooser nodeChooser;
 
-	public CircuitManagerImpl(Directory directory, ConnectionManagerImpl connectionManager, StreamManager streamManager, Logger logger) {
+	public CircuitManagerImpl(Directory directory, ConnectionManagerImpl connectionManager, StreamManagerImpl streamManager, Logger logger) {
 		this.directory = directory;
 		this.connectionManager = connectionManager;
 		this.streamManager = streamManager;
@@ -50,7 +51,7 @@ public class CircuitManagerImpl implements CircuitManager {
 	}
 
 	public Circuit createCircuitFromPath(List<Router> path) {
-		return CircuitImpl.create(this, connectionManager, path);
+		return CircuitImpl.create(this, connectionManager, logger, path);
 	}
 
 	synchronized void circuitStartConnect(Circuit circuit) {
@@ -84,6 +85,7 @@ public class CircuitManagerImpl implements CircuitManager {
 			public void run() {
 				while(true) {
 					try {
+						checkUnassignedPendingStreams();
 						checkExpiredPendingCircuits();
 						checkCircuitsForCreation();
 					
@@ -111,12 +113,25 @@ public class CircuitManagerImpl implements CircuitManager {
 		ncc.addExcludedRouter(middleRouter);
 		final Router entryRouter = nodeChooser.chooseEntryNode(ncc);
 		return Arrays.asList(entryRouter, middleRouter, exitRouter);
-		
-		
 	}
 
-	private void checkExpiredPendingCircuits() {
+	private void checkUnassignedPendingStreams() {
+		final List<StreamExitRequest> pendingExitStreams = streamManager.getPendingExitStreams();
+		if(pendingExitStreams.isEmpty())
+			return;
+		final List<Circuit> ac = new ArrayList<Circuit>(activeCircuits);
+		for(Circuit c : ac) {
+			for(StreamExitRequest req : pendingExitStreams) {
+				final Router lastRouter = c.getFinalCircuitNode().getRouter();
+				if(canRouterHandleExitRequest(lastRouter, req) && req.reserveRequest()) {
+					asynchTryOpenExitStream(c, req);
+				}
+			}
+		}
 		
+	}
+	private void checkExpiredPendingCircuits() {
+
 	}
 	/* called every second */
 	private void checkCircuitsForCreation() {
@@ -150,14 +165,15 @@ public class CircuitManagerImpl implements CircuitManager {
 
 			public void circuitBuildCompleted(Circuit circuit) {
 				logger.debug("Preemptive Circuit completed to: "+ circuit);
+				preemptiveCircuitOpened(circuit);
 			}
 
 			public void circuitBuildFailed(String reason) {
-				logger.debug("Preemptive circuit build failed: "+ reason);				
+				logger.debug("Preemptive circuit build failed: "+ reason);
 			}
 
 			public void connectionCompleted(Connection connection) {
-				logger.debug("Preemptive circuit connection completed to "+ connection);				
+				logger.debug("Preemptive circuit connection completed to "+ connection);
 			}
 
 			public void connectionFailed(String reason) {
@@ -165,11 +181,53 @@ public class CircuitManagerImpl implements CircuitManager {
 			}
 
 			public void nodeAdded(CircuitNode node) {
-				logger.debug("Node added to circuit: "+ node);				
+				//logger.debug("Node added to circuit: "+ node);
 			}
-			
+
 		});
-		
+
+	}
+
+	private void preemptiveCircuitOpened(Circuit circuit) {
+		final Router lastRouter = circuit.getFinalCircuitNode().getRouter();
+		final List<StreamExitRequest> pendingExitStreams = streamManager.getPendingExitStreams();
+		for(StreamExitRequest req: pendingExitStreams) {
+			if(canRouterHandleExitRequest(lastRouter, req) && req.reserveRequest()) 
+				tryOpenExitStream(circuit, req);
+		}
+	}
+
+	private boolean canRouterHandleExitRequest(Router router, StreamExitRequest request) {
+		if(request.isAddressRequest())
+			return router.exitPolicyAccepts(request.getAddress(), request.getPort());
+		else
+			return router.exitPolicyAccepts(request.getPort());
+	}
+
+	private void asynchTryOpenExitStream(final Circuit circuit, final StreamExitRequest req) {
+		final Thread t = new Thread(new Runnable() { public void run() {
+			tryOpenExitStream(circuit, req);
+			}
+		});
+		t.run();
+	}
+
+	private void tryOpenExitStream(Circuit circuit, StreamExitRequest req) {
+		logger.debug("Attempting to open stream to "+ req);
+		final Stream stream = doOpen(circuit, req);
+		if(stream == null) {
+			req.unreserveRequest();
+			return;
+		}
+		req.setAllocatedStream(stream);
+		streamManager.streamIsConnected(req);
+	}
+
+	private Stream doOpen(Circuit circuit, StreamExitRequest req) {
+		if(req.isAddressRequest())
+			return circuit.openExitStream(req.getAddress(), req.getPort());
+		else
+			return circuit.openExitStream(req.getHostname(), req.getPort());
 	}
 
 }
