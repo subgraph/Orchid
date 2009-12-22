@@ -9,17 +9,19 @@ public class TorOutputStream extends OutputStream {
 
 	private final StreamImpl stream;
 	private RelayCell currentOutputCell;
-	
+
 	TorOutputStream(StreamImpl stream) {
 		this.stream = stream;
 	}
-	
+
 	private void flushCurrentOutputCell() {
 		if(currentOutputCell != null && currentOutputCell.cellBytesConsumed() > RelayCell.HEADER_SIZE) 
 			stream.getCircuit().sendRelayCell(currentOutputCell);
+
 		currentOutputCell = new RelayCellImpl(stream.getTargetNode(), stream.getCircuit().getCircuitId(),
 				stream.getStreamId(), RelayCell.RELAY_DATA);
 	}
+
 	@Override
 	public void write(int b) throws IOException {
 		if(currentOutputCell == null || currentOutputCell.cellBytesRemaining() == 0)
@@ -30,7 +32,7 @@ public class TorOutputStream extends OutputStream {
 	public void write(byte[] data, int offset, int length) {
 		if(currentOutputCell == null || currentOutputCell.cellBytesRemaining() == 0)
 			flushCurrentOutputCell();
-		
+
 		while(length > 0) {
 			if(length < currentOutputCell.cellBytesRemaining()) {
 				currentOutputCell.putByteArray(data, offset, length);
@@ -43,12 +45,16 @@ public class TorOutputStream extends OutputStream {
 			length -= writeCount;
 		}
 	}
-	
+
 	public void flush() {
 		flushCurrentOutputCell();
 	}
-	
+
 	public void close() {
 		stream.close();
+	}
+
+	public String toString() {
+		return "TorOutputStream stream="+ stream.getStreamId() +" node="+ stream.getTargetNode();
 	}
 }
