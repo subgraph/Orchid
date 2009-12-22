@@ -124,7 +124,15 @@ class CircuitBuilder {
 	}
 
 	private void receiveExtendResponse(CircuitNodeImpl newNode) throws IOException {
-		final RelayCell cell = circuit.receiveRelayResponse(RelayCell.RELAY_EXTENDED);
+		final RelayCell cell = circuit.receiveRelayCell();
+		final int command = cell.getRelayCommand();
+		if(command == RelayCell.RELAY_TRUNCATED) {
+			final int code = cell.getByte() & 0xFF;
+			final String msg = CellImpl.errorToDescription(code);
+			throw new TorException("Circuit build failed: "+ msg);
+		} else if (command != RelayCell.RELAY_EXTENDED) {
+			throw new TorException("Unexpected response to RELAY_EXTEND.  Command = "+ command);
+		}
 		
 		byte[] dhPublic = new byte[TorKeyAgreement.DH_LEN];
 		cell.getByteArray(dhPublic);
