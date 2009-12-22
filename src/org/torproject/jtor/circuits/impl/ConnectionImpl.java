@@ -13,7 +13,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.net.ssl.SSLSocket;
 
+import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorException;
+import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.ConnectionClosedException;
 import org.torproject.jtor.circuits.ConnectionConnectException;
@@ -31,6 +33,7 @@ public class ConnectionImpl implements Connection {
 
 	private final SSLSocket socket;
 	private final ConnectionManagerImpl manager;
+	private final Logger logger;
 	private InputStream input;
 	private OutputStream output;
 	private final Router router;
@@ -40,9 +43,10 @@ public class ConnectionImpl implements Connection {
 	private boolean isConnected;
 	private final Thread readCellsThread;
 
-	ConnectionImpl(ConnectionManagerImpl manager, SSLSocket socket, Router router) {
+	ConnectionImpl(ConnectionManagerImpl manager, Logger logger, SSLSocket socket, Router router) {
 		this.manager = manager;
-		this.socket = socket;	
+		this.logger = logger;
+		this.socket = socket;
 		this.router = router;
 		this.circuitMap = new HashMap<Integer, CircuitImpl>();
 		this.readCellsThread = new Thread(createReadCellsRunnable());
@@ -91,7 +95,7 @@ public class ConnectionImpl implements Connection {
 		output = socket.getOutputStream();
 		readCellsThread.start();
 		final ConnectionHandshakeV2 handshake = new ConnectionHandshakeV2(this, socket);
-		
+
 		handshake.runHandshake();
 	}
 
@@ -125,18 +129,18 @@ public class ConnectionImpl implements Connection {
 			socket.close();
 			isConnected = false;
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.warn("Error closing socket: "+ e.getMessage());
 		}
 	}
 
 	private Runnable createReadCellsRunnable() {
 		return new Runnable() {
 			public void run() {
-				readCellsLoop();				
+				readCellsLoop();
 			}
 		};
 	}
+
 	private void readCellsLoop() {
 		while(!Thread.interrupted()) {
 			try {
@@ -145,7 +149,7 @@ public class ConnectionImpl implements Connection {
 				notifyCircuitsLinkClosed();
 				return;
 			} catch(TorException e) {
-				System.out.println("Unhandled tor exception");
+				logger.warn("Unhandled Tor exception reading and processing cells: "+ e.getMessage());
 				e.printStackTrace();
 			}
 		}
@@ -163,6 +167,7 @@ public class ConnectionImpl implements Connection {
 			throw new ConnectionClosedException();
 		}
 	}
+
 	private void processCell(Cell cell) {
 		final int command = cell.getCommand();
 
@@ -181,7 +186,9 @@ public class ConnectionImpl implements Connection {
 			processControlCell(cell);
 			break;
 		case Cell.DESTROY:
-			System.out.println("Got destroy cell: "+ cell.getByte());
+			processDestroyCell(cell);
+			break;
+
 		default:
 			// Ignore everything else
 			break;
@@ -189,23 +196,48 @@ public class ConnectionImpl implements Connection {
 	}
 
 	private void processRelayCell(Cell cell) {
-		final CircuitImpl circuit = circuitMap.get(cell.getCircuitId());
-		if(circuit == null) {
-			System.out.println("NO CIRCUIT");
-			// XXX no circuit for relay cell
-			return;
+		synchronized(circuitMap) {
+			final CircuitImpl circuit = circuitMap.get(cell.getCircuitId());
+			if(circuit == null) {
+				logger.warn("Could not deliver relay cell for circuit id = "+ cell.getCircuitId() +" on connection "+ this +". Circuit not found");
+				return;
+			}
+			circuit.deliverRelayCell(cell);
 		}
-		circuit.deliverRelayCell(cell);
 	}
 
 	private void processControlCell(Cell cell) {
-		final CircuitImpl circuit = circuitMap.get(cell.getCircuitId());
-		if(circuit == null) {
-			System.out.println("NO CIRCUIT");
-			// XXX no circuit found
-			return;
+		synchronized(circuitMap) {
+			final CircuitImpl circuit = circuitMap.get(cell.getCircuitId());
+			if(circuit == null) {
+				logger.warn("Could not deliver control cell for circuit id = "+ cell.getCircuitId() +" on connection "+ this +". Circuit not found");
+				return;
+			}
+			circuit.deliverControlCell(cell);
 		}
-		circuit.deliverControlCell(cell);
+	}
+
+	private void processDestroyCell(Cell cell) {
+		logger.debug("DESTROY cell received ("+ CellImpl.errorToDescription(cell.getByte() & 0xFF) +")");
+		final CircuitImpl circuit;
+
+		synchronized(circuitMap) {
+			circuit = circuitMap.get(cell.getCircuitId());
+
+			if(circuit == null)
+				return;
+		}
+		circuit.destroyCircuit();
+	}
+
+	void removeCircuit(Circuit circuit) {
+		synchronized(circuitMap) {
+			circuitMap.remove(circuit.getCircuitId());
+			if(circuitMap.size() == 0) {
+				manager.removeActiveConnection(this);
+				closeSocket();
+			}
+		}
 	}
 
 	public String toString() {
