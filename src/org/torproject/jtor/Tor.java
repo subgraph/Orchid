@@ -8,7 +8,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.impl.CircuitManagerImpl;
 import org.torproject.jtor.circuits.impl.ConnectionManagerImpl;
-import org.torproject.jtor.circuits.impl.StreamManager;
+import org.torproject.jtor.circuits.impl.StreamManagerImpl;
 import org.torproject.jtor.config.impl.TorConfigImpl;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.Router;
@@ -16,16 +16,19 @@ import org.torproject.jtor.directory.impl.DirectoryImpl;
 import org.torproject.jtor.directory.impl.DocumentParserFactoryImpl;
 import org.torproject.jtor.directory.impl.NetworkStatusManager;
 import org.torproject.jtor.directory.parsing.DocumentParserFactory;
+import org.torproject.jtor.socks.SocksPortListener;
+import org.torproject.jtor.socks.impl.SocksPortListenerImpl;
 
 public class Tor {
 	private final Directory directory;
 	private final DocumentParserFactory parserFactory;
 	private final ConnectionManagerImpl connectionManager;
 	private final CircuitManagerImpl circuitManager;
-	private final StreamManager streamManager;
+	private final StreamManagerImpl streamManager;
 	private final Logger logger;
 	private final TorConfig config;
 	private final NetworkStatusManager statusManager;
+	private final SocksPortListener socksListener;
 	
 	public Tor() {
 		this(new ConsoleLogger());
@@ -37,10 +40,11 @@ public class Tor {
 		this.config = new TorConfigImpl();
 		this.directory = new DirectoryImpl(logger, config);
 		parserFactory = new DocumentParserFactoryImpl(logger);
-		connectionManager = new ConnectionManagerImpl();
-		streamManager = new StreamManager();
+		connectionManager = new ConnectionManagerImpl(logger);
+		streamManager = new StreamManagerImpl();
 		circuitManager = new CircuitManagerImpl(directory, connectionManager, streamManager, logger);
 		statusManager = new NetworkStatusManager(directory, logger);
+		socksListener = new SocksPortListenerImpl(logger, streamManager);
 	}
 	
 	
@@ -48,6 +52,7 @@ public class Tor {
 		directory.loadFromStore();
 		statusManager.startDownloadingDocuments();
 		circuitManager.startBuildingCircuits();
+		socksListener.addListeningPort(5090);
 	}
 	
 	public Circuit createCircuitFromNicknames(List<String> nicknamePath) {
