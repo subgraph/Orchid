@@ -1,6 +1,7 @@
 package org.torproject.jtor.circuits;
 
 import org.torproject.jtor.circuits.cells.RelayCell;
+import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Router;
 
 public interface Circuit {
@@ -14,7 +15,10 @@ public interface Circuit {
 	Connection getConnection();
 	int getCircuitId();
 	Stream openDirectoryStream();
+	Stream openExitStream(IPv4Address address, int port);
+	Stream openExitStream(String hostname, int port);
 	RelayCell createRelayCell(int relayCommand, int streamId, CircuitNode targetNode);
-	RelayCell receiveRelayResponse(int expectedType);
+	RelayCell receiveRelayCell();
 	void sendRelayCell(RelayCell cell);
+	CircuitNode getFinalCircuitNode();
 }
