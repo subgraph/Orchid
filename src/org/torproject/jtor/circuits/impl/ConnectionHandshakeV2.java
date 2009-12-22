@@ -29,12 +29,12 @@ public class ConnectionHandshakeV2 {
 	private final Object lock = new Object();
 	private boolean hasRenegotiated = false;
 	private boolean isFinishedHandshake = false;
-	
+
 	private final List<Integer> remoteVersions;
 	private int remoteTimestamp;
 	private IPv4Address myAddress;
 	private final List<IPv4Address> remoteAddresses;
-	
+
 	ConnectionHandshakeV2(ConnectionImpl connection, SSLSocket socket) {
 		this.connection = connection;
 		this.socket = socket;
@@ -48,7 +48,7 @@ public class ConnectionHandshakeV2 {
 		this.remoteVersions = new ArrayList<Integer>();
 		this.remoteAddresses = new ArrayList<IPv4Address>();
 	}
-	
+
 	void runHandshake() throws IOException, InterruptedException {
 		socket.startHandshake();
 		waitForHandshakeFinished();
@@ -57,27 +57,28 @@ public class ConnectionHandshakeV2 {
 		sendNetinfo();
 		recvNetinfo();
 	}
-	
+
 	int getRemoteTimestamp() {
 		return remoteTimestamp;
 	}
-	
+
 	IPv4Address getMyAddress() {
 		return myAddress;
 	}
-	
+
 	private void signalFinished() {
 		synchronized (lock) {
 			isFinishedHandshake = true;
 			lock.notifyAll();
 		}
 	}
+
 	private void processHandshakeCompleted(HandshakeCompletedEvent event) {
 		if(hasRenegotiated) {
 			signalFinished();
 			return;
 		}
-		
+
 		SSLSession session = socket.getSession();
 		session.invalidate();
 		hasRenegotiated = true;
@@ -87,25 +88,25 @@ public class ConnectionHandshakeV2 {
 		} catch (IOException e) {
 			throw new TorException(e);
 		}
-		
+
 	}
-	
+
 	private void waitForHandshakeFinished() throws InterruptedException {
 		synchronized(lock) {
 			while(!isFinishedHandshake) 
 					lock.wait();		
 		}
 	}
-	
+
 	private  void sendVersions() throws IOException {
 		final Cell cell = CellImpl.createVarCell(0, Cell.VERSIONS, SUPPORTED_CONNECTION_VERSIONS.length * 2);
 		for(int v: SUPPORTED_CONNECTION_VERSIONS)
 			cell.putShort(v);
 
 		connection.sendCell(cell);
-		
+
 	}
-	
+
 	private void receiveVersions() throws IOException {
 		try {
 			Cell c  = connection.readConnectionControlCell();
@@ -114,10 +115,8 @@ public class ConnectionHandshakeV2 {
 		} catch (ConnectionClosedException e) {
 			throw new ConnectionConnectException("Connection closed while performing handshake");
 		}
-		
-		System.out.println("VERSIONS: Got versions "+ remoteVersions);
 	}
-	
+
 	private void sendNetinfo() throws IOException {
 		final Cell cell = CellImpl.createCell(0, Cell.NETINFO);
 		// XXX this is a mess
@@ -130,11 +129,11 @@ public class ConnectionHandshakeV2 {
 		cell.putByte(4);
 		cell.putByte(4);
 		cell.putInt(0);
-		
+
 		connection.sendCell(cell);
-		
+
 	}
-	
+
 	private void recvNetinfo() throws IOException {
 		try {
 			final Cell cell = connection.readConnectionControlCell();
@@ -148,14 +147,14 @@ public class ConnectionHandshakeV2 {
 		} catch (ConnectionClosedException e) {
 			throw new ConnectionConnectException("Connection closed while performing handshake");
 		}
-			
+
 		
 	}
-	
+
 	private IPv4Address readAddress(Cell cell) {
 		final int type = cell.getByte();
 		final int len = cell.getByte();
-		
+
 		return new IPv4Address(cell.getInt());
 	}
 
