@@ -15,6 +15,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.bouncycastle.x509.X509V3CertificateGenerator;
+import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.directory.Router;
 
@@ -29,7 +30,7 @@ public class ConnectionManagerImpl {
 		new X509TrustManager() {
 			private final X509Certificate[] empty = {};
 			public void checkClientTrusted(X509Certificate[] chain, String authType)
-					throws CertificateException {				
+					throws CertificateException {
 			}
 
 			public void checkServerTrusted(X509Certificate[] chain, String authType)
@@ -41,14 +42,15 @@ public class ConnectionManagerImpl {
 			}
 		}
 	};
-	
+
 	private final Map<Router, ConnectionImpl> activeConnections;
 	X509V3CertificateGenerator b;
 
 	private final SSLContext sslContext;
+	private final Logger logger;
 	private SSLSocketFactory socketFactory;
-	
-	public ConnectionManagerImpl() {
+
+	public ConnectionManagerImpl(Logger logger) {
 		try {
 			sslContext = SSLContext.getInstance("SSLv3");
 			sslContext.init(null, NULL_TRUST, null);
@@ -59,15 +61,16 @@ public class ConnectionManagerImpl {
 		}
 		socketFactory = sslContext.getSocketFactory();
 		activeConnections = new HashMap<Router, ConnectionImpl>();
+		this.logger = logger;
 	}
-	
+
 	public ConnectionImpl createConnection(Router router) {
 		final SSLSocket socket = createSocket();
 		socket.setEnabledCipherSuites(MANDATORY_CIPHERS);
 		socket.setUseClientMode(true);
-		return new ConnectionImpl(this, socket, router);
+		return new ConnectionImpl(this, logger, socket, router);
 	}
-	
+
 	SSLSocket createSocket() {
 		try {
 			return (SSLSocket) socketFactory.createSocket();
@@ -75,24 +78,23 @@ public class ConnectionManagerImpl {
 			throw new TorException(e);
 		}
 	}
-	
+
 	void addActiveConnection(ConnectionImpl connection) {
 		synchronized(activeConnections) {
 			activeConnections.put(connection.getRouter(), connection);
 		}
 	}
-	
+
 	void removeActiveConnection(ConnectionImpl connection) {
 		synchronized(activeConnections) {
 			activeConnections.remove(connection);
 		}
 	}
-	
+
 	public ConnectionImpl findActiveLinkForRouter(Router router) {
 		synchronized(activeConnections) {
 			return activeConnections.get(router);
 		}
-		
 	}
 
 }
