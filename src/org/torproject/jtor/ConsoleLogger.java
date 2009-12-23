@@ -1,13 +1,14 @@
 package org.torproject.jtor;
 
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
  * A simple logger implementation that formats log messages and prints them to the console.
  */
 public class ConsoleLogger implements Logger {
-	private final DateFormat dateFormat = DateFormat.getInstance();
+	private final DateFormat dateFormat = new SimpleDateFormat("MM/dd/yy HH:mm:ss.SSS");
 	public void debug(String message) {
 		outputMessage(formatMessage("DEBUG", message));
 	}
