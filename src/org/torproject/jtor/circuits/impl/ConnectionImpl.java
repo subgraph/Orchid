@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -29,7 +30,7 @@ import org.torproject.jtor.directory.Router;
  */
 public class ConnectionImpl implements Connection {
 
-	private final static int DEFAULT_CONNECT_TIMEOUT = 30000;
+	private final static int DEFAULT_CONNECT_TIMEOUT = 10000;
 
 	private final SSLSocket socket;
 	private final ConnectionManagerImpl manager;
@@ -80,6 +81,8 @@ public class ConnectionImpl implements Connection {
 	public void connect() {
 		try {
 			doConnect();
+		} catch (SocketTimeoutException e) {
+			throw new ConnectionConnectException("Connect timed out");
 		} catch (IOException e) {
 			throw new ConnectionConnectException(e.getMessage());
 		} catch (InterruptedException e) {
