@@ -4,39 +4,38 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Socket;
 
 import org.torproject.jtor.Logger;
 import org.torproject.jtor.circuits.Stream;
 
 public class SocksStreamConnection {
 	
-	public static void runConnection(InputStream socketIn, OutputStream socketOut, Stream stream, Logger logger) {
-		SocksStreamConnection ssc = new SocksStreamConnection(socketIn, socketOut, stream, logger);
+	public static void runConnection(Socket socket, Stream stream, Logger logger) {
+		SocksStreamConnection ssc = new SocksStreamConnection(socket, stream, logger);
 		ssc.run();
 	}
 	private final static int TRANSFER_BUFFER_SIZE = 1024;
 	private final InputStream torInputStream;
 	private final OutputStream torOutputStream;
-	private final InputStream socketInputStream;
-	private final OutputStream socketOutputStream;
+	private final Socket socket;
 	private final Logger logger;
 	private final Thread incomingThread;
 	private final Thread outgoingThread;
 	private final Object lock = new Object();
 	private volatile boolean outgoingClosed;
 	private volatile boolean incomingClosed;
-	
-	
-	private SocksStreamConnection(InputStream socketIn, OutputStream socketOut, Stream stream, Logger logger) {
+
+	private SocksStreamConnection(Socket socket, Stream stream, Logger logger) {
+		this.socket = socket;
 		torInputStream = stream.getInputStream();
 		torOutputStream = stream.getOutputStream();
-		socketInputStream = socketIn;
-		socketOutputStream = socketOut;
+		
 		this.logger = logger;
 		incomingThread = createIncomingThread();
 		outgoingThread = createOutgoingThread();
 	}
-	
+
 	private void run() {
 		incomingThread.start();
 		outgoingThread.start();
@@ -49,13 +48,19 @@ public class SocksStreamConnection {
 					return;
 				}
 			}
+			
+			try {
+				socket.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			closeStream(torInputStream);
 			closeStream(torOutputStream);
-			closeStream(socketInputStream);
-			closeStream(socketOutputStream);
+			
 		}
 	}
-	
+
 	private Thread createIncomingThread() {
 		return new Thread(new Runnable() { public void run() {
 			try {
@@ -70,7 +75,7 @@ public class SocksStreamConnection {
 			}
 		}});
 	}
-	
+
 	private Thread createOutgoingThread() {
 		return new Thread(new Runnable() { public void run() {
 			try {
@@ -86,25 +91,32 @@ public class SocksStreamConnection {
 			}
 		}});
 	}
-	
+
 	private void incomingTransferLoop() throws IOException {
 		final byte[] incomingBuffer = new byte[TRANSFER_BUFFER_SIZE];
 		while(true) {
 			final int n = torInputStream.read(incomingBuffer);
 			if(n == -1) {
 				logger.debug("EOF on TOR input stream "+ torInputStream);
+				socket.shutdownOutput();
 				return;
 			} else if(n > 0) {
 				logger.debug("Transferring "+ n +" bytes from "+ torInputStream +" to SOCKS socket");
-				socketOutputStream.write(incomingBuffer, 0, n);
-				socketOutputStream.flush();
+				if(!socket.isOutputShutdown()) {
+					socket.getOutputStream().write(incomingBuffer, 0, n);
+					socket.getOutputStream().flush();
+				} else {
+					closeStream(torInputStream);
+					return;
+				}
 			}
 		}
 	}
+
 	private void outgoingTransferLoop() throws IOException {
 		final byte[] outgoingBuffer = new byte[TRANSFER_BUFFER_SIZE];
 		while(true) {
-			final int n = socketInputStream.read(outgoingBuffer);
+			final int n = socket.getInputStream().read(outgoingBuffer);
 			if(n == -1) {
 				logger.debug("EOF on SOCKS socket connected to "+ torOutputStream);
 				return;
@@ -115,7 +127,7 @@ public class SocksStreamConnection {
 			}
 		}
 	}
-	
+
 	private void closeStream(Closeable c) {
 		try {
 			c.close();

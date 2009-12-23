@@ -74,7 +74,7 @@ public class SocksPortListenerImpl implements SocksPortListener {
 	private void newClientSocket(final Socket s) {
 		final Thread t = new Thread(new Runnable() { public void run() {
 			try {
-				SocksClientSocket.runClient(s.getInputStream(), s.getOutputStream(), logger, streamManager);
+				SocksClientSocket.runClient(s, logger, streamManager);
 			} catch(IOException e) {
 				logger.warn("System error processing client connection: "+ e.getMessage());
 			} finally {
