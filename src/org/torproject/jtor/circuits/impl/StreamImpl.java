@@ -46,7 +46,7 @@ public class StreamImpl implements Stream {
 		return targetNode;
 	}
 
-	void close() {
+	public void close() {
 		if(isClosed)
 			return;
 		isClosed = true;
@@ -71,6 +71,9 @@ public class StreamImpl implements Stream {
 
 	private RelayCell receiveRelayConnectedCell() {
 		final RelayCell responseCell = circuit.receiveRelayCell();
+		if(responseCell == null)
+			throw new TorException("Timeout waiting for RELAY_CONNECTED cell.");
+
 		final int command = responseCell.getRelayCommand();
 		if(command != RelayCell.RELAY_CONNECTED)
 			throw new TorException("Did not receive expected RELAY_CONNECTED cell.  cell = "+ responseCell);
