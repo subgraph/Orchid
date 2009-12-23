@@ -1,5 +1,7 @@
 package org.torproject.jtor.circuits.impl;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -7,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.torproject.jtor.Logger;
+import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitManager;
@@ -29,6 +32,7 @@ public class CircuitManagerImpl implements CircuitManager {
 	private final Set<Circuit> cleanCircuits;
 	private final Thread circuitCreationThread;
 	private final NodeChooser nodeChooser;
+	private final SecureRandom random;
 
 	public CircuitManagerImpl(Directory directory, ConnectionManagerImpl connectionManager, StreamManagerImpl streamManager, Logger logger) {
 		this.directory = directory;
@@ -40,18 +44,22 @@ public class CircuitManagerImpl implements CircuitManager {
 		this.cleanCircuits = new HashSet<Circuit>();
 		this.nodeChooser = new NodeChooser(streamManager, directory);
 		this.circuitCreationThread = createCircuitCreationThread();
+		this.random = createRandom();
 	}
 
+	private static SecureRandom createRandom() {
+		try {
+			return SecureRandom.getInstance("SHA1PRNG");
+		} catch (NoSuchAlgorithmException e) {
+			throw new TorException(e);
+		}
+	}
 	public void startBuildingCircuits() {
 		circuitCreationThread.start();
 	}
-	public Circuit createCircuitFromNicknames(List<String> nicknamePath) {
-		final List<Router> path = directory.getRouterListByNames(nicknamePath);
-		return createCircuitFromPath(path);
-	}
 
-	public Circuit createCircuitFromPath(List<Router> path) {
-		return CircuitImpl.create(this, connectionManager, logger, path);
+	public Circuit newCircuit() {
+		return CircuitImpl.create(this, connectionManager, logger);
 	}
 
 	synchronized void circuitStartConnect(Circuit circuit) {
@@ -88,7 +96,7 @@ public class CircuitManagerImpl implements CircuitManager {
 						checkUnassignedPendingStreams();
 						checkExpiredPendingCircuits();
 						checkCircuitsForCreation();
-					
+
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
@@ -119,8 +127,9 @@ public class CircuitManagerImpl implements CircuitManager {
 		final List<StreamExitRequest> pendingExitStreams = streamManager.getPendingExitStreams();
 		if(pendingExitStreams.isEmpty())
 			return;
-		final List<Circuit> ac = new ArrayList<Circuit>(activeCircuits);
-		for(Circuit c : ac) {
+
+		final List<Circuit> circuits = getRandomlyOrderedListOfActiveCircuits();
+		for(Circuit c : circuits) {
 			for(StreamExitRequest req : pendingExitStreams) {
 				final Router lastRouter = c.getFinalCircuitNode().getRouter();
 				if(canRouterHandleExitRequest(lastRouter, req) && req.reserveRequest()) {
@@ -128,13 +137,26 @@ public class CircuitManagerImpl implements CircuitManager {
 				}
 			}
 		}
-		
+	}
+
+	private List<Circuit> getRandomlyOrderedListOfActiveCircuits() {
+		final ArrayList<Circuit> ac = new ArrayList<Circuit>(activeCircuits);
+		final int sz = ac.size();
+		for(int i = 0; i < sz; i++) {
+			final Circuit tmp = ac.get(i);
+			final int swapIdx = random.nextInt(sz);
+			ac.set(i, ac.get(swapIdx));
+			ac.set(swapIdx, tmp);
+		}
+		return ac;
+
 	}
 	private void checkExpiredPendingCircuits() {
 
 	}
 	/* called every second */
 	private void checkCircuitsForCreation() {
+		//logger.debug("clean circuits: "+ cleanCircuits.size() + " pending circuits: "+ pendingCircuits.size() + " active circuits: "+ activeCircuits.size());
 		if((cleanCircuits.size() + pendingCircuits.size()) < DEFAULT_CLEAN_CIRCUITS && 
 				pendingCircuits.size() < MAX_PENDING_CIRCUITS) {
 			final Thread t = createLaunchCircuitThread();
@@ -155,13 +177,13 @@ public class CircuitManagerImpl implements CircuitManager {
 			logger.warn("Cannot build circuits because we don't have enough directory information");
 			return;
 		}
-
+		logger.debug("Opening new preemptive circuit");
 		final List<Router> path = choosePreemptiveExitPath();
-		final Circuit circuit = createCircuitFromPath(path);
+		final Circuit circuit = newCircuit();
 		synchronized(pendingCircuits) {
 			pendingCircuits.add(circuit);
 		}
-		circuit.openCircuit(new CircuitBuildHandler() {
+		circuit.openCircuit(path, new CircuitBuildHandler() {
 
 			public void circuitBuildCompleted(Circuit circuit) {
 				logger.debug("Preemptive Circuit completed to: "+ circuit);

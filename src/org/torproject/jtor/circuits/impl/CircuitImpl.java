@@ -28,11 +28,8 @@ import org.torproject.jtor.directory.Router;
  *
  */
 public class CircuitImpl implements Circuit {
-	static CircuitImpl create(CircuitManagerImpl circuitManager, ConnectionManagerImpl connectionManager, Logger logger, List<Router> routerPath) {
-		if(routerPath.isEmpty())
-			throw new IllegalArgumentException("Path must contain at least one router to create a circuit.");
-		final ConnectionImpl entryConnection = createEntryConnection(connectionManager, routerPath.get(0));
-		return new CircuitImpl(circuitManager, entryConnection, logger, routerPath);
+	static CircuitImpl create(CircuitManagerImpl circuitManager, ConnectionManagerImpl connectionManager, Logger logger) {
+		return new CircuitImpl(circuitManager, connectionManager, logger);
 	}
 
 	private static ConnectionImpl createEntryConnection(ConnectionManagerImpl connectionManager, Router router) {
@@ -54,14 +51,15 @@ public class CircuitImpl implements Circuit {
 		public String toString() { return name; }
 	}
 
-	private final static long CIRCUIT_BUILD_TIMEOUT_MS = 60 * 1000;
+	private final static long CIRCUIT_BUILD_TIMEOUT_MS = 30 * 1000;
+	private final static long CIRCUIT_RELAY_RESPONSE_TIMEOUT = 20 * 1000;
 
-	private final ConnectionImpl entryConnection;
-	private final int circuitId;
+	private ConnectionImpl entryConnection;
+	private int circuitId;
 	private final CircuitManagerImpl circuitManager;
-	private final CircuitBuilder circuitBuilder;
+	private final ConnectionManagerImpl connectionManager;
+	private CircuitBuilder circuitBuilder;
 	private final Logger logger;
-	private final Map<Router, CircuitNodeImpl> circuitNodes;
 	private final List<CircuitNodeImpl> nodeList;
 	private final BlockingQueue<RelayCell> relayCellResponseQueue;
 	private final BlockingQueue<Cell> controlCellResponseQueue;
@@ -71,13 +69,10 @@ public class CircuitImpl implements Circuit {
 	private Date circuitBuildStart;
 
 	// XXX implement control relay lock
-	private CircuitImpl(CircuitManagerImpl circuitManager, ConnectionImpl entryConnection, Logger logger, List<Router> circuitPath) {
-		circuitNodes = new HashMap<Router, CircuitNodeImpl>();
+	private CircuitImpl(CircuitManagerImpl circuitManager, ConnectionManagerImpl connectionManager, Logger logger) {
 		nodeList = new ArrayList<CircuitNodeImpl>();
-		circuitId = entryConnection.allocateCircuitId(this);
 		this.circuitManager = circuitManager;
-		this.entryConnection = entryConnection;
-		this.circuitBuilder = new CircuitBuilder(this, circuitPath);
+		this.connectionManager = connectionManager;
 		this.logger = logger;
 		this.relayCellResponseQueue = new LinkedBlockingQueue<RelayCell>();
 		this.controlCellResponseQueue = new LinkedBlockingQueue<Cell>();
@@ -92,13 +87,22 @@ public class CircuitImpl implements Circuit {
 		state = CircuitState.OPEN;
 	}
 
-	public boolean openCircuit(CircuitBuildHandler handler)  {
+	public boolean openCircuit(List<Router> circuitPath, CircuitBuildHandler handler)  {
+		if(circuitPath.isEmpty())
+			throw new IllegalArgumentException("Path must contain at least one router to create a circuit.");
+		entryConnection = createEntryConnection(connectionManager, circuitPath.get(0));
+		circuitId = entryConnection.allocateCircuitId(this);
+		circuitBuilder = new CircuitBuilder(this, circuitPath);
+
 		state = CircuitState.BUILDING;
 		circuitBuildStart = new Date();
 		circuitManager.circuitStartConnect(this);
 		if(!entryConnection.isConnected()) {
 			try {
+				final Date connectStart = new Date();
 				entryConnection.connect();
+				final Date now = new Date();
+				logger.debug("Connect completed in " + (now.getTime() - connectStart.getTime()) +" milliseconds");
 			} catch(ConnectionConnectException e) {
 				entryConnection.removeCircuit(this);
 				state = CircuitState.FAILED;
@@ -165,7 +169,6 @@ public class CircuitImpl implements Circuit {
 	}
 
 	void appendNode(CircuitNodeImpl node) {
-		circuitNodes.put(node.getRouter(), node);
 		nodeList.add(node);
 	}
 
@@ -189,7 +192,8 @@ public class CircuitImpl implements Circuit {
 
 	private RelayCell dequeueRelayResponseCell() {
 		try {
-			return relayCellResponseQueue.take();
+			final long timeout = getReceiveTimeout();
+			return relayCellResponseQueue.poll(timeout, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			throw new TorException("Interrupted while waiting for relay response");
@@ -220,8 +224,8 @@ public class CircuitImpl implements Circuit {
 	private long getReceiveTimeout() {
 		if(state == CircuitState.BUILDING)
 			return remainingBuildTime();
-
-		throw new TorException("Implement me for state "+ state);
+		else
+			return CIRCUIT_RELAY_RESPONSE_TIMEOUT;
 	}
 
 	private long remainingBuildTime() {
@@ -356,16 +360,4 @@ public class CircuitImpl implements Circuit {
 		sb.append("]");
 		return sb.toString();
 	}
-
-	public boolean equals(Object o) {
-		if(!(o instanceof CircuitImpl))
-			return false;
-		final CircuitImpl other = (CircuitImpl) o;
-		return (other.circuitId == this.circuitId && other.entryConnection == this.entryConnection);
-	}
-
-	public int hashCode() {
-		return this.circuitId;
-	}
-
 }

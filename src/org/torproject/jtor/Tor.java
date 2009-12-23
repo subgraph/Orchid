@@ -54,16 +54,11 @@ public class Tor {
 		circuitManager.startBuildingCircuits();
 		socksListener.addListeningPort(5090);
 	}
-	
-	public Circuit createCircuitFromNicknames(List<String> nicknamePath) {
-		final List<Router> path = directory.getRouterListByNames(nicknamePath);
-		return createCircuit(path);
+
+	public Circuit createCircuit() {
+		return circuitManager.newCircuit();
 	}
-	
-	public Circuit createCircuit(List<Router> path) {
-		return circuitManager.createCircuitFromPath(path);
-	}
-	
+
 	public Logger getLogger() {
 		return logger;
 	}

@@ -1,15 +1,18 @@
 package org.torproject.jtor.circuits;
 
+import java.util.List;
+
 import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Router;
 
+/**
+ * A Circuit represents a logical path through multiple ORs.  Circuits are described in
+ * section 5 of tor-spec.txt.
+ *
+ */
 public interface Circuit {
-	/**
-	 * 
-	 * @throws ConnectionConnectException Network connection to the first router in the chain failed.
-	 */
-	boolean openCircuit(CircuitBuildHandler callback);
+	boolean openCircuit(List<Router> circuitPath, CircuitBuildHandler callback);
 	void extendCircuit(Router router);
 	boolean isConnected();
 	Connection getConnection();

@@ -1,12 +1,14 @@
 package org.torproject.jtor;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.directory.Directory;
+import org.torproject.jtor.directory.Router;
 
 public class TorTest {
 
@@ -22,10 +24,10 @@ public class TorTest {
 	void circuitTest()  {
 		
 		String[] path = {  "AnonymousRelay", "CodeGnomeTor1", "bambi", "TorVidalia"};
+		List<Router> routerPath= directory.getRouterListByNames(Arrays.asList(path));
+		Circuit c = tor.createCircuit();
 		
-		Circuit c = tor.createCircuitFromNicknames(Arrays.asList(path));
-		
-		c.openCircuit(new CircuitBuildHandler() {
+		c.openCircuit(routerPath, new CircuitBuildHandler() {
 			
 			public void nodeAdded(CircuitNode node) {
 				System.out.println("Node added: "+ node.getRouter().getNickname());				

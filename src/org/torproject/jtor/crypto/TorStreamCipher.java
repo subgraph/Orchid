@@ -89,7 +89,7 @@ public class TorStreamCipher {
 			cipher.doFinal(counter, 0, BLOCK_SIZE, counterOut, 0);
 		} catch (GeneralSecurityException e) {
 			throw new TorException(e);
-		} 
+		}
 	}
 	
 	private void incrementCounter() {
