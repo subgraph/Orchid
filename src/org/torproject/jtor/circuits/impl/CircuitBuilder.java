@@ -70,9 +70,9 @@ class CircuitBuilder {
 
 	private void receiveAndProcessCreateResponse(CircuitNodeImpl node) {
 		final Cell cell = circuit.receiveControlCellResponse();
-		if(cell == null) 
+		if(cell == null)
 			throw new TorException("Timeout building circuit");
-			
+
 		processCreatedCell(node, cell);
 		circuit.appendNode(node);
 	}
@@ -125,6 +125,9 @@ class CircuitBuilder {
 
 	private void receiveExtendResponse(CircuitNodeImpl newNode) throws IOException {
 		final RelayCell cell = circuit.receiveRelayCell();
+		if(cell == null)
+			throw new TorException("Timeout building circuit");
+
 		final int command = cell.getRelayCommand();
 		if(command == RelayCell.RELAY_TRUNCATED) {
 			final int code = cell.getByte() & 0xFF;
