@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorException;
@@ -19,10 +21,12 @@ public class SocksPortListenerImpl implements SocksPortListener {
 	private final Map<Integer, Thread> acceptThreads = new HashMap<Integer, Thread>();
 	private final Logger logger;
 	private final StreamManagerImpl streamManager;
+	private final Executor executor;
 	
 	public SocksPortListenerImpl(Logger logger, StreamManagerImpl streamManager) {
 		this.logger = logger;
 		this.streamManager = streamManager;
+		executor = Executors.newFixedThreadPool(25);
 	}
 
 	public void addListeningPort(int port) {
@@ -67,22 +71,12 @@ public class SocksPortListenerImpl implements SocksPortListener {
 	
 	private void runAcceptLoop(ServerSocket ss) throws IOException {
 		while(true) {
-			newClientSocket(ss.accept());
+			final Socket s = ss.accept();
+			executor.execute(newClientSocket(s));
 		}
 	}
 	
-	private void newClientSocket(final Socket s) {
-		final Thread t = new Thread(new Runnable() { public void run() {
-			try {
-				SocksClientSocket.runClient(s, logger, streamManager);
-			} catch(IOException e) {
-				logger.warn("System error processing client connection: "+ e.getMessage());
-			} finally {
-				try {
-					s.close();
-				} catch (IOException e) {}
-			}
-		}});
-		t.start();
+	private Runnable newClientSocket(final Socket s) {
+		return new SocksClientTask(s, logger, streamManager);
 	}
 }

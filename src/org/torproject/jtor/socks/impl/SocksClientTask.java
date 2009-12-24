@@ -9,26 +9,35 @@ import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.circuits.StreamManager;
 import org.torproject.jtor.circuits.impl.StreamManagerImpl;
 
-public class SocksClientSocket {
-
-	static void runClient(Socket socket, Logger logger, StreamManagerImpl streamManager) throws IOException {
-		final SocksClientSocket client = new SocksClientSocket(socket, logger, streamManager);
-		client.run();
-	}
+public class SocksClientTask implements Runnable {
 
 	private final Socket socket;
 	private final Logger logger;
 	private final StreamManager streamManager;
 
-	private SocksClientSocket(Socket socket, Logger logger, StreamManagerImpl streamManager) {
+	SocksClientTask(Socket socket, Logger logger, StreamManagerImpl streamManager) {
 		this.socket = socket;
 		this.logger = logger;
 		this.streamManager = streamManager;
 	}
 
-	private void run() throws IOException {
-		final int version = socket.getInputStream().read();
-		switch(version) {
+	public void run() {
+		final int version = readByte();
+		dispatchRequest(version);
+		closeSocket();
+	}
+
+	private int readByte() {
+		try {
+			return socket.getInputStream().read();
+		} catch (IOException e) {
+			logger.warn("IO error reading version byte: "+ e.getMessage());
+			return -1;
+		}
+	}
+	
+	private void dispatchRequest(int versionByte) {
+		switch(versionByte) {
 		case 'H':
 		case 'G':
 		case 'P':
@@ -41,10 +50,10 @@ public class SocksClientSocket {
 			processRequest(new Socks5Request(socket));
 			break;
 		default:
-			// XXX
-		}
+			// fall through, do nothing
+		}	
 	}
-
+	
 	private void processRequest(SocksRequest request) {
 		try {
 			request.readRequest();
@@ -76,7 +85,16 @@ public class SocksClientSocket {
 			return streamManager.openExitStreamTo(request.getAddress(), request.getPort());
 		}
 	}
+
 	private void sendHttpPage() {
 		throw new TorException("Returning HTTP page not implemented");
+	}
+
+	private void closeSocket() {
+		try {
+			socket.close();
+		} catch (IOException e) {
+			logger.warn("Error closing SOCKS socket: "+ e.getMessage());
+		}
 	}
 }
