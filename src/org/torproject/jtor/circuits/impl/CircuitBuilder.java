@@ -13,6 +13,7 @@ import org.torproject.jtor.crypto.TorKeyAgreement;
 import org.torproject.jtor.crypto.TorMessageDigest;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.directory.Router;
+import org.torproject.jtor.logging.Logger;
 
 /*
  * Utility class used by CircuitImpl that manages setting up a circuit 
@@ -22,10 +23,12 @@ class CircuitBuilder {
 
 	private final List<Router> circuitPath;
 	private final CircuitImpl circuit;
+	private final Logger logger;
 
-	CircuitBuilder(CircuitImpl circuit, List<Router> path) {
+	CircuitBuilder(CircuitImpl circuit, List<Router> path, Logger logger) {
 		this.circuit = circuit;
-		this.circuitPath = path;	
+		this.circuitPath = path;
+		this.logger = logger;
 	}
 
 	boolean build(CircuitBuildHandler handler) {
@@ -34,6 +37,11 @@ class CircuitBuilder {
 		} catch(TorException e) {
 			if(handler != null) 
 				handler.circuitBuildFailed(e.getMessage());
+			return false;
+		} catch(Exception e) {
+			logger.error("Unexpected exception building circuit.", e);
+			if(handler != null)
+				handler.circuitBuildFailed("Unexpected exception: "+ e.getMessage());
 			return false;
 		}
 		circuit.setConnected();

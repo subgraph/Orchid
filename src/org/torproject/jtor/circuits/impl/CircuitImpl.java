@@ -9,7 +9,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
@@ -22,6 +21,7 @@ import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Router;
+import org.torproject.jtor.logging.Logger;
 
 /**
  * This class represents an established circuit through the Tor network.
@@ -92,7 +92,7 @@ public class CircuitImpl implements Circuit {
 			throw new IllegalArgumentException("Path must contain at least one router to create a circuit.");
 		entryConnection = createEntryConnection(connectionManager, circuitPath.get(0));
 		circuitId = entryConnection.allocateCircuitId(this);
-		circuitBuilder = new CircuitBuilder(this, circuitPath);
+		circuitBuilder = new CircuitBuilder(this, circuitPath, logger);
 
 		state = CircuitState.BUILDING;
 		circuitBuildStart = new Date();
@@ -109,6 +109,14 @@ public class CircuitImpl implements Circuit {
 				circuitManager.circuitClosed(this);
 				if(handler != null)
 					handler.connectionFailed(e.getMessage());
+				return false;
+			} catch (Exception e) {
+				entryConnection.removeCircuit(this);
+				state = CircuitState.FAILED;
+				circuitManager.circuitClosed(this);
+				if(handler != null)
+					handler.connectionFailed(e.getMessage());
+				logger.error("Unexpected exception connecting to entry node.", e);
 				return false;
 			}
 		}
