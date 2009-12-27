@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.data.HexDigest;
@@ -24,6 +23,8 @@ import org.torproject.jtor.directory.StatusDocument;
 import org.torproject.jtor.events.Event;
 import org.torproject.jtor.events.EventHandler;
 import org.torproject.jtor.events.EventManager;
+import org.torproject.jtor.logging.LogManager;
+import org.torproject.jtor.logging.Logger;
 
 public class DirectoryImpl implements Directory {
 	private final DirectoryStore store;
@@ -39,9 +40,9 @@ public class DirectoryImpl implements Directory {
 	private StatusDocument currentConsensus;
 	private boolean descriptorsDirty;
 
-	public DirectoryImpl(Logger logger, TorConfig config) {
-		this.logger = logger;
-		store = new DirectoryStoreImpl(logger, config);
+	public DirectoryImpl(LogManager logManager, TorConfig config) {
+		this.logger = logManager.getLogger("directory");
+		store = new DirectoryStoreImpl(logManager, config);
 		certificates = new HashMap<HexDigest, KeyCertificate>();
 		routersByIdentity = new HashMap<HexDigest, RouterImpl>();
 		routersByNickname = new HashMap<String, RouterImpl>();
@@ -147,7 +148,7 @@ public class DirectoryImpl implements Directory {
 			return;
 
 		if(currentConsensus != null && consensus.getValidAfterTime().isBefore(currentConsensus.getValidAfterTime())) {
-			logger.warn("New consensus document is older than current consensus document");
+			logger.warning("New consensus document is older than current consensus document");
 			return;
 		}
 
@@ -217,7 +218,7 @@ public class DirectoryImpl implements Directory {
 	synchronized void addDescriptor(RouterDescriptor descriptor) {
 		final HexDigest identity = descriptor.getIdentityKey().getFingerprint();
 		if(!routersByIdentity.containsKey(identity)) {
-			logger.warn("Could not find router for descriptor: "+ descriptor.getIdentityKey().getFingerprint());
+			logger.warning("Could not find router for descriptor: "+ descriptor.getIdentityKey().getFingerprint());
 			return;
 		}
 		final RouterImpl router = routersByIdentity.get(identity);
@@ -226,7 +227,7 @@ public class DirectoryImpl implements Directory {
 			return;
 		
 		if(oldDescriptor != null && oldDescriptor.isNewerThan(descriptor)) {
-			logger.warn("Attempting to add descriptor to router which is older than the descriptor we already have");
+			logger.warning("Attempting to add descriptor to router which is older than the descriptor we already have");
 			return;
 		}
 		descriptorsDirty = true;

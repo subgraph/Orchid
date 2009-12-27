@@ -2,10 +2,10 @@ package org.torproject.jtor.circuits.impl;
 
 import java.util.List;
 
-import org.torproject.jtor.Logger;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.directory.Router;
+import org.torproject.jtor.logging.Logger;
 
 public class OpenCircuitTask implements Runnable {
 

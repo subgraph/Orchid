@@ -15,9 +15,10 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.bouncycastle.x509.X509V3CertificateGenerator;
-import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.directory.Router;
+import org.torproject.jtor.logging.LogManager;
+import org.torproject.jtor.logging.Logger;
 
 public class ConnectionManagerImpl {
 	private static final String[] MANDATORY_CIPHERS = {
@@ -50,7 +51,7 @@ public class ConnectionManagerImpl {
 	private final Logger logger;
 	private SSLSocketFactory socketFactory;
 
-	public ConnectionManagerImpl(Logger logger) {
+	public ConnectionManagerImpl(LogManager logManager) {
 		try {
 			sslContext = SSLContext.getInstance("SSLv3");
 			sslContext.init(null, NULL_TRUST, null);
@@ -61,7 +62,7 @@ public class ConnectionManagerImpl {
 		}
 		socketFactory = sslContext.getSocketFactory();
 		activeConnections = new HashMap<Router, ConnectionImpl>();
-		this.logger = logger;
+		this.logger = logManager.getLogger("connections");
 	}
 
 	public ConnectionImpl createConnection(Router router) {

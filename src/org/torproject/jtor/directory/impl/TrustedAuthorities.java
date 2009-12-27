@@ -4,12 +4,12 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.torproject.jtor.Logger;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.DirectoryServer;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 import org.torproject.jtor.directory.parsing.DocumentParsingHandler;
+import org.torproject.jtor.logging.Logger;
 
 /*
  * This class contains the hardcoded 'bootstrap' directory authority

@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.IPv4Address;
@@ -23,6 +22,8 @@ import org.torproject.jtor.directory.StatusDocument;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParserFactory;
 import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
+import org.torproject.jtor.logging.LogManager;
+import org.torproject.jtor.logging.Logger;
 
 public class NetworkStatusManager {
 	private final static int MAX_DIRECTORY_CONNECT_ATTEMPTS = 5;
@@ -30,18 +31,18 @@ public class NetworkStatusManager {
 	private final static int MAX_DL_TO_DELAY = 16;
 	private final static int MIN_DL_REQUESTS = 3;
 	private final static int MAX_CLIENT_INTERVAL_WITHOUT_REQUEST = 10 * 60 * 1000;
-	
+
 	private final Directory directory;
 	private final Logger logger;
 	private final DocumentParserFactory parserFactory;
 	private Date lastDescriptorDownload;
-	
-	public NetworkStatusManager(Directory directory, Logger logger) {
+
+	public NetworkStatusManager(Directory directory, LogManager logManager) {
 		this.directory = directory;
-		this.logger = logger;
-		parserFactory = new DocumentParserFactoryImpl(logger);
+		this.logger = logManager.getLogger("network-status-manager");
+		parserFactory = new DocumentParserFactoryImpl(logManager);
 	}
-	
+
 	public void startDownloadingDocuments() {
 		final Thread thread = new Thread(new Runnable() {
 			public void run() {
@@ -50,7 +51,7 @@ public class NetworkStatusManager {
 		});
 		thread.start();
 	}
-	
+
 	private void documentDownloadLoop() {
 		logger.debug("Starting download loop");
 		while(true) {
@@ -65,7 +66,7 @@ public class NetworkStatusManager {
 			}
 		}
 	}
-	
+
 	private void checkConsensus() {
 		final StatusDocument consensus = directory.getCurrentConsensusDocument();
 		if(consensus != null && consensus.isLive()) {
@@ -74,43 +75,43 @@ public class NetworkStatusManager {
 		}
 		requestConsensusDocument();
 	}
-	
+
 	private void requestConsensusDocument() {
 		final Thread requestThread = new Thread(new Runnable() {
 			public void run() {
 				try {
 					runRequestConsensus();
 				} catch (TorException e) {
-					logger.warn("Error downloading consensus document: "+ e.getMessage());				
+					logger.warning("Error downloading consensus document: "+ e.getMessage());
 				}
 			}
 		});
 		requestThread.start();
 	}
-	
+
 	private void runRequestConsensus() {
 		final DirectoryConnection directoryConnection = openDirectConnectionToDirectoryServer();
 		final Reader reader = directoryConnection.getConsensus();
 		DocumentParser<StatusDocument> statusParser = parserFactory.createStatusDocumentParser(reader);
 		final boolean success = statusParser.parse(new DocumentParsingResultHandler<StatusDocument>() {
-			
+
 			public void parsingError(String message) {
-				logger.warn("Parsing error processing consensus document: "+ message);				
+				logger.warning("Parsing error processing consensus document: "+ message);
 			}
-			
+
 			public void documentParsed(StatusDocument document) {
 				directory.addConsensusDocument(document);				
 			}
-			
+
 			public void documentInvalid(StatusDocument document, String message) {
-				logger.warn("Received consensus document is invalid: "+ message);				
+				logger.warning("Received consensus document is invalid: "+ message);
 			}
 		});
-		
+
 		if(success)
 			directory.storeConsensus();
 	}
-	
+
 	private void checkValidCertificates() {
 		final List<HexDigest> neededCertificates = new ArrayList<HexDigest>();
 		for(DirectoryServer dir: directory.getDirectoryAuthorities()) {
@@ -122,9 +123,8 @@ public class NetworkStatusManager {
 		}
 		if(!neededCertificates.isEmpty())
 			requestCertificates(neededCertificates);
-		
 	}
-	
+
 	private void requestCertificates(final List<HexDigest> certificates) {
 		Thread requestThread = new Thread(new Runnable() {
 
@@ -138,7 +138,7 @@ public class NetworkStatusManager {
 		});
 		requestThread.start();
 	}
-	
+
 	private void runRequestCertificates(List<HexDigest> certificates) {
 		final DirectoryConnection directoryConnection = openDirectConnectionToDirectoryServer();
 		final Reader reader = directoryConnection.getCertificatesByFingerprint(certificates);
@@ -146,7 +146,7 @@ public class NetworkStatusManager {
 		final boolean success = certificateParser.parse(new DocumentParsingResultHandler<KeyCertificate>() {
 
 			public void documentInvalid(KeyCertificate document, String message) {
-				logger.warn("Received invalid certificate document: "+ message);				
+				logger.warning("Received invalid certificate document: "+ message);
 			}
 
 			public void documentParsed(KeyCertificate document) {
@@ -154,15 +154,14 @@ public class NetworkStatusManager {
 			}
 
 			public void parsingError(String message) {
-				logger.warn("Parsing error processing certificate document: "+ message);				
+				logger.warning("Parsing error processing certificate document: "+ message);
 			}
 		});
-		
+
 		if(success)
 			directory.storeCertificates();
 	}
-	
-	
+
 	private void checkDescriptors() {
 		final StatusDocument consensus = directory.getCurrentConsensusDocument();
 		if(consensus == null || !consensus.isLive())
@@ -175,10 +174,10 @@ public class NetworkStatusManager {
 			return;
 		
 		logger.debug("Downloading: "+ downloadables.size() +" descriptors");
-		for(List<Router> set: partitionDescriptors(downloadables))			
+		for(List<Router> set: partitionDescriptors(downloadables))
 			requestDescriptors(set);
 	}
-	
+
 	private boolean canDownloadDescriptors(int downloadableCount) {
 		if(downloadableCount >= MAX_DL_TO_DELAY)
 			return true;
@@ -188,9 +187,9 @@ public class NetworkStatusManager {
 			return true;
 		final Date now = new Date();
 		final long diff = now.getTime() - lastDescriptorDownload.getTime();
-		return diff > MAX_CLIENT_INTERVAL_WITHOUT_REQUEST;	
+		return diff > MAX_CLIENT_INTERVAL_WITHOUT_REQUEST;
 	}
-	
+
 	/*
 	 * dir-spec.txt section 5.3
 	 */
@@ -224,7 +223,7 @@ public class NetworkStatusManager {
 			return partitions;	
 		}
 	}
-	
+
 	private List<Router> createPartitionList(List<Router> descriptors, int offset, int size) {
 		final List<Router> newList = new ArrayList<Router>();
 		for(int i = offset; i < (offset + size) && i < descriptors.size(); i++)
@@ -239,13 +238,13 @@ public class NetworkStatusManager {
 					runRequestDescriptors(descriptors);
 				} catch(TorException e) {
 					e.printStackTrace();
-				}				
+				}
 			}
-			
+
 		});
 		requestThread.start();
 	}
-	
+
 	private void runRequestDescriptors(List<Router> descriptors) {
 		final DirectoryConnection directoryConnection = openDirectConnectionToDirectoryServer();
 		final List<HexDigest> digestList = new ArrayList<HexDigest>();
@@ -260,34 +259,34 @@ public class NetworkStatusManager {
 
 			public void documentInvalid(RouterDescriptor document,
 					String message) {
-				logger.warn("Router descriptor "+ document.getNickname() +" invalid: "+ message);
-				directory.markDescriptorInvalid(document);				
+				logger.warning("Router descriptor "+ document.getNickname() +" invalid: "+ message);
+				directory.markDescriptorInvalid(document);
 			}
 
 			public void documentParsed(RouterDescriptor document) {
 				if(!digestSet.contains(document.getDescriptorDigest())) {
-					logger.warn("Server returned a router descriptor that was not requested");
+					logger.warning("Server returned a router descriptor that was not requested");
 					return;
 				}
-				directory.addRouterDescriptor(document);				
+				directory.addRouterDescriptor(document);
 			}
 
 			public void parsingError(String message) {
-				logger.warn("Parsing error processing router descriptors: "+ message);				
+				logger.warning("Parsing error processing router descriptors: "+ message);
 			}
 		});
 		
 		if(success)
 			directory.storeDescriptors();
 	}
-	
+
 	private DirectoryConnection openDirectConnectionToDirectoryServer() {
 		for(int i = 0; i < MAX_DIRECTORY_CONNECT_ATTEMPTS; i++) {
 			final DirectoryServer directoryAuthority = directory.getRandomDirectoryAuthority();
 			try {
 				return openDirectConnectionToDirectoryServer(directoryAuthority);
 			} catch (IOException e) {
-				logger.warn("Failed to connect to: "+ directoryAuthority +": "+ e.getMessage());
+				logger.warning("Failed to connect to: "+ directoryAuthority +": "+ e.getMessage());
 			}
 		}
 		throw new TorException("Giving up on direct connection to directory server");
@@ -297,10 +296,10 @@ public class NetworkStatusManager {
 		final InetAddress address = server.getAddress().toInetAddress();
 		final int port = server.getDirectoryPort();
 		final String hostString = getHostString(server.getAddress(), port);
-		
+
 		final Socket socket = new Socket(address, port);
 		return new DirectoryConnection(hostString, socket.getInputStream(), socket.getOutputStream());
-		
+
 	}
 	
 	private String getHostString(IPv4Address address, int port) {

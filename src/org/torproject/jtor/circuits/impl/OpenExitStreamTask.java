@@ -1,8 +1,8 @@
 package org.torproject.jtor.circuits.impl;
 
-import org.torproject.jtor.Logger;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.Stream;
+import org.torproject.jtor.logging.Logger;
 
 public class OpenExitStreamTask implements Runnable {
 

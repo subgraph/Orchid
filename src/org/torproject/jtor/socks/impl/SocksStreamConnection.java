@@ -6,8 +6,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-import org.torproject.jtor.Logger;
 import org.torproject.jtor.circuits.Stream;
+import org.torproject.jtor.logging.Logger;
 
 public class SocksStreamConnection {
 	
@@ -66,7 +66,7 @@ public class SocksStreamConnection {
 			try {
 				incomingTransferLoop();
 			} catch (IOException e) {
-				logger.warn("System error on incoming stream IO : "+ e.getMessage());
+				logger.warning("System error on incoming stream IO : "+ e.getMessage());
 			} finally {
 				synchronized(lock) {
 					incomingClosed = true;
@@ -82,7 +82,7 @@ public class SocksStreamConnection {
 				outgoingTransferLoop();
 			} catch (IOException e) {
 				e.printStackTrace();
-				logger.warn("System error on outgoing stream IO : "+ e.getMessage());
+				logger.warning("System error on outgoing stream IO : "+ e.getMessage());
 			} finally {
 				synchronized(lock) {
 					outgoingClosed = true;
@@ -132,7 +132,7 @@ public class SocksStreamConnection {
 		try {
 			c.close();
 		} catch (IOException e) {
-			logger.warn("Close failed on "+ c + " : "+ e.getMessage());
+			logger.warning("Close failed on "+ c + " : "+ e.getMessage());
 		}	
 	}
 }

@@ -10,11 +10,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.directory.Directory;
+import org.torproject.jtor.logging.LogManager;
+import org.torproject.jtor.logging.Logger;
 
 public class CircuitManagerImpl implements CircuitManager {
 	private final static boolean DEBUG_CIRCUIT_CREATION = true;
@@ -28,10 +29,11 @@ public class CircuitManagerImpl implements CircuitManager {
 	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 	private final Runnable circuitCreationTask;
 
-	public CircuitManagerImpl(Directory directory, ConnectionManagerImpl connectionManager, StreamManagerImpl streamManager, Logger logger) {
+	public CircuitManagerImpl(Directory directory, ConnectionManagerImpl connectionManager, StreamManagerImpl streamManager, LogManager logManager) {
 		this.connectionManager = connectionManager;
+		this.logger = logManager.getLogger("circuits");
+		this.logger.enableDebug();
 		this.circuitCreationTask = new CircuitCreationTask(directory, streamManager, this, logger);
-		this.logger = logger;
 		this.activeCircuits = new HashSet<Circuit>();
 		this.pendingCircuits = new HashSet<Circuit>();
 		this.cleanCircuits = new HashSet<Circuit>();

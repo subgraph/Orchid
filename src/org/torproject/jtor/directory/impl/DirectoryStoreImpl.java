@@ -10,7 +10,6 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.List;
 
-import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.DirectoryStore;
@@ -20,19 +19,21 @@ import org.torproject.jtor.directory.StatusDocument;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParserFactory;
 import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
+import org.torproject.jtor.logging.LogManager;
+import org.torproject.jtor.logging.Logger;
 
 public class DirectoryStoreImpl implements DirectoryStore {
 	private final Logger logger;
 	private final TorConfig config;
 	private final DocumentParserFactory parserFactory;
-	
-	
-	DirectoryStoreImpl(Logger logger, TorConfig config) {
-		this.logger = logger;
+
+
+	DirectoryStoreImpl(LogManager logManager, TorConfig config) {
+		this.logger = logManager.getLogger("directory-store");
 		this.config = config;
-		this.parserFactory = new DocumentParserFactoryImpl(logger);
+		this.parserFactory = new DocumentParserFactoryImpl(logManager);
 	}
-	
+
 	public void saveCertificates(List<KeyCertificate> certificates) {
 		final File outFile = new File(config.getDataDirectory(), "certificates");
 		try {
@@ -45,7 +46,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void loadCertificates(final Directory directory) {
 		final File inFile = new File(config.getDataDirectory(), "certificates");
 		if(!inFile.exists())
@@ -55,23 +56,23 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			final Reader reader = new InputStreamReader(fis, "ISO-8859-1");
 			final DocumentParser<KeyCertificate> parser = parserFactory.createKeyCertificateParser(reader);
 			parser.parse(new DocumentParsingResultHandler<KeyCertificate>() {
-				
+
 				public void parsingError(String message) {
-					logger.error("Parsing error loading certificates: "+ message);					
+					logger.error("Parsing error loading certificates: "+ message);
 				}
-				
+
 				public void documentParsed(KeyCertificate document) {
-					directory.addCertificate(document);					
+					directory.addCertificate(document);
 				}
-				
+
 				public void documentInvalid(KeyCertificate document, String message) {
-					logger.warn("Problem loading certificate: "+ message);					
+					logger.warning("Problem loading certificate: "+ message);
 				}
 			});
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 	public void saveConsensus(StatusDocument consensus) {
 		final File outFile = new File(config.getDataDirectory(), "consensus");
@@ -84,7 +85,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void loadConsensus(final Directory directory) {
 		final File inFile = new File(config.getDataDirectory(), "consensus");
 		if(!inFile.exists())
@@ -97,15 +98,15 @@ public class DirectoryStoreImpl implements DirectoryStore {
 
 				public void documentInvalid(StatusDocument document,
 						String message) {
-					logger.warn("Stored consensus document is invalid: "+ message);					
+					logger.warning("Stored consensus document is invalid: "+ message);
 				}
 
 				public void documentParsed(StatusDocument document) {
-					directory.addConsensusDocument(document);					
+					directory.addConsensusDocument(document);
 				}
 
 				public void parsingError(String message) {
-					logger.warn("Parsing error loading stored consensus document: "+ message);
+					logger.warning("Parsing error loading stored consensus document: "+ message);
 				}
 			});
 		} catch(IOException e) {
@@ -125,7 +126,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void loadRouterDescriptors(final Directory directory) {
 		final File inFile = new File(config.getDataDirectory(), "routers");
 		if(!inFile.exists())
@@ -138,21 +139,21 @@ public class DirectoryStoreImpl implements DirectoryStore {
 
 				public void documentInvalid(RouterDescriptor document,
 						String message) {
-					logger.warn("Router descriptor "+ document.getNickname() +" invalid: "+ message);
-					directory.markDescriptorInvalid(document);					
+					logger.warning("Router descriptor "+ document.getNickname() +" invalid: "+ message);
+					directory.markDescriptorInvalid(document);
 				}
 
 				public void documentParsed(RouterDescriptor document) {
-					directory.addRouterDescriptor(document);					
+					directory.addRouterDescriptor(document);
 				}
 
 				public void parsingError(String message) {
-					logger.warn("Parsing error loading router descriptors: "+ message);					
+					logger.warning("Parsing error loading router descriptors: "+ message);
 				}
 			});
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 }

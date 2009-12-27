@@ -14,7 +14,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.net.ssl.SSLSocket;
 
-import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.Connection;
@@ -22,6 +21,7 @@ import org.torproject.jtor.circuits.ConnectionClosedException;
 import org.torproject.jtor.circuits.ConnectionConnectException;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.directory.Router;
+import org.torproject.jtor.logging.Logger;
 
 /**
  * This class represents a transport link between two onion routers or
@@ -132,7 +132,7 @@ public class ConnectionImpl implements Connection {
 			socket.close();
 			isConnected = false;
 		} catch (IOException e) {
-			logger.warn("Error closing socket: "+ e.getMessage());
+			logger.warning("Error closing socket: "+ e.getMessage());
 		}
 	}
 
@@ -152,7 +152,7 @@ public class ConnectionImpl implements Connection {
 				notifyCircuitsLinkClosed();
 				return;
 			} catch(TorException e) {
-				logger.warn("Unhandled Tor exception reading and processing cells: "+ e.getMessage());
+				logger.warning("Unhandled Tor exception reading and processing cells: "+ e.getMessage());
 				e.printStackTrace();
 			}
 		}
@@ -202,7 +202,7 @@ public class ConnectionImpl implements Connection {
 		synchronized(circuitMap) {
 			final CircuitImpl circuit = circuitMap.get(cell.getCircuitId());
 			if(circuit == null) {
-				logger.warn("Could not deliver relay cell for circuit id = "+ cell.getCircuitId() +" on connection "+ this +". Circuit not found");
+				logger.warning("Could not deliver relay cell for circuit id = "+ cell.getCircuitId() +" on connection "+ this +". Circuit not found");
 				return;
 			}
 			circuit.deliverRelayCell(cell);
@@ -213,7 +213,7 @@ public class ConnectionImpl implements Connection {
 		synchronized(circuitMap) {
 			final CircuitImpl circuit = circuitMap.get(cell.getCircuitId());
 			if(circuit == null) {
-				logger.warn("Could not deliver control cell for circuit id = "+ cell.getCircuitId() +" on connection "+ this +". Circuit not found");
+				logger.warning("Could not deliver control cell for circuit id = "+ cell.getCircuitId() +" on connection "+ this +". Circuit not found");
 				return;
 			}
 			circuit.deliverControlCell(cell);

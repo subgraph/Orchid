@@ -10,9 +10,10 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.impl.StreamManagerImpl;
+import org.torproject.jtor.logging.LogManager;
+import org.torproject.jtor.logging.Logger;
 import org.torproject.jtor.socks.SocksPortListener;
 
 public class SocksPortListenerImpl implements SocksPortListener {
@@ -23,8 +24,8 @@ public class SocksPortListenerImpl implements SocksPortListener {
 	private final StreamManagerImpl streamManager;
 	private final Executor executor;
 	
-	public SocksPortListenerImpl(Logger logger, StreamManagerImpl streamManager) {
-		this.logger = logger;
+	public SocksPortListenerImpl(LogManager logManager, StreamManagerImpl streamManager) {
+		this.logger = logManager.getLogger("socks");
 		this.streamManager = streamManager;
 		executor = Executors.newFixedThreadPool(25);
 	}

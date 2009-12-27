@@ -5,13 +5,13 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import org.torproject.jtor.Logger;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.Router;
+import org.torproject.jtor.logging.Logger;
 
 public class CircuitCreationTask implements Runnable {
 	private final static int MAX_PENDING_CIRCUITS = 2;
@@ -73,7 +73,7 @@ public class CircuitCreationTask implements Runnable {
 	private void checkCircuitsForCreation() {
 		
 		if(!directory.haveMinimumRouterInfo()) {
-			logger.warn("Cannot build circuits because we don't have enough directory information");
+			logger.warning("Cannot build circuits because we don't have enough directory information");
 			return;
 		}
 		

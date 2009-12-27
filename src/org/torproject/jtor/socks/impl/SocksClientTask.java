@@ -3,11 +3,11 @@ package org.torproject.jtor.socks.impl;
 import java.io.IOException;
 import java.net.Socket;
 
-import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.circuits.StreamManager;
 import org.torproject.jtor.circuits.impl.StreamManagerImpl;
+import org.torproject.jtor.logging.Logger;
 
 public class SocksClientTask implements Runnable {
 
@@ -31,7 +31,7 @@ public class SocksClientTask implements Runnable {
 		try {
 			return socket.getInputStream().read();
 		} catch (IOException e) {
-			logger.warn("IO error reading version byte: "+ e.getMessage());
+			logger.warning("IO error reading version byte: "+ e.getMessage());
 			return -1;
 		}
 	}
@@ -58,7 +58,7 @@ public class SocksClientTask implements Runnable {
 		try {
 			request.readRequest();
 			if(!request.isConnectRequest()) {
-				logger.warn("Non connect command");
+				logger.warning("Non connect command");
 				request.sendError();
 				return;
 			}
@@ -66,12 +66,12 @@ public class SocksClientTask implements Runnable {
 			request.sendSuccess();
 			SocksStreamConnection.runConnection(socket, stream, logger);
 		} catch (SocksRequestException e) {
-			logger.warn("Failure reading SOCKS request");
+			logger.warning("Failure reading SOCKS request");
 		} catch (InterruptedException e) {
-			logger.warn("Stream open interrupted");
+			logger.warning("Stream open interrupted");
 			Thread.currentThread().interrupt();
 		} catch (IOException e) {
-			logger.warn("Error sending SOCKS response: "+ e);
+			logger.warning("Error sending SOCKS response: "+ e);
 		}
 		
 	}
@@ -94,7 +94,7 @@ public class SocksClientTask implements Runnable {
 		try {
 			socket.close();
 		} catch (IOException e) {
-			logger.warn("Error closing SOCKS socket: "+ e.getMessage());
+			logger.warning("Error closing SOCKS socket: "+ e.getMessage());
 		}
 	}
 }
