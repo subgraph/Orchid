@@ -14,6 +14,7 @@ public class Socks5Request extends SocksRequest {
 	final static int SOCKS5_ADDRESS_IPV6 = 4;
 	final static int SOCKS5_STATUS_SUCCESS = 0;
 	final static int SOCKS5_STATUS_FAILURE = 1;
+	final static int SOCKS5_STATUS_CONNECTION_REFUSED = 5;
 	
 	private int command;
 	private int addressType;
@@ -58,6 +59,10 @@ public class Socks5Request extends SocksRequest {
 		setPortData(portBytes);		
 	}
 	
+	public void sendConnectionRefused() throws IOException {
+		sendResponse(SOCKS5_STATUS_CONNECTION_REFUSED);
+	}
+
 	public void sendError() throws IOException {
 		sendResponse(SOCKS5_STATUS_FAILURE);
 	}

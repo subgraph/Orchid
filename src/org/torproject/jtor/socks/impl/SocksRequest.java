@@ -22,6 +22,7 @@ public abstract class SocksRequest {
 	abstract public boolean isConnectRequest();
 	abstract void sendError() throws IOException;
 	abstract void sendSuccess() throws IOException;
+	abstract void sendConnectionRefused() throws IOException;
 	
 	public int getPort() {
 		return port;

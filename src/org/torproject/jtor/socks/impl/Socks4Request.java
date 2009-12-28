@@ -8,23 +8,27 @@ public class Socks4Request extends SocksRequest {
 	private final static int SOCKS_STATUS_SUCCESS = 0x5a;
 	private final static int SOCKS_STATUS_FAILURE = 0x5b;
 	private int command;
-	
+
 	Socks4Request(Socket socket) {
 		super(socket);
 	}
-	
+
 	public boolean isConnectRequest() {
 		return command == SOCKS_COMMAND_CONNECT;
 	}
-	
+
+	public void sendConnectionRefused() throws IOException {
+		sendError();
+	}
+
 	public void sendError() throws IOException {
 		sendResponse(SOCKS_STATUS_FAILURE);
 	}
-	
+
 	public void sendSuccess() throws IOException {
 		sendResponse(SOCKS_STATUS_SUCCESS);
 	}
-	
+
 	public void readRequest() {
 		command = readByte();
 		setPortData(readPortData());
@@ -35,7 +39,7 @@ public class Socks4Request extends SocksRequest {
 		else
 			setIPv4AddressData(ipv4Data);
 	}
-	
+
 	private boolean isVersion4aHostname(byte[] data) {
 		/*
 		 * For version 4A, if the client cannot resolve the destination host's
@@ -48,16 +52,13 @@ public class Socks4Request extends SocksRequest {
 		for(int i = 0; i < 3; i++)
 			if(data[i] != 0)
 				return false;
-		return data[3] != 0;	
+		return data[3] != 0;
 	}
-	
+
 	private void sendResponse(int code) throws IOException {
 		final byte[] responseBuffer = new byte[8];
 		responseBuffer[0] = 0;
 		responseBuffer[1] = (byte) code;
 		socketWrite(responseBuffer);
 	}
-	
-	
-
 }
