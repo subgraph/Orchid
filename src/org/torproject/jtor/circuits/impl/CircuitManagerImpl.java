@@ -53,7 +53,7 @@ public class CircuitManagerImpl implements CircuitManager {
 
 		if(DEBUG_CIRCUIT_CREATION) {
 			Runnable debugTask = createCircuitCreationDebugTask();
-			scheduledExecutor.scheduleAtFixedRate(debugTask, 0, 10000, TimeUnit.MILLISECONDS);
+			scheduledExecutor.scheduleAtFixedRate(debugTask, 0, 30000, TimeUnit.MILLISECONDS);
 		}
 	}
 

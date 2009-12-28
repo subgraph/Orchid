@@ -18,11 +18,8 @@ public class TorTest {
 		tor = new Tor();
 		directory = tor.getDirectory();
 	}
-	
-	
-	
+
 	void circuitTest()  {
-		
 		String[] path = {  "AnonymousRelay", "CodeGnomeTor1", "bambi", "TorVidalia"};
 		List<Router> routerPath= directory.getRouterListByNames(Arrays.asList(path));
 		Circuit c = tor.createCircuit();

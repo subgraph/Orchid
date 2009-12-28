@@ -20,6 +20,7 @@ import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.ConnectionClosedException;
 import org.torproject.jtor.circuits.ConnectionConnectException;
 import org.torproject.jtor.circuits.cells.Cell;
+import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.logging.Logger;
 
@@ -53,6 +54,12 @@ public class ConnectionImpl implements Connection {
 		this.readCellsThread = new Thread(createReadCellsRunnable());
 		this.readCellsThread.setDaemon(true);
 		this.connectionControlCells = new LinkedBlockingQueue<Cell>();
+		initializeCurrentCircuitId();
+	}
+	
+	private void initializeCurrentCircuitId() {
+		final TorRandom random = new TorRandom();
+		currentId = random.nextInt(0xFFFF) + 1;
 	}
 
 	public Router getRouter() {
@@ -108,12 +115,14 @@ public class ConnectionImpl implements Connection {
 	}
 
 	public void sendCell(Cell cell)  {
-		try {
-			output.write(cell.getCellBytes());
-		} catch (IOException e) {
-			closeSocket();
-			manager.removeActiveConnection(this);
-			throw new ConnectionClosedException();
+		synchronized(output) {
+			try {
+				output.write(cell.getCellBytes());
+			} catch (IOException e) {
+				closeSocket();
+				manager.removeActiveConnection(this);
+				throw new ConnectionClosedException();
+			}
 		}
 	}
 

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.Socket;
 
 import org.torproject.jtor.TorException;
+import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.circuits.StreamManager;
 import org.torproject.jtor.circuits.impl.StreamManagerImpl;
@@ -62,9 +63,20 @@ public class SocksClientTask implements Runnable {
 				request.sendError();
 				return;
 			}
-			final Stream stream = openConnectStream(request);
-			request.sendSuccess();
-			SocksStreamConnection.runConnection(socket, stream, logger);
+			final OpenStreamResponse openResponse = openConnectStream(request);
+			switch(openResponse.getStatus()) {
+			case STATUS_STREAM_OPENED:
+				request.sendSuccess();
+				runOpenConnection(openResponse.getStream());
+				break;
+			case STATUS_ERROR_CONNECTION_REFUSED:
+				request.sendConnectionRefused();
+				break;
+			default:
+				request.sendError();
+				break;
+			}
+			
 		} catch (SocksRequestException e) {
 			logger.warning("Failure reading SOCKS request");
 		} catch (InterruptedException e) {
@@ -75,8 +87,12 @@ public class SocksClientTask implements Runnable {
 		}
 		
 	}
+		
+	private void runOpenConnection(Stream stream) {
+		SocksStreamConnection.runConnection(socket, stream, logger);
+	}
 
-	private Stream openConnectStream(SocksRequest request) throws InterruptedException {
+	private OpenStreamResponse openConnectStream(SocksRequest request) throws InterruptedException {
 		if(request.hasHostname()) {
 			logger.debug("SOCKS CONNECT request to "+ request.getHostname() +":"+ request.getPort());
 			return streamManager.openExitStreamTo(request.getHostname(), request.getPort());

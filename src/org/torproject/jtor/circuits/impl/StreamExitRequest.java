@@ -1,6 +1,6 @@
 package org.torproject.jtor.circuits.impl;
 
-import org.torproject.jtor.circuits.Stream;
+import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.data.IPv4Address;
 
 public class StreamExitRequest {
@@ -9,7 +9,7 @@ public class StreamExitRequest {
 	private final IPv4Address address;
 	private final String hostname;
 	private final int port;
-	private Stream allocatedStream;
+	private OpenStreamResponse response;
 	private boolean isReserved;
 
 	StreamExitRequest(IPv4Address address, int port) {
@@ -42,16 +42,16 @@ public class StreamExitRequest {
 		return port;
 	}
 
-	void setAllocatedStream(Stream stream) {
-		allocatedStream = stream;
+	void setResponse(OpenStreamResponse response) {
+		this.response = response;
+	}
+	
+	OpenStreamResponse getResponse() {
+		return response;
 	}
 
-	Stream getAllocatedStream() {
-		return allocatedStream;
-	}
-
-	boolean isConnected() {
-		return allocatedStream != null;
+	boolean isCompleted() {
+		return response != null;
 	}
 	
 	synchronized boolean reserveRequest() {

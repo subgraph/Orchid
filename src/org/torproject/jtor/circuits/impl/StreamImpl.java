@@ -16,6 +16,7 @@ public class StreamImpl implements Stream {
 	private final TorInputStream inputStream;
 	private final TorOutputStream outputStream;
 	private boolean isClosed;
+	private boolean relayEndReceived;
 	
 	StreamImpl(CircuitImpl circuit, CircuitNode targetNode, int streamId) {
 		this.circuit = circuit;
@@ -28,17 +29,19 @@ public class StreamImpl implements Stream {
 	void addInputCell(RelayCell cell) {
 		if(isClosed)
 			return;
-		if(cell.getRelayCommand() == RelayCell.RELAY_END)
+		if(cell.getRelayCommand() == RelayCell.RELAY_END) {
+			relayEndReceived = true;
 			inputStream.addEndCell(cell);
+		}
 		else
 			inputStream.addInputCell(cell);
 	}
 
-	int getStreamId() {
+	public int getStreamId() {
 		return streamId;
 	}
 
-	Circuit getCircuit() {
+	public Circuit getCircuit() {
 		return circuit;
 	}
 
@@ -52,6 +55,11 @@ public class StreamImpl implements Stream {
 		isClosed = true;
 		inputStream.close();
 		outputStream.close();
+		if(!relayEndReceived) {
+			final RelayCell cell = new RelayCellImpl(circuit.getFinalCircuitNode(), circuit.getCircuitId(), streamId, RelayCell.RELAY_END);
+			cell.putByte(RelayCell.REASON_DONE);
+			circuit.sendRelayCellToFinalNode(cell);
+		}
 		// XXX when to remove?
 		//circuit.removeStream(this);
 	}
@@ -90,5 +98,9 @@ public class StreamImpl implements Stream {
 
 	public OutputStream getOutputStream() {
 		return outputStream;
+	}
+	
+	public String toString() {
+		return "[Stream stream_id="+ streamId + " circuit="+ circuit +" ]";
 	}
 }

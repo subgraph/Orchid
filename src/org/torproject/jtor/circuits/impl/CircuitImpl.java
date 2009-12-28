@@ -15,10 +15,10 @@ import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.ConnectionClosedException;
-import org.torproject.jtor.circuits.ConnectionConnectException;
-import org.torproject.jtor.circuits.Stream;
+import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
+import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.logging.Logger;
@@ -30,14 +30,6 @@ import org.torproject.jtor.logging.Logger;
 public class CircuitImpl implements Circuit {
 	static CircuitImpl create(CircuitManagerImpl circuitManager, ConnectionManagerImpl connectionManager, Logger logger) {
 		return new CircuitImpl(circuitManager, connectionManager, logger);
-	}
-
-	private static ConnectionImpl createEntryConnection(ConnectionManagerImpl connectionManager, Router router) {
-		final ConnectionImpl existingConnection = connectionManager.findActiveLinkForRouter(router);
-		if(existingConnection != null)
-			return existingConnection;
-		else
-			return connectionManager.createConnection(router);
 	}
 
 	private enum CircuitState {
@@ -57,28 +49,38 @@ public class CircuitImpl implements Circuit {
 	private ConnectionImpl entryConnection;
 	private int circuitId;
 	private final CircuitManagerImpl circuitManager;
-	private final ConnectionManagerImpl connectionManager;
-	private CircuitBuilder circuitBuilder;
 	private final Logger logger;
 	private final List<CircuitNodeImpl> nodeList;
 	private final BlockingQueue<RelayCell> relayCellResponseQueue;
 	private final BlockingQueue<Cell> controlCellResponseQueue;
 	private final Map<Integer, StreamImpl> streamMap;
+	private final CircuitBuilder circuitBuilder;
+	private final Object relaySendLock = new Object();
 	private int currentStreamId;
 	private CircuitState state = CircuitState.UNCONNECTED;
 	private Date circuitBuildStart;
 
-	// XXX implement control relay lock
 	private CircuitImpl(CircuitManagerImpl circuitManager, ConnectionManagerImpl connectionManager, Logger logger) {
 		nodeList = new ArrayList<CircuitNodeImpl>();
 		this.circuitManager = circuitManager;
-		this.connectionManager = connectionManager;
 		this.logger = logger;
 		this.relayCellResponseQueue = new LinkedBlockingQueue<RelayCell>();
 		this.controlCellResponseQueue = new LinkedBlockingQueue<Cell>();
 		this.streamMap = new HashMap<Integer, StreamImpl>();
+		circuitBuilder = new CircuitBuilder(this, connectionManager, logger);
+		initializeCurrentStreamId();
 	}
 
+	private void initializeCurrentStreamId() {
+		final TorRandom random = new TorRandom();
+		currentStreamId = random.nextInt(0xFFFF) + 1;	
+	}
+	
+	void initializeConnectingCircuit(ConnectionImpl entryConnection, int circuitId) {
+		this.circuitId = circuitId;
+		this.entryConnection = entryConnection;
+	}
+	
 	public boolean isConnected() {
 		return state == CircuitState.OPEN;
 	}
@@ -86,52 +88,31 @@ public class CircuitImpl implements Circuit {
 	void setConnected() {
 		state = CircuitState.OPEN;
 	}
+	
+	public void openCircuit(List<Router> circuitPath, CircuitBuildHandler handler)  {
+		startCircuitOpen();	
+		if(circuitBuilder.openCircuit(circuitPath, handler)) 
+			circuitOpenSucceeded();
+		else
+			circuitOpenFailed();
+	}
 
-	public boolean openCircuit(List<Router> circuitPath, CircuitBuildHandler handler)  {
-		if(circuitPath.isEmpty())
-			throw new IllegalArgumentException("Path must contain at least one router to create a circuit.");
-		entryConnection = createEntryConnection(connectionManager, circuitPath.get(0));
-		circuitId = entryConnection.allocateCircuitId(this);
-		circuitBuilder = new CircuitBuilder(this, circuitPath, logger);
-
-		state = CircuitState.BUILDING;
+	private void startCircuitOpen() {
+		if(state != CircuitState.UNCONNECTED)
+			throw new IllegalStateException("Can only connect UNCONNECTED circuits");
 		circuitBuildStart = new Date();
+		state = CircuitState.BUILDING;
 		circuitManager.circuitStartConnect(this);
-		if(!entryConnection.isConnected()) {
-			try {
-				final Date connectStart = new Date();
-				entryConnection.connect();
-				final Date now = new Date();
-				logger.debug("Connect completed in " + (now.getTime() - connectStart.getTime()) +" milliseconds");
-			} catch(ConnectionConnectException e) {
-				entryConnection.removeCircuit(this);
-				state = CircuitState.FAILED;
-				circuitManager.circuitClosed(this);
-				if(handler != null)
-					handler.connectionFailed(e.getMessage());
-				return false;
-			} catch (Exception e) {
-				entryConnection.removeCircuit(this);
-				state = CircuitState.FAILED;
-				circuitManager.circuitClosed(this);
-				if(handler != null)
-					handler.connectionFailed(e.getMessage());
-				logger.error("Unexpected exception connecting to entry node.", e);
-				return false;
-			}
-		}
-
-		if(handler != null)
-			handler.connectionCompleted(entryConnection);
-
-		if(circuitBuilder.build(handler)) {
-			circuitManager.circuitConnected(this);
-			return true;
-		}
-		entryConnection.removeCircuit(this);
+	}
+	
+	private void circuitOpenFailed() {
 		state = CircuitState.FAILED;
 		circuitManager.circuitClosed(this);
-		return false;
+	}
+	
+	private void circuitOpenSucceeded() {
+		state = CircuitState.OPEN;
+		circuitManager.circuitConnected(this);
 	}
 
 	public void extendCircuit(Router router) {
@@ -141,6 +122,8 @@ public class CircuitImpl implements Circuit {
 	}
 
 	public Connection getConnection() {
+		if(!isConnected())
+			throw new TorException("Circuit is not connected.");
 		return entryConnection;
 	}
 
@@ -157,15 +140,17 @@ public class CircuitImpl implements Circuit {
 	}
 
 	private void sendRelayCellTo(RelayCell cell, CircuitNode targetNode) {
-		logger.debug("Sending:     "+ cell);
-		cell.setLength();
-		targetNode.updateForwardDigest(cell);
-		cell.setDigest(targetNode.getForwardDigestBytes());
+		synchronized(relaySendLock) {
+			logger.debug("Sending:     "+ cell);
+			cell.setLength();
+			targetNode.updateForwardDigest(cell);
+			cell.setDigest(targetNode.getForwardDigestBytes());
 
-		for(CircuitNode node = targetNode; node != null; node = node.getPreviousNode())
-			node.encryptForwardCell(cell);
+			for(CircuitNode node = targetNode; node != null; node = node.getPreviousNode())
+				node.encryptForwardCell(cell);
 
-		sendCell(cell);
+			sendCell(cell);
+		}
 	}
 
 	public void sendCell(Cell cell) {
@@ -204,7 +189,7 @@ public class CircuitImpl implements Circuit {
 			return relayCellResponseQueue.poll(timeout, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
-			throw new TorException("Interrupted while waiting for relay response");
+			return null;
 		}
 	}
 
@@ -293,27 +278,23 @@ public class CircuitImpl implements Circuit {
 		}
 	}
 
-	public Stream openDirectoryStream() {
-		final StreamImpl stream = createNewStream();
-		stream.openDirectory();
-		return stream;
+	public OpenStreamResponse openDirectoryStream() {
+		return null;
 	}
 
-	public Stream openExitStream(IPv4Address address, int port) {
+	public OpenStreamResponse openExitStream(IPv4Address address, int port) {
 		return openExitStream(address.toString(), port);
 	}
 
-	public Stream openExitStream(String target, int port) {
+	public OpenStreamResponse openExitStream(String target, int port) {
 		final StreamImpl stream = createNewStream();
 		try {
 			stream.openExit(target, port);
-			return stream;
-
+			return OpenStreamResponseImpl.createStreamOpened(stream);
 		} catch(TorException e) {
-			System.out.println("Tor exception "+ e);
-			e.printStackTrace();
+			logger.info("Failed to open stream: "+ e.getMessage());
 			removeStream(stream);
-			return null;
+			return OpenStreamResponseImpl.createStreamError();
 		}
 	}
 

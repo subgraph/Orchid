@@ -237,7 +237,7 @@ public class NetworkStatusManager {
 				try {
 					runRequestDescriptors(descriptors);
 				} catch(TorException e) {
-					e.printStackTrace();
+					logger.warning("Request descriptors failed: "+ e.getMessage());
 				}
 			}
 

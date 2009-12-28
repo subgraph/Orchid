@@ -2,11 +2,13 @@ package org.torproject.jtor.circuits.impl;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Date;
 import java.util.List;
 
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitNode;
+import org.torproject.jtor.circuits.ConnectionConnectException;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.crypto.TorKeyAgreement;
@@ -21,19 +23,73 @@ import org.torproject.jtor.logging.Logger;
  */
 class CircuitBuilder {
 
-	private final List<Router> circuitPath;
 	private final CircuitImpl circuit;
+	private final ConnectionManagerImpl connectionManager;
 	private final Logger logger;
 
-	CircuitBuilder(CircuitImpl circuit, List<Router> path, Logger logger) {
+	
+	CircuitBuilder(CircuitImpl circuit, ConnectionManagerImpl connectionManager, Logger logger) {
 		this.circuit = circuit;
-		this.circuitPath = path;
+		this.connectionManager = connectionManager;
 		this.logger = logger;
 	}
+	
+	boolean openCircuit(List<Router> circuitPath, CircuitBuildHandler handler) {
+		if(circuitPath.isEmpty())
+			throw new IllegalArgumentException("Path must contain at least one router to create a circuit.");
+		final Router entryRouter = circuitPath.get(0);
+		return openEntryNodeConnection(entryRouter, handler) && 
+			buildCircuit(circuitPath, handler);
+	}
+	
+	private boolean openEntryNodeConnection(Router entryRouter, CircuitBuildHandler handler) {
+		final ConnectionImpl entryConnection = createEntryConnection(entryRouter);
+		if(!entryConnection.isConnected() && !connectEntryNodeConnection(entryConnection, handler))
+			return false;
+			
+		final int circuitId = entryConnection.allocateCircuitId(circuit);
+		circuit.initializeConnectingCircuit(entryConnection, circuitId);
+		
+		if(handler != null)
+			handler.connectionCompleted(entryConnection);
 
-	boolean build(CircuitBuildHandler handler) {
+		return true;
+	}
+
+	private boolean connectEntryNodeConnection(ConnectionImpl entryConnection, CircuitBuildHandler handler) {
 		try {
-			runCircuitBuild(handler);
+			final Date start = new Date();
+			entryConnection.connect();
+			final Date now = new Date();
+			logger.debug("Connect completed in "+ (now.getTime() - start.getTime()) +" milliseconds.");
+			return true;
+		} catch (ConnectionConnectException e) {
+			processConnectFailed(entryConnection, handler, e);
+			return false;
+		} catch (Exception e) {
+			processConnectFailed(entryConnection, handler, e);
+			logger.error("Unexpected exception connecting to entry node.", e);
+			return false;
+		}
+	}
+
+	private void processConnectFailed(ConnectionImpl entryConnection, CircuitBuildHandler handler, Throwable e) {
+		entryConnection.removeCircuit(circuit);
+		if(handler != null)
+			handler.connectionFailed(e.getMessage());
+	}
+
+	private ConnectionImpl createEntryConnection(Router entryRouter) {
+		final ConnectionImpl existingConnection = connectionManager.findActiveLinkForRouter(entryRouter);
+		if(existingConnection != null)
+			return existingConnection;
+		else
+			return connectionManager.createConnection(entryRouter);
+	}
+
+	private boolean buildCircuit(List<Router> circuitPath, CircuitBuildHandler handler) {
+		try {
+			runCircuitBuild(circuitPath, handler);
 		} catch(TorException e) {
 			if(handler != null) 
 				handler.circuitBuildFailed(e.getMessage());
@@ -50,12 +106,12 @@ class CircuitBuilder {
 		return true;
 	}
 
-	private void runCircuitBuild(CircuitBuildHandler handler) {
+	private void runCircuitBuild(List<Router> circuitPath, CircuitBuildHandler handler) {
 		final Router entryRouter = circuitPath.get(0);
 		final CircuitNode firstNode = createTo(entryRouter);
 		if(handler != null)
 			handler.nodeAdded(firstNode);
-		
+
 		for(int i = 1; i < circuitPath.size(); i++) {
 			final CircuitNode extendedNode = extendTo(circuitPath.get(i));
 			if(handler != null)
@@ -89,13 +145,13 @@ class CircuitBuilder {
 		final byte[] cellBytes = cell.getCellBytes();
 		final byte[] dhData = new byte[TorKeyAgreement.DH_LEN];
 		final byte[] hash = new byte[TorMessageDigest.TOR_DIGEST_SIZE];
-		
+
 		int offset = Cell.CELL_HEADER_LEN;
 		System.arraycopy(cellBytes, offset, dhData, 0, TorKeyAgreement.DH_LEN);
-		
+
 		offset += TorKeyAgreement.DH_LEN;
 		System.arraycopy(cellBytes, offset, hash, 0, TorMessageDigest.TOR_DIGEST_SIZE);
-		
+
 		BigInteger peerPublic = new BigInteger(1, dhData);
 		node.setSharedSecret(peerPublic, HexDigest.createFromDigestBytes(hash));
 	}
@@ -144,7 +200,7 @@ class CircuitBuilder {
 		} else if (command != RelayCell.RELAY_EXTENDED) {
 			throw new TorException("Unexpected response to RELAY_EXTEND.  Command = "+ command);
 		}
-		
+
 		byte[] dhPublic = new byte[TorKeyAgreement.DH_LEN];
 		cell.getByteArray(dhPublic);
 		byte[] keyHash = new byte[TorMessageDigest.TOR_DIGEST_SIZE];

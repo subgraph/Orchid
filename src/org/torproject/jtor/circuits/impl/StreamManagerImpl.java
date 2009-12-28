@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.torproject.jtor.circuits.Stream;
+import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.StreamManager;
 import org.torproject.jtor.data.IPv4Address;
 
@@ -18,11 +18,11 @@ public class StreamManagerImpl implements StreamManager {
 		}
 	}
 	
-	public Stream openExitStreamTo(String hostname, int port) throws InterruptedException {
+	public OpenStreamResponse openExitStreamTo(String hostname, int port) throws InterruptedException {
 		return openExitStreamByRequest(new StreamExitRequest(hostname, port));
 	}
 	
-	public Stream openExitStreamTo(IPv4Address address, int port) throws InterruptedException {
+	public OpenStreamResponse openExitStreamTo(IPv4Address address, int port) throws InterruptedException {
 		return openExitStreamByRequest(new StreamExitRequest(address, port));
 	}
 	
@@ -33,12 +33,12 @@ public class StreamManagerImpl implements StreamManager {
 		}
 	}
 	
-	private Stream openExitStreamByRequest(StreamExitRequest request) throws InterruptedException {
+	private OpenStreamResponse openExitStreamByRequest(StreamExitRequest request) throws InterruptedException {
 		synchronized(pendingExitStreams) {
 			pendingExitStreams.add(request);
-			while(!request.isConnected())
+			while(!request.isCompleted())
 				pendingExitStreams.wait();
 		}
-		return request.getAllocatedStream();
+		return request.getResponse();
 	}
 }

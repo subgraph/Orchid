@@ -16,6 +16,7 @@ public class SocksStreamConnection {
 		ssc.run();
 	}
 	private final static int TRANSFER_BUFFER_SIZE = 4096;
+	private final Stream stream;
 	private final InputStream torInputStream;
 	private final OutputStream torOutputStream;
 	private final Socket socket;
@@ -28,6 +29,7 @@ public class SocksStreamConnection {
 
 	private SocksStreamConnection(Socket socket, Stream stream, Logger logger) {
 		this.socket = socket;
+		this.stream = stream;
 		torInputStream = stream.getInputStream();
 		torOutputStream = stream.getOutputStream();
 		
@@ -66,7 +68,7 @@ public class SocksStreamConnection {
 			try {
 				incomingTransferLoop();
 			} catch (IOException e) {
-				logger.warning("System error on incoming stream IO : "+ e.getMessage());
+				logger.debug("System error on incoming stream IO  "+ stream +" : "+ e.getMessage());
 			} finally {
 				synchronized(lock) {
 					incomingClosed = true;
@@ -81,8 +83,7 @@ public class SocksStreamConnection {
 			try {
 				outgoingTransferLoop();
 			} catch (IOException e) {
-				e.printStackTrace();
-				logger.warning("System error on outgoing stream IO : "+ e.getMessage());
+				logger.debug("System error on outgoing stream IO "+ stream +" : "+ e.getMessage());
 			} finally {
 				synchronized(lock) {
 					outgoingClosed = true;
@@ -97,11 +98,11 @@ public class SocksStreamConnection {
 		while(true) {
 			final int n = torInputStream.read(incomingBuffer);
 			if(n == -1) {
-				logger.debug("EOF on TOR input stream "+ torInputStream);
+				logger.debug("EOF on TOR input stream "+ stream);
 				socket.shutdownOutput();
 				return;
 			} else if(n > 0) {
-				logger.debug("Transferring "+ n +" bytes from "+ torInputStream +" to SOCKS socket");
+				logger.debug("Transferring "+ n +" bytes from "+ stream +" to SOCKS socket");
 				if(!socket.isOutputShutdown()) {
 					socket.getOutputStream().write(incomingBuffer, 0, n);
 					socket.getOutputStream().flush();
@@ -118,10 +119,10 @@ public class SocksStreamConnection {
 		while(true) {
 			final int n = socket.getInputStream().read(outgoingBuffer);
 			if(n == -1) {
-				logger.debug("EOF on SOCKS socket connected to "+ torOutputStream);
+				logger.debug("EOF on SOCKS socket connected to "+ stream);
 				return;
 			} else if(n > 0) {
-				logger.debug("Transferring "+ n +" bytes from SOCKS socket to "+ torOutputStream);
+				logger.debug("Transferring "+ n +" bytes from SOCKS socket to "+ stream);
 				torOutputStream.write(outgoingBuffer, 0, n);
 				torOutputStream.flush();
 			}
