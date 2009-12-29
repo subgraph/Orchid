@@ -4,22 +4,21 @@ import java.io.IOException;
 import java.net.Socket;
 
 import org.torproject.jtor.TorException;
+import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.Stream;
-import org.torproject.jtor.circuits.StreamManager;
-import org.torproject.jtor.circuits.impl.StreamManagerImpl;
 import org.torproject.jtor.logging.Logger;
 
 public class SocksClientTask implements Runnable {
 
 	private final Socket socket;
 	private final Logger logger;
-	private final StreamManager streamManager;
+	private final CircuitManager circuitManager;
 
-	SocksClientTask(Socket socket, Logger logger, StreamManagerImpl streamManager) {
+	SocksClientTask(Socket socket, Logger logger, CircuitManager circuitManager) {
 		this.socket = socket;
 		this.logger = logger;
-		this.streamManager = streamManager;
+		this.circuitManager = circuitManager;
 	}
 
 	public void run() {
@@ -95,10 +94,10 @@ public class SocksClientTask implements Runnable {
 	private OpenStreamResponse openConnectStream(SocksRequest request) throws InterruptedException {
 		if(request.hasHostname()) {
 			logger.debug("SOCKS CONNECT request to "+ request.getHostname() +":"+ request.getPort());
-			return streamManager.openExitStreamTo(request.getHostname(), request.getPort());
+			return circuitManager.openExitStreamTo(request.getHostname(), request.getPort());
 		} else {
 			logger.debug("SOCKS CONNECT request to "+ request.getAddress() +":"+ request.getPort());
-			return streamManager.openExitStreamTo(request.getAddress(), request.getPort());
+			return circuitManager.openExitStreamTo(request.getAddress(), request.getPort());
 		}
 	}
 

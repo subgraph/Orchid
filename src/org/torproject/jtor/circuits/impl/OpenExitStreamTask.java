@@ -8,13 +8,13 @@ public class OpenExitStreamTask implements Runnable {
 
 	private final Circuit circuit;
 	private final StreamExitRequest exitRequest;
-	private final StreamManagerImpl streamManager;
+	private final CircuitManagerImpl circuitManager;
 	private final Logger logger;
 	
-	OpenExitStreamTask(Circuit circuit, StreamExitRequest exitRequest, StreamManagerImpl streamManager, Logger logger) {
+	OpenExitStreamTask(Circuit circuit, StreamExitRequest exitRequest, CircuitManagerImpl circuitManager, Logger logger) {
 		this.circuit = circuit;
 		this.exitRequest = exitRequest;
-		this.streamManager = streamManager;
+		this.circuitManager = circuitManager;
 		this.logger = logger;
 	}
 	
@@ -24,8 +24,7 @@ public class OpenExitStreamTask implements Runnable {
 		switch(openStreamResponse.getStatus()) {
 		case STATUS_STREAM_OPENED:
 		case STATUS_ERROR_CONNECTION_REFUSED:
-			exitRequest.setResponse(openStreamResponse);
-			streamManager.streamIsConnected(exitRequest);
+			exitRequest.setCompleted(openStreamResponse);
 			break;
 		default:
 			exitRequest.unreserveRequest();

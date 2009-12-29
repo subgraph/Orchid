@@ -11,7 +11,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.impl.StreamManagerImpl;
+import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.logging.LogManager;
 import org.torproject.jtor.logging.Logger;
 import org.torproject.jtor.socks.SocksPortListener;
@@ -21,12 +21,13 @@ public class SocksPortListenerImpl implements SocksPortListener {
 	private final Set<Integer> listeningPorts = new HashSet<Integer>();
 	private final Map<Integer, Thread> acceptThreads = new HashMap<Integer, Thread>();
 	private final Logger logger;
-	private final StreamManagerImpl streamManager;
+	private final CircuitManager circuitManager;
 	private final Executor executor;
 	
-	public SocksPortListenerImpl(LogManager logManager, StreamManagerImpl streamManager) {
+	public SocksPortListenerImpl(LogManager logManager, CircuitManager circuitManager) {
 		this.logger = logManager.getLogger("socks");
-		this.streamManager = streamManager;
+		logger.enableDebug();
+		this.circuitManager = circuitManager;
 		executor = Executors.newFixedThreadPool(25);
 	}
 
@@ -78,6 +79,6 @@ public class SocksPortListenerImpl implements SocksPortListener {
 	}
 	
 	private Runnable newClientSocket(final Socket s) {
-		return new SocksClientTask(s, logger, streamManager);
+		return new SocksClientTask(s, logger, circuitManager);
 	}
 }

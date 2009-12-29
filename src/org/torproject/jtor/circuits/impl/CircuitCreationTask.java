@@ -17,18 +17,16 @@ public class CircuitCreationTask implements Runnable {
 	private final static int MAX_PENDING_CIRCUITS = 2;
 	private final static int DEFAULT_CLEAN_CIRCUITS = 3;
 	private final Directory directory;
-	private final StreamManagerImpl streamManager;
 	private final CircuitManagerImpl circuitManager;
 	private final Logger logger;
 	private final NodeChooser nodeChooser;
 	private final Executor executor;
 	
-	CircuitCreationTask(Directory directory, StreamManagerImpl streamManager, CircuitManagerImpl circuitManager, Logger logger) {
+	CircuitCreationTask(Directory directory, CircuitManagerImpl circuitManager, Logger logger) {
 		this.directory = directory;
-		this.streamManager = streamManager;
 		this.circuitManager = circuitManager;
 		this.logger = logger;
-		this.nodeChooser = new NodeChooser(streamManager, directory);
+		this.nodeChooser = new NodeChooser(circuitManager, directory);
 		this.executor = Executors.newCachedThreadPool();
 	}
 	
@@ -39,7 +37,7 @@ public class CircuitCreationTask implements Runnable {
 	}
 
 	private void checkUnassignedPendingStreams() {
-		final List<StreamExitRequest> pendingExitStreams = streamManager.getPendingExitStreams();
+		final List<StreamExitRequest> pendingExitStreams = circuitManager.getPendingExitStreams();
 		if(pendingExitStreams.isEmpty())
 			return;
 
@@ -56,7 +54,7 @@ public class CircuitCreationTask implements Runnable {
 	}
 
 	private OpenExitStreamTask newExitStreamTask(Circuit circuit, StreamExitRequest exitRequest) {
-		return new OpenExitStreamTask(circuit, exitRequest, streamManager, logger);
+		return new OpenExitStreamTask(circuit, exitRequest, circuitManager, logger);
 	}
 	
 	private boolean canRouterHandleExitRequest(Router router, StreamExitRequest request) {
@@ -80,7 +78,7 @@ public class CircuitCreationTask implements Runnable {
 		if((circuitManager.getCleanCircuitCount() + circuitManager.getPendingCircuitCount()) < DEFAULT_CLEAN_CIRCUITS &&
 				circuitManager.getPendingCircuitCount() < MAX_PENDING_CIRCUITS) {
 			final List<Router> path = choosePreemptiveExitPath();
-			final Circuit circuit = circuitManager.newCircuit();
+			final Circuit circuit = circuitManager.createNewCircuit();
 			executor.execute(new OpenCircuitTask(circuit, path, createCircuitBuildHandler(), logger));
 		}
 		
@@ -126,7 +124,7 @@ public class CircuitCreationTask implements Runnable {
 	
 	private void preemptiveCircuitOpened(Circuit circuit) {
 		final Router lastRouter = circuit.getFinalCircuitNode().getRouter();
-		final List<StreamExitRequest> pendingExitStreams = streamManager.getPendingExitStreams();
+		final List<StreamExitRequest> pendingExitStreams = circuitManager.getPendingExitStreams();
 		for(StreamExitRequest req: pendingExitStreams) {
 			if(canRouterHandleExitRequest(lastRouter, req) && req.reserveRequest())
 				executor.execute(newExitStreamTask(circuit, req));

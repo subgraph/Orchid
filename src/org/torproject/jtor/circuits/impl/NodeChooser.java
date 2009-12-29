@@ -1,35 +1,25 @@
 package org.torproject.jtor.circuits.impl;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.torproject.jtor.TorException;
+import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.Router;
 
 public class NodeChooser {
-	final private StreamManagerImpl streamManager;
-	final private Directory directory;
-	private final SecureRandom random;
+	private final CircuitManagerImpl circuitManager;
+	private final Directory directory;
+	private final TorRandom random;
 
-	NodeChooser(StreamManagerImpl streamManager, Directory directory) {
-		this.streamManager = streamManager;
+	NodeChooser(CircuitManagerImpl circuitManager, Directory directory) {
+		this.circuitManager = circuitManager;
 		this.directory = directory;
-		this.random = createRandom();
-	}
-
-	private static SecureRandom createRandom() {
-		try {
-			return SecureRandom.getInstance("SHA1PRNG");
-		} catch (NoSuchAlgorithmException e) {
-			throw new TorException(e);
-		}
+		this.random = new TorRandom();
 	}
 
 	Router chooseEntryNode(NodeChoiceConstraints ncc) {
@@ -66,7 +56,7 @@ public class NodeChooser {
 	}
 
 	Router chooseExitNodeForPort(int port, NodeChoiceConstraints ncc) {
-		final List<StreamExitRequest> pendingExitStreams = streamManager.getPendingExitStreams();
+		final List<StreamExitRequest> pendingExitStreams = circuitManager.getPendingExitStreams();
 		final List<Router> allRouters = directory.getAllRouters();
 		final List<Router> exitRouters = filterForExitDestination(allRouters, null, port);
 		final List<Router> filteredPending = filterForPendingStreams(exitRouters, pendingExitStreams);

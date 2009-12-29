@@ -1,18 +1,19 @@
 package org.torproject.jtor.circuits.impl;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitManager;
+import org.torproject.jtor.circuits.OpenStreamResponse;
+import org.torproject.jtor.crypto.TorRandom;
+import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.logging.LogManager;
 import org.torproject.jtor.logging.Logger;
@@ -25,27 +26,20 @@ public class CircuitManagerImpl implements CircuitManager {
 	private final Set<Circuit> pendingCircuits;
 	private final Set<Circuit> activeCircuits;
 	private final Set<Circuit> cleanCircuits;
-	private final SecureRandom random;
+	private final TorRandom random;
+	private final List<StreamExitRequest> pendingExitStreams = new LinkedList<StreamExitRequest>();
 	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 	private final Runnable circuitCreationTask;
 
-	public CircuitManagerImpl(Directory directory, ConnectionManagerImpl connectionManager, StreamManagerImpl streamManager, LogManager logManager) {
+	public CircuitManagerImpl(Directory directory, ConnectionManagerImpl connectionManager, LogManager logManager) {
 		this.connectionManager = connectionManager;
 		this.logger = logManager.getLogger("circuits");
 		this.logger.enableDebug();
-		this.circuitCreationTask = new CircuitCreationTask(directory, streamManager, this, logger);
+		this.circuitCreationTask = new CircuitCreationTask(directory, this, logger);
 		this.activeCircuits = new HashSet<Circuit>();
 		this.pendingCircuits = new HashSet<Circuit>();
 		this.cleanCircuits = new HashSet<Circuit>();
-		this.random = createRandom();
-	}
-
-	private static SecureRandom createRandom() {
-		try {
-			return SecureRandom.getInstance("SHA1PRNG");
-		} catch (NoSuchAlgorithmException e) {
-			throw new TorException(e);
-		}
+		this.random = new TorRandom();
 	}
 
 	public void startBuildingCircuits() {
@@ -65,7 +59,7 @@ public class CircuitManagerImpl implements CircuitManager {
 		}};
 	}
 
-	public Circuit newCircuit() {
+	public Circuit createNewCircuit() {
 		return CircuitImpl.create(this, connectionManager, logger);
 	}
 
@@ -111,5 +105,37 @@ public class CircuitManagerImpl implements CircuitManager {
 			ac.set(swapIdx, tmp);
 		}
 		return ac;
+	}
+
+	public OpenStreamResponse openExitStreamTo(String hostname, int port)
+			throws InterruptedException {
+		return openExitStreamByRequest(new StreamExitRequest(this, hostname, port));
+	}
+
+	public OpenStreamResponse openExitStreamTo(IPv4Address address, int port)
+			throws InterruptedException {
+		return openExitStreamByRequest(new StreamExitRequest(this, address, port));
+	}
+	
+	private OpenStreamResponse openExitStreamByRequest(StreamExitRequest request) throws InterruptedException {
+		synchronized(pendingExitStreams) {
+			pendingExitStreams.add(request);
+			while(!request.isCompleted())
+				pendingExitStreams.wait();
+		}
+		return request.getResponse();
+	}
+	
+	List<StreamExitRequest> getPendingExitStreams() {
+		synchronized(pendingExitStreams) {
+			return new ArrayList<StreamExitRequest>(pendingExitStreams);
+		}
+	}
+	
+	void streamRequestIsCompleted(StreamExitRequest request) {
+		synchronized(pendingExitStreams) {
+			pendingExitStreams.remove(request);
+			pendingExitStreams.notifyAll();
+		}
 	}
 }

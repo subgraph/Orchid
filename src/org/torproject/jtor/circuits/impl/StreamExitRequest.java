@@ -9,18 +9,21 @@ public class StreamExitRequest {
 	private final IPv4Address address;
 	private final String hostname;
 	private final int port;
+	private final CircuitManagerImpl circuitManager;
 	private OpenStreamResponse response;
 	private boolean isReserved;
 
-	StreamExitRequest(IPv4Address address, int port) {
+	StreamExitRequest(CircuitManagerImpl circuitManager, IPv4Address address, int port) {
+		this.circuitManager = circuitManager;
 		isAddress = true;
 		this.address = address;
 		this.port = port;
 		this.hostname = null;
 	}
 
-	StreamExitRequest(String hostname, int port) {
+	StreamExitRequest(CircuitManagerImpl circuitManager, String hostname, int port) {
 		isAddress = false;
+		this.circuitManager = circuitManager;
 		this.address = null;
 		this.hostname = hostname;
 		this.port = port;
@@ -42,8 +45,9 @@ public class StreamExitRequest {
 		return port;
 	}
 
-	void setResponse(OpenStreamResponse response) {
+	void setCompleted(OpenStreamResponse response) {
 		this.response = response;
+		circuitManager.streamRequestIsCompleted(this);
 	}
 	
 	OpenStreamResponse getResponse() {
