@@ -86,6 +86,8 @@ public class ConnectionImpl implements Connection {
 	}
 
 	public void connect() {
+		if(isConnected)
+			return;
 		try {
 			doConnect();
 		} catch (SocketTimeoutException e) {
@@ -115,6 +117,8 @@ public class ConnectionImpl implements Connection {
 	}
 
 	public void sendCell(Cell cell)  {
+		if(!isConnected)
+			throw new ConnectionClosedException("Cannot send cell because connection is not connected");
 		synchronized(output) {
 			try {
 				output.write(cell.getCellBytes());
