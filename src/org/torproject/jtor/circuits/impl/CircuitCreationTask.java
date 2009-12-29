@@ -54,7 +54,7 @@ public class CircuitCreationTask implements Runnable {
 	}
 
 	private OpenExitStreamTask newExitStreamTask(Circuit circuit, StreamExitRequest exitRequest) {
-		return new OpenExitStreamTask(circuit, exitRequest, circuitManager, logger);
+		return new OpenExitStreamTask(circuit, exitRequest, logger);
 	}
 	
 	private boolean canRouterHandleExitRequest(Router router, StreamExitRequest request) {
