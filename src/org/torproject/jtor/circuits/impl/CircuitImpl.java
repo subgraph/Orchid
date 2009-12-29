@@ -1,7 +1,6 @@
 package org.torproject.jtor.circuits.impl;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +9,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.torproject.jtor.TorException;
+import org.torproject.jtor.TorTimeoutException;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitNode;
@@ -18,7 +18,6 @@ import org.torproject.jtor.circuits.ConnectionClosedException;
 import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
-import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.logging.Logger;
@@ -30,17 +29,6 @@ import org.torproject.jtor.logging.Logger;
 public class CircuitImpl implements Circuit {
 	static CircuitImpl create(CircuitManagerImpl circuitManager, ConnectionManagerImpl connectionManager, Logger logger) {
 		return new CircuitImpl(circuitManager, connectionManager, logger);
-	}
-
-	private enum CircuitState {
-		UNCONNECTED("Unconnected"),
-		BUILDING("Building"),
-		FAILED("Failed"),
-		OPEN("Open"),
-		DESTROYED("Destroyed");
-		String name;
-		CircuitState(String name) { this.name = name; }
-		public String toString() { return name; }
 	}
 
 	private final static long CIRCUIT_BUILD_TIMEOUT_MS = 30 * 1000;
@@ -55,11 +43,9 @@ public class CircuitImpl implements Circuit {
 	private final BlockingQueue<Cell> controlCellResponseQueue;
 	private final Map<Integer, StreamImpl> streamMap;
 	private final CircuitBuilder circuitBuilder;
+	private final CircuitStatus status;
 	private final Object relaySendLock = new Object();
-	private int currentStreamId;
-	private CircuitState state = CircuitState.UNCONNECTED;
-	private Date circuitBuildStart;
-
+	
 	private CircuitImpl(CircuitManagerImpl circuitManager, ConnectionManagerImpl connectionManager, Logger logger) {
 		nodeList = new ArrayList<CircuitNodeImpl>();
 		this.circuitManager = circuitManager;
@@ -67,28 +53,23 @@ public class CircuitImpl implements Circuit {
 		this.relayCellResponseQueue = new LinkedBlockingQueue<RelayCell>();
 		this.controlCellResponseQueue = new LinkedBlockingQueue<Cell>();
 		this.streamMap = new HashMap<Integer, StreamImpl>();
+		status = new CircuitStatus();
 		circuitBuilder = new CircuitBuilder(this, connectionManager, logger);
-		initializeCurrentStreamId();
 	}
 
-	private void initializeCurrentStreamId() {
-		final TorRandom random = new TorRandom();
-		currentStreamId = random.nextInt(0xFFFF) + 1;	
-	}
-	
 	void initializeConnectingCircuit(ConnectionImpl entryConnection, int circuitId) {
 		this.circuitId = circuitId;
 		this.entryConnection = entryConnection;
 	}
-	
+
 	public boolean isConnected() {
-		return state == CircuitState.OPEN;
+		return status.isConnected();
 	}
 
 	void setConnected() {
-		state = CircuitState.OPEN;
+		status.setStateConnected();
 	}
-	
+
 	public void openCircuit(List<Router> circuitPath, CircuitBuildHandler handler)  {
 		startCircuitOpen();	
 		if(circuitBuilder.openCircuit(circuitPath, handler)) 
@@ -98,20 +79,20 @@ public class CircuitImpl implements Circuit {
 	}
 
 	private void startCircuitOpen() {
-		if(state != CircuitState.UNCONNECTED)
+		if(!status.isUnconnected())
 			throw new IllegalStateException("Can only connect UNCONNECTED circuits");
-		circuitBuildStart = new Date();
-		state = CircuitState.BUILDING;
+		status.updateCreatedTimestamp();
+		status.setStateBuilding();
 		circuitManager.circuitStartConnect(this);
 	}
-	
+
 	private void circuitOpenFailed() {
-		state = CircuitState.FAILED;
-		circuitManager.circuitClosed(this);
+		status.setStateFailed();
+		circuitManager.circuitInactive(this);
 	}
-	
+
 	private void circuitOpenSucceeded() {
-		state = CircuitState.OPEN;
+		status.setStateOpen();
 		circuitManager.circuitConnected(this);
 	}
 
@@ -155,6 +136,7 @@ public class CircuitImpl implements Circuit {
 
 	public void sendCell(Cell cell) {
 		try {
+			status.updateDirtyTimestamp();
 			entryConnection.sendCell(cell);
 		} catch (ConnectionClosedException e) {
 			destroyCircuit();
@@ -215,18 +197,15 @@ public class CircuitImpl implements Circuit {
 	}
 
 	private long getReceiveTimeout() {
-		if(state == CircuitState.BUILDING)
+		if(status.isBuilding())
 			return remainingBuildTime();
 		else
 			return CIRCUIT_RELAY_RESPONSE_TIMEOUT;
 	}
 
 	private long remainingBuildTime() {
-		if(circuitBuildStart == null)
-			return 0;
-		final Date now = new Date();
-		final long elapsed = now.getTime() - circuitBuildStart.getTime();
-		if(elapsed >= CIRCUIT_BUILD_TIMEOUT_MS)
+		final long elapsed = status.getMillisecondsElapsedSinceCreated();
+		if(elapsed == 0 || elapsed >= CIRCUIT_BUILD_TIMEOUT_MS)
 			return 0;
 		return CIRCUIT_BUILD_TIMEOUT_MS - elapsed;
 	}
@@ -236,22 +215,25 @@ public class CircuitImpl implements Circuit {
 	 * associated with this circuit (CREATED or CREATED_FAST).
 	 */
 	void deliverControlCell(Cell cell) {
+		status.updateDirtyTimestamp();
 		controlCellResponseQueue.add(cell);
 	}
 
 	/* This is called by the cell reading thread in ConnectionImpl to deliver RELAY cells. */
 	void deliverRelayCell(Cell cell) {
+		status.updateDirtyTimestamp();
 		final RelayCell relayCell = decryptRelayCell(cell);
 		logger.debug("Dispatching: "+ relayCell);
 		switch(relayCell.getRelayCommand()) {
 		case RelayCell.RELAY_EXTENDED:
 		case RelayCell.RELAY_RESOLVED:
-		case RelayCell.RELAY_CONNECTED:
 		case RelayCell.RELAY_TRUNCATED:
 			relayCellResponseQueue.add(relayCell);
 			break;	
 		case RelayCell.RELAY_DATA:
 		case RelayCell.RELAY_END:
+		case RelayCell.RELAY_CONNECTED:
+
 			processRelayDataCell(relayCell);
 			break;
 
@@ -272,9 +254,13 @@ public class CircuitImpl implements Circuit {
 	private void processRelayDataCell(RelayCell cell) {
 		synchronized(streamMap) {
 			final StreamImpl stream = streamMap.get(cell.getStreamId());
-			if(stream == null)
-				throw new TorException("Stream not found for data cell with stream id: "+ cell.getStreamId());
-			stream.addInputCell(cell);
+			// It's not unusual for the stream to not be found.  For example, if a RELAY_CONNECTED arrives after
+			// the client has stopped waiting for it, the stream will never be tracked and eventually the edge node
+			// will send a RELAY_END for this stream.
+			if(stream != null)
+				stream.addInputCell(cell);
+			else
+				logger.debug("Stream not found for stream id="+ cell.getStreamId());	
 		}
 	}
 
@@ -291,6 +277,14 @@ public class CircuitImpl implements Circuit {
 		try {
 			stream.openExit(target, port);
 			return OpenStreamResponseImpl.createStreamOpened(stream);
+		} catch (TorTimeoutException e) {
+			logger.info("Failed to open stream: "+ e.getMessage());
+			removeStream(stream);
+			if(status.countStreamTimeout()) {
+				// XXX 
+				// do something
+			}
+			return OpenStreamResponseImpl.createStreamError();
 		} catch(TorException e) {
 			logger.info("Failed to open stream: "+ e.getMessage());
 			removeStream(stream);
@@ -303,29 +297,22 @@ public class CircuitImpl implements Circuit {
 	}
 
 	void destroyCircuit() {
-		state = CircuitState.DESTROYED;
+		status.setStateDestroyed();
 		entryConnection.removeCircuit(this);
 		synchronized(streamMap) {
 			for(StreamImpl s: streamMap.values())
 				s.close();
 		}
-		circuitManager.circuitClosed(this);
+		circuitManager.circuitInactive(this);
 	}
 
 	private StreamImpl createNewStream() {
 		synchronized(streamMap) {
-			final int streamId = allocateStreamId();
+			final int streamId = status.nextStreamId();
 			final StreamImpl stream = new StreamImpl(this, getFinalCircuitNode(), streamId);
 			streamMap.put(streamId, stream);
 			return stream;
 		}
-	}
-
-	private int allocateStreamId() {
-		currentStreamId++;
-		if(currentStreamId > 0xFFFF)
-			currentStreamId = 1;
-		return currentStreamId;
 	}
 
 	void removeStream(StreamImpl stream) {
@@ -335,7 +322,7 @@ public class CircuitImpl implements Circuit {
 	}
 
 	public String toString() {
-		return "Circuit id="+ circuitId +" state=" + state +" "+ pathToString();
+		return "Circuit id="+ circuitId +" state=" + status.getStateAsString() +" "+ pathToString();
 	}
 
 	private  String pathToString() {

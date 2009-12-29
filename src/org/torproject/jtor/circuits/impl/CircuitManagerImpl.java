@@ -77,7 +77,7 @@ public class CircuitManagerImpl implements CircuitManager {
 		cleanCircuits.remove(circuit);
 	}
 
-	synchronized void circuitClosed(Circuit circuit) {
+	synchronized void circuitInactive(Circuit circuit) {
 		pendingCircuits.remove(circuit);
 		activeCircuits.remove(circuit);
 		cleanCircuits.remove(circuit);
