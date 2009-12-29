@@ -8,16 +8,14 @@ public class OpenExitStreamTask implements Runnable {
 
 	private final Circuit circuit;
 	private final StreamExitRequest exitRequest;
-	private final CircuitManagerImpl circuitManager;
 	private final Logger logger;
-	
-	OpenExitStreamTask(Circuit circuit, StreamExitRequest exitRequest, CircuitManagerImpl circuitManager, Logger logger) {
+
+	OpenExitStreamTask(Circuit circuit, StreamExitRequest exitRequest, Logger logger) {
 		this.circuit = circuit;
 		this.exitRequest = exitRequest;
-		this.circuitManager = circuitManager;
 		this.logger = logger;
 	}
-	
+
 	public void run() {
 		logger.debug("Attempting to open stream to "+ exitRequest);
 		final OpenStreamResponse openStreamResponse = tryOpenExitStream();
@@ -29,7 +27,7 @@ public class OpenExitStreamTask implements Runnable {
 		default:
 			exitRequest.unreserveRequest();
 			break;
-		}		
+		}
 	}
 
 	private OpenStreamResponse tryOpenExitStream() {
