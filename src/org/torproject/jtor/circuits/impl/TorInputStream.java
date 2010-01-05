@@ -14,18 +14,17 @@ public class TorInputStream extends InputStream {
 	private final StreamImpl stream;
 	private ByteBuffer currentBuffer;
 	private int availableBytes;
-	private volatile boolean closed;
+	private volatile boolean isClosed;
 	private boolean isEOF;
 	TorInputStream(StreamImpl stream) {
 		this.stream = stream;
-		this.closed = false;
+		this.isClosed = false;
 		incomingCells = new LinkedBlockingQueue<RelayCell>();
 	}
 
 	@Override
-	public int read() throws IOException {
-		if(closed)
-			throw new IOException("Stream is closed");
+	public synchronized int read() throws IOException {
+		checkOpen();
 
 		while(currentBuffer == null || !currentBuffer.hasRemaining())
 			fillBuffer();
@@ -43,7 +42,8 @@ public class TorInputStream extends InputStream {
 		return read(b, 0, b.length);
 	}
 
-	public int read(byte[] b, int off, int len) throws IOException {
+	public synchronized int read(byte[] b, int off, int len) throws IOException {
+		checkOpen();
 		if(b == null)
 			throw new NullPointerException();
 		if( (off < 0) || (off > b.length) || (len < 0) ||
@@ -89,19 +89,18 @@ public class TorInputStream extends InputStream {
 	}
 
 	public void close() {
-		closed = true;
-		incomingCells.clear();
+		isClosed = true;
 		stream.close();
 	}
 
 	void addEndCell(RelayCell cell) {
-		if(closed)
+		if(isClosed)
 			return;
 		incomingCells.add(cell);
 	}
 
 	void addInputCell(RelayCell cell) {
-		if(closed)
+		if(isClosed)
 			return;
 		synchronized(incomingCells) {
 			availableBytes += cell.cellBytesRemaining();
@@ -110,7 +109,7 @@ public class TorInputStream extends InputStream {
 	}
 
 	private void checkOpen() throws IOException {
-		if (closed)
+		if (isClosed)
 			throw new IOException("Input stream closed");
 	}
 

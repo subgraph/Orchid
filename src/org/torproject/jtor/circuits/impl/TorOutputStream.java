@@ -9,6 +9,7 @@ public class TorOutputStream extends OutputStream {
 
 	private final StreamImpl stream;
 	private RelayCell currentOutputCell;
+	private volatile boolean isClosed;
 
 	TorOutputStream(StreamImpl stream) {
 		this.stream = stream;
@@ -23,13 +24,15 @@ public class TorOutputStream extends OutputStream {
 	}
 
 	@Override
-	public void write(int b) throws IOException {
+	public synchronized void write(int b) throws IOException {
+		checkOpen();
 		if(currentOutputCell == null || currentOutputCell.cellBytesRemaining() == 0)
 			flushCurrentOutputCell();
 		currentOutputCell.putByte(b);		
 	}
 
-	public void write(byte[] data, int offset, int length) {
+	public synchronized void write(byte[] data, int offset, int length) throws IOException {
+		checkOpen();
 		if(currentOutputCell == null || currentOutputCell.cellBytesRemaining() == 0)
 			flushCurrentOutputCell();
 
@@ -46,11 +49,23 @@ public class TorOutputStream extends OutputStream {
 		}
 	}
 
-	public void flush() {
+	private void checkOpen() throws IOException {
+		if(isClosed)
+			throw new IOException("Output stream is closed");
+	}
+
+	public synchronized void flush() {
+		if(isClosed)
+			return;
 		flushCurrentOutputCell();
 	}
 
-	public void close() {
+	public synchronized void close() {
+		if(isClosed)
+			return;
+		flush();
+		isClosed = true;
+		currentOutputCell = null;
 		stream.close();
 	}
 
