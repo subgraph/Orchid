@@ -135,6 +135,8 @@ public class CircuitImpl implements Circuit {
 	}
 
 	public void sendCell(Cell cell) {
+		if(!(status.isConnected() || status.isBuilding()))
+			return;
 		try {
 			status.updateDirtyTimestamp();
 			entryConnection.sendCell(cell);
