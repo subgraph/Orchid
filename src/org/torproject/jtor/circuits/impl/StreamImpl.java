@@ -68,12 +68,13 @@ public class StreamImpl implements Stream {
 		isClosed = true;
 		inputStream.close();
 		outputStream.close();
+		circuit.removeStream(this);
+
 		if(!relayEndReceived) {
 			final RelayCell cell = new RelayCellImpl(circuit.getFinalCircuitNode(), circuit.getCircuitId(), streamId, RelayCell.RELAY_END);
 			cell.putByte(RelayCell.REASON_DONE);
 			circuit.sendRelayCellToFinalNode(cell);
 		}
-		circuit.removeStream(this);
 	}
 
 	void openDirectory() {
@@ -92,21 +93,28 @@ public class StreamImpl implements Stream {
 	private void waitForRelayConnected() {
 		final Date startWait = new Date();
 		synchronized(waitConnectLock) {
-			while(!relayConnectedReceived && !relayEndReceived)
+			while(!relayConnectedReceived) {
+
+				if(relayEndReceived)
+					throw new TorException("RELAY_END cell received while waiting for RELAY_CONNECTED cell on stream id="+ streamId);
+
+				if(hasStreamConnectTimedOut(startWait))
+					throw new TorTimeoutException("Timeout waiting for RELAY_CONNECTED cell on stream id="+ streamId);
+
 				try {
 					waitConnectLock.wait(1000);
-					final Date now = new Date();
-					if(now.getTime() - startWait.getTime() >= STREAM_CONNECT_TIMEOUT)
-						throw new TorTimeoutException("Timeout waiting for RELAY_CONNECTED cell on stream id="+ streamId);
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
 					throw new TorTimeoutException("Interrupted waiting for RELAY_CONNECTED cell on stream id="+ streamId);
 				}
-				if(relayEndReceived)
-					throw new TorException("RELAY_END cell received while waiting for RELAY_CONNECTED cell on stream id="+ streamId);
-				if(relayConnectedReceived)
-					return;
+			}
 		}
+	}
+
+	private static boolean hasStreamConnectTimedOut(Date startTime) {
+		final Date now = new Date();
+		final long diff = now.getTime() - startTime.getTime();
+		return diff >= STREAM_CONNECT_TIMEOUT;
 	}
 
 	public InputStream getInputStream() {
