@@ -3,10 +3,11 @@ package org.torproject.jtor.config.impl;
 import java.io.File;
 import java.net.InetAddress;
 
-import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.events.EventHandler;
 import org.torproject.jtor.events.EventManager;
+import org.torproject.jtor.logging.LogManager;
+import org.torproject.jtor.logging.Logger;
 
 public class TorConfigImpl implements TorConfig {
 
@@ -106,8 +107,8 @@ public class TorConfigImpl implements TorConfig {
 
 	protected Logger logger;
 
-	public TorConfigImpl(Logger logger) {
-		this.logger = logger;
+	public TorConfigImpl(LogManager logManager) {
+		this.logger = logManager.getLogger("config");
 		new TorConfigEventThread(this);
 	}
 

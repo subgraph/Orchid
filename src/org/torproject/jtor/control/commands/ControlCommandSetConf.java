@@ -40,7 +40,7 @@ public class ControlCommandSetConf {
 
 
 			} catch (KeyNotFoundException e) {
-				cch.getControlServer().getLogger().warn("Control command setconf key not found: " + key);
+				cch.getControlServer().getLogger().warning("Control command setconf key not found: " + key);
 				
 				success = false;
 			}

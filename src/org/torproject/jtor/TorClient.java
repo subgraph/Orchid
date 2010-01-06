@@ -20,7 +20,7 @@ public class TorClient {
 	public TorClient() {
 		Security.addProvider(new BouncyCastleProvider());
 		logManager = Tor.createLogManager();
-		config = Tor.createConfig();
+		config = Tor.createConfig(logManager);
 		directory = Tor.createDirectory(logManager, config);
 		circuitManager = Tor.createCircuitManager(directory, logManager);
 		networkStatusManager = Tor.createNetworkStatusManager(directory, logManager);

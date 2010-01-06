@@ -1,8 +1,8 @@
 package org.torproject.jtor.control.commands;
 
-import org.torproject.jtor.Tor;
 import org.torproject.jtor.control.ControlConnectionHandler;
 import org.torproject.jtor.control.KeyNotFoundException;
+import org.torproject.jtor.directory.Directory;
 
 public class ControlCommandSetEvents {
 	
@@ -19,13 +19,13 @@ public class ControlCommandSetEvents {
 				throw new KeyNotFoundException();
 			}
 		}
-		
-		Tor tor = cch.getControlServer().getTor();
-		cch.getEventQueue().resetAllHandlers(tor.getDirectory());
+
+		final Directory directory = cch.getControlServer().getDirectory();
+		cch.getEventQueue().resetAllHandlers(directory);
 		
 		for (String event : eventtypes) {
 			if (event.equals("newconsensus")) {
-				cch.getEventQueue().addNewConsensusHandler(tor.getDirectory());
+				cch.getEventQueue().addNewConsensusHandler(directory);
 			}
 		}
 		

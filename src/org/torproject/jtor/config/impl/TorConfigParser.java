@@ -7,8 +7,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 
-import org.torproject.jtor.Logger;
 import org.torproject.jtor.TorConfig;
+import org.torproject.jtor.logging.Logger;
 
 /**
  *

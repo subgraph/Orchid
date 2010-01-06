@@ -76,7 +76,7 @@ public class ControlCommandParser {
 					}
 				} catch (KeyNotFoundException e) {
 					cch.write("552 unknown configuration keyword");
-					cch.getControlServer().getLogger().warn("Control command: key not found: " + confs[i]);
+					cch.getControlServer().getLogger().warning("Control command: key not found: " + confs[i]);
 					return;
 				}
 			}
@@ -109,7 +109,7 @@ public class ControlCommandParser {
 				cch.write("250 OK");
 			} else {
 				cch.write("552 Unrecognized signal");
-				cch.getControlServer().getLogger().warn("Control command: unrecognized signal: " + args);
+				cch.getControlServer().getLogger().warning("Control command: unrecognized signal: " + args);
 			}
 		}
 		
@@ -150,7 +150,7 @@ public class ControlCommandParser {
 					pairs.put(confs[i], value);
 				} catch (KeyNotFoundException e) {
 					cch.write("552 unknown configuration keyword");
-					cch.getControlServer().getLogger().warn("Control command: key not found: " + confs[i]);
+					cch.getControlServer().getLogger().warning("Control command: key not found: " + confs[i]);
 					return;
 				} catch (FeatureNotSupportedException e) {
 					cch.write("551 feature not supported");

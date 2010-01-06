@@ -17,7 +17,7 @@ public class ControlCommandGetInfo {
 		TorConfig tc = cch.getControlServer().getTorConfig();
 		
 		if (key.equals("version")) {
-			return Tor.version;
+			return Tor.getVersion();
 		}
 		
 		else if (key.equals("config-file")) {

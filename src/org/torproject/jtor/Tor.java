@@ -13,12 +13,18 @@ import org.torproject.jtor.socks.SocksPortListener;
 import org.torproject.jtor.socks.impl.SocksPortListenerImpl;
 
 public class Tor {
+	private final static String version = "JTor 0.0.0";
+	
+	public static String getVersion() {
+		return version;
+	}
+	
 	static public LogManager createLogManager() {
 		return new LogManagerImpl();
 	}
 
-	static public TorConfig createConfig() {
-		return new TorConfigImpl();
+	static public TorConfig createConfig(LogManager logManager) {
+		return new TorConfigImpl(logManager);
 	}
 
 	static public Directory createDirectory(LogManager logManager, TorConfig config) {

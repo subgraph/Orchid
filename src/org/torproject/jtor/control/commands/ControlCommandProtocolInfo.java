@@ -27,7 +27,7 @@ public class ControlCommandProtocolInfo {
 		
 		cch.write(authline);
 		
-		cch.write("250-VERSION Tor=\"" + Tor.version + "\"");
+		cch.write("250-VERSION Tor=\"" + Tor.getVersion() + "\"");
 		
 		cch.write("250 OK");
 	}

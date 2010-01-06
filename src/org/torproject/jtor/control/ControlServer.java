@@ -2,10 +2,11 @@ package org.torproject.jtor.control;
 
 import java.net.InetAddress;
 
-import org.torproject.jtor.Logger;
-import org.torproject.jtor.Tor;
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.control.auth.ControlAuthenticator;
+import org.torproject.jtor.directory.Directory;
+import org.torproject.jtor.logging.LogManager;
+import org.torproject.jtor.logging.Logger;
 
 /**
  *
@@ -15,7 +16,7 @@ public abstract class ControlServer extends Thread {
 
     protected InetAddress host;
     protected TorConfig tc;
-    protected Tor tor;
+    private final Directory directory;
     protected Logger logger;
     protected boolean running = false;
 
@@ -24,10 +25,10 @@ public abstract class ControlServer extends Thread {
     public abstract void disconnectHandler(ControlConnectionHandler cch);
     public abstract String getProtocol();
 
-    public ControlServer(Tor tor, TorConfig tc, Logger logger) {
-    	this.tor = tor;
+    public ControlServer(Directory directory, TorConfig tc, LogManager logManager) {
+    	this.directory = directory;
         this.tc = tc;
-        this.logger = logger;
+        this.logger = logManager.getLogger("controller");
         if (tc.isCookieAuthentication()) {
         	ControlAuthenticator.writeCookie(tc);
         }
@@ -49,8 +50,7 @@ public abstract class ControlServer extends Thread {
     	return logger;
     }
     
-    public Tor getTor() {
-    	return tor;
+    public Directory getDirectory() {
+    	return directory;
     }
-
 }
