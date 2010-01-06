@@ -22,7 +22,6 @@ enum DocumentKeyword {
 	
 	DIR_SOURCE("dir-source", DocumentSection.AUTHORITY, 6),
 	CONTACT("contact", DocumentSection.AUTHORITY),
-	LEGACY_KEY("legacy-key", DocumentSection.AUTHORITY, 1, true),
 	VOTE_DIGEST("vote-digest", DocumentSection.AUTHORITY, 1, false, true),
 	
 	R("r", DocumentSection.ROUTER_STATUS, 8),

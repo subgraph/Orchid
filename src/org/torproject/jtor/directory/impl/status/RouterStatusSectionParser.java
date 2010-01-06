@@ -52,7 +52,7 @@ public class RouterStatusSectionParser extends StatusDocumentSectionParser {
 		if(currentEntry != null)
 			throw new TorParsingException("Unterminated router status entry.");
 		currentEntry = new RouterStatusImpl();
-		currentEntry.setNickname(fieldParser.parseString());
+		currentEntry.setNickname(fieldParser.parseNickname());
 		currentEntry.setIdentity(parseBase64Digest());
 		currentEntry.setDigest(parseBase64Digest());
 		currentEntry.setPublicationTime(fieldParser.parseTimestamp());

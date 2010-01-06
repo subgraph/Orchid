@@ -25,8 +25,6 @@ public class AuthoritySectionParser extends StatusDocumentSectionParser {
 			currentEntry.setVoteDigest(fieldParser.parseHexDigest());
 			addCurrentEntry();
 			break;
-		case LEGACY_KEY:
-			// XXX votes only
 		}
 		
 	}
@@ -40,7 +38,7 @@ public class AuthoritySectionParser extends StatusDocumentSectionParser {
 		startEntry();
 	}
 	private void parseDirSource() {
-		currentEntry.setNickname(fieldParser.parseString());
+		currentEntry.setNickname(fieldParser.parseNickname());
 		currentEntry.setIdentity(fieldParser.parseHexDigest());
 		currentEntry.setHostname(fieldParser.parseString());
 		currentEntry.setAddress(fieldParser.parseAddress());
