@@ -86,6 +86,8 @@ public class ConnectionImpl implements Connection {
 	}
 
 	public void connect() {
+		if(isConnected)
+			return;
 		try {
 			doConnect();
 		} catch (SocketTimeoutException e) {
@@ -115,6 +117,8 @@ public class ConnectionImpl implements Connection {
 	}
 
 	public void sendCell(Cell cell)  {
+		if(!socket.isConnected())
+			throw new ConnectionClosedException("Cannot send cell because connection is not connected");
 		synchronized(output) {
 			try {
 				output.write(cell.getCellBytes());
@@ -231,15 +235,12 @@ public class ConnectionImpl implements Connection {
 
 	private void processDestroyCell(Cell cell) {
 		logger.debug("DESTROY cell received ("+ CellImpl.errorToDescription(cell.getByte() & 0xFF) +")");
-		final CircuitImpl circuit;
-
 		synchronized(circuitMap) {
-			circuit = circuitMap.get(cell.getCircuitId());
-
+			final CircuitImpl circuit = circuitMap.remove(cell.getCircuitId());
 			if(circuit == null)
 				return;
+			circuit.destroyCircuit();
 		}
-		circuit.destroyCircuit();
 	}
 
 	void removeCircuit(Circuit circuit) {

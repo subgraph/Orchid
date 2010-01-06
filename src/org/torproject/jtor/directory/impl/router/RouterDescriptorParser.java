@@ -10,7 +10,7 @@ import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParsingHandler;
 import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
 
-public class RouterDescriptorParser implements DocumentParser<RouterDescriptor>{
+public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> {
 	private final DocumentFieldParser fieldParser;
 	private RouterDescriptorImpl currentDescriptor;
 	private DocumentParsingResultHandler<RouterDescriptor> resultHandler;
@@ -149,9 +149,10 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor>{
 	}
 	
 	private void processRouter() {
-		currentDescriptor.setNickname(fieldParser.parseString());
+		currentDescriptor.setNickname(fieldParser.parseNickname());
 		currentDescriptor.setAddress(fieldParser.parseAddress());
 		currentDescriptor.setRouterPort(fieldParser.parsePort());
+		/* 2.1 SOCKSPort is deprecated and should always be 0 */
 		fieldParser.parsePort();
 		currentDescriptor.setDirectoryPort(fieldParser.parsePort());
 	}
