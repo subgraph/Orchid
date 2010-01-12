@@ -110,12 +110,14 @@ public class TorConfigImpl implements TorConfig {
 	public TorConfigImpl(LogManager logManager) {
 		this.logger = logManager.getLogger("config");
 		new TorConfigEventThread(this);
+		loadDefaults();
 	}
 
 	/* (non-Javadoc)
 	 * @see org.torproject.jtor.config.impl.TorConfig#getDataDirectory()
 	 */
 	public String getDataDirectory() {
+		createDataDirectory();
 		return dataDirectory.getAbsolutePath();
 	}
 
