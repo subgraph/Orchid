@@ -101,10 +101,6 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 		return !validUntil.hasPassed();
 	}
 	
-	public boolean isConsensusDocument() {
-		return true;
-	}
-	
 	public List<RouterStatus> getRouterStatusEntries() {
 		return Collections.unmodifiableList(routerStatusEntries);
 	}
