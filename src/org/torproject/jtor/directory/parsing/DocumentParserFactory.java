@@ -14,12 +14,9 @@ public interface DocumentParserFactory {
 	DocumentParser<KeyCertificate> createKeyCertificateParser(InputStream input);
 	DocumentParser<KeyCertificate> createKeyCertificateParser(Reader reader);
 
+	DocumentParser<ConsensusDocument> createConsensusDocumentParser(InputStream input);
+	DocumentParser<ConsensusDocument> createConsensusDocumentParser(Reader reader);
 
-	DocumentParser<ConsensusDocument> createStatusDocumentParser(InputStream input);
-	DocumentParser<ConsensusDocument> createStatusDocumentParser(Reader reader);
-	
 	DocumentFieldParser createDocumentFieldParser(InputStream input);
 	DocumentFieldParser createDocumentFieldParser(Reader reader);
-
-
 }

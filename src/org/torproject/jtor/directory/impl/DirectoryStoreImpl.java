@@ -93,7 +93,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 		try {
 			final FileInputStream fis = new FileInputStream(inFile);
 			final Reader reader = new InputStreamReader(fis, "ISO-8859-1");
-			final DocumentParser<ConsensusDocument> parser = parserFactory.createStatusDocumentParser(reader);
+			final DocumentParser<ConsensusDocument> parser = parserFactory.createConsensusDocumentParser(reader);
 			parser.parse(new DocumentParsingResultHandler<ConsensusDocument>() {
 
 				public void documentInvalid(ConsensusDocument document,

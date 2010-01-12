@@ -92,8 +92,8 @@ public class NetworkStatusManager {
 	private void runRequestConsensus() {
 		final DirectoryConnection directoryConnection = openDirectConnectionToDirectoryServer();
 		final Reader reader = directoryConnection.getConsensus();
-		DocumentParser<ConsensusDocument> statusParser = parserFactory.createStatusDocumentParser(reader);
-		final boolean success = statusParser.parse(new DocumentParsingResultHandler<ConsensusDocument>() {
+		DocumentParser<ConsensusDocument> consensusParser = parserFactory.createConsensusDocumentParser(reader);
+		final boolean success = consensusParser.parse(new DocumentParsingResultHandler<ConsensusDocument>() {
 
 			public void parsingError(String message) {
 				logger.warning("Parsing error processing consensus document: "+ message);

@@ -38,11 +38,11 @@ public class DocumentParserFactoryImpl implements DocumentParserFactory {
 		return new RouterDescriptorParser(createDocumentFieldParser(reader));
 	}
 
-	public DocumentParser<ConsensusDocument> createStatusDocumentParser(InputStream input) {
+	public DocumentParser<ConsensusDocument> createConsensusDocumentParser(InputStream input) {
 		return new ConsensusDocumentParser(createDocumentFieldParser(input));
 	}
 
-	public DocumentParser<ConsensusDocument> createStatusDocumentParser(Reader reader) {
+	public DocumentParser<ConsensusDocument> createConsensusDocumentParser(Reader reader) {
 		return new ConsensusDocumentParser(createDocumentFieldParser(reader));
 	}
 	
