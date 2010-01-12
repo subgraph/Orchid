@@ -302,7 +302,8 @@ public class CircuitImpl implements Circuit {
 		status.setStateDestroyed();
 		entryConnection.removeCircuit(this);
 		synchronized(streamMap) {
-			for(StreamImpl s: streamMap.values())
+			final List<StreamImpl> tmpList = new ArrayList<StreamImpl>(streamMap.values());
+			for(StreamImpl s: tmpList)
 				s.close();
 		}
 		circuitManager.circuitInactive(this);
