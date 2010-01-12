@@ -12,6 +12,7 @@ import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.RandomSet;
+import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.DirectoryServer;
 import org.torproject.jtor.directory.DirectoryStore;
@@ -19,7 +20,6 @@ import org.torproject.jtor.directory.KeyCertificate;
 import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.directory.RouterDescriptor;
 import org.torproject.jtor.directory.RouterStatus;
-import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.events.Event;
 import org.torproject.jtor.events.EventHandler;
 import org.torproject.jtor.events.EventManager;
@@ -38,10 +38,12 @@ public class DirectoryImpl implements Directory {
 	private final EventManager consensusChangedManager;
 	private final SecureRandom random;
 	private ConsensusDocument currentConsensus;
+	private ConsensusDocument consensusWaitingForCertificates;
 	private boolean descriptorsDirty;
 
 	public DirectoryImpl(LogManager logManager, TorConfig config) {
 		this.logger = logManager.getLogger("directory");
+		logger.enableDebug();
 		store = new DirectoryStoreImpl(logManager, config);
 		certificates = new HashMap<HexDigest, KeyCertificate>();
 		routersByIdentity = new HashMap<HexDigest, RouterImpl>();
@@ -107,7 +109,13 @@ public class DirectoryImpl implements Directory {
 	}
 
 	public void addCertificate(KeyCertificate certificate) {
-		certificates.put(certificate.getAuthorityFingerprint(), certificate);
+		synchronized(certificates) {
+			certificates.put(certificate.getAuthorityFingerprint(), certificate);
+			if(consensusWaitingForCertificates != null && consensusWaitingForCertificates.canVerifySignatures(certificates)) {
+				addConsensusDocument(consensusWaitingForCertificates);
+				consensusWaitingForCertificates = null;
+			}	
+		}
 	}
 
 	public KeyCertificate findCertificate(HexDigest authorityFingerprint) {
@@ -152,6 +160,18 @@ public class DirectoryImpl implements Directory {
 			return;
 		}
 
+		synchronized(certificates) {
+			if(!consensus.canVerifySignatures(certificates)) {
+				logger.warning("Need more signatures to verify consensus document.");
+				consensusWaitingForCertificates = consensus;
+				return;
+			}
+			
+			if(!consensus.verifySignatures(certificates)) {
+				logger.warning("Signature verification on Consensus document failed.");
+				return;
+			}
+		}
 		final Map<HexDigest, RouterImpl> oldRouterByIdentity = new HashMap<HexDigest, RouterImpl>(routersByIdentity);
 		clearAll();
 

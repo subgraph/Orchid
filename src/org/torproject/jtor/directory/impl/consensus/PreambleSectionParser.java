@@ -40,6 +40,11 @@ public class PreambleSectionParser extends ConsensusDocumentSectionParser {
 		switch(keyword) {
 		case NETWORK_STATUS_VERSION:
 			throw new TorParsingException("Network status version may only appear on the first line of status document");
+		case VOTE_STATUS:
+			final String voteStatus = fieldParser.parseString();
+			if(!voteStatus.equals("consensus"))
+				throw new TorParsingException("Unexpected vote-status type: "+ voteStatus);
+			break;
 		case CONSENSUS_METHOD:
 			document.setConsensusMethod(fieldParser.parseInteger());
 			break;

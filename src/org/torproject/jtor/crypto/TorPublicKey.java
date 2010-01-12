@@ -68,11 +68,19 @@ public class TorPublicKey {
 		return keyFingerprint;
 	}
 
+	public boolean verifySignature(TorSignature signature, HexDigest digest) {
+		return verifySignatureFromDigestBytes(signature, digest.getRawBytes());
+	}
+
 	public boolean verifySignature(TorSignature signature, TorMessageDigest digest) {
+		return verifySignatureFromDigestBytes(signature, digest.getDigestBytes());
+	}
+
+	public boolean verifySignatureFromDigestBytes(TorSignature signature, byte[] digestBytes) {
 		final Cipher cipher = createCipherInstance();
 		try {
 			byte[] decrypted = cipher.doFinal(signature.getSignatureBytes());
-			return constantTimeArrayEquals(decrypted, digest.getDigestBytes());
+			return constantTimeArrayEquals(decrypted, digestBytes);
 		} catch (IllegalBlockSizeException e) {
 			throw new TorException(e);
 		} catch (BadPaddingException e) {

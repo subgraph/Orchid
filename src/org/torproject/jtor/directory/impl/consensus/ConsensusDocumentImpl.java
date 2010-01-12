@@ -8,8 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.torproject.jtor.crypto.TorPublicKey;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.Timestamp;
+import org.torproject.jtor.directory.KeyCertificate;
 import org.torproject.jtor.directory.RouterStatus;
 import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.VoteAuthorityEntry;
@@ -110,14 +112,39 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	}
 	
 	public boolean isValidDocument() {
-		// XXX implement me
-		return true;
+		return (validAfter != null) && (freshUntil != null) && (validUntil != null) &&
+		(voteDelaySeconds > 0) && (distDelaySeconds > 0) && (signingHash != null) &&
+		(signatures.size() != 0);
 	}
 	
 	public HexDigest getSigningHash() {
 		return signingHash;
 	}
 	
+	public List<DirectorySignature> getDocumentSignatures() {
+		return Collections.unmodifiableList(signatures);
+	}
+	
+	public boolean canVerifySignatures(Map<HexDigest, KeyCertificate> certificates) {
+		for(DirectorySignature s: signatures) {
+			KeyCertificate cert = certificates.get(s.getIdentityDigest());
+			if(cert == null || !s.getSigningKeyDigest().equals(cert.getAuthoritySigningKey().getFingerprint()))
+				return false;
+		}
+		return true;
+	}
+	
+	public boolean verifySignatures(Map<HexDigest, KeyCertificate> certificates) {
+		for(DirectorySignature s: signatures) {
+			KeyCertificate cert = certificates.get(s.getIdentityDigest());
+			if(cert == null) return false;
+			TorPublicKey signingKey = cert.getAuthoritySigningKey();
+			if(!signingKey.verifySignature(s.getSignature(), signingHash))
+				return false;
+		}
+		return true;
+	}
+
 	public boolean equals(Object o) {
 		if(!(o instanceof ConsensusDocumentImpl))
 			return false;
