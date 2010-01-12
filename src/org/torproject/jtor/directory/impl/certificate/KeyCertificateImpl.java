@@ -17,10 +17,8 @@ public class KeyCertificateImpl implements KeyCertificate {
 	private TorPublicKey signingKey;
 	private String rawDocumentData;
 	
-	// XXX Cross signature not implemented
-	
 	private boolean hasValidSignature = false;
-	
+
 	void setDirectoryPort(int port) { this.directoryPort = port; }
 	void setDirectoryAddress(IPv4Address address) { this.directoryAddress = address; }
 	void setAuthorityFingerprint(HexDigest fingerprint) { this.fingerprint = fingerprint;}

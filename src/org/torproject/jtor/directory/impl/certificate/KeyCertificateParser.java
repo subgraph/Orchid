@@ -1,6 +1,7 @@
 package org.torproject.jtor.directory.impl.certificate;
 
 import org.torproject.jtor.TorParsingException;
+import org.torproject.jtor.crypto.TorPublicKey;
 import org.torproject.jtor.crypto.TorSignature;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.KeyCertificate;
@@ -84,8 +85,7 @@ public class KeyCertificateParser implements DocumentParser<KeyCertificate> {
 			currentCertificate.setKeyExpiryTime(fieldParser.parseTimestamp());
 			break;
 		case DIR_KEY_CROSSCERT:
-			// XXX
-			fieldParser.parseObject();
+			verifyCrossSignature(fieldParser.parseSignature());
 			break;
 		case DIR_KEY_CERTIFICATION:
 			processCertificateSignature();
@@ -108,6 +108,13 @@ public class KeyCertificateParser implements DocumentParser<KeyCertificate> {
 		currentCertificate.setDirectoryPort(fieldParser.parsePort(args[1]));
 	}
 	
+	private void verifyCrossSignature(TorSignature crossSignature) {
+		TorPublicKey identityKey = currentCertificate.getAuthorityIdentityKey();
+		TorPublicKey signingKey = currentCertificate.getAuthoritySigningKey();
+		if(!signingKey.verifySignature(crossSignature, identityKey.getFingerprint())) 
+			throw new TorParsingException("Cross signature on certificate failed.");
+	}
+
 	private boolean verifyCurrentCertificate(TorSignature signature) {
 		if(!fieldParser.verifySignedEntity(currentCertificate.getAuthorityIdentityKey(), signature)) {
 			resultHandler.documentInvalid(currentCertificate, "Signature failed");
