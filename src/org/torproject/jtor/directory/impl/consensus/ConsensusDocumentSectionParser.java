@@ -1,15 +1,15 @@
-package org.torproject.jtor.directory.impl.status;
+package org.torproject.jtor.directory.impl.consensus;
 
-import org.torproject.jtor.directory.impl.status.StatusDocumentParser.DocumentSection;
+import org.torproject.jtor.directory.impl.consensus.ConsensusDocumentParser.DocumentSection;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 
-public abstract class StatusDocumentSectionParser {
+public abstract class ConsensusDocumentSectionParser {
 	
-	protected final StatusDocumentImpl document;
+	protected final ConsensusDocumentImpl document;
 	protected final DocumentFieldParser fieldParser;
 	
 	
-	StatusDocumentSectionParser(DocumentFieldParser parser, StatusDocumentImpl document) {
+	ConsensusDocumentSectionParser(DocumentFieldParser parser, ConsensusDocumentImpl document) {
 		this.fieldParser = parser;
 		this.document = document;
 	}

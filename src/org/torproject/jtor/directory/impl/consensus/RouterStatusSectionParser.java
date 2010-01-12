@@ -1,15 +1,15 @@
-package org.torproject.jtor.directory.impl.status;
+package org.torproject.jtor.directory.impl.consensus;
 
 import org.torproject.jtor.TorParsingException;
 import org.torproject.jtor.data.HexDigest;
-import org.torproject.jtor.directory.impl.status.StatusDocumentParser.DocumentSection;
+import org.torproject.jtor.directory.impl.consensus.ConsensusDocumentParser.DocumentSection;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 
-public class RouterStatusSectionParser extends StatusDocumentSectionParser {
+public class RouterStatusSectionParser extends ConsensusDocumentSectionParser {
 
 	private RouterStatusImpl currentEntry = null;
 	
-	RouterStatusSectionParser(DocumentFieldParser parser, StatusDocumentImpl document) {
+	RouterStatusSectionParser(DocumentFieldParser parser, ConsensusDocumentImpl document) {
 		super(parser, document);
 	}
 	

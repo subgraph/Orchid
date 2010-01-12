@@ -5,7 +5,7 @@ import java.util.Set;
 
 import org.torproject.jtor.data.Timestamp;
 
-public interface StatusDocument extends Document {
+public interface ConsensusDocument extends Document {
 	
 	Timestamp getValidAfterTime();
 	Timestamp getFreshUntilTime();
@@ -16,7 +16,5 @@ public interface StatusDocument extends Document {
 	Set<String> getClientVersions();
 	Set<String> getServerVersions();
 	boolean isLive();
-	boolean isConsensusDocument();
 	List<RouterStatus> getRouterStatusEntries();
-
 }

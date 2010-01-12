@@ -1,17 +1,17 @@
-package org.torproject.jtor.directory.impl.status;
+package org.torproject.jtor.directory.impl.consensus;
 
 import java.util.Arrays;
 import java.util.List;
 
 import org.torproject.jtor.TorParsingException;
-import org.torproject.jtor.directory.impl.status.StatusDocumentParser.DocumentSection;
+import org.torproject.jtor.directory.impl.consensus.ConsensusDocumentParser.DocumentSection;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 
-public class PreambleSectionParser extends StatusDocumentSectionParser {
+public class PreambleSectionParser extends ConsensusDocumentSectionParser {
 	private final static int CURRENT_DOCUMENT_VERSION = 3;
 	private boolean isFirstLine = true;
 	
-	PreambleSectionParser(DocumentFieldParser parser, StatusDocumentImpl document) {
+	PreambleSectionParser(DocumentFieldParser parser, ConsensusDocumentImpl document) {
 		super(parser, document);
 	}
 	

@@ -15,7 +15,7 @@ import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.DirectoryStore;
 import org.torproject.jtor.directory.KeyCertificate;
 import org.torproject.jtor.directory.RouterDescriptor;
-import org.torproject.jtor.directory.StatusDocument;
+import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParserFactory;
 import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
@@ -74,7 +74,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 		}
 
 	}
-	public void saveConsensus(StatusDocument consensus) {
+	public void saveConsensus(ConsensusDocument consensus) {
 		final File outFile = new File(config.getDataDirectory(), "consensus");
 		try {
 			final FileOutputStream fos = new FileOutputStream(outFile);
@@ -93,15 +93,15 @@ public class DirectoryStoreImpl implements DirectoryStore {
 		try {
 			final FileInputStream fis = new FileInputStream(inFile);
 			final Reader reader = new InputStreamReader(fis, "ISO-8859-1");
-			final DocumentParser<StatusDocument> parser = parserFactory.createStatusDocumentParser(reader);
-			parser.parse(new DocumentParsingResultHandler<StatusDocument>() {
+			final DocumentParser<ConsensusDocument> parser = parserFactory.createStatusDocumentParser(reader);
+			parser.parse(new DocumentParsingResultHandler<ConsensusDocument>() {
 
-				public void documentInvalid(StatusDocument document,
+				public void documentInvalid(ConsensusDocument document,
 						String message) {
 					logger.warning("Stored consensus document is invalid: "+ message);
 				}
 
-				public void documentParsed(StatusDocument document) {
+				public void documentParsed(ConsensusDocument document) {
 					directory.addConsensusDocument(document);
 				}
 

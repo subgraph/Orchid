@@ -18,7 +18,7 @@ import org.torproject.jtor.directory.DirectoryServer;
 import org.torproject.jtor.directory.KeyCertificate;
 import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.directory.RouterDescriptor;
-import org.torproject.jtor.directory.StatusDocument;
+import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParserFactory;
 import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
@@ -68,7 +68,7 @@ public class NetworkStatusManager {
 	}
 
 	private void checkConsensus() {
-		final StatusDocument consensus = directory.getCurrentConsensusDocument();
+		final ConsensusDocument consensus = directory.getCurrentConsensusDocument();
 		if(consensus != null && consensus.isLive()) {
 			//logger.debug("Have live consensus");
 			return;
@@ -92,18 +92,18 @@ public class NetworkStatusManager {
 	private void runRequestConsensus() {
 		final DirectoryConnection directoryConnection = openDirectConnectionToDirectoryServer();
 		final Reader reader = directoryConnection.getConsensus();
-		DocumentParser<StatusDocument> statusParser = parserFactory.createStatusDocumentParser(reader);
-		final boolean success = statusParser.parse(new DocumentParsingResultHandler<StatusDocument>() {
+		DocumentParser<ConsensusDocument> statusParser = parserFactory.createStatusDocumentParser(reader);
+		final boolean success = statusParser.parse(new DocumentParsingResultHandler<ConsensusDocument>() {
 
 			public void parsingError(String message) {
 				logger.warning("Parsing error processing consensus document: "+ message);
 			}
 
-			public void documentParsed(StatusDocument document) {
+			public void documentParsed(ConsensusDocument document) {
 				directory.addConsensusDocument(document);				
 			}
 
-			public void documentInvalid(StatusDocument document, String message) {
+			public void documentInvalid(ConsensusDocument document, String message) {
 				logger.warning("Received consensus document is invalid: "+ message);
 			}
 		});
@@ -163,7 +163,7 @@ public class NetworkStatusManager {
 	}
 
 	private void checkDescriptors() {
-		final StatusDocument consensus = directory.getCurrentConsensusDocument();
+		final ConsensusDocument consensus = directory.getCurrentConsensusDocument();
 		if(consensus == null || !consensus.isLive())
 			return;
 		final List<Router> downloadables = directory.getRoutersWithDownloadableDescriptors();

@@ -1,16 +1,16 @@
-package org.torproject.jtor.directory.impl.status;
+package org.torproject.jtor.directory.impl.consensus;
 
 import org.torproject.jtor.crypto.TorMessageDigest;
 import org.torproject.jtor.crypto.TorSignature;
 import org.torproject.jtor.data.HexDigest;
-import org.torproject.jtor.directory.impl.status.StatusDocumentParser.DocumentSection;
+import org.torproject.jtor.directory.impl.consensus.ConsensusDocumentParser.DocumentSection;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 
-public class SignatureSectionParser extends StatusDocumentSectionParser {
+public class SignatureSectionParser extends ConsensusDocumentSectionParser {
 
 	private boolean seenFirstLine = false;
 	
-	SignatureSectionParser(DocumentFieldParser parser, StatusDocumentImpl document) {
+	SignatureSectionParser(DocumentFieldParser parser, ConsensusDocumentImpl document) {
 		super(parser, document);
 	}
 

@@ -1,6 +1,6 @@
-package org.torproject.jtor.directory.impl.status;
+package org.torproject.jtor.directory.impl.consensus;
 
-import org.torproject.jtor.directory.impl.status.StatusDocumentParser.DocumentSection;
+import org.torproject.jtor.directory.impl.consensus.ConsensusDocumentParser.DocumentSection;
 
 enum DocumentKeyword {
 	/*

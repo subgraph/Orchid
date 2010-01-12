@@ -1,13 +1,13 @@
-package org.torproject.jtor.directory.impl.status;
+package org.torproject.jtor.directory.impl.consensus;
 
 import org.torproject.jtor.TorParsingException;
-import org.torproject.jtor.directory.StatusDocument;
+import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParsingHandler;
 import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
 
-public class StatusDocumentParser implements DocumentParser<StatusDocument> {
+public class ConsensusDocumentParser implements DocumentParser<ConsensusDocument> {
 	public enum DocumentSection { NO_SECTION, PREAMBLE, AUTHORITY, ROUTER_STATUS, SIGNATURE };
 
 	// dir-spec.txt 3.2 
@@ -21,15 +21,15 @@ public class StatusDocumentParser implements DocumentParser<StatusDocument> {
 	private final SignatureSectionParser signatureParser;
 	private final DocumentFieldParser fieldParser;
 	private DocumentSection currentSection = DocumentSection.PREAMBLE;
-	private final StatusDocumentImpl document;
+	private final ConsensusDocumentImpl document;
 	
-	private DocumentParsingResultHandler<StatusDocument> resultHandler;
+	private DocumentParsingResultHandler<ConsensusDocument> resultHandler;
 	
-	public StatusDocumentParser(DocumentFieldParser fieldParser) {
+	public ConsensusDocumentParser(DocumentFieldParser fieldParser) {
 		this.fieldParser = fieldParser;
 		initializeParser();
 		
-		document = new StatusDocumentImpl();
+		document = new ConsensusDocumentImpl();
 		preambleParser = new PreambleSectionParser(fieldParser, document);
 		authorityParser = new AuthoritySectionParser(fieldParser, document);
 		routerStatusParser = new RouterStatusSectionParser(fieldParser, document);
@@ -44,7 +44,7 @@ public class StatusDocumentParser implements DocumentParser<StatusDocument> {
 		fieldParser.startSignedEntity();
 	}
 	
-	public boolean parse(DocumentParsingResultHandler<StatusDocument> resultHandler) {
+	public boolean parse(DocumentParsingResultHandler<ConsensusDocument> resultHandler) {
 		this.resultHandler = resultHandler;
 		try {
 			fieldParser.processDocument();

@@ -19,7 +19,7 @@ import org.torproject.jtor.directory.KeyCertificate;
 import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.directory.RouterDescriptor;
 import org.torproject.jtor.directory.RouterStatus;
-import org.torproject.jtor.directory.StatusDocument;
+import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.events.Event;
 import org.torproject.jtor.events.EventHandler;
 import org.torproject.jtor.events.EventManager;
@@ -37,7 +37,7 @@ public class DirectoryImpl implements Directory {
 	private boolean haveMinimumRouterInfo;
 	private final EventManager consensusChangedManager;
 	private final SecureRandom random;
-	private StatusDocument currentConsensus;
+	private ConsensusDocument currentConsensus;
 	private boolean descriptorsDirty;
 
 	public DirectoryImpl(LogManager logManager, TorConfig config) {
@@ -143,7 +143,7 @@ public class DirectoryImpl implements Directory {
 		descriptorsDirty = false;
 	}
 
-	public void addConsensusDocument(StatusDocument consensus) {
+	public void addConsensusDocument(ConsensusDocument consensus) {
 		if(consensus.equals(currentConsensus))
 			return;
 
@@ -269,7 +269,7 @@ public class DirectoryImpl implements Directory {
 		directoryCaches.remove(router);
 	}
 
-	public StatusDocument getCurrentConsensusDocument() {
+	public ConsensusDocument getCurrentConsensusDocument() {
 		return currentConsensus;
 	}
 

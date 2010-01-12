@@ -1,4 +1,4 @@
-package org.torproject.jtor.directory.impl.status;
+package org.torproject.jtor.directory.impl.consensus;
 
 import org.torproject.jtor.crypto.TorSignature;
 import org.torproject.jtor.data.HexDigest;

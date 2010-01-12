@@ -5,10 +5,10 @@ import java.io.Reader;
 
 import org.torproject.jtor.directory.KeyCertificate;
 import org.torproject.jtor.directory.RouterDescriptor;
-import org.torproject.jtor.directory.StatusDocument;
+import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.impl.certificate.KeyCertificateParser;
+import org.torproject.jtor.directory.impl.consensus.ConsensusDocumentParser;
 import org.torproject.jtor.directory.impl.router.RouterDescriptorParser;
-import org.torproject.jtor.directory.impl.status.StatusDocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParserFactory;
@@ -38,12 +38,12 @@ public class DocumentParserFactoryImpl implements DocumentParserFactory {
 		return new RouterDescriptorParser(createDocumentFieldParser(reader));
 	}
 
-	public DocumentParser<StatusDocument> createStatusDocumentParser(InputStream input) {
-		return new StatusDocumentParser(createDocumentFieldParser(input));
+	public DocumentParser<ConsensusDocument> createStatusDocumentParser(InputStream input) {
+		return new ConsensusDocumentParser(createDocumentFieldParser(input));
 	}
 
-	public DocumentParser<StatusDocument> createStatusDocumentParser(Reader reader) {
-		return new StatusDocumentParser(createDocumentFieldParser(reader));
+	public DocumentParser<ConsensusDocument> createStatusDocumentParser(Reader reader) {
+		return new ConsensusDocumentParser(createDocumentFieldParser(reader));
 	}
 	
 	public DocumentFieldParser createDocumentFieldParser(InputStream input) {

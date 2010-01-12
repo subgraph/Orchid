@@ -1,4 +1,4 @@
-package org.torproject.jtor.directory.impl.status;
+package org.torproject.jtor.directory.impl.consensus;
 
 import java.util.HashSet;
 import java.util.Set;

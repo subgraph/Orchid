@@ -1,13 +1,13 @@
-package org.torproject.jtor.directory.impl.status;
+package org.torproject.jtor.directory.impl.consensus;
 
-import org.torproject.jtor.directory.impl.status.StatusDocumentParser.DocumentSection;
+import org.torproject.jtor.directory.impl.consensus.ConsensusDocumentParser.DocumentSection;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 
-public class AuthoritySectionParser extends StatusDocumentSectionParser {
+public class AuthoritySectionParser extends ConsensusDocumentSectionParser {
 
 	private VoteAuthorityEntryImpl currentEntry = null;
 	
-	AuthoritySectionParser(DocumentFieldParser parser , StatusDocumentImpl document) {
+	AuthoritySectionParser(DocumentFieldParser parser , ConsensusDocumentImpl document) {
 		super(parser, document);
 		startEntry();
 	}

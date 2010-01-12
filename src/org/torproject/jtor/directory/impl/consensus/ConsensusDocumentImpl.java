@@ -1,4 +1,4 @@
-package org.torproject.jtor.directory.impl.status;
+package org.torproject.jtor.directory.impl.consensus;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,10 +11,10 @@ import java.util.Set;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.Timestamp;
 import org.torproject.jtor.directory.RouterStatus;
-import org.torproject.jtor.directory.StatusDocument;
+import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.VoteAuthorityEntry;
 
-public class StatusDocumentImpl implements StatusDocument {
+public class ConsensusDocumentImpl implements ConsensusDocument {
 	
 	private int consensusMethod;
 	private Timestamp validAfter;
@@ -44,7 +44,7 @@ public class StatusDocumentImpl implements StatusDocument {
 	void setSigningHash(HexDigest hash) { signingHash = hash; }
 	void setRawDocumentData(String rawData) { rawDocumentData = rawData; }
 	
-	StatusDocumentImpl() {
+	ConsensusDocumentImpl() {
 		clientVersions = new HashSet<String>();
 		serverVersions = new HashSet<String>();
 		knownFlags = new HashSet<String>();
@@ -123,9 +123,9 @@ public class StatusDocumentImpl implements StatusDocument {
 	}
 	
 	public boolean equals(Object o) {
-		if(!(o instanceof StatusDocumentImpl))
+		if(!(o instanceof ConsensusDocumentImpl))
 			return false;
-		final StatusDocumentImpl other = (StatusDocumentImpl) o;
+		final ConsensusDocumentImpl other = (ConsensusDocumentImpl) o;
 		return other.getSigningHash().equals(signingHash);
 	}
 	

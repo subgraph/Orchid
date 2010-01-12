@@ -23,8 +23,8 @@ public interface Directory {
 	Router getRandomDirectoryServer();
 	void addCertificate(KeyCertificate certificate);
 	void addRouterDescriptor(RouterDescriptor router);
-	void addConsensusDocument(StatusDocument consensus);
-	StatusDocument getCurrentConsensusDocument();
+	void addConsensusDocument(ConsensusDocument consensus);
+	ConsensusDocument getCurrentConsensusDocument();
 	void registerConsensusChangedHandler(EventHandler handler);
 	void unregisterConsensusChangedHandler(EventHandler handler);
 	KeyCertificate findCertificate(HexDigest authorityFingerprint);
