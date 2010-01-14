@@ -117,6 +117,7 @@ public class SocksStreamConnection {
 	private void outgoingTransferLoop() throws IOException {
 		final byte[] outgoingBuffer = new byte[TRANSFER_BUFFER_SIZE];
 		while(true) {
+			stream.waitForSendWindow();
 			final int n = socket.getInputStream().read(outgoingBuffer);
 			if(n == -1) {
 				logger.debug("EOF on SOCKS socket connected to "+ stream);

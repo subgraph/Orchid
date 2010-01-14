@@ -36,4 +36,11 @@ public interface Stream {
 	 * @return An {@link OutputStream} for receiving data from this stream.
 	 */
 	OutputStream getOutputStream();
+	
+	/**
+	 * If the circuit and stream level packaging windows are open for this stream
+	 * this method returns immediately, otherwise it blocks until both windows are
+	 * open or the stream is closed.
+	 */
+	void waitForSendWindow();
 }

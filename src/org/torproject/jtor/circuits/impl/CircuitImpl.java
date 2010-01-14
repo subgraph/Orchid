@@ -130,6 +130,9 @@ public class CircuitImpl implements Circuit {
 			for(CircuitNode node = targetNode; node != null; node = node.getPreviousNode())
 				node.encryptForwardCell(cell);
 
+			if(cell.getRelayCommand() == RelayCell.RELAY_DATA) 
+				targetNode.waitForSendWindowAndDecrement();
+			
 			sendCell(cell);
 		}
 	}
@@ -235,12 +238,14 @@ public class CircuitImpl implements Circuit {
 		case RelayCell.RELAY_DATA:
 		case RelayCell.RELAY_END:
 		case RelayCell.RELAY_CONNECTED:
-
 			processRelayDataCell(relayCell);
 			break;
 
 		case RelayCell.RELAY_SENDME:
-			// XXX ignore for now
+			if(relayCell.getStreamId() != 0)
+				processRelayDataCell(relayCell);
+			else
+				processCircuitSendme(relayCell);
 			break;
 		case RelayCell.RELAY_BEGIN:
 		case RelayCell.RELAY_BEGIN_DIR:
@@ -254,6 +259,14 @@ public class CircuitImpl implements Circuit {
 
 	/* Runs in the context of the connection cell reading thread */
 	private void processRelayDataCell(RelayCell cell) {
+		if(cell.getRelayCommand() == RelayCell.RELAY_DATA) {
+			cell.getCircuitNode().decrementDeliverWindow();
+			if(cell.getCircuitNode().considerSendingSendme()) {
+				final RelayCell sendme = createRelayCell(RelayCell.RELAY_SENDME, 0, cell.getCircuitNode());
+				sendRelayCell(sendme);
+			}
+		}
+
 		synchronized(streamMap) {
 			final StreamImpl stream = streamMap.get(cell.getStreamId());
 			// It's not unusual for the stream to not be found.  For example, if a RELAY_CONNECTED arrives after
@@ -264,6 +277,10 @@ public class CircuitImpl implements Circuit {
 			else
 				logger.debug("Stream not found for stream id="+ cell.getStreamId());	
 		}
+	}
+
+	private void processCircuitSendme(RelayCell cell) {
+		cell.getCircuitNode().incrementSendWindow();
 	}
 
 	public OpenStreamResponse openDirectoryStream() {

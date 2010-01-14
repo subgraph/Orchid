@@ -47,4 +47,43 @@ public interface CircuitNode {
 	 *         null</code> if this is the first node.
 	 */
 	CircuitNode getPreviousNode();
+
+	/**
+	 * Return immediately if the packaging window for this node is open (ie: greater than 0), otherwise
+	 * block until the circuit is destroyed or the window is incremented by receiving a RELAY_SENDME cell
+	 * from this node.
+	 */
+	void waitForSendWindow();
+
+	/**
+	 * If the packaging window for this node is open (ie: greater than 0) this method
+	 * decrements the packaging window by 1 and returns immediately, otherwise it will
+	 * block until the circuit is destroyed or the window is incremented by receiving 
+	 * a RELAY_SENDME cell from this node.  This method will always decrement the packaging
+	 * window before returning unless the circuit has been destroyed. 
+	 */
+	void waitForSendWindowAndDecrement();
+
+	/**
+	 * This method is called to signal that a RELAY_SENDME cell has been received from this
+	 * node and the packaging window should be incremented.  This will also wake up any threads
+	 * that are waiting for the packaging window to open.
+	 */
+	void incrementSendWindow();
+
+	/**
+	 * This method is called when a RELAY_DATA cell is received from this node to decrement
+	 * the deliver window counter.
+	 */
+	void decrementDeliverWindow();
+
+	/**
+	 * Examines the delivery window and determines if it would be an appropriate time to
+	 * send a RELAY_SENDME cell.  If this method returns true, it increments the delivery
+	 * window assuming that a RELAY_SENDME cell will be transmitted.
+	 * 
+	 * @return Returns true if the deliver window is small enough that sending a RELAY_SENDME
+	 * cell would be appropriate.
+	 */
+	boolean considerSendingSendme();
 }

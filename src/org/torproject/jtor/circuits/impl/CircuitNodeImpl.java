@@ -17,10 +17,16 @@ class CircuitNodeImpl implements CircuitNode {
 		return new CircuitNodeImpl(router);
 	}
 
+	private final static int CIRCWINDOW_START = 1000;
+	private final static int CIRCWINDOW_INCREMENT = 100;
 	private final TorKeyAgreement dhContext;
 	private final Router router;
 	private CircuitNodeCryptoState cryptoState;
 	private final CircuitNodeImpl previousNode;
+
+	private final Object windowLock;
+	private int packageWindow;
+	private int deliverWindow;
 
 	private CircuitNodeImpl(Router router) {
 		this(router, null);
@@ -30,6 +36,9 @@ class CircuitNodeImpl implements CircuitNode {
 		previousNode = previous;
 		this.router = router;
 		this.dhContext = new TorKeyAgreement();
+		windowLock = new Object();
+		packageWindow = CIRCWINDOW_START;
+		deliverWindow = CIRCWINDOW_START;
 	}
 
 	public Router getRouter() {
@@ -90,5 +99,51 @@ class CircuitNodeImpl implements CircuitNode {
 
 	public String toString() {
 		return "|"+ router.getNickname() + "|";
+	}
+
+	public void decrementDeliverWindow() {
+		synchronized(windowLock) {
+			deliverWindow--;
+		}
+	}
+
+	public boolean considerSendingSendme() {
+		synchronized(windowLock) {
+			if(deliverWindow <= (CIRCWINDOW_START - CIRCWINDOW_INCREMENT)) {
+				deliverWindow += CIRCWINDOW_INCREMENT;
+				return true;
+			}
+			return false;
+		}
+	}
+
+	public void waitForSendWindow() {
+		waitForSendWindow(false);
+	}
+
+	public void waitForSendWindowAndDecrement() {
+		waitForSendWindow(true);
+	}
+
+	private void waitForSendWindow(boolean decrement) {
+		synchronized(windowLock) {
+			while(packageWindow == 0) {
+				try {
+					windowLock.wait();
+				} catch (InterruptedException e) {
+					throw new TorException("Thread interrupted while waiting for circuit send window");
+				}
+			}
+			if(decrement)
+				packageWindow--;
+		}
+	}
+
+	public void incrementSendWindow() {
+		synchronized(windowLock) {
+			packageWindow += CIRCWINDOW_INCREMENT;
+			windowLock.notifyAll();
+		}
+		
 	}
 }

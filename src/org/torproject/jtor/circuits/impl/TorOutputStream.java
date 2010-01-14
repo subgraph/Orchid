@@ -16,8 +16,10 @@ public class TorOutputStream extends OutputStream {
 	}
 
 	private void flushCurrentOutputCell() {
-		if(currentOutputCell != null && currentOutputCell.cellBytesConsumed() > RelayCell.HEADER_SIZE) 
+		if(currentOutputCell != null && currentOutputCell.cellBytesConsumed() > RelayCell.HEADER_SIZE) {
+			stream.waitForSendWindowAndDecrement();
 			stream.getCircuit().sendRelayCell(currentOutputCell);
+		}
 
 		currentOutputCell = new RelayCellImpl(stream.getTargetNode(), stream.getCircuit().getCircuitId(),
 				stream.getStreamId(), RelayCell.RELAY_DATA);

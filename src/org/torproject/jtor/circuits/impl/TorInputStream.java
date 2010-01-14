@@ -121,7 +121,6 @@ public class TorInputStream extends InputStream {
 
 		try {
 			final RelayCell nextCell = incomingCells.take();
-
 			if(nextCell.getRelayCommand() == RelayCell.RELAY_END) {
 				isEOF = true;
 				return;
@@ -133,6 +132,10 @@ public class TorInputStream extends InputStream {
 			throw new IOException("Read interrupted");
 		}
 
+	}
+
+	int unflushedCellCount() {
+		return incomingCells.size();
 	}
 
 	public String toString() {
