@@ -173,6 +173,7 @@ public class NetworkStatusManager {
 		if(!canDownloadDescriptors(downloadables.size())) 
 			return;
 		
+		lastDescriptorDownload = new Date();
 		logger.debug("Downloading: "+ downloadables.size() +" descriptors");
 		for(List<Router> set: partitionDescriptors(downloadables))
 			requestDescriptors(set);

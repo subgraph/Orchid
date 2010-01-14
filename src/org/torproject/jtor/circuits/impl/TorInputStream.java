@@ -85,7 +85,9 @@ public class TorInputStream extends InputStream {
 	}
 
 	public int available() {
-		return availableBytes;
+		synchronized(incomingCells) {
+			return availableBytes;
+		}
 	}
 
 	public void close() {

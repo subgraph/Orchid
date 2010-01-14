@@ -62,7 +62,7 @@ public class CircuitStatus {
 		return now.getTime() - then.getTime();	
 	}
 
-	boolean isDirty() {
+	synchronized boolean isDirty() {
 		return timestampDirty != timestampCreated;
 	}
 

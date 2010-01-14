@@ -14,7 +14,6 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.logging.LogManager;
@@ -45,7 +44,6 @@ public class ConnectionManagerImpl {
 	};
 
 	private final Map<Router, ConnectionImpl> activeConnections;
-	X509V3CertificateGenerator b;
 
 	private final SSLContext sslContext;
 	private final Logger logger;
@@ -88,7 +86,7 @@ public class ConnectionManagerImpl {
 
 	void removeActiveConnection(ConnectionImpl connection) {
 		synchronized(activeConnections) {
-			activeConnections.remove(connection);
+			activeConnections.remove(connection.getRouter());
 		}
 	}
 

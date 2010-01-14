@@ -10,6 +10,7 @@ import org.torproject.jtor.logging.Logger;
 
 public class LogManagerImpl implements LogManager, LogReader{
 	private final Map<String, LoggerImpl> loggers = new HashMap<String, LoggerImpl>();
+	private final Object readerLock = new Object();
 	private LogReader logReader = new DefaultConsoleLogReader();
 		
 	public synchronized Logger getLogger(String name) {
@@ -20,27 +21,24 @@ public class LogManagerImpl implements LogManager, LogReader{
 	}
 
 	public void logRaw(String message) {
-		if(logReader != null) {
-			synchronized(logReader) {
-				logReader.logRaw(message);
-			}
+		synchronized(readerLock) {
+			if(logReader != null) logReader.logRaw(message);
 		}
 	}
 	
 	public void log(LogEntry entry) {
-		if(logReader != null) {
-			synchronized(logReader) {
-				logReader.log(entry);
-			}
-		}		
+		synchronized(readerLock) {
+			if(logReader != null) logReader.log(entry);
+		}
 	}
 	
 	public void setLogReader(LogReader reader) {
-		if(reader == null) {
-			this.logReader = reader;
-			return;
-		}
-		synchronized(logReader) {
+		synchronized(readerLock) {
+			if(reader == null) {
+				this.logReader = null;
+				return;
+			}
+
 			if(logReader instanceof RingBufferLogReader) {
 				RingBufferLogReader ringBufferReader = (RingBufferLogReader) logReader;
 				for(LogEntry entry : ringBufferReader) {
