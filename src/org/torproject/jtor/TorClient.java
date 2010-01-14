@@ -9,6 +9,10 @@ import org.torproject.jtor.directory.impl.NetworkStatusManager;
 import org.torproject.jtor.logging.LogManager;
 import org.torproject.jtor.socks.SocksPortListener;
 
+/**
+ * This class is the main entry-point for running a Tor proxy
+ * or client.
+ */
 public class TorClient {
 	private final LogManager logManager;
 	private final TorConfig config;
@@ -28,6 +32,9 @@ public class TorClient {
 		
 	}
 
+	/**
+	 * Start running the Tor client service.
+	 */
 	public void start() {
 		directory.loadFromStore();
 		networkStatusManager.startDownloadingDocuments();
