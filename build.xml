@@ -1,0 +1,23 @@
+<project name="jtor" default="jtor">
+
+    <target name="jtor">
+      <mkdir dir="${basedir}/bin" />
+      <javac destdir="${basedir}/bin">
+        <src path="${basedir}/src" />
+	<classpath path="${basedir}/lib/bcprov-jdk15-143.jar" />
+      </javac>
+
+      <jar destfile="jtor.jar">
+        <manifest>
+	  <attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
+	  <attribute name="Rsrc-Main-Class" value="org.torproject.jtor.TorClient"/>
+	  <attribute name="Class-Path" value="." />
+          <attribute name="Rsrc-Class-Path" value="./ bcprov-jdk15-143.jar"/>
+	</manifest>
+        <zipfileset src="${basedir}/lib/jar-in-jar-loader.zip"/>
+        <fileset dir="${basedir}/bin" />
+        <zipfileset dir="${basedir}/lib" includes="bcprov-jdk15-143.jar"/>
+      </jar>
+    </target>
+
+</project>
