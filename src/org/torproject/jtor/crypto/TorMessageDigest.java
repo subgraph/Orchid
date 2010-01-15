@@ -33,6 +33,10 @@ public class TorMessageDigest {
 		}
 	}
 
+	/**
+	 * Return the digest value of all data processed up until this point.
+	 * @return The digest value as an array of <code>TOR_DIGEST_SIZE<code> bytes.
+	 */
 	public byte[] getDigestBytes() {
 		try {
 			// Make a clone because #digest() will reset the MessageDigest instance
@@ -59,18 +63,43 @@ public class TorMessageDigest {
 		}
 	}
 
+	/**
+	 * Calculate the digest value of all data processed up until this point and convert
+	 * the digest into a <code>HexDigest</code> object.
+	 * @return A new <code>HexDigest</code> object representing the current digest value.
+	 * @see HexDigest
+	 */
 	public HexDigest getHexDigest() {
 		return HexDigest.createFromDigestBytes(getDigestBytes());
 	}
 
+	/**
+	 * Add the entire contents of the byte array <code>input</code> to the current digest calculation.
+	 * 
+	 * @param input An array of input bytes to process.
+	 */
 	public void update(byte[] input) {
 		digestInstance.update(input);
 	}
 
+	/**
+	 * Add <code>length</code> bytes of the contents of the byte array <code>input</code> beginning at 
+	 * <code>offset</code> into the array to the current digest calculation.
+	 * 
+	 * @param input An array of input bytes to process.
+	 * @param offset The offset into the <code>input</code> array to begin processing.
+	 * @param length A count of how many bytes of the <code>input</code> array to process.
+	 */
 	public void update(byte[] input, int offset, int length) {
 		digestInstance.update(input, offset, length);
 	}
 
+	/**
+	 * Convert the String <code>input</code> into an array of bytes using the ISO-8859-1 encoding
+	 * and add these bytes to the current digest calculation.
+	 * 
+	 * @param input A string to process.
+	 */
 	public void update(String input) {
 		try {
 			digestInstance.update(input.getBytes("ISO-8859-1"));
