@@ -13,7 +13,21 @@ import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.DHPublicKeySpec;
 
 import org.torproject.jtor.TorException;
-
+/**
+ * The <code>TorKeyAgreement</code> class implements the diffie-hellman key agreement
+ * protocol using the parameters specified in the main Tor specification (tor-spec.txt).
+ * 
+ * An instance of this class can only be used to perform a single key agreement operation.
+ * 
+ * After instantiating the class, a user calls {@link #getPublicValue()} or {@link #getPublicKeyBytes()}
+ * to retrieve the public value to transmit to the peer in the key agreement operation.  After receiving
+ * a public value from the peer, this value should be converted into a <code>BigInteger</code> and
+ * {@link #isValidPublicValue(BigInteger)} should be called to verify that the peer has sent a safe
+ * and legal public value.  If {@link #isValidPublicValue(BigInteger)} returns true, the peer public
+ * value is valid and {@link #getSharedSecret(BigInteger)} can be called to complete the key agreement
+ * protocol and return the shared secret value.
+ * 
+ */
 public class TorKeyAgreement {
 	public final static int DH_LEN = 128;
 	public final static int DH_SEC_LEN = 40;
@@ -44,16 +58,32 @@ public class TorKeyAgreement {
 	private final KeyAgreement dh;
 	private final KeyPair keyPair;
 	
+	/**
+	 * Create a new <code>TorKeyAgreement</code> instance which can be used to perform a single
+	 * key agreement operation.  A new set of ephemeral Diffie-Hellman parameters are generated
+	 * when this class is instantiated.
+	 */
 	public TorKeyAgreement() {
 		keyPair = generateKeyPair();
 		dh = createDH();
 	}
 	
+	/**
+	 * Return the generated public value for this key agreement operation as a <code>BigInteger</code>.
+	 * 
+	 * @return The diffie-hellman public value as a <code>BigInteger</code>.
+	 */
 	public BigInteger getPublicValue() {
 		DHPublicKey pubKey = (DHPublicKey) keyPair.getPublic();
 		return pubKey.getY();
 	}
 	
+	/**
+	 * Return the generated public value for this key agreement operation as an array with the value
+	 * encoded in big-endian byte order.
+	 * 
+	 * @return A byte array containing the encoded public value for this key agreement operation.
+	 */
 	public byte[] getPublicKeyBytes() {
 		final byte[] output = new byte[128];
 		final byte[] yBytes = getPublicValue().toByteArray();
@@ -62,7 +92,10 @@ public class TorKeyAgreement {
 		return output;
 	}
 	
-	/*
+	/**
+	 * Return <code>true</code> if the specified value is a legal public
+	 * value rather than a dangerous degenerate or confined subgroup value.  
+	 * 
 	 * tor-spec 5.2
 	 * Before computing g^xy, both client and server MUST verify that 
 	 * the received g^x or g^y value is not degenerate; that is, it must
@@ -78,6 +111,13 @@ public class TorKeyAgreement {
 		return true;
 	}
 
+	/**
+	 * Complete the key agreement protocol with the peer public value
+	 * <code>otherPublic</code> and return the calculated shared secret.
+	 * 
+	 * @param otherPublic The peer public value.
+	 * @return The shared secret value produced by the protocol.
+	 */
 	public byte[] getSharedSecret(BigInteger otherPublic) {
 		try {
 			KeyFactory factory = KeyFactory.getInstance("DH", "BC");

@@ -11,6 +11,10 @@ import javax.crypto.NoSuchPaddingException;
 
 import org.torproject.jtor.TorException;
 
+/**
+ * The <code>HybridEncryption</code> class implements the "hybrid encryption" scheme
+ * as described in section 0.3 of the main Tor specification (tor-spec.txt).
+ */
 public class HybridEncryption {
 	
 	private final static int PK_ENC_LEN = 128;
@@ -28,9 +32,12 @@ public class HybridEncryption {
      *     Pad and encrypt K|M1 with PK.  Encrypt M2 with our stream cipher,
      *     using the key K.  Concatenate these encrypted values.
 	 */
-	
-	
 	final private Cipher cipher;
+	
+	/**
+	 * Create a new <code>HybridEncryption</code> instance which can be used for performing
+	 * "hybrid encryption" operations as described in the main Tor specification (tor-spec.txt).
+	 */
 	public HybridEncryption() {
 		try {
 			cipher = Cipher.getInstance("RSA/None/OAEPWithSHA1AndMGF1Padding", "BC");
@@ -43,6 +50,14 @@ public class HybridEncryption {
 		}
 	}
 	
+	/**
+	 * Encrypt the entire contents of the byte array <code>data</code> with the given <code>TorPublicKey</code>
+	 * according to the "hybrid encryption" scheme described in the main Tor specification (tor-spec.txt).
+	 * 
+	 * @param data The bytes to be encrypted.
+	 * @param publicKey The public key to use for encryption.
+	 * @return A new array containing the encrypted data.
+	 */
 	public byte[] encrypt(byte[] data, TorPublicKey publicKey) {
 		if(data.length < PK_DATA_LEN) 
 			return encryptSimple(data, publicKey);
@@ -80,7 +95,15 @@ public class HybridEncryption {
 		}
 	}
 	
-	byte[] decrypt(byte[] data, TorPrivateKey privateKey) {
+	/**
+	 * Decrypt the contents of the byte array <code>data</code> with the given <code>TorPrivateKey</code>
+	 * according to the "hybrid encryption" scheme described in the main Tor specification (tor-spec.txt).
+	 * 
+	 * @param data Encrypted data to decrypt.
+	 * @param privateKey The private key to use to decrypt the data.
+	 * @return A new byte array containing the decrypted data.
+	 */
+	public byte[] decrypt(byte[] data, TorPrivateKey privateKey) {
 		if(data.length < PK_ENC_LEN)
 			throw new TorException("Message is too short");
 		
