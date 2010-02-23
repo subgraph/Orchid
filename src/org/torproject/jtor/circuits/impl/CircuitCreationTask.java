@@ -22,6 +22,9 @@ public class CircuitCreationTask implements Runnable {
 	private final NodeChooser nodeChooser;
 	private final Executor executor;
 	
+	// To avoid obnoxiously printing a warning every second
+	private int notEnoughDirectoryInformationWarningCounter = 0;
+	
 	CircuitCreationTask(Directory directory, CircuitManagerImpl circuitManager, Logger logger) {
 		this.directory = directory;
 		this.circuitManager = circuitManager;
@@ -71,7 +74,9 @@ public class CircuitCreationTask implements Runnable {
 	private void checkCircuitsForCreation() {
 		
 		if(!directory.haveMinimumRouterInfo()) {
-			logger.warning("Cannot build circuits because we don't have enough directory information");
+			if(notEnoughDirectoryInformationWarningCounter % 20 == 0)
+				logger.warning("Cannot build circuits because we don't have enough directory information");
+			notEnoughDirectoryInformationWarningCounter++;
 			return;
 		}
 		
