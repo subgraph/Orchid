@@ -2,6 +2,7 @@ package org.torproject.jtor.directory;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.events.EventHandler;
@@ -22,6 +23,7 @@ public interface Directory {
 	DirectoryServer getRandomDirectoryAuthority();
 	Router getRandomDirectoryServer();
 	void addCertificate(KeyCertificate certificate);
+	Set<HexDigest> getRequiredCertificates();
 	void addRouterDescriptor(RouterDescriptor router);
 	void addConsensusDocument(ConsensusDocument consensus);
 	ConsensusDocument getCurrentConsensusDocument();

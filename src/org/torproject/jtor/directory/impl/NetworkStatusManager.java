@@ -59,7 +59,7 @@ public class NetworkStatusManager {
 			checkConsensus();
 			checkDescriptors();
 			try {
-				Thread.sleep(30000);
+				Thread.sleep(5000);
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 				return;
@@ -113,14 +113,8 @@ public class NetworkStatusManager {
 	}
 
 	private void checkValidCertificates() {
-		final List<HexDigest> neededCertificates = new ArrayList<HexDigest>();
-		for(DirectoryServer dir: directory.getDirectoryAuthorities()) {
-			if(!dir.isV3Authority())
-				continue;
-			final KeyCertificate certificate = directory.findCertificate(dir.getV3Identity());
-			if(certificate == null || certificate.isExpired()) 
-				neededCertificates.add(dir.getV3Identity());
-		}
+		final List<HexDigest> neededCertificates = new ArrayList<HexDigest>(directory.getRequiredCertificates());
+
 		if(!neededCertificates.isEmpty())
 			requestCertificates(neededCertificates);
 	}

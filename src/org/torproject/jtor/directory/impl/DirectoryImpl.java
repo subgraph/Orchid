@@ -5,8 +5,10 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.TorException;
@@ -20,6 +22,7 @@ import org.torproject.jtor.directory.KeyCertificate;
 import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.directory.RouterDescriptor;
 import org.torproject.jtor.directory.RouterStatus;
+import org.torproject.jtor.directory.impl.consensus.DirectorySignature;
 import org.torproject.jtor.events.Event;
 import org.torproject.jtor.events.EventHandler;
 import org.torproject.jtor.events.EventManager;
@@ -33,6 +36,7 @@ public class DirectoryImpl implements Directory {
 	private final Map<HexDigest, RouterImpl> routersByIdentity;
 	private final Map<String, RouterImpl> routersByNickname;
 	private final RandomSet<RouterImpl> directoryCaches;
+	private final Set<HexDigest> requiredCertificates;
 	private List<DirectoryServer> directoryAuthorities;
 	private boolean haveMinimumRouterInfo;
 	private final EventManager consensusChangedManager;
@@ -49,6 +53,7 @@ public class DirectoryImpl implements Directory {
 		routersByIdentity = new HashMap<HexDigest, RouterImpl>();
 		routersByNickname = new HashMap<String, RouterImpl>();
 		directoryCaches = new RandomSet<RouterImpl>();
+		requiredCertificates = new HashSet<HexDigest>();
 		consensusChangedManager = new EventManager();
 		random = createRandom();
 		loadAuthorityServers();
@@ -108,9 +113,15 @@ public class DirectoryImpl implements Directory {
 		return directoryCaches.getRandomElement();
 	}
 
+	public Set<HexDigest> getRequiredCertificates() {
+		return new HashSet<HexDigest>(requiredCertificates);
+	}
+	
 	public void addCertificate(KeyCertificate certificate) {
+		final HexDigest fingerprint = certificate.getAuthorityFingerprint();
 		synchronized(certificates) {
-			certificates.put(certificate.getAuthorityFingerprint(), certificate);
+			requiredCertificates.remove(fingerprint);
+			certificates.put(fingerprint, certificate);
 			if(consensusWaitingForCertificates != null && consensusWaitingForCertificates.canVerifySignatures(certificates)) {
 				addConsensusDocument(consensusWaitingForCertificates);
 				consensusWaitingForCertificates = null;
@@ -162,8 +173,12 @@ public class DirectoryImpl implements Directory {
 
 		synchronized(certificates) {
 			if(!consensus.canVerifySignatures(certificates)) {
-				logger.warning("Need more signatures to verify consensus document.");
+				logger.warning("Need more certificates to verify consensus document.");
 				consensusWaitingForCertificates = consensus;
+				for(DirectorySignature s: consensus.getDocumentSignatures()) {
+					if(!certificates.containsKey(s.getIdentityDigest())) 
+						requiredCertificates.add(s.getIdentityDigest());
+				}
 				return;
 			}
 			
