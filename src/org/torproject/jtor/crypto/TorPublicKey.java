@@ -3,6 +3,7 @@ package org.torproject.jtor.crypto;
 import java.io.IOException;
 import java.io.StringReader;
 import java.security.InvalidKeyException;
+import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.interfaces.RSAPublicKey;
@@ -40,8 +41,12 @@ public class TorPublicKey {
 	static private RSAPublicKey verifyObjectAsKey(Object ob) {
 		if(ob instanceof RSAPublicKey)
 			return ((RSAPublicKey) ob);
-		else
-			throw new TorParsingException("Failed to extract PEM public key.");
+		else if(ob instanceof KeyPair) {
+			KeyPair kp = (KeyPair)ob;
+			if(kp.getPublic() instanceof RSAPublicKey)
+				return ((RSAPublicKey)kp.getPublic());
+		}
+		throw new TorParsingException("Failed to extract PEM public key.");
 	}
 
 	private final RSAPublicKey key;
