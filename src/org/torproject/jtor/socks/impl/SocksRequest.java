@@ -43,7 +43,7 @@ public abstract class SocksRequest {
 	protected void setPortData(byte[] data) {
 		if(data.length != 2)
 			throw new SocksRequestException();
-		port = (data[0] & 0xFF << 8) | (data[1] & 0xFF);
+		port = ((data[0] & 0xFF) << 8) | (data[1] & 0xFF);
 	}
 	
 	protected void setIPv4AddressData(byte[] data) {
