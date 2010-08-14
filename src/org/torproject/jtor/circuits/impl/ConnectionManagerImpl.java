@@ -50,6 +50,9 @@ public class ConnectionManagerImpl {
 	private SSLSocketFactory socketFactory;
 
 	public ConnectionManagerImpl(LogManager logManager) {
+		// See: http://java.sun.com/javase/javaseforbusiness/docs/TLSReadme.html
+		System.setProperty("sun.security.ssl.allowUnsafeRenegotiation", "true");
+		
 		try {
 			sslContext = SSLContext.getInstance("SSLv3");
 			sslContext.init(null, NULL_TRUST, null);
