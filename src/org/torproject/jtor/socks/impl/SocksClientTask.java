@@ -7,6 +7,7 @@ import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.Stream;
+import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.logging.Logger;
 
 public class SocksClientTask implements Runnable {
@@ -68,8 +69,11 @@ public class SocksClientTask implements Runnable {
 				request.sendSuccess();
 				runOpenConnection(openResponse.getStream());
 				break;
-			case STATUS_ERROR_CONNECTION_REFUSED:
-				request.sendConnectionRefused();
+			case STATUS_STREAM_ERROR:
+				if(openResponse.getErrorCode() == RelayCell.REASON_CONNECTREFUSED)
+					request.sendConnectionRefused();
+				else
+					request.sendError();
 				break;
 			default:
 				request.sendError();
