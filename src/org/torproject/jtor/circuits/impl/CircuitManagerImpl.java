@@ -1,6 +1,7 @@
 package org.torproject.jtor.circuits.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -129,6 +130,12 @@ public class CircuitManagerImpl implements CircuitManager {
 	List<StreamExitRequest> getPendingExitStreams() {
 		synchronized(pendingExitStreams) {
 			return new ArrayList<StreamExitRequest>(pendingExitStreams);
+		}
+	}
+	
+	List<Circuit> getPendingCircuits() {
+		synchronized(pendingCircuits) {
+			return new ArrayList<Circuit>(pendingCircuits);
 		}
 	}
 	
