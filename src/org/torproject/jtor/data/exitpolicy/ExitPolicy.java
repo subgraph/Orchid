@@ -16,6 +16,13 @@ public class ExitPolicy {
 		rules.add(PolicyRule.createRejectFromString(rule));
 	}
 
+	public boolean acceptsTarget(ExitTarget target) {
+		if(target.isAddressTarget())
+			return acceptsDestination(target.getAddress(), target.getPort());
+		else
+			return acceptsPort(target.getPort());
+	}
+	
 	public boolean acceptsDestination(IPv4Address address, int port) {
 		if(address == null)
 			return acceptsPort(port);
