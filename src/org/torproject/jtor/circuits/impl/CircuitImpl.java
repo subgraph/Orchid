@@ -2,14 +2,15 @@ package org.torproject.jtor.circuits.impl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.TorTimeoutException;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitNode;
@@ -19,6 +20,7 @@ import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.data.IPv4Address;
+import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.logging.Logger;
 
@@ -42,6 +44,7 @@ public class CircuitImpl implements Circuit {
 	private final BlockingQueue<RelayCell> relayCellResponseQueue;
 	private final BlockingQueue<Cell> controlCellResponseQueue;
 	private final Map<Integer, StreamImpl> streamMap;
+	private final Set<ExitTarget> failedExitRequests;
 	private final CircuitBuilder circuitBuilder;
 	private final CircuitStatus status;
 	private final Object relaySendLock = new Object();
@@ -53,6 +56,7 @@ public class CircuitImpl implements Circuit {
 		this.relayCellResponseQueue = new LinkedBlockingQueue<RelayCell>();
 		this.controlCellResponseQueue = new LinkedBlockingQueue<Cell>();
 		this.streamMap = new HashMap<Integer, StreamImpl>();
+		this.failedExitRequests = new HashSet<ExitTarget>();
 		status = new CircuitStatus();
 		circuitBuilder = new CircuitBuilder(this, connectionManager, logger);
 	}
@@ -71,18 +75,18 @@ public class CircuitImpl implements Circuit {
 	}
 
 	public void openCircuit(List<Router> circuitPath, CircuitBuildHandler handler)  {
-		startCircuitOpen();	
+		startCircuitOpen(circuitPath);	
 		if(circuitBuilder.openCircuit(circuitPath, handler)) 
 			circuitOpenSucceeded();
 		else
 			circuitOpenFailed();
 	}
 
-	private void startCircuitOpen() {
+	private void startCircuitOpen(List<Router> circuitPath) {
 		if(!status.isUnconnected())
 			throw new IllegalStateException("Can only connect UNCONNECTED circuits");
 		status.updateCreatedTimestamp();
-		status.setStateBuilding();
+		status.setStateBuilding(circuitPath);
 		circuitManager.circuitStartConnect(this);
 	}
 
@@ -293,22 +297,23 @@ public class CircuitImpl implements Circuit {
 
 	public OpenStreamResponse openExitStream(String target, int port) {
 		final StreamImpl stream = createNewStream();
-		try {
-			stream.openExit(target, port);
-			return OpenStreamResponseImpl.createStreamOpened(stream);
-		} catch (TorTimeoutException e) {
-			logger.info("Failed to open stream: "+ e.getMessage());
-			removeStream(stream);
+		final OpenStreamResponse response = stream.openExit(target, port);
+		switch(response.getStatus()) {
+		case STATUS_STREAM_TIMEOUT:
+			logger.info("Timeout opening stream: "+ stream);
 			if(status.countStreamTimeout()) {
-				// XXX 
-				// do something
+				// XXX do something
 			}
-			return OpenStreamResponseImpl.createStreamError();
-		} catch(TorException e) {
-			logger.info("Failed to open stream: "+ e.getMessage());
 			removeStream(stream);
-			return OpenStreamResponseImpl.createStreamError();
+			break;
+
+		case STATUS_STREAM_ERROR:
+			logger.info("Error opening stream: "+ stream +" reason: "+ response.getErrorCodeMessage());
+			removeStream(stream);
+			break;
+
 		}
+		return response;
 	}
 
 	boolean isFinalNodeDirectory() {
@@ -339,6 +344,25 @@ public class CircuitImpl implements Circuit {
 		synchronized(streamMap) {
 			streamMap.remove(stream.getStreamId());
 		}
+	}
+
+	public void recordFailedExitTarget(ExitTarget target) {
+		synchronized(failedExitRequests) {
+			failedExitRequests.add(target);
+		}
+	}
+
+	public boolean canHandleExitTo(ExitTarget target) {
+		synchronized(failedExitRequests) {
+			if(failedExitRequests.contains(target))
+				return false;
+		}
+
+		final Router lastRouter = status.getFinalRouter();
+		if(target.isAddressTarget())
+			return lastRouter.exitPolicyAccepts(target.getAddress(), target.getPort());
+		else
+			return lastRouter.exitPolicyAccepts(target.getPort());
 	}
 
 	public String toString() {
