@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.data.IPv4Address;
+import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Router;
 
 /**
@@ -121,4 +122,7 @@ public interface Circuit {
 	 * @return The final 'hop' or node of this circuit.
 	 */
 	CircuitNode getFinalCircuitNode();
+
+	boolean canHandleExitTo(ExitTarget target);
+	public void recordFailedExitTarget(ExitTarget target);
 }
