@@ -2,8 +2,9 @@ package org.torproject.jtor.circuits.impl;
 
 import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.data.IPv4Address;
+import org.torproject.jtor.data.exitpolicy.ExitTarget;
 
-public class StreamExitRequest {
+public class StreamExitRequest implements ExitTarget {
 
 	private final boolean isAddress;
 	private final IPv4Address address;
@@ -18,7 +19,7 @@ public class StreamExitRequest {
 		isAddress = true;
 		this.address = address;
 		this.port = port;
-		this.hostname = null;
+		this.hostname = "";
 	}
 
 	StreamExitRequest(CircuitManagerImpl circuitManager, String hostname, int port) {
@@ -29,19 +30,19 @@ public class StreamExitRequest {
 		this.port = port;
 	}
 
-	boolean isAddressRequest() {
+	public boolean isAddressTarget() {
 		return isAddress;
 	}
 
-	IPv4Address getAddress() {
+	public IPv4Address getAddress() {
 		return address;
 	}
 
-	String getHostname() {
+	public String getHostname() {
 		return hostname;
 	}
 
-	int getPort() {
+	public int getPort() {
 		return port;
 	}
 
@@ -78,5 +79,28 @@ public class StreamExitRequest {
 		else
 			return hostname + ":"+ port;
 	}
-
+	
+	public boolean equals(Object ob) {
+		if(this == ob) return true;
+		if(!(ob instanceof StreamExitRequest))
+			return false;
+		StreamExitRequest other = (StreamExitRequest) ob;
+		if(address != null && isAddress)
+			return (other.isAddress && address.equals(other.address) && port == other.port);
+		else 
+			return (!other.isAddress && hostname.equals(other.hostname) && port == other.port); 
+	}
+	
+	public int hashCode() {
+		int hash = port;
+		if(address != null) {
+			hash *= 31;
+			hash += address.hashCode();
+		}
+		if(hostname != null) {
+			hash *= 31;
+			hash += hostname.hashCode();
+		}
+		return hash;	
+	}
 }
