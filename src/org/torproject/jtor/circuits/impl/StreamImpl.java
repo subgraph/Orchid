@@ -5,9 +5,9 @@ import java.io.OutputStream;
 import java.util.Date;
 
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.TorTimeoutException;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitNode;
+import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.circuits.cells.RelayCell;
 
@@ -23,6 +23,7 @@ public class StreamImpl implements Stream {
 	private final TorOutputStream outputStream;
 	private boolean isClosed;
 	private boolean relayEndReceived;
+	private int relayEndReason;
 	private boolean relayConnectedReceived;
 	private final Object waitConnectLock = new Object();
 	private final Object windowLock = new Object();
@@ -44,6 +45,7 @@ public class StreamImpl implements Stream {
 			return;
 		if(cell.getRelayCommand() == RelayCell.RELAY_END) {
 			synchronized(waitConnectLock) {
+				relayEndReason = cell.getByte();
 				relayEndReceived = true;
 				inputStream.addEndCell(cell);
 				waitConnectLock.notifyAll();
@@ -117,32 +119,34 @@ public class StreamImpl implements Stream {
 		waitForRelayConnected();
 	}
 
-	void openExit(String target, int port) {
+	OpenStreamResponse openExit(String target, int port) {
 		final RelayCell cell = new RelayCellImpl(circuit.getFinalCircuitNode(), circuit.getCircuitId(), streamId, RelayCell.RELAY_BEGIN);
 		cell.putString(target + ":"+ port);
 		circuit.sendRelayCellToFinalNode(cell);
-		waitForRelayConnected();
+		return waitForRelayConnected();
 	}
 
-	private void waitForRelayConnected() {
+	private OpenStreamResponse waitForRelayConnected() {
 		final Date startWait = new Date();
 		synchronized(waitConnectLock) {
 			while(!relayConnectedReceived) {
 
 				if(relayEndReceived)
-					throw new TorException("RELAY_END cell received while waiting for RELAY_CONNECTED cell on stream id="+ streamId);
+					return OpenStreamResponseImpl.createStreamError(relayEndReason);
+
 
 				if(hasStreamConnectTimedOut(startWait))
-					throw new TorTimeoutException("Timeout waiting for RELAY_CONNECTED cell on stream id="+ streamId);
+					return OpenStreamResponseImpl.createStreamTimeout();
 
 				try {
 					waitConnectLock.wait(1000);
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
-					throw new TorTimeoutException("Interrupted waiting for RELAY_CONNECTED cell on stream id="+ streamId);
+					return OpenStreamResponseImpl.createStreamTimeout();
 				}
 			}
 		}
+		return OpenStreamResponseImpl.createStreamOpened(this);
 	}
 
 	private static boolean hasStreamConnectTimedOut(Date startTime) {
