@@ -18,14 +18,14 @@ import org.torproject.jtor.TorParsingException;
 import org.torproject.jtor.data.HexDigest;
 
 public class TorPrivateKey {
-	
+
 	static public TorPrivateKey generateNewKeypair() {
 		KeyPairGenerator generator = createGenerator();
 		generator.initialize(1024, new SecureRandom());
 		KeyPair pair = generator.generateKeyPair();
 		return new TorPrivateKey((RSAPrivateKey)pair.getPrivate(), (RSAPublicKey)pair.getPublic());
 	}
-	
+
 	static KeyPairGenerator createGenerator() {
 		try {
 			return KeyPairGenerator.getInstance("RSA", "BC");
@@ -35,7 +35,7 @@ public class TorPrivateKey {
 			throw new TorException(e);
 		}
 	}
-	
+
 	static public TorPrivateKey createFromPEMBuffer(String buffer) {
 		final PEMReader pemReader = new PEMReader(new StringReader(buffer));
 		final KeyPair kp = readPEMKeyPair(pemReader);
@@ -63,27 +63,27 @@ public class TorPrivateKey {
 
 	private final TorPublicKey publicKey;
 	private final RSAPrivateKey privateKey;
-	
+
 	TorPrivateKey(RSAPrivateKey privateKey, RSAPublicKey publicKey) {
 		this.privateKey = privateKey;
 		this.publicKey = new TorPublicKey(publicKey);
 	}
-	
+
 	public TorPublicKey getPublicKey() {
 		return publicKey;
 	}
-	
+
 	public RSAPublicKey getRSAPublicKey() {
 		return publicKey.getRSAPublicKey();
 	}
-	
+
 	public RSAPrivateKey getRSAPrivateKey() {
 		return privateKey;
 	}
-	
+
 	private HexDigest keyFingerprint = null;
-	
-	public HexDigest getFingerPrint() {
+
+	public HexDigest getFingerprint() {
 		if(keyFingerprint == null)
 			keyFingerprint = HexDigest.createDigestForData(toASN1Raw());
 		return keyFingerprint;
