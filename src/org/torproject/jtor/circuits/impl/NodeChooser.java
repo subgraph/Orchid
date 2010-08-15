@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.data.IPv4Address;
+import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.Router;
 
@@ -55,16 +56,25 @@ public class NodeChooser {
 		return routerSet;
 	}
 
-	Router chooseExitNodeForPort(int port, NodeChoiceConstraints ncc) {
-		final List<StreamExitRequest> pendingExitStreams = circuitManager.getPendingExitStreams();
-		final List<Router> allRouters = directory.getAllRouters();
-		final List<Router> exitRouters = filterForExitDestination(allRouters, null, port);
-		final List<Router> filteredPending = filterForPendingStreams(exitRouters, pendingExitStreams);
-
-		return chooseRandomRouterByBandwidth(filteredPending, ncc);
-
+	Router chooseExitNodeForTarget(ExitTarget target, NodeChoiceConstraints ncc) {
+		if(target.isAddressTarget())
+			return chooseExitNodeForAddress(target.getAddress(), target.getPort(), ncc);
+		else
+			return chooseExitNodeForPort(target.getPort(), ncc);
 	}
 
+	Router chooseExitNodeForPort(int port, NodeChoiceConstraints ncc) {
+		return chooseExitNodeForAddress(null, port, ncc);
+	}
+
+	Router chooseExitNodeForAddress(IPv4Address address, int port, NodeChoiceConstraints ncc) {
+		final List<StreamExitRequest> pendingExitStreams = circuitManager.getPendingExitStreams();
+		final List<Router> allRouters = directory.getAllRouters();
+		final List<Router> exitRouters = filterForExitDestination(allRouters, address, port);
+		final List<Router> filteredPending = filterForPendingStreams(exitRouters, pendingExitStreams);
+		return chooseRandomRouterByBandwidth(filteredPending, ncc);
+	}
+	
 	private List<Router> filterForConstraintFlags(List<Router> routers, NodeChoiceConstraints ncc) {
 		final List<Router> resultRouters = new ArrayList<Router>();
 		for(Router r : routers) {
@@ -103,7 +113,7 @@ public class NodeChooser {
 		for(int i = 0; i < routers.size(); i++) {
 			final Router r = routers.get(i);
 			for(StreamExitRequest request: pendingStreams) {
-				if(request.isAddressRequest()) {
+				if(request.isAddressTarget()) {
 					if(r.exitPolicyAccepts(request.getAddress(), request.getPort()))
 						nSupport[i]++;
 				} else {
