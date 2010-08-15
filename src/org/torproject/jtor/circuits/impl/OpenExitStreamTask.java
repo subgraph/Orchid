@@ -21,17 +21,17 @@ public class OpenExitStreamTask implements Runnable {
 		final OpenStreamResponse openStreamResponse = tryOpenExitStream();
 		switch(openStreamResponse.getStatus()) {
 		case STATUS_STREAM_OPENED:
-		case STATUS_ERROR_CONNECTION_REFUSED:
-			exitRequest.setCompleted(openStreamResponse);
 			break;
-		default:
-			exitRequest.unreserveRequest();
+		case STATUS_STREAM_ERROR:
+		case STATUS_STREAM_TIMEOUT:
+			circuit.recordFailedExitTarget(exitRequest);
 			break;
 		}
+		exitRequest.setCompleted(openStreamResponse);
 	}
 
 	private OpenStreamResponse tryOpenExitStream() {
-		if(exitRequest.isAddressRequest())
+		if(exitRequest.isAddressTarget())
 			return circuit.openExitStream(exitRequest.getAddress(), exitRequest.getPort());
 		else
 			return circuit.openExitStream(exitRequest.getHostname(), exitRequest.getPort());
