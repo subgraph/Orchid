@@ -93,6 +93,10 @@ public class RouterImpl implements Router {
 	public boolean isStable() {
 		return hasFlag("Stable");
 	}
+	
+	public boolean isHSDirectory() {
+		return hasFlag("HSDir");
+	}
 
 	public int getDirectoryPort() {
 		return status.getDirectoryPort();

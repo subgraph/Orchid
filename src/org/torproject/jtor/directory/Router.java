@@ -31,6 +31,7 @@ public interface Router {
 	boolean isExit();
 	boolean isFast();
 	boolean isStable();
+	boolean isHSDirectory();
 	boolean exitPolicyAccepts(IPv4Address address, int port);
 	boolean exitPolicyAccepts(int port);
 }
