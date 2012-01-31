@@ -18,8 +18,8 @@ public abstract class SocksRequest {
 		this.socket = socket;
 	}
 
-	abstract public void readRequest();
-	abstract public boolean isConnectRequest();
+	public abstract void readRequest();
+	public abstract boolean isConnectRequest();
 	abstract void sendError() throws IOException;
 	abstract void sendSuccess() throws IOException;
 	abstract void sendConnectionRefused() throws IOException;

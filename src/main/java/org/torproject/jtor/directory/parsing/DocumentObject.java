@@ -2,8 +2,8 @@ package org.torproject.jtor.directory.parsing;
 
 public class DocumentObject {
 
-	final private String keyword;
-	final private StringBuilder stringContent;
+	private final String keyword;
+	private final StringBuilder stringContent;
 
 	public DocumentObject(String keyword) {
 		this.keyword = keyword;

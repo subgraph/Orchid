@@ -32,7 +32,7 @@ public class HybridEncryption {
      *     Pad and encrypt K|M1 with PK.  Encrypt M2 with our stream cipher,
      *     using the key K.  Concatenate these encrypted values.
 	 */
-	final private Cipher cipher;
+	private final Cipher cipher;
 
 	/**
 	 * Create a new <code>HybridEncryption</code> instance which can be used for performing

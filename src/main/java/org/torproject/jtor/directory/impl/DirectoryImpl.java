@@ -271,7 +271,7 @@ public class DirectoryImpl implements Directory {
 		checkMinimumRouterInfo();
 	}
 
-	synchronized public List<Router> getRoutersWithDownloadableDescriptors() {
+	public synchronized List<Router> getRoutersWithDownloadableDescriptors() {
 		final List<Router> routers = new ArrayList<Router>();
 		for(RouterImpl router: routersByIdentity.values()) {
 			if(router.isDescriptorDownloadable())
@@ -289,7 +289,7 @@ public class DirectoryImpl implements Directory {
 		return routers;
 	}
 
-	synchronized public void markDescriptorInvalid(RouterDescriptor descriptor) {
+	public synchronized void markDescriptorInvalid(RouterDescriptor descriptor) {
 		removeRouterByIdentity(descriptor.getIdentityKey().getFingerprint());
 	}
 
