@@ -22,7 +22,7 @@ import org.torproject.jtor.data.IPv4Address;
  * NETINFO cells have been exchanged between the two sides.
  */
 public class ConnectionHandshakeV2 {
-	private static final int[] SUPPORTED_CONNECTION_VERSIONS = {1,2};
+	private static final int[] SUPPORTED_CONNECTION_VERSIONS = {1, 2};
 
 	private final ConnectionImpl connection;
 	private final SSLSocket socket;

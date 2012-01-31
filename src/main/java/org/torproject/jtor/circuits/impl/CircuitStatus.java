@@ -16,7 +16,7 @@ public class CircuitStatus {
 		FAILED("Failed"),
 		OPEN("Open"),
 		DESTROYED("Destroyed");
-		String name;
+		private String name;
 		CircuitState(String name) { this.name = name; }
 		public String toString() { return name; }
 	}

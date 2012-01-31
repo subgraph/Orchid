@@ -27,7 +27,7 @@ public class PortRange {
 		}
 	}
 	private static final int MAX_PORT = 0xFFFF;
-	public static final PortRange ALL_PORTS = new PortRange(1,MAX_PORT);
+	public static final PortRange ALL_PORTS = new PortRange(1, MAX_PORT);
 	private final int portStart;
 	private final int portEnd;
 

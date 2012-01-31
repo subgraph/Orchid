@@ -71,7 +71,7 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 	void setExtraInfoDigest(HexDigest digest) { this.extraInfoDigest = digest; }
 	void setCachesExtraInfo() { cachesExtraInfo = true; }
 	void setAllowSingleHopExits() { allowSingleHopExits = true; }
-	void setReadHistory(BandwidthHistory history) { this.readHistory= history; }
+	void setReadHistory(BandwidthHistory history) { this.readHistory = history; }
 	void setWriteHistory(BandwidthHistory history) { this.writeHistory = history; }
 	void setValidSignature() { hasValidSignature = true; }
 	void setDescriptorHash(HexDigest digest) { descriptorDigest = digest; }

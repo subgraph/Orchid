@@ -17,7 +17,7 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
     private Socket s;
     private boolean running = false;
 
-    public ControlConnectionHandlerTCP(ControlServer cs,Socket s) {
+    public ControlConnectionHandlerTCP(ControlServer cs, Socket s) {
         this.s = s;
         this.cs = cs;
         running = true;
