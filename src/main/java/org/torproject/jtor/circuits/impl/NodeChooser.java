@@ -195,7 +195,8 @@ public class NodeChooser {
 			long avgFast, avgSlow;
 			if(totalExitBandwidth + totalNonexitBandwidth > 0) {
 				final int nKnown = routers.size() - nUnknown;
-				avgFast = avgSlow = (long) ((totalExitBandwidth + totalNonexitBandwidth) / nKnown);
+				avgFast = (long) ((totalExitBandwidth + totalNonexitBandwidth) / nKnown);
+				avgSlow = avgFast;
 			} else {
 				avgFast = 40000;
 				avgSlow = 20000;

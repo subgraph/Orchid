@@ -8,4 +8,7 @@ public class ControlCommandUseFeature {
 		// currently all listed features are enabled by default
 		cch.write("250 OK");
 	}
+
+	private ControlCommandUseFeature() {
+	}
 }

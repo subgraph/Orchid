@@ -51,7 +51,7 @@ public class Base32 {
 		case 0:
 			return ls(b0, 3) + rs(b1, 2);
 		case 8:
-			return ls(b0, 6) + ls(b1, 1) + rs (b2, 4);
+			return ls(b0, 6) + ls(b1, 1) + rs(b2, 4);
 		case 16:
 			return ls(b0, 4) + rs(b1, 1);
 		case 24:
@@ -84,5 +84,8 @@ public class Base32 {
 				throw new TorException("Illegal character in base32 encoded string: "+ s.charAt(i));
 		}
 		return ints;
+	}
+
+	private Base32() {
 	}
 }

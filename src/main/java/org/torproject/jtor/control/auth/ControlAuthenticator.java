@@ -63,4 +63,7 @@ public class ControlAuthenticator {
 		}
 		return true;
 	}
+
+	private ControlAuthenticator() {
+	}
 }

@@ -59,4 +59,7 @@ public class ControlCommandSignal {
 
 		return true;
 	}
+
+	private ControlCommandSignal() {
+	}
 }

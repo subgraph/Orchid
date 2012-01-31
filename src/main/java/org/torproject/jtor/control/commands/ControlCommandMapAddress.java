@@ -69,4 +69,7 @@ public class ControlCommandMapAddress {
 
 		return true;
 	}
+
+	private ControlCommandMapAddress() {
+	}
 }

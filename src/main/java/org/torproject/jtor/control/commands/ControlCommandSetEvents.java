@@ -40,7 +40,7 @@ public class ControlCommandSetEvents {
     };
 
 
-	private static boolean verifyEvent (String event) {
+	private static boolean verifyEvent(String event) {
 		for (String sup : supportedEvents) {
 			if (event.equalsIgnoreCase(sup)) {
 				return true;
@@ -48,6 +48,9 @@ public class ControlCommandSetEvents {
 		}
 
 		return false;
+	}
+
+	private ControlCommandSetEvents() {
 	}
 
 }

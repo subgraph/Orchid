@@ -31,4 +31,7 @@ public class ControlCommandProtocolInfo {
 
 		cch.write("250 OK");
 	}
+
+	private ControlCommandProtocolInfo() {
+	}
 }

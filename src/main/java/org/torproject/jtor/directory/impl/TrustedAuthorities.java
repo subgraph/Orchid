@@ -44,7 +44,7 @@ public class TrustedAuthorities {
 
 		parser.setHandler(new DocumentParsingHandler() {
 			public void endOfDocument() {}
-			public void parseKeywordLine() { processKeywordLine(parser);}
+			public void parseKeywordLine() { processKeywordLine(parser); }
 		});
 		parser.processDocument();
 	}

@@ -329,4 +329,7 @@ public class ControlCommandSetConf {
 		}
 
 	}
+
+	private ControlCommandSetConf() {
+	}
 }

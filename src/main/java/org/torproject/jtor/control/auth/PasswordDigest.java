@@ -13,8 +13,8 @@ import java.security.MessageDigest;
  */
 public class PasswordDigest {
 
-    byte[] secret;
-    String hashedKey;
+    private byte[] secret;
+    private String hashedKey;
 
     /** Return a new password digest with a random secret and salt. */
     public static PasswordDigest generateDigest() {

@@ -7,7 +7,14 @@ import org.torproject.jtor.control.ControlConnectionHandler;
 import org.torproject.jtor.control.FeatureNotSupportedException;
 import org.torproject.jtor.control.KeyNotFoundException;
 import org.torproject.jtor.control.auth.ControlAuthenticator;
-import org.torproject.jtor.control.commands.*;
+import org.torproject.jtor.control.commands.ControlCommandGetConf;
+import org.torproject.jtor.control.commands.ControlCommandGetInfo;
+import org.torproject.jtor.control.commands.ControlCommandMapAddress;
+import org.torproject.jtor.control.commands.ControlCommandProtocolInfo;
+import org.torproject.jtor.control.commands.ControlCommandSetConf;
+import org.torproject.jtor.control.commands.ControlCommandSetEvents;
+import org.torproject.jtor.control.commands.ControlCommandSignal;
+import org.torproject.jtor.control.commands.ControlCommandUseFeature;
 
 /**
  *

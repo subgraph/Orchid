@@ -106,4 +106,7 @@ public class Tor {
 	public static NetworkStatusManager createNetworkStatusManager(Directory directory, LogManager logManager) {
 		return new NetworkStatusManager(directory, logManager);
 	}
+
+	private Tor() {
+	}
 }

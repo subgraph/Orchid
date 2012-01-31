@@ -297,4 +297,7 @@ public class TorConfigSaver {
 		ret = ret.replaceAll("[,\\s]*$", "");
 		return ret;
 	}
+
+	private TorConfigSaver() {
+	}
 }

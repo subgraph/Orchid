@@ -374,4 +374,7 @@ public class ControlCommandGetConf {
 
 		throw new KeyNotFoundException();
 	}
+
+	private ControlCommandGetConf() {
+	}
 }

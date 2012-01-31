@@ -26,7 +26,7 @@ public class ControlCommandGetInfo {
 
 		else if (key.equals("address")) {
 			try {
-				InetAddress ip =InetAddress.getLocalHost();
+				InetAddress ip = InetAddress.getLocalHost();
 				if (ip.isAnyLocalAddress() || ip.isLoopbackAddress()) {
 					throw new FeatureNotSupportedException();
 				}
@@ -59,5 +59,8 @@ public class ControlCommandGetInfo {
 		}
 
 		throw new KeyNotFoundException();
+	}
+
+	private ControlCommandGetInfo() {
 	}
 }
