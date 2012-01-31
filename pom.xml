@@ -1,0 +1,169 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<properties>
+		<!--
+			This may get better support in Maven 3, see:
+			http://docs.codehaus.org/display/MAVENUSER/POM+Element+for+Source+File+Encoding
+		-->
+		<project.build.encoding>UTF-8</project.build.encoding>
+		<project.build.sourceEncoding>${project.build.encoding}</project.build.sourceEncoding>
+		<project.build.resourceEncoding>${project.build.encoding}</project.build.resourceEncoding>
+
+		<project.packageName>org.torproject.jtor</project.packageName>
+		<project.mainClass>org.torproject.jtor.TorClient</project.mainClass>
+	</properties>
+
+	<groupId>org.torproject</groupId>
+	<artifactId>jtor</artifactId>
+	<version>0.1-SNAPSHOT</version>
+
+	<packaging>jar</packaging>
+
+	<organization>
+		<name>Tor Project Community</name>
+		<url>http://torproject.org</url>
+	</organization>
+	<name>JTor</name>
+	<description>A Tor implementation in Java</description>
+	<url>https://github.com/brl/JTor</url>
+	<prerequisites>
+		<maven>2.1</maven>
+	</prerequisites>
+	<inceptionYear>2009</inceptionYear>
+
+	<licenses>
+		<license>
+			<name>BSD</name>
+			<url>http://www.opensource.org/licenses/bsd-license.php</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/brl/JTor/issues/</url>
+	</issueManagement>
+
+	<scm>
+		<connection>scm:git:git://github.com/brl/JTor</connection>
+		<developerConnection>scm:git:git@github.com:brl/JTor.git</developerConnection>
+		<url>http://github.com/brl/JTor</url>
+	</scm>
+
+	<build>
+		<defaultGoal>package</defaultGoal>
+		<sourceDirectory>src</sourceDirectory>
+
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.2</version>
+				<configuration>
+					<source>1.5</source>
+					<target>1.5</target>
+					<encoding>${project.build.sourceEncoding}</encoding>
+					<showDeprecation>true</showDeprecation>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>2.5</version>
+				<configuration>
+					<encoding>${project.build.resourceEncoding}</encoding>
+				</configuration>
+			</plugin>
+
+			<!--
+				Modifies the jars manifest file.
+				Here we add the Main-Class attribute, for example.
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.3.2</version>
+				<configuration>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<classpathPrefix>dependency</classpathPrefix>
+							<packageName>${project.packageName}</packageName>
+							<mainClass>${project.mainClass}</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+
+			<!--
+				Here we include the dependencies in the generated jar
+				during the package phase.
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-${bcprov.postfix}</artifactId>
+			<version>1.43</version>
+		</dependency>
+	</dependencies>
+
+
+	<profiles>
+		<profile>
+			<id>BcProv-JDK-1.7</id>
+			<activation>
+				<jdk>1.7</jdk>
+			</activation>
+			<properties>
+				<bcprov.postfix>jdk16</bcprov.postfix>
+			</properties>
+		</profile>
+		<profile>
+			<id>BcProv-JDK-1.6</id>
+			<activation>
+				<jdk>1.6</jdk>
+			</activation>
+			<properties>
+				<bcprov.postfix>jdk16</bcprov.postfix>
+			</properties>
+		</profile>
+		<profile>
+			<id>BcProv-JDK-1.5</id>
+			<activation>
+				<jdk>1.5</jdk>
+			</activation>
+			<properties>
+				<bcprov.postfix>jdk15</bcprov.postfix>
+			</properties>
+		</profile>
+		<profile>
+			<id>BcProv-JDK-1.4</id>
+			<activation>
+				<jdk>1.4</jdk>
+			</activation>
+			<properties>
+				<bcprov.postfix>jdk14</bcprov.postfix>
+			</properties>
+		</profile>
+	</profiles>
+
+</project>
+
