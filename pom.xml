@@ -162,6 +162,24 @@
 						<goals>
 							<goal>shade</goal>
 						</goals>
+						<configuration>
+							<filters>
+								<filter>
+									<!--
+										Exclude files that sign a jar
+										(one or multiple of the dependencies).
+										One may not repack a signed jar without
+										this, or you will get a
+										SecurityException at program start.
+									-->
+									<artifact>*:*</artifact>
+									<excludes>
+										<exclude>META-INF/*.SF</exclude>
+										<exclude>META-INF/*.RSA</exclude>
+									</excludes>
+								</filter>
+							</filters>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
