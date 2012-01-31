@@ -87,7 +87,7 @@ class CellImpl implements Cell {
 		this.command = cellBuffer.get() & 0xFF;
 		cellBuffer.mark();
 	}
-	
+
 	public int getCircuitId() {
 		return circuitId;
 	}

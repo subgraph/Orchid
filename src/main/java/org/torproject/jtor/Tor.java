@@ -18,19 +18,19 @@ import org.torproject.jtor.socks.impl.SocksPortListenerImpl;
  */
 public class Tor {
 	private final static String version = "JTor 0.0.0";
-	
+
 	/**
 	 * Return a string describing the version of this software.
-	 * 
+	 *
 	 * @return A string representation of the software version.
 	 */
 	public static String getVersion() {
 		return version;
 	}
-	
+
 	/**
 	 * Create and return a new <code>LogManager</code> instance.
-	 * 
+	 *
 	 * @return A new <code>LogManager</code>
 	 * @see LogManager
 	 */
@@ -40,7 +40,7 @@ public class Tor {
 
 	/**
 	 * Create and return a new <code>TorConfig</code> instance.
-	 * 
+	 *
 	 * @param logManager This is a required dependency.  You must create a <code>LogManager</code>
 	 *                   before calling this method to create a <code>TorConfig</code>
 	 * @return A new <code>TorConfig</code> instance.
@@ -52,9 +52,9 @@ public class Tor {
 
 	/**
 	 * Create and return a new <code>Directory</code> instance.
-	 * 
-	 * @param logManager This is a required dependency.  You must create a <code>LogManager</code> 
-	 *                   before creating a <code>Directory</code>. 
+	 *
+	 * @param logManager This is a required dependency.  You must create a <code>LogManager</code>
+	 *                   before creating a <code>Directory</code>.
 	 * @param config This is a required dependency. You must create a <code>TorConfig</code> before
 	 *               calling this method to create a <code>Directory</code>
 	 * @return A new <code>Directory</code> instance.
@@ -66,8 +66,8 @@ public class Tor {
 
 	/**
 	 * Create and return a new <code>CircuitManager</code> instance.
-	 * 
-	 * @param directory This is a required dependency.  You must create a <code>Directory</code> 
+	 *
+	 * @param directory This is a required dependency.  You must create a <code>Directory</code>
 	 *                  before calling this method to create a <code>CircuitManager</code>.
 	 * @param logManager This is a required dependency.  You must create a <code>LogManager</code>
 	 *                   before calling this method to create a <code>CircuitManager</code>.
@@ -81,7 +81,7 @@ public class Tor {
 
 	/**
 	 * Create and return a new <code>SocksPortListener</code> instance.
-	 * 
+	 *
 	 * @param logManager This is a required dependency.  You must create a <code>LogManager</code>
 	 *                   before calling this method to create a <code>SocksPortListener</code>.
 	 * @param circuitManager This is a required dependency.  You must create a <code>CircuitManager</code>
@@ -95,7 +95,7 @@ public class Tor {
 
 	/**
 	 * Create and return a new <code>NetworkStatusManager</code> instance.
-	 * 
+	 *
 	 * @param directory This is a required dependency.  You must create a <code>Directory</code>
 	 *                  before calling this method to create a <code>NetworkStatusManager</code>
 	 * @param logManager This is a required dependency.  You must create a <code>LogManager</code>

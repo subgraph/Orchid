@@ -10,7 +10,7 @@ import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.logging.Logger;
 
 public class SocksStreamConnection {
-	
+
 	public static void runConnection(Socket socket, Stream stream, Logger logger) {
 		SocksStreamConnection ssc = new SocksStreamConnection(socket, stream, logger);
 		ssc.run();
@@ -32,7 +32,7 @@ public class SocksStreamConnection {
 		this.stream = stream;
 		torInputStream = stream.getInputStream();
 		torOutputStream = stream.getOutputStream();
-		
+
 		this.logger = logger;
 		incomingThread = createIncomingThread();
 		outgoingThread = createOutgoingThread();
@@ -50,7 +50,7 @@ public class SocksStreamConnection {
 					return;
 				}
 			}
-			
+
 			try {
 				socket.close();
 			} catch (IOException e) {
@@ -59,7 +59,7 @@ public class SocksStreamConnection {
 			}
 			closeStream(torInputStream);
 			closeStream(torOutputStream);
-			
+
 		}
 	}
 
@@ -135,6 +135,6 @@ public class SocksStreamConnection {
 			c.close();
 		} catch (IOException e) {
 			logger.warning("Close failed on "+ c + " : "+ e.getMessage());
-		}	
+		}
 	}
 }

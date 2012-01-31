@@ -116,7 +116,7 @@ public class DirectoryImpl implements Directory {
 	public Set<HexDigest> getRequiredCertificates() {
 		return new HashSet<HexDigest>(requiredCertificates);
 	}
-	
+
 	public void addCertificate(KeyCertificate certificate) {
 		final HexDigest fingerprint = certificate.getAuthorityFingerprint();
 		synchronized(certificates) {
@@ -125,7 +125,7 @@ public class DirectoryImpl implements Directory {
 			if(consensusWaitingForCertificates != null && consensusWaitingForCertificates.canVerifySignatures(certificates)) {
 				addConsensusDocument(consensusWaitingForCertificates);
 				consensusWaitingForCertificates = null;
-			}	
+			}
 		}
 	}
 
@@ -134,8 +134,8 @@ public class DirectoryImpl implements Directory {
 	}
 
 	public void storeCertificates() {
-		final List<KeyCertificate> certs = new ArrayList<KeyCertificate>(); 
-		for(KeyCertificate c: certificates.values()) 
+		final List<KeyCertificate> certs = new ArrayList<KeyCertificate>();
+		for(KeyCertificate c: certificates.values())
 			certs.add(c);
 		store.saveCertificates(certs);
 	}
@@ -176,12 +176,12 @@ public class DirectoryImpl implements Directory {
 				logger.warning("Need more certificates to verify consensus document.");
 				consensusWaitingForCertificates = consensus;
 				for(DirectorySignature s: consensus.getDocumentSignatures()) {
-					if(!certificates.containsKey(s.getIdentityDigest())) 
+					if(!certificates.containsKey(s.getIdentityDigest()))
 						requiredCertificates.add(s.getIdentityDigest());
 				}
 				return;
 			}
-			
+
 			if(!consensus.verifySignatures(certificates)) {
 				logger.warning("Signature verification on Consensus document failed.");
 				return;
@@ -218,7 +218,7 @@ public class DirectoryImpl implements Directory {
 	}
 
 	private void classifyRouter(RouterImpl router) {
-		if(isValidDirectoryCache(router)) 
+		if(isValidDirectoryCache(router))
 			directoryCaches.add(router);
 		else
 			directoryCaches.remove(router);
@@ -260,7 +260,7 @@ public class DirectoryImpl implements Directory {
 		final RouterDescriptor oldDescriptor = router.getCurrentDescriptor();
 		if(descriptor.equals(oldDescriptor))
 			return;
-		
+
 		if(oldDescriptor != null && oldDescriptor.isNewerThan(descriptor)) {
 			logger.warning("Attempting to add descriptor to router which is older than the descriptor we already have");
 			return;
@@ -290,7 +290,7 @@ public class DirectoryImpl implements Directory {
 	}
 
 	synchronized public void markDescriptorInvalid(RouterDescriptor descriptor) {
-		removeRouterByIdentity(descriptor.getIdentityKey().getFingerprint());	
+		removeRouterByIdentity(descriptor.getIdentityKey().getFingerprint());
 	}
 
 	private void removeRouterByIdentity(HexDigest identity) {

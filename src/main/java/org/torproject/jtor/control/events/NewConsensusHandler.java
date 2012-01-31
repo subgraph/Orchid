@@ -3,7 +3,7 @@ package org.torproject.jtor.control.events;
 import org.torproject.jtor.events.Event;
 
 public class NewConsensusHandler extends ControlEventHandler {
-	
+
 	public NewConsensusHandler(ControlEventQueue ceq) {
 		super(ceq);
 	}

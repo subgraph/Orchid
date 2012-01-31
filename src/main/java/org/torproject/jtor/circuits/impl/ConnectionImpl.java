@@ -56,7 +56,7 @@ public class ConnectionImpl implements Connection {
 		this.connectionControlCells = new LinkedBlockingQueue<Cell>();
 		initializeCurrentCircuitId();
 	}
-	
+
 	private void initializeCurrentCircuitId() {
 		final TorRandom random = new TorRandom();
 		currentId = random.nextInt(0xFFFF) + 1;
@@ -68,7 +68,7 @@ public class ConnectionImpl implements Connection {
 
 	int allocateCircuitId(CircuitImpl circuit) {
 		synchronized(circuitMap) {
-			while(circuitMap.containsKey(currentId)) 
+			while(circuitMap.containsKey(currentId))
 				incrementNextId();
 			circuitMap.put(currentId, circuit);
 			return currentId;
@@ -172,7 +172,7 @@ public class ConnectionImpl implements Connection {
 	}
 
 	private void notifyCircuitsLinkClosed() {
-		
+
 	}
 
 	Cell readConnectionControlCell() {

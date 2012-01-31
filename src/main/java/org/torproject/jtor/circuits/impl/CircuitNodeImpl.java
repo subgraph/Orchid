@@ -144,6 +144,6 @@ class CircuitNodeImpl implements CircuitNode {
 			packageWindow += CIRCWINDOW_INCREMENT;
 			windowLock.notifyAll();
 		}
-		
+
 	}
 }

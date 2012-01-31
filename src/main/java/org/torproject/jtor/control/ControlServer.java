@@ -33,7 +33,7 @@ public abstract class ControlServer extends Thread {
         	ControlAuthenticator.writeCookie(tc);
         }
     }
-    
+
     public void setInetAddress(InetAddress host) {
         this.host = host;
     }
@@ -41,15 +41,15 @@ public abstract class ControlServer extends Thread {
     public boolean isRunning() {
         return running;
     }
-    
+
     public TorConfig getTorConfig() {
     	return tc;
     }
-    
+
     public Logger getLogger() {
     	return logger;
     }
-    
+
     public Directory getDirectory() {
     	return directory;
     }

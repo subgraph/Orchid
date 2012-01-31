@@ -31,7 +31,7 @@ public class HttpConnection {
 	private boolean bodyCompressed;
 	private String responseMessage;
 	private Reader bodyReader;
-	
+
 	HttpConnection(String host, BufferedReader reader, BufferedWriter writer) {
 		this.host = host;
 		this.reader = reader;
@@ -46,10 +46,10 @@ public class HttpConnection {
 		sb.append(" HTTP/1.0\r\n");
 		sb.append("Host: "+ host +"\r\n");
 		if(ifModifiedSince != null) {
-			
+
 		}
 		sb.append("\r\n");
-		
+
 		try {
 			writer.write(sb.toString());
 			writer.flush();
@@ -57,31 +57,31 @@ public class HttpConnection {
 			throw new TorException("IO exception sending GET request", e);
 		}
 	}
-	
+
 	void readResponse() {
 		readStatusLine();
 		readHeaders();
 		readBody();
 	}
-	
+
 	int getStatusCode() {
 		return responseCode;
 	}
-	
+
 	String getStatusMessage() {
 		return responseMessage;
 	}
 	Reader getBodyReader() {
 		return bodyReader;
 	}
-	
+
 	private void readStatusLine() {
-		final String line = nextResponseLine();	
+		final String line = nextResponseLine();
 		final Pattern p = Pattern.compile(HTTP_RESPONSE_REGEX);
 		final Matcher m = p.matcher(line);
-		if(!m.find() || m.groupCount() != 3) 
+		if(!m.find() || m.groupCount() != 3)
 			throw new TorException("Error parsing HTTP response line: "+ line);
-		
+
 		try {
 			int n1 = Integer.parseInt(m.group(1));
 			int n2 = Integer.parseInt(m.group(2));
@@ -94,7 +94,7 @@ public class HttpConnection {
 			throw new TorException("Failed to parse header: "+ line);
 		}
 	}
-	
+
 	private void readHeaders() {
 		headers.clear();
 		while(true) {
@@ -107,7 +107,7 @@ public class HttpConnection {
 			headers.put(args[0], args[1]);
 		}
 	}
-	
+
 	private String nextResponseLine() {
 		try {
 			final String line = reader.readLine();
@@ -118,34 +118,34 @@ public class HttpConnection {
 			throw new TorException("IO error reading HTTP response", e);
 		}
 	}
-	
+
 	private void readBody() {
 		processContentEncodingHeader();
-		
-		if(headers.containsKey(CONTENT_LENGTH_HEADER)) 
+
+		if(headers.containsKey(CONTENT_LENGTH_HEADER))
 			readBodyFromContentLength();
-		else 
+		else
 			readBodyUntilEOF();
 	}
-	
+
 	private void processContentEncodingHeader() {
 		final String encoding = headers.get(CONTENT_ENCODING_HEADER);
-		if(encoding == null || encoding.equals("identity")) 
+		if(encoding == null || encoding.equals("identity"))
 			bodyCompressed = false;
 		else if(encoding.equals("deflate") || encoding.equals("x-deflate"))
 			bodyCompressed = true;
 		else
 			throw new TorException("Unrecognized content encoding: "+ encoding);
 	}
-	
+
 	private void readBodyFromContentLength() {
 		int bodyLength = Integer.parseInt(headers.get(CONTENT_LENGTH_HEADER));
 		char[] bodyBuffer = new char[bodyLength];
 		readAll(bodyBuffer);
-		
+
 		bodyReader = charBufferToReader(bodyBuffer, bodyLength);
 	}
-	
+
 	private void readBodyUntilEOF() {
 		char[] bodyBuffer = new char[1024];
 		int offset = 0;
@@ -157,22 +157,22 @@ public class HttpConnection {
 					return;
 				}
 				offset += n;
-				if(offset == bodyBuffer.length) 
+				if(offset == bodyBuffer.length)
 					bodyBuffer = expandCharBuffer(bodyBuffer);
-					
+
 			} catch (IOException e) {
 				throw new TorException("IO error reading HTTP response");
-			}		
+			}
 		}
 	}
-	
+
 	private char[] expandCharBuffer(char[] buffer) {
 		final int newLength = buffer.length * 2;
 		final char[] newBuffer = new char[newLength];
 		System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
 		return newBuffer;
 	}
-	
+
 	private Reader charBufferToReader(char[] buffer, int length) {
 		if(bodyCompressed) {
 			final byte[] bytes = new byte[length];
@@ -185,7 +185,7 @@ public class HttpConnection {
 			return new StringReader(new String(buffer, 0, length));
 		}
 	}
-	
+
 	private Reader createInputStreamReader(InputStream input) {
 		try {
 			return new InputStreamReader(input, "ISO-8859-1");

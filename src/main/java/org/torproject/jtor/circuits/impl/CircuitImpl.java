@@ -48,7 +48,7 @@ public class CircuitImpl implements Circuit {
 	private final CircuitBuilder circuitBuilder;
 	private final CircuitStatus status;
 	private final Object relaySendLock = new Object();
-	
+
 	private CircuitImpl(CircuitManagerImpl circuitManager, ConnectionManagerImpl connectionManager, Logger logger) {
 		nodeList = new ArrayList<CircuitNodeImpl>();
 		this.circuitManager = circuitManager;
@@ -75,8 +75,8 @@ public class CircuitImpl implements Circuit {
 	}
 
 	public void openCircuit(List<Router> circuitPath, CircuitBuildHandler handler)  {
-		startCircuitOpen(circuitPath);	
-		if(circuitBuilder.openCircuit(circuitPath, handler)) 
+		startCircuitOpen(circuitPath);
+		if(circuitBuilder.openCircuit(circuitPath, handler))
 			circuitOpenSucceeded();
 		else
 			circuitOpenFailed();
@@ -134,9 +134,9 @@ public class CircuitImpl implements Circuit {
 			for(CircuitNode node = targetNode; node != null; node = node.getPreviousNode())
 				node.encryptForwardCell(cell);
 
-			if(cell.getRelayCommand() == RelayCell.RELAY_DATA) 
+			if(cell.getRelayCommand() == RelayCell.RELAY_DATA)
 				targetNode.waitForSendWindowAndDecrement();
-			
+
 			sendCell(cell);
 		}
 	}
@@ -220,7 +220,7 @@ public class CircuitImpl implements Circuit {
 	}
 
 	/*
-	 * This is called by the cell reading thread in ConnectionImpl to deliver control cells 
+	 * This is called by the cell reading thread in ConnectionImpl to deliver control cells
 	 * associated with this circuit (CREATED or CREATED_FAST).
 	 */
 	void deliverControlCell(Cell cell) {
@@ -238,7 +238,7 @@ public class CircuitImpl implements Circuit {
 		case RelayCell.RELAY_RESOLVED:
 		case RelayCell.RELAY_TRUNCATED:
 			relayCellResponseQueue.add(relayCell);
-			break;	
+			break;
 		case RelayCell.RELAY_DATA:
 		case RelayCell.RELAY_END:
 		case RelayCell.RELAY_CONNECTED:
@@ -279,7 +279,7 @@ public class CircuitImpl implements Circuit {
 			if(stream != null)
 				stream.addInputCell(cell);
 			else
-				logger.debug("Stream not found for stream id="+ cell.getStreamId());	
+				logger.debug("Stream not found for stream id="+ cell.getStreamId());
 		}
 	}
 

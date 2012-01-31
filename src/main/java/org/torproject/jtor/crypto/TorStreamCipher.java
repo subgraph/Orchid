@@ -11,12 +11,12 @@ import org.torproject.jtor.TorException;
 
 public class TorStreamCipher {
 	public static final int KEY_LEN = 16;
-	
+
 	public static TorStreamCipher createWithRandomKey() {
 		final SecretKey randomKey = generateRandomKey();
 		return new TorStreamCipher(randomKey.getEncoded());
 	}
-	
+
 	public static TorStreamCipher createFromKeyBytes(byte[] keyBytes) {
 		return new TorStreamCipher(keyBytes);
 	}
@@ -27,32 +27,32 @@ public class TorStreamCipher {
 	/* Next byte of keystream in counterOut */
 	private int keystreamPointer = -1;
 	private final SecretKeySpec key;
-	
-	
+
+
 	private TorStreamCipher(byte[] keyBytes) {
 		key = keyBytesToSecretKey(keyBytes);
 		cipher = createCipher(key);
 		counter = new byte[BLOCK_SIZE];
-		counterOut = new byte[BLOCK_SIZE];	
+		counterOut = new byte[BLOCK_SIZE];
 	}
-	
+
 	public void encrypt(byte[] data) {
 		encrypt(data, 0, data.length);
 	}
-	
+
 	public synchronized void encrypt(byte[] data, int offset, int length) {
-		for(int i = 0; i < length; i++) 
+		for(int i = 0; i < length; i++)
 			data[i + offset] ^= nextKeystreamByte();
 	}
-	
+
 	public byte[] getKeyBytes() {
 		return key.getEncoded();
 	}
-	
+
 	private static SecretKeySpec keyBytesToSecretKey(byte[] keyBytes) {
 		return new SecretKeySpec(keyBytes, "AES");
 	}
-	
+
 	private static Cipher createCipher(SecretKeySpec keySpec) {
 		try {
 			final Cipher cipher = Cipher.getInstance("AES/ECB/NoPadding", "BC");
@@ -60,9 +60,9 @@ public class TorStreamCipher {
 			return cipher;
 		} catch (GeneralSecurityException e) {
 			throw new TorException(e);
-		} 
+		}
 	}
-	
+
 	private static SecretKey generateRandomKey() {
 		try {
 			KeyGenerator generator = KeyGenerator.getInstance("AES", "BC");
@@ -70,9 +70,9 @@ public class TorStreamCipher {
 			return generator.generateKey();
 		} catch (GeneralSecurityException e) {
 			throw new TorException(e);
-		} 
+		}
 	}
-	
+
 	private byte nextKeystreamByte() {
 		if(keystreamPointer == -1 || (keystreamPointer >= BLOCK_SIZE))
 			updateCounter();
@@ -83,7 +83,7 @@ public class TorStreamCipher {
 		incrementCounter();
 		keystreamPointer = 0;
 	}
-	
+
 	private void encryptCounter() {
 		try {
 			cipher.doFinal(counter, 0, BLOCK_SIZE, counterOut, 0);
@@ -91,12 +91,12 @@ public class TorStreamCipher {
 			throw new TorException(e);
 		}
 	}
-	
+
 	private void incrementCounter() {
 		int carry = 1;
 		for(int i = counter.length - 1; i >= 0; i--) {
 			int x = (counter[i] & 0xff) + carry;
-			if(x > 0xff) 
+			if(x > 0xff)
 				carry = 1;
 			else
 				carry = 0;

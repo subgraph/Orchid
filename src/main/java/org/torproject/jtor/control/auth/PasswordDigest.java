@@ -79,13 +79,13 @@ public class PasswordDigest {
         	byte[] salt = hexStringToByteArray(in.substring(3, 21));
         	PasswordDigest pwd = new PasswordDigest(secret, salt);
         	return pwd.getHashedPassword().equals(in);
-        	
+
         } else if (in.startsWith("\"") && in.endsWith("\"")) { // plain text password
         	byte[] salt = hexStringToByteArray(hashedKey.substring(3, 21));
         	byte[] key = in.substring(1, in.length()-1).getBytes();
             PasswordDigest pwd = new PasswordDigest(key, salt);
             return hashedKey.equals(pwd.getHashedPassword());
-        	
+
         } else { // hex encoded string
             byte[] salt = hexStringToByteArray(hashedKey.substring(3, 21));
             byte[] key = hexStringToByteArray(in);
@@ -151,7 +151,7 @@ public class PasswordDigest {
         }
         return data;
     }
-    
+
     /** Removes any unescaped quotes from a given string */
 	private String removeQuotes(String in) {
 		int index = in.indexOf("\"");

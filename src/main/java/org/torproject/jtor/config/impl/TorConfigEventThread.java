@@ -3,7 +3,7 @@ package org.torproject.jtor.config.impl;
 import org.torproject.jtor.events.Event;
 
 public class TorConfigEventThread extends Thread {
-	
+
 	private static final int sleeptime = 2000;
 
 	private TorConfigImpl tc;

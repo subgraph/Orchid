@@ -10,15 +10,15 @@ import org.torproject.jtor.logging.LogReader;
 public class RingBufferLogReader implements LogReader, Iterable<LogEntry> {
 	private final static int SIZE = 100;
 	final private List<LogEntry> ringBuffer = new ArrayList<LogEntry>(100);
-	int writeIndex; 
+	int writeIndex;
 	int readIndex;
-	
+
 	public void log(LogEntry entry) {
 		ringBuffer.add(writeIndex, entry);
 		writeIndex = (writeIndex + 1) % SIZE;
 		if(readIndex == writeIndex) {
 			readIndex = (readIndex + 1) % SIZE;
-		}		
+		}
 	}
 	public void logRaw(String message) {
 	}
@@ -41,7 +41,7 @@ public class RingBufferLogReader implements LogReader, Iterable<LogEntry> {
 			return entry;
 		}
 		public void remove() {
-			throw new UnsupportedOperationException();			
+			throw new UnsupportedOperationException();
 		}
 	}
 

@@ -16,7 +16,7 @@ import org.torproject.jtor.data.HexDigest;
 public class DirectoryConnection {
 	private final static boolean USE_COMPRESSION = true;
 	private final HttpConnection http;
-	
+
 	DirectoryConnection(String host, InputStream input, OutputStream output) {
 		try {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(input, "ISO-8859-1"));
@@ -26,21 +26,21 @@ public class DirectoryConnection {
 			throw new TorException("Character set ISO-8859-1 not supported (?!?)");
 		}
 	}
-	
+
 	Reader getCertificatesByFingerprint(List<HexDigest> fingerprints) {
 		final String fps = fingerprintsToRequestString(fingerprints);
 		return requestDocument("/tor/keys/fp/"+ fps);
 	}
-	
+
 	Reader getConsensus() {
 		return requestDocument("/tor/status-vote/current/consensus");
 	}
-	
+
 	Reader getDescriptorsByDigests(List<HexDigest> digests) {
 		final String fps = fingerprintsToRequestString(digests);
 		return requestDocument("/tor/server/d/"+ fps);
 	}
-	
+
 	private String fingerprintsToRequestString(List<HexDigest> fingerprints) {
 		final StringBuilder sb = new StringBuilder();
 		for(HexDigest fp: fingerprints) {
@@ -60,8 +60,8 @@ public class DirectoryConnection {
 		} else {
 			throw new TorException("HTTP server returned error code: "+ http.getStatusCode() +" "+ http.getStatusMessage());
 		}
-		
+
 	}
-	
+
 
 }

@@ -55,11 +55,11 @@ public class ControlCommandGetConf {
 			ret = ret.replaceAll("\\s*$", "");
 			return ret;
 		}
-		
+
 		else if (key.equals("tunneldirconns")) {
 			return "" + (tc.isTunnelDirConns() ? "1" : "0");
 		}
-		
+
 		else if (key.equals("prefertunneleddirconns")) {
 			return "" + (tc.isPreferTunneledDirConns() ? "1" : "0");
 		}
@@ -203,7 +203,7 @@ public class ControlCommandGetConf {
 			ret = ret.replaceAll("\\s*$", "");
 			return ret;
 		}
-		
+
 		else if (key.equals("reachableaddresses")) {
 			return tc.getReachableAddresses();
 		}
@@ -351,23 +351,23 @@ public class ControlCommandGetConf {
 		else if (key.equals("rendpostperiod")) {
 			return "" + tc.getRendPostPeriod();
 		}
-		
+
 		else if (key.equals("__alldiroptionsprivate")) {
 			return "" + (tc.is__AllDirOptionsPrivate() ? "1" : "0");
 		}
-		
+
 		else if (key.equals("__disablepredictedcircuits")) {
 			return "" + (tc.is__DisablePredictedCircuits() ? "1" : "0");
 		}
-		
+
 		else if (key.equals("__leavestreamsunattached")) {
 			return "" + (tc.is__LeaveStreamsUnattached() ? "1" : "0");
 		}
-		
+
 		else if (key.equals("__hashedcontrolsessionpassword")) {
 			return tc.get__HashedControlSessionPassword();
 		}
-		
+
 		else if (key.equals("__reloadtorrconsighup")) {
 			return "" + (tc.is__ReloadTorrcOnSIGHUP() ? "1" : "0");
 		}

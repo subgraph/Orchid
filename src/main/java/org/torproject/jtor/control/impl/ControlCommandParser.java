@@ -22,11 +22,11 @@ public class ControlCommandParser {
 		String command = in.substring(0, in.indexOf(" ")).toLowerCase();
 		String args = in.substring(in.indexOf(" ", 0)+1);
 		args = removeQuotes(args);
-		
+
 		if (command.startsWith("quit")) {
             cch.disconnect();
-        } 
-		
+        }
+
 		else if (command.startsWith("authenticate")) {
             if (ControlAuthenticator.authenticate(cch.getControlServer().getTorConfig(), args)) {
                 cch.setAuthenticated(true);
@@ -35,9 +35,9 @@ public class ControlCommandParser {
                 cch.write("515 Bad authentication");
                 cch.disconnect();
             }
-            
-        } 
-        
+
+        }
+
         else if (command.startsWith("protocolinfo")) {
             if (!cch.isRequestedProtocolinfo() || cch.isAuthenticated()) {
                 cch.setRequestedProtocolinfo(!cch.isAuthenticated());
@@ -46,8 +46,8 @@ public class ControlCommandParser {
             	cch.getControlServer().getLogger().debug("Control command: refused repeated protocolinfo to unauthenticated client");
                 cch.disconnect();
             }
-        } 
-        
+        }
+
         else if (!cch.isAuthenticated()) { // user is trying something illegal
         	cch.disconnect();
         }
@@ -62,7 +62,7 @@ public class ControlCommandParser {
 
 		else if (command.equals("getconf")) {
 			String[] confs = args.split(" ");
-			HashMap pairs = new HashMap(); 
+			HashMap pairs = new HashMap();
 			for (int i = 0; i < confs.length; i++) {
 				try {
 					if (confs[i].toLowerCase().equals("hiddenserviceoptions")) {
@@ -70,8 +70,8 @@ public class ControlCommandParser {
 						pairs.put("HiddenServicePort", ControlCommandGetConf.handleGetConf(cch, "HiddenServicePort"));
 						pairs.put("HiddenServiceNodes", ControlCommandGetConf.handleGetConf(cch, "HiddenServiceNodes"));
 						pairs.put("HiddenServiceExcludeNodes", ControlCommandGetConf.handleGetConf(cch, "HiddenServiceExcludeNodes"));
-					} else {						
-						String value = ControlCommandGetConf.handleGetConf(cch, confs[i]);						
+					} else {
+						String value = ControlCommandGetConf.handleGetConf(cch, confs[i]);
 						pairs.put(confs[i], value);
 					}
 				} catch (KeyNotFoundException e) {
@@ -91,7 +91,7 @@ public class ControlCommandParser {
 					cch.write("250 " + key);
 					continue;
 				}
-				
+
 				String[] vals = val.split("\n");
 				for (int i = 0; i < vals.length; i++) {
 					if (vals[i] == null || vals[i].equals("")) {
@@ -112,10 +112,10 @@ public class ControlCommandParser {
 				cch.getControlServer().getLogger().warning("Control command: unrecognized signal: " + args);
 			}
 		}
-		
+
 		else if (command.equals("mapaddress")) {
 			String[] maps = args.split(" ");
-			
+
 			// check syntax
 			for (int i = 0; i < maps.length; i++) {
 				if (maps[i].indexOf("=") == -1) {
@@ -123,14 +123,14 @@ public class ControlCommandParser {
 					return;
 				}
 			}
-			
+
 			for (int i = 0; i < maps.length; i++) {
 				if (ControlCommandMapAddress.handleMapAddress(cch, maps[i])) {
 					cch.write("250 " + maps[i]);
 				}
 			}
 		}
-		
+
 		else if (command.equals("saveconf")) {
 			if(cch.getControlServer().getTorConfig().saveConf()) {
 				cch.write("250 OK");
@@ -140,10 +140,10 @@ public class ControlCommandParser {
 				cch.getControlServer().getLogger().error("Control command: could not save config file");
 			}
 		}
-		
+
 		else if (command.equals("getinfo")) {
 			String[] confs = args.split(" ");
-			HashMap pairs = new HashMap(); 
+			HashMap pairs = new HashMap();
 			for (int i = 0; i < confs.length; i++) {
 				try {
 					String value = ControlCommandGetInfo.handleGetInfo(cch, confs[i]);
@@ -166,23 +166,23 @@ public class ControlCommandParser {
 
 				if (val.indexOf("\n") > 0) {
 					cch.write("250+" + key + "=");
-					
+
 					String[] vals = val.split("\n");
 					for (int i = 0; i < vals.length; i++) {
 						cch.write(vals[i]);
 					}
-					
+
 					cch.write(".");
 				} else {
 					cch.write("250 " + key + "=" + val);
 				}
 			}
 		}
-		
+
 		else if (command.equals("usefeature")) {
 			ControlCommandUseFeature.handleUseFeature(cch, args);
 		}
-		
+
 		else if (command.equals("setevents")) {
 			try {
 				ControlCommandSetEvents.handleSetEvent(cch, args);

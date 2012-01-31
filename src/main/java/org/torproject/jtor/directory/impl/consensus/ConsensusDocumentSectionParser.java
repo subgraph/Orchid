@@ -4,21 +4,21 @@ import org.torproject.jtor.directory.impl.consensus.ConsensusDocumentParser.Docu
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 
 public abstract class ConsensusDocumentSectionParser {
-	
+
 	protected final ConsensusDocumentImpl document;
 	protected final DocumentFieldParser fieldParser;
-	
-	
+
+
 	ConsensusDocumentSectionParser(DocumentFieldParser parser, ConsensusDocumentImpl document) {
 		this.fieldParser = parser;
 		this.document = document;
 	}
-	
+
 	DocumentSection parseKeywordLine() {
 		String keywordString = fieldParser.getCurrentKeyword();
-		if(getNextStateKeyword() != null && getNextStateKeyword().equals(keywordString)) 
+		if(getNextStateKeyword() != null && getNextStateKeyword().equals(keywordString))
 			return nextSection();
-			
+
 		final DocumentKeyword keyword = DocumentKeyword.findKeyword(keywordString, getSection());
 		/*
 		 * dirspec.txt (1.2)
@@ -27,10 +27,10 @@ public abstract class ConsensusDocumentSectionParser {
 		 */
 		if(!keyword.equals(DocumentKeyword.UNKNOWN_KEYWORD))
 			parseLine(keyword);
-		
+
 		return getSection();
 	}
-	
+
 	abstract void parseLine(DocumentKeyword keyword);
 	abstract String getNextStateKeyword();
 	abstract DocumentSection getSection();

@@ -7,15 +7,15 @@ public class TorException extends RuntimeException {
 	public TorException() {
 		super();
 	}
-	
+
 	public TorException(String message) {
 		super(message);
 	}
-	
+
 	public TorException(String message, Throwable ex) {
 		super(message, ex);
 	}
-	
+
 	public TorException(Throwable ex) {
 		super(ex);
 	}

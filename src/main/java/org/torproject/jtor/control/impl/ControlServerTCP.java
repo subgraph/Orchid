@@ -22,7 +22,7 @@ public class ControlServerTCP extends ControlServer implements EventHandler {
 
 	private Vector<ControlConnectionHandler> connections = new Vector<ControlConnectionHandler>();
 	private ServerSocket ss;
-	
+
 	public ControlServerTCP(Directory directory, TorConfig tc, LogManager logManager) {
 		super(directory, tc, logManager);
 	}
@@ -46,15 +46,15 @@ public class ControlServerTCP extends ControlServer implements EventHandler {
 		} catch (IOException ex) {
 			running = false;
 		}
-		
+
 		tc.registerConfigChangedHandler(this);
-		
+
 		while (running) {
 			try {
 				Socket s = ss.accept();
 				ControlConnectionHandler cch = new ControlConnectionHandlerTCP(this, s);
 				connections.add(cch);
-				
+
 				logger.debug("Opening new TCP Control Connection on port " + s.getLocalPort());
 			} catch (Throwable t) {}
 		}

@@ -21,7 +21,7 @@ public class ControlCommandSetConf {
 				key = confs[i].substring(0, confs[i].indexOf("="));
 				value = confs[i].substring(confs[i].indexOf("=")+1);
 			}
-			
+
 			boolean success;
 
 			try {
@@ -41,7 +41,7 @@ public class ControlCommandSetConf {
 
 			} catch (KeyNotFoundException e) {
 				cch.getControlServer().getLogger().warning("Control command setconf key not found: " + key);
-				
+
 				success = false;
 			}
 			if (!success) {
@@ -103,11 +103,11 @@ public class ControlCommandSetConf {
 		else if (key.equals("dirserver")) {
 			tc.setDefaultDirServer();
 		}
-		
+
 		else if (key.equals("tunneldirconns")) {
 			tc.setDefaultTunnelDirConns();
 		}
-		
+
 		else if (key.equals("prefertunneleddirconns")) {
 			tc.setDefaultPreferTunneledDirConns();
 		}
@@ -215,7 +215,7 @@ public class ControlCommandSetConf {
 		else if (key.equals("firewallips")) {
 			tc.setDefaultFirewallIPs();
 		}
-		
+
 		else if (key.equals("reachableaddresses")) {
 			tc.setDefaultReachableAddresses();
 		}

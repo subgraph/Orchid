@@ -5,7 +5,7 @@ import org.torproject.jtor.data.IPv4Address;
 
 public class PolicyRule {
 	private final static String WILDCARD = "*";
-	
+
 	public static PolicyRule createAcceptFromString(String rule) {
 		return createRule(rule, true);
 	}

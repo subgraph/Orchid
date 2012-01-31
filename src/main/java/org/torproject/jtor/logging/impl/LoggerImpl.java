@@ -10,7 +10,7 @@ public class LoggerImpl implements Logger {
 	private final LogReader reader;
 	private final LogManager manager;
 	private boolean debugEnabled;
-	
+
 	LoggerImpl(String name, LogManagerImpl manager) {
 		this.name = name;
 		this.reader = manager;
@@ -21,7 +21,7 @@ public class LoggerImpl implements Logger {
 	public LogManager getManager() {
 		return manager;
 	}
-	
+
 	public void debug(String message) {
 		debug(message, null);
 	}
@@ -35,13 +35,13 @@ public class LoggerImpl implements Logger {
 	public void enableDebug() {
 		debugEnabled = true;
 	}
-	
+
 	public void disableDebug() {
 		debugEnabled = false;
 	}
-	
+
 	public void error(String message) {
-		error(message, null);		
+		error(message, null);
 	}
 
 	public void error(String message, Throwable exception) {
@@ -49,21 +49,21 @@ public class LoggerImpl implements Logger {
 	}
 
 	public void info(String message) {
-		info(message, null);		
+		info(message, null);
 	}
 
 	public void info(String message, Throwable exception) {
-		log(LogLevel.INFO, message, exception);		
+		log(LogLevel.INFO, message, exception);
 	}
 
 	public void warning(String message) {
-		warning(message, null);		
+		warning(message, null);
 	}
 
 	public void warning(String message, Throwable exception) {
-		log(LogLevel.WARNING, message, exception);		
+		log(LogLevel.WARNING, message, exception);
 	}
-	
+
 	private void log(LogLevel level, String message, Throwable exception) {
 		if(reader != null) {
 			reader.log(new LogEntryImpl(level, name, message, exception));

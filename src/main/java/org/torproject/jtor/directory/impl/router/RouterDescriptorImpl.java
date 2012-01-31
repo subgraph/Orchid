@@ -53,7 +53,7 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 
 	private HexDigest descriptorDigest;
 	private String rawDocumentData;
-	
+
 	public void setNickname(String nickname) { this.nickname = nickname; }
 	public void setAddress(IPv4Address address) { this.address = address; }
 	public void setRouterPort(int port) { this.routerPort = port; }
@@ -106,7 +106,7 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 	void addLinkProtocolVersion(int version) {
 		if(linkProtocols.isEmpty())
 			linkProtocols = new HashSet<Integer>();
-		linkProtocols.add(version);	
+		linkProtocols.add(version);
 	}
 
 	public boolean isValidDocument() {
@@ -248,17 +248,17 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 	public boolean isNewerThan(RouterDescriptor other) {
 		return other.getPublishedTime().isBefore(published);
 	}
-	
+
 	public HexDigest getDescriptorDigest() {
 		return descriptorDigest;
 	}
-	
+
 	public String getRawDocumentData() {
 		return rawDocumentData;
 	}
-	
+
 	public boolean equals(Object o) {
-		if(!(o instanceof RouterDescriptorImpl)) 
+		if(!(o instanceof RouterDescriptorImpl))
 			return false;
 		final RouterDescriptorImpl other = (RouterDescriptorImpl) o;
 		if(other.getDescriptorDigest() == null || descriptorDigest == null)

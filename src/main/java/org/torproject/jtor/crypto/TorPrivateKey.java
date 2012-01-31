@@ -39,7 +39,7 @@ public class TorPrivateKey {
 	static public TorPrivateKey createFromPEMBuffer(String buffer) {
 		final PEMReader pemReader = new PEMReader(new StringReader(buffer));
 		final KeyPair kp = readPEMKeyPair(pemReader);
-		if(kp.getPublic() instanceof RSAPublicKey && kp.getPrivate() instanceof RSAPrivateKey) 
+		if(kp.getPublic() instanceof RSAPublicKey && kp.getPrivate() instanceof RSAPrivateKey)
 			return new TorPrivateKey((RSAPrivateKey)kp.getPrivate(), (RSAPublicKey)kp.getPublic());
 		else
 			throw new TorParsingException("Failed to extract PEM private key");

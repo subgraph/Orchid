@@ -39,7 +39,7 @@ public class RelayCellImpl extends CellImpl implements RelayCell {
 		putShort(0);			// 'Recognized'
 		putShort(stream);		// Stream
 		putInt(0);				// Digest
-		putShort(0);			// Length	
+		putShort(0);			// Length
 	}
 
 	private RelayCellImpl(CircuitNode node, byte[] rawCell) {

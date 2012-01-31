@@ -17,15 +17,15 @@ public interface CircuitNode {
 	/**
 	 * Update the 'forward' cryptographic digest state for this
 	 * node with the contents of <code>cell</code>
-	 * 
+	 *
 	 * @param cell The {@link RelayCell} to add to the digest.
 	 */
 	void updateForwardDigest(RelayCell cell);
 
 	/**
-	 * Return the current 'forward' running digest value for this 
+	 * Return the current 'forward' running digest value for this
 	 * node as an array of <code>TOR_DIGEST_SIZE</code> bytes.
-	 * 
+	 *
 	 * @return The current 'forward' running digest value for this node.
 	 */
 	byte[] getForwardDigestBytes();
@@ -33,7 +33,7 @@ public interface CircuitNode {
 	/**
 	 * Encrypt a {@link RelayCell} for this node with the current
 	 * 'forward' cipher state.
-	 * 
+	 *
 	 * @param cell The {@link RelayCell} to encrypt.
 	 */
 	void encryptForwardCell(RelayCell cell);
@@ -42,7 +42,7 @@ public interface CircuitNode {
 	 * Return the {@link CircuitNode} which immediately preceeds this
 	 * one in the circuit node chain or <code>null</code> if this is
 	 * the first hop.
-	 * 
+	 *
 	 * @return The previous {@link CircuitNode} in the chain or <code>
 	 *         null</code> if this is the first node.
 	 */
@@ -58,9 +58,9 @@ public interface CircuitNode {
 	/**
 	 * If the packaging window for this node is open (ie: greater than 0) this method
 	 * decrements the packaging window by 1 and returns immediately, otherwise it will
-	 * block until the circuit is destroyed or the window is incremented by receiving 
+	 * block until the circuit is destroyed or the window is incremented by receiving
 	 * a RELAY_SENDME cell from this node.  This method will always decrement the packaging
-	 * window before returning unless the circuit has been destroyed. 
+	 * window before returning unless the circuit has been destroyed.
 	 */
 	void waitForSendWindowAndDecrement();
 
@@ -81,7 +81,7 @@ public interface CircuitNode {
 	 * Examines the delivery window and determines if it would be an appropriate time to
 	 * send a RELAY_SENDME cell.  If this method returns true, it increments the delivery
 	 * window assuming that a RELAY_SENDME cell will be transmitted.
-	 * 
+	 *
 	 * @return Returns true if the deliver window is small enough that sending a RELAY_SENDME
 	 * cell would be appropriate.
 	 */

@@ -9,25 +9,25 @@ import org.torproject.jtor.crypto.TorMessageDigest;
 
 /**
  * This class represents both digests and fingerprints that appear in directory
- * documents.  The names fingerprint and digest are used interchangeably in 
+ * documents.  The names fingerprint and digest are used interchangeably in
  * the specification but generally a fingerprint is a message digest (ie: SHA1)
  * over the DER ASN.1 encoding of a public key.  A digest is usually
  * a message digest over a set of fields in a directory document.
- * 
+ *
  * Digests always appear as a 40 character hex string:
- * 
+ *
  * 0EA20CAA3CE696E561BC08B15E00106700E8F682
  *
  * Fingerprints may either appear as a single hex string as above or sometimes in
  * a more easily human-parsed spaced format:
- * 
+ *
  * 1E0F 5874 2268 E82F C600 D81D 9064 07C5 7CC2 C3A7
  *
  */
 public class HexDigest {
 	public static HexDigest createFromStringList(List<String> strings) {
 		StringBuilder builder = new StringBuilder();
-		for(String chunk: strings) 
+		for(String chunk: strings)
 			builder.append(chunk);
 		return createFromString(builder.toString());
 	}
@@ -43,7 +43,7 @@ public class HexDigest {
 	public static HexDigest createFromDigestBytes(byte[] data) {
 		return new HexDigest(data);
 	}
-	
+
 	public static HexDigest createDigestForData(byte[] data) {
 		final TorMessageDigest digest = new TorMessageDigest();
 		digest.update(data);
@@ -68,10 +68,10 @@ public class HexDigest {
 	}
 
 	/**
-	 * Return a spaced fingerprint representation of this HexDigest. 
-	 * 
+	 * Return a spaced fingerprint representation of this HexDigest.
+	 *
 	 * ex:
-	 * 
+	 *
 	 * 1E0F 5874 2268 E82F C600 D81D 9064 07C5 7CC2 C3A7
 	 *
 	 * @return A string representation of this HexDigest in the spaced fingerprint format.

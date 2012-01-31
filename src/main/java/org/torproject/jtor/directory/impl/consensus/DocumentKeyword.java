@@ -19,22 +19,22 @@ enum DocumentKeyword {
 	SERVER_VERSIONS("server-versions",  DocumentSection.PREAMBLE,1),
 	KNOWN_FLAGS("known-flags",  DocumentSection.PREAMBLE),
 	PARAMS("params",  DocumentSection.PREAMBLE),
-	
+
 	DIR_SOURCE("dir-source", DocumentSection.AUTHORITY, 6),
 	CONTACT("contact", DocumentSection.AUTHORITY),
 	VOTE_DIGEST("vote-digest", DocumentSection.AUTHORITY, 1, false, true),
-	
+
 	R("r", DocumentSection.ROUTER_STATUS, 8),
 	S("s", DocumentSection.ROUTER_STATUS),
 	V("v", DocumentSection.ROUTER_STATUS),
 	W("w", DocumentSection.ROUTER_STATUS, 1),
 	P("p", DocumentSection.ROUTER_STATUS, 2),
-	
+
 	DIRECTORY_SIGNATURE("directory-signature", DocumentSection.SIGNATURE, 2),
-	
+
 	UNKNOWN_KEYWORD("KEYWORD NOT FOUND");
-	
-	
+
+
 	public final static int VARIABLE_ARGUMENT_COUNT = -1;
 
 	private final String keyword;
@@ -42,24 +42,24 @@ enum DocumentKeyword {
 	private final int argumentCount;
 	private final boolean voteOnly;
 	private final boolean consensusOnly;
-	
-	
+
+
 	DocumentKeyword(String keyword) {
 		this(keyword, DocumentSection.NO_SECTION);
 	}
-	
+
 	DocumentKeyword(String keyword, DocumentSection section) {
 		this(keyword, section, VARIABLE_ARGUMENT_COUNT);
 	}
 	DocumentKeyword(String keyword, DocumentSection section, int argumentCount) {
 		this(keyword, section, argumentCount, false);
 	}
-	
+
 	DocumentKeyword(String keyword, DocumentSection section, int argumentCount, boolean voteOnly) {
 		this(keyword, section, argumentCount, voteOnly, false);
 	}
-	
-	
+
+
 	DocumentKeyword(String keyword, DocumentSection section, int argumentCount, boolean voteOnly, boolean consensusOnly) {
 		this.keyword = keyword;
 		this.section = section;
@@ -75,25 +75,25 @@ enum DocumentKeyword {
 		}
 		return UNKNOWN_KEYWORD;
 	}
-	
+
 	public String getKeyword() {
 		return keyword;
 	}
-	
+
 	public DocumentSection getSection() {
 		return section;
 	}
 	public int getArgumentCount() {
 		return argumentCount;
 	}
-	
+
 	public boolean isConsensusOnly() {
 		return consensusOnly;
 	}
-	
+
 	public boolean isVoteOnly() {
 		return voteOnly;
 	}
-	
-	
+
+
 }

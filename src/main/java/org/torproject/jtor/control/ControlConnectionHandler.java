@@ -16,15 +16,15 @@ public abstract class ControlConnectionHandler extends Thread {
     public boolean isAuthenticated() {
         return authenticated;
     }
-    
+
     public void setAuthenticated(boolean authenticated) {
     	this.authenticated = authenticated;
     }
-    
+
     public ControlServer getControlServer() {
     	return cs;
     }
-    
+
     public boolean isRequestedProtocolinfo() {
 		return requestedProtocolinfo;
 	}

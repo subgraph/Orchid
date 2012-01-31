@@ -53,7 +53,7 @@ public class CircuitManagerImpl implements CircuitManager {
 
 	private Runnable createCircuitCreationDebugTask() {
 		return new Runnable() { public void run() {
-			logger.debug("CLEAN: "+ getCleanCircuitCount() 
+			logger.debug("CLEAN: "+ getCleanCircuitCount()
 					+ " PENDING: "+ getPendingCircuitCount()
 					+ " ACTIVE: "+ getActiveCircuitCount());
 		}};
@@ -116,7 +116,7 @@ public class CircuitManagerImpl implements CircuitManager {
 			throws InterruptedException {
 		return openExitStreamByRequest(new StreamExitRequest(this, address, port));
 	}
-	
+
 	private OpenStreamResponse openExitStreamByRequest(StreamExitRequest request) throws InterruptedException {
 		synchronized(pendingExitStreams) {
 			pendingExitStreams.add(request);
@@ -125,19 +125,19 @@ public class CircuitManagerImpl implements CircuitManager {
 		}
 		return request.getResponse();
 	}
-	
+
 	List<StreamExitRequest> getPendingExitStreams() {
 		synchronized(pendingExitStreams) {
 			return new ArrayList<StreamExitRequest>(pendingExitStreams);
 		}
 	}
-	
+
 	List<Circuit> getPendingCircuits() {
 		synchronized(pendingCircuits) {
 			return new ArrayList<Circuit>(pendingCircuits);
 		}
 	}
-	
+
 	void streamRequestIsCompleted(StreamExitRequest request) {
 		synchronized(pendingExitStreams) {
 			pendingExitStreams.remove(request);

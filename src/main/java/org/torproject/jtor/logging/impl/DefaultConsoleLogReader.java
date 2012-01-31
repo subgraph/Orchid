@@ -13,18 +13,18 @@ public class DefaultConsoleLogReader implements LogReader {
 
 	public void log(LogEntry entry) {
 		final OutputState out = new OutputState(entry);
-		
+
 		addBanner(out);
 		out.println(entry.getMessage());
 		addException(out);
 		printToConsole(out);
-		
+
 	}
 
 	public void logRaw(String message) {
 		System.out.println(message);
 	}
-	
+
 	private void addBanner(OutputState out) {
 		final LogEntry entry = out.getEntry();
 		out.print(getTimestamp());
@@ -42,21 +42,21 @@ public class DefaultConsoleLogReader implements LogReader {
 			out.print("ERROR");
 			break;
 		}
-		
+
 		out.print(" (" + entry.getComponent() + ") : ");
 	}
-	
+
 	private void addException(OutputState out) {
 		final LogEntry entry = out.getEntry();
 		if(entry.getException() != null) {
 			out.printException(entry.getException());
 		}
 	}
-	
+
 	private String getTimestamp() {
 		return "["+ dateFormat.format(new Date()) +"] ";
 	}
-	
+
 	private void printToConsole(OutputState out) {
 		final LogEntry entry = out.getEntry();
 		if(entry.getLevel() == LogLevel.ERROR) {

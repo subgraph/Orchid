@@ -7,7 +7,7 @@ public class LogEntryImpl implements LogEntry {
 	private final String component;
 	private final String message;
 	private final Throwable exception;
-	
+
 	LogEntryImpl(LogLevel level, String component, String message, Throwable exception) {
 		this.level = level;
 		this.component = component;
@@ -26,7 +26,7 @@ public class LogEntryImpl implements LogEntry {
 	public String getMessage() {
 		return message;
 	}
-	
+
 	public String getComponent() {
 		return component;
 	}

@@ -10,11 +10,11 @@ import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
 public class ConsensusDocumentParser implements DocumentParser<ConsensusDocument> {
 	public enum DocumentSection { NO_SECTION, PREAMBLE, AUTHORITY, ROUTER_STATUS, SIGNATURE };
 
-	// dir-spec.txt 3.2 
+	// dir-spec.txt 3.2
 	// Unlike other formats described above, a SP in these documents must be a
 	// single space character (hex 20).
 	private final static String ITEM_DELIMITER = " ";
-	
+
 	private final PreambleSectionParser preambleParser;
 	private final AuthoritySectionParser authorityParser;
 	private final RouterStatusSectionParser routerStatusParser;
@@ -22,20 +22,20 @@ public class ConsensusDocumentParser implements DocumentParser<ConsensusDocument
 	private final DocumentFieldParser fieldParser;
 	private DocumentSection currentSection = DocumentSection.PREAMBLE;
 	private final ConsensusDocumentImpl document;
-	
+
 	private DocumentParsingResultHandler<ConsensusDocument> resultHandler;
-	
+
 	public ConsensusDocumentParser(DocumentFieldParser fieldParser) {
 		this.fieldParser = fieldParser;
 		initializeParser();
-		
+
 		document = new ConsensusDocumentImpl();
 		preambleParser = new PreambleSectionParser(fieldParser, document);
 		authorityParser = new AuthoritySectionParser(fieldParser, document);
 		routerStatusParser = new RouterStatusSectionParser(fieldParser, document);
 		signatureParser = new SignatureSectionParser(fieldParser, document);
 	}
-	
+
 	private void initializeParser() {
 		fieldParser.resetRawDocument();
 		fieldParser.setHandler(createParsingHandler());
@@ -43,7 +43,7 @@ public class ConsensusDocumentParser implements DocumentParser<ConsensusDocument
 		fieldParser.setSignatureIgnoreToken("directory-signature");
 		fieldParser.startSignedEntity();
 	}
-	
+
 	public boolean parse(DocumentParsingResultHandler<ConsensusDocument> resultHandler) {
 		this.resultHandler = resultHandler;
 		try {
@@ -54,19 +54,19 @@ public class ConsensusDocumentParser implements DocumentParser<ConsensusDocument
 			return false;
 		}
 	}
-	
+
 	private DocumentParsingHandler createParsingHandler() {
 		return new DocumentParsingHandler() {
 
 			public void endOfDocument() {
 				document.setRawDocumentData(fieldParser.getRawDocument());
 				resultHandler.documentParsed(document);
-				fieldParser.logDebug("Finished parsing status document.");				
+				fieldParser.logDebug("Finished parsing status document.");
 			}
 			public void parseKeywordLine() {
-				processKeywordLine();	
+				processKeywordLine();
 			}
-			
+
 		};
 	}
 	private void processKeywordLine() {
@@ -88,9 +88,9 @@ public class ConsensusDocumentParser implements DocumentParser<ConsensusDocument
 			}
 			if(newSection == currentSection)
 				return;
-			
+
 			currentSection = newSection;
-		}	
+		}
 	}
-	
+
 }

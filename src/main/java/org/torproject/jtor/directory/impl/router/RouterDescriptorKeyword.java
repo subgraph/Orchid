@@ -2,7 +2,7 @@ package org.torproject.jtor.directory.impl.router;
 
 public enum RouterDescriptorKeyword {
 	/*
-	 * See dir-spec.txt 
+	 * See dir-spec.txt
 	 * Section 2.1. Router descriptor format
 	 */
 	ROUTER("router", 5),
@@ -28,34 +28,34 @@ public enum RouterDescriptorKeyword {
 	PROTOCOLS("protocols"),
 	ALLOW_SINGLE_HOP_EXITS("allow-single-hop-exits", 0),
 	UNKNOWN_KEYWORD("KEYWORD NOT FOUND");
-	
+
 	public final static int VARIABLE_ARGUMENT_COUNT = -1;
 
 	private final String keyword;
 	private final int argumentCount;
-	
+
 	RouterDescriptorKeyword(String keyword) {
 		this(keyword, VARIABLE_ARGUMENT_COUNT);
 	}
-	
+
 	RouterDescriptorKeyword(String keyword, int argumentCount) {
 		this.keyword = keyword;
 		this.argumentCount = argumentCount;
 	}
-	
+
 	String getKeyword() {
 		return keyword;
 	}
-	
+
 	int getArgumentCount() {
 		return argumentCount;
 	}
-	
+
 	static RouterDescriptorKeyword findKeyword(String keyword) {
-		for(RouterDescriptorKeyword k: values()) 
-			if(k.getKeyword().equals(keyword)) 
+		for(RouterDescriptorKeyword k: values())
+			if(k.getKeyword().equals(keyword))
 				return k;
-		
+
 		return UNKNOWN_KEYWORD;
 	}
 

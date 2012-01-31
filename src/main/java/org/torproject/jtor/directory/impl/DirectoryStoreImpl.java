@@ -39,7 +39,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 		try {
 			final FileOutputStream fos = new FileOutputStream(outFile);
 			final Writer writer = new OutputStreamWriter(fos, "ISO-8859-1");
-			for(KeyCertificate cert: certificates) 
+			for(KeyCertificate cert: certificates)
 				writer.write(cert.getRawDocumentData());
 			writer.close();
 		} catch(IOException e) {
@@ -113,7 +113,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void saveRouterDescriptors(List<RouterDescriptor> descriptors) {
 		final File outFile = new File(config.getDataDirectory(), "routers");
 		try {

@@ -18,7 +18,7 @@ public class DirectoryAuthorityStatus implements RouterStatus {
 	private int directoryPort;
 	private Set<String> flags = new HashSet<String>();
 	private HexDigest v3Ident;
-	
+
 	void setV1Authority() { }
 	void setHiddenServiceAuthority() { addFlag("HSDir"); }
 	void unsetHiddenServiceAuthority() { flags.remove("HSDir"); }
@@ -31,12 +31,12 @@ public class DirectoryAuthorityStatus implements RouterStatus {
 	void setDirectoryPort(int port) { this.directoryPort = port; }
 	void addFlag(String flag) { this.flags.add(flag); }
 	void setV3Ident(HexDigest v3Ident) { this.v3Ident = v3Ident; }
-	
+
 	DirectoryAuthorityStatus() {
 		addFlag("Authority");
 		addFlag("V2Dir");
 	}
-	
+
 	public IPv4Address getAddress() {
 		return address;
 	}
@@ -69,7 +69,7 @@ public class DirectoryAuthorityStatus implements RouterStatus {
 		return nickname;
 	}
 
-	public Timestamp getPublicationTime() {		
+	public Timestamp getPublicationTime() {
 		return null;
 	}
 

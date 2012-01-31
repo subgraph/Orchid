@@ -11,10 +11,10 @@ public interface OpenStreamResponse {
 	Stream getStream();
 	/**
 	 * The 'reason' code from a RELAY_END cell sent in response to a RELAY_BEGIN or RELAY_BEGIN_DIR
-	 * 
+	 *
 	 * @return The error 'reason' from a RELAY_END cell.
 	 */
 	int getErrorCode();
-	
+
 	String getErrorCodeMessage();
 }

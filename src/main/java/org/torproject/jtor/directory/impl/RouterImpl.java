@@ -35,15 +35,15 @@ public class RouterImpl implements Router {
 	}
 
 	public boolean isDescriptorDownloadable() {
-		
+
 		if(descriptor != null && descriptor.getDescriptorDigest().equals(status.getDescriptorDigest()))
 			return false;
-		
+
 		final Date now = new Date();
 		final long diff = now.getTime() - status.getPublicationTime().getDate().getTime();
-		return diff > (1000 * 60 * 10);	
+		return diff > (1000 * 60 * 10);
 	}
-	
+
 	public HexDigest getDescriptorDigest() {
 		return status.getDescriptorDigest();
 	}
@@ -93,7 +93,7 @@ public class RouterImpl implements Router {
 	public boolean isStable() {
 		return hasFlag("Stable");
 	}
-	
+
 	public boolean isHSDirectory() {
 		return hasFlag("HSDir");
 	}
@@ -105,7 +105,7 @@ public class RouterImpl implements Router {
 	public HexDigest getIdentityHash() {
 		return identityHash;
 	}
-	
+
 	public TorPublicKey getIdentityKey() {
 		return descriptor.getIdentityKey();
 	}

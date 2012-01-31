@@ -25,9 +25,9 @@ public class TorConfigSaver {
 			String line = null;
 			while ((line=reader.readLine()) != null) {
 				if (line.startsWith("#") || line.matches("^\\s*$")) { // copy comments directly
-					
+
 					// TODO check comments for values that have changed and inject them here instead of the end of file
-					
+
 					output += line + "\n";
 					continue;
 				}
@@ -64,22 +64,22 @@ public class TorConfigSaver {
 		} catch (FileNotFoundException e) {
 			torrc.setWritable(true);
 		} catch (IOException e) {}
-		
+
 		Map defaults = defaultConfigToHash(new TorConfigDefaults());
-		
+
 		Iterator it = opts.keySet().iterator();
 		while (it.hasNext()) {
 			String key = (String)it.next();
 			if (key.startsWith("__")) // values with __ should never be stored
 				continue;
-			
+
 			if (written.get(key) == null && opts.get(key) != null) {
 				String val = (String)opts.get(key);
-				
+
 				if (((String)defaults.get(key)).equals(val)) { // value hasn't changed
 					continue;
 				}
-				
+
 				if (((String)opts.get(key)).indexOf("\n") == -1) {
 					output += key + " " + val + "\n";
 				} else {
@@ -90,7 +90,7 @@ public class TorConfigSaver {
 				}
 			}
 		}
-		
+
 		try {
 			torrc.delete();
 			FileOutputStream fos = new FileOutputStream(torrc);
@@ -104,7 +104,7 @@ public class TorConfigSaver {
 		} catch (IOException e) {
 			return false;
 		}
-		
+
 		return true;
 	}
 
@@ -276,7 +276,7 @@ public class TorConfigSaver {
 		if (in == null) {
 			return "";
 		}
-		
+
 		String ret = "";
 		for (int i = 0; i < in.length; i++) {
 			ret += in[i] + "\n";
@@ -289,7 +289,7 @@ public class TorConfigSaver {
 		if (in == null) {
 			return "";
 		}
-		
+
 		String ret = "";
 		for (int i = 0; i < in.length; i++) {
 			ret += in[i] + ", ";

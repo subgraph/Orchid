@@ -36,7 +36,7 @@ public class SocksClientTask implements Runnable {
 			return -1;
 		}
 	}
-	
+
 	private void dispatchRequest(int versionByte) {
 		switch(versionByte) {
 		case 'H':
@@ -52,9 +52,9 @@ public class SocksClientTask implements Runnable {
 			break;
 		default:
 			// fall through, do nothing
-		}	
+		}
 	}
-	
+
 	private void processRequest(SocksRequest request) {
 		try {
 			request.readRequest();
@@ -79,7 +79,7 @@ public class SocksClientTask implements Runnable {
 				request.sendError();
 				break;
 			}
-			
+
 		} catch (SocksRequestException e) {
 			logger.warning("Failure reading SOCKS request");
 		} catch (InterruptedException e) {
@@ -88,9 +88,9 @@ public class SocksClientTask implements Runnable {
 		} catch (IOException e) {
 			logger.warning("Error sending SOCKS response: "+ e);
 		}
-		
+
 	}
-		
+
 	private void runOpenConnection(Stream stream) {
 		SocksStreamConnection.runConnection(socket, stream, logger);
 	}

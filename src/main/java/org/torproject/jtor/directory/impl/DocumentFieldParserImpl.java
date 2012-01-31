@@ -88,7 +88,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 	}
 
 	private String getItem() {
-		if(currentItemsPosition >= currentItems.size()) 
+		if(currentItemsPosition >= currentItems.size())
 			throw new TorParsingException("Overrun while reading arguments");
 		return currentItems.get(currentItemsPosition++);
 	}
@@ -111,7 +111,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 			return true;
 		else if(i == 0)
 			return false;
-		else 
+		else
 			throw new TorParsingException("Illegal boolean value: "+ i);
 	}
 
@@ -156,7 +156,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 
 	private  void verifyExpectedArgumentCount(String keyword, int expectedMin, int expectedMax) {
 		final int argumentCount = argumentsRemaining();
-		if(expectedMin != -1 && argumentCount < expectedMin) 
+		if(expectedMin != -1 && argumentCount < expectedMin)
 			throw new TorParsingException("Not enough arguments for keyword '"+ keyword +"' expected "+ expectedMin +" and got "+ argumentCount);
 
 		if(expectedMax != -1 && argumentCount > expectedMax)
@@ -215,7 +215,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 	private String parseObjectHeader(String headerLine) {
 		if(!(headerLine.startsWith(BEGIN_TAG) && headerLine.endsWith(TAG_DELIMITER)))
 			throw new TorParsingException("Did not find expected object start tag.");
-		return headerLine.substring(BEGIN_TAG.length() + 1, 
+		return headerLine.substring(BEGIN_TAG.length() + 1,
 				headerLine.length() - TAG_DELIMITER.length());
 	}
 
@@ -244,7 +244,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 	}
 
 	public void processDocument() {
-		if(callbackHandler == null) 
+		if(callbackHandler == null)
 			throw new TorException("DocumentFieldParser#processDocument() called with null callbackHandler");
 
 		while(true) {

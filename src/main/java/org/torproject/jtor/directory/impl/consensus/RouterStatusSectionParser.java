@@ -8,11 +8,11 @@ import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 public class RouterStatusSectionParser extends ConsensusDocumentSectionParser {
 
 	private RouterStatusImpl currentEntry = null;
-	
+
 	RouterStatusSectionParser(DocumentFieldParser parser, ConsensusDocumentImpl document) {
 		super(parser, document);
 	}
-	
+
 	@Override
 	void parseLine(DocumentKeyword keyword) {
 		if(!keyword.equals(DocumentKeyword.R))
@@ -37,17 +37,17 @@ public class RouterStatusSectionParser extends ConsensusDocumentSectionParser {
 	}
 
 	private void assertCurrentEntry() {
-		if(currentEntry == null) 
+		if(currentEntry == null)
 			throw new TorParsingException("Router status entry must begin with an 'r' line");
 	}
-	
+
 	private void addCurrentEntry() {
 		assert(currentEntry != null);
 		if(currentEntry != null)
 			document.addRouterStatusEntry(currentEntry);
 		currentEntry = null;
 	}
-	
+
 	private void parseFirstLine() {
 		if(currentEntry != null)
 			throw new TorParsingException("Unterminated router status entry.");
@@ -60,20 +60,20 @@ public class RouterStatusSectionParser extends ConsensusDocumentSectionParser {
 		currentEntry.setRouterPort(fieldParser.parsePort());
 		currentEntry.setDirectoryPort(fieldParser.parsePort());
 	}
-	
+
 	private HexDigest parseBase64Digest() {
 		return HexDigest.createFromDigestBytes(fieldParser.parseBase64Data());
 	}
-	
+
 	private void parseFlags() {
 		while(fieldParser.argumentsRemaining() > 0)
 			currentEntry.addFlag(fieldParser.parseString());
 	}
-	
+
 	private void parseVersion() {
 		currentEntry.setVersion(fieldParser.parseConcatenatedString());
 	}
-	
+
 	private void parseBandwidth() {
 		while(fieldParser.argumentsRemaining() > 0) {
 			final String[] parts = fieldParser.parseString().split("=");
@@ -81,14 +81,14 @@ public class RouterStatusSectionParser extends ConsensusDocumentSectionParser {
 				parseBandwidthItem(parts[0], fieldParser.parseInteger(parts[1]));
 		}
 	}
-	
+
 	private void parseBandwidthItem(String key, int value) {
-		if(key.equals("Bandwidth")) 
+		if(key.equals("Bandwidth"))
 			currentEntry.setEstimatedBandwidth(value);
 		else if(key.equals("Measured"))
 			currentEntry.setMeasuredBandwidth(value);
 	}
-	
+
 	private void parsePortList() {
 		final String arg = fieldParser.parseString();
 		if(arg.equals("accept")) {
@@ -98,7 +98,7 @@ public class RouterStatusSectionParser extends ConsensusDocumentSectionParser {
 		}
 		addCurrentEntry();
 	}
-	
+
 	@Override
 	String getNextStateKeyword() {
 		return "directory-signature";
@@ -108,7 +108,7 @@ public class RouterStatusSectionParser extends ConsensusDocumentSectionParser {
 	DocumentSection getSection() {
 		return DocumentSection.ROUTER_STATUS;
 	}
-	
+
 	DocumentSection nextSection() {
 		return DocumentSection.SIGNATURE;
 	}

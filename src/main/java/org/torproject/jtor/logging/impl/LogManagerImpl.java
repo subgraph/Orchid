@@ -12,7 +12,7 @@ public class LogManagerImpl implements LogManager, LogReader{
 	private final Map<String, LoggerImpl> loggers = new HashMap<String, LoggerImpl>();
 	private final Object readerLock = new Object();
 	private LogReader logReader = new DefaultConsoleLogReader();
-		
+
 	public synchronized Logger getLogger(String name) {
 		if(!loggers.containsKey(name)) {
 			loggers.put(name, new LoggerImpl(name, this));
@@ -25,13 +25,13 @@ public class LogManagerImpl implements LogManager, LogReader{
 			if(logReader != null) logReader.logRaw(message);
 		}
 	}
-	
+
 	public void log(LogEntry entry) {
 		synchronized(readerLock) {
 			if(logReader != null) logReader.log(entry);
 		}
 	}
-	
+
 	public void setLogReader(LogReader reader) {
 		synchronized(readerLock) {
 			if(reader == null) {

@@ -6,12 +6,12 @@ import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 public class AuthoritySectionParser extends ConsensusDocumentSectionParser {
 
 	private VoteAuthorityEntryImpl currentEntry = null;
-	
+
 	AuthoritySectionParser(DocumentFieldParser parser , ConsensusDocumentImpl document) {
 		super(parser, document);
 		startEntry();
 	}
-	
+
 	@Override
 	void parseLine(DocumentKeyword keyword) {
 		switch(keyword) {
@@ -26,13 +26,13 @@ public class AuthoritySectionParser extends ConsensusDocumentSectionParser {
 			addCurrentEntry();
 			break;
 		}
-		
+
 	}
-	
+
 	private void startEntry() {
 		currentEntry = new VoteAuthorityEntryImpl();
 	}
-	
+
 	private void addCurrentEntry() {
 		document.addVoteAuthorityEntry(currentEntry);
 		startEntry();
@@ -55,7 +55,7 @@ public class AuthoritySectionParser extends ConsensusDocumentSectionParser {
 	DocumentSection getSection() {
 		return DocumentSection.AUTHORITY;
 	}
-	
+
 	DocumentSection nextSection() {
 		return DocumentSection.ROUTER_STATUS;
 	}

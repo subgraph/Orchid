@@ -27,7 +27,7 @@ public class NodeChooser {
 		ncc.setNeedGuard(true);
 		ncc.setWeightAsGuard(true);
 		final List<Router> filteredRouters = filterForRouterList(
-				filterForConstraintFlags(directory.getAllRouters(), ncc), 
+				filterForConstraintFlags(directory.getAllRouters(), ncc),
 				ncc.getExcludedRouters());
 		return chooseRandomRouterByBandwidth(filteredRouters, ncc);
 	}
@@ -41,7 +41,7 @@ public class NodeChooser {
 		final List<Router> resultRouters = new ArrayList<Router>();
 		final Set<Router> excludedSet = routerListToSet(excludedRouters);
 
-		for(Router r : routers) { 
+		for(Router r : routers) {
 			if(!excludedSet.contains(r))
 				resultRouters.add(r);
 		}
@@ -74,11 +74,11 @@ public class NodeChooser {
 		final List<Router> filteredPending = filterForPendingStreams(exitRouters, pendingExitStreams);
 		return chooseRandomRouterByBandwidth(filteredPending, ncc);
 	}
-	
+
 	private List<Router> filterForConstraintFlags(List<Router> routers, NodeChoiceConstraints ncc) {
 		final List<Router> resultRouters = new ArrayList<Router>();
 		for(Router r : routers) {
-			if(testConstraintFlags(r, ncc)) resultRouters.add(r);							
+			if(testConstraintFlags(r, ncc)) resultRouters.add(r);
 		}
 		return resultRouters;
 	}
@@ -97,7 +97,7 @@ public class NodeChooser {
 	private List<Router> filterForExitDestination(List<Router> routers, IPv4Address address, int port) {
 		final List<Router> resultRouters = new ArrayList<Router>();
 		for(Router r : routers) {
-			if(r.isRunning() && r.isValid() && !(r.isHibernating() || r.isBadExit()) && 
+			if(r.isRunning() && r.isValid() && !(r.isHibernating() || r.isBadExit()) &&
 					routerAcceptsDestination(r, address, port))
 				resultRouters.add(r);
 		}
@@ -108,7 +108,7 @@ public class NodeChooser {
 		int bestSupport = 0;
 		if(pendingStreams.isEmpty())
 			return routers;
-		
+
 		final int[] nSupport = new int[routers.size()];
 		for(int i = 0; i < routers.size(); i++) {
 			final Router r = routers.get(i);
@@ -274,7 +274,7 @@ public class NodeChooser {
 				tmp += bandwidths[i];
 			if(tmp > randBw)
 				return routers.get(i);
-			
+
 		}
 
 		return routers.get(routers.size() - 1);

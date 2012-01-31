@@ -30,7 +30,7 @@ public class TorOutputStream extends OutputStream {
 		checkOpen();
 		if(currentOutputCell == null || currentOutputCell.cellBytesRemaining() == 0)
 			flushCurrentOutputCell();
-		currentOutputCell.putByte(b);		
+		currentOutputCell.putByte(b);
 	}
 
 	public synchronized void write(byte[] data, int offset, int length) throws IOException {

@@ -13,19 +13,19 @@ public class OpenCircuitTask implements Runnable {
 	private final List<Router> circuitPath;
 	private final CircuitBuildHandler buildHandler;
 	private final Logger logger;
-	
+
 	OpenCircuitTask(Circuit circuit, List<Router> circuitPath, CircuitBuildHandler handler, Logger logger) {
 		this.circuit = circuit;
 		this.circuitPath = circuitPath;
 		this.buildHandler = handler;
 		this.logger = logger;
 	}
-	
+
 	public void run() {
 		logger.debug("Opening a new circuit to "+ pathToString());
-		circuit.openCircuit(circuitPath, buildHandler);		
+		circuit.openCircuit(circuitPath, buildHandler);
 	}
-	
+
 	private String pathToString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("[");

@@ -63,7 +63,7 @@ public class StreamImpl implements Stream {
 		}
 		else {
 			inputStream.addInputCell(cell);
-			synchronized(windowLock) { 
+			synchronized(windowLock) {
 				deliverWindow--;
 				if(deliverWindow < 0)
 					throw new TorException("Stream has negative delivery window");

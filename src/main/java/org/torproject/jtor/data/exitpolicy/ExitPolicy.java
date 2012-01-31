@@ -22,13 +22,13 @@ public class ExitPolicy {
 		else
 			return acceptsPort(target.getPort());
 	}
-	
+
 	public boolean acceptsDestination(IPv4Address address, int port) {
 		if(address == null)
 			return acceptsPort(port);
 
 		for(PolicyRule r: rules) {
-			if(r.matchesDestination(address, port)) 
+			if(r.matchesDestination(address, port))
 				return r.isAcceptRule();
 		}
 		// Default accept (see dir-spec.txt section 2.1, 'accept'/'reject' keywords)

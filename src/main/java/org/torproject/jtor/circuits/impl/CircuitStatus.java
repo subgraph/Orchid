@@ -83,7 +83,7 @@ public class CircuitStatus {
 	Router getFinalRouter() {
 		if(state == CircuitState.UNCONNECTED)
 			throw new TorException("Cannot retrieve last router from UNCONNECTED circuit");
-		if(circuitPath.size() == 0) 
+		if(circuitPath.size() == 0)
 			throw new TorException("No routers on circuit (?!)");
 		return circuitPath.get(circuitPath.size() - 1);
 	}

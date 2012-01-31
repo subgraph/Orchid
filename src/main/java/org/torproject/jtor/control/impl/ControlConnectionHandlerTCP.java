@@ -29,18 +29,18 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
         BufferedReader in = null;
         try {
             in = new BufferedReader(new InputStreamReader(s.getInputStream()));
-            
+
             while (running) {
                 String recv = in.readLine();
-                
+
                 recv.length(); // trigger NullPointerException
                 cs.getLogger().debug("Control Connection TCP: received " + recv);
-                
+
                 eq.writeQueue(this);
-                
+
                 ControlCommandParser.execute(this, recv);
             }
-            
+
         } catch (IOException ex) {
         	cs.getLogger().debug("Control Connection TCP: IOException during receiving");
         } catch (NullPointerException e) {
@@ -51,7 +51,7 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
                 in.close();
             } catch (IOException ex) {}
         }
-        
+
     }
 
 	public void write(String w) {

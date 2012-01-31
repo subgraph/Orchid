@@ -37,7 +37,7 @@ public class CircuitCreationTask implements Runnable {
 	public void run() {
 		checkUnassignedPendingStreams();
 		checkExpiredPendingCircuits();
-		checkCircuitsForCreation();		
+		checkCircuitsForCreation();
 	}
 
 	private void checkUnassignedPendingStreams() {
@@ -62,7 +62,7 @@ public class CircuitCreationTask implements Runnable {
 			}
 		}
 	}
-	
+
 	private void removePendingStreamsByPendingCircuits(List<StreamExitRequest> pendingExitStreams) {
 		if(pendingExitStreams.isEmpty())
 			return;
@@ -179,7 +179,7 @@ public class CircuitCreationTask implements Runnable {
 
 			public void nodeAdded(CircuitNode node) {
 				//logger.debug("Node added to circuit: "+ node);
-			}	
+			}
 		};
 	}
 

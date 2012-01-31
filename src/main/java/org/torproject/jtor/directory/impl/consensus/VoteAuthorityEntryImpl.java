@@ -11,10 +11,10 @@ public class VoteAuthorityEntryImpl implements VoteAuthorityEntry {
 	private IPv4Address address;
 	private int dirport = -1;
 	private int orport = -1;
-	
+
 	private String contact;
 	private HexDigest voteDigest;
-	
+
 	void setNickname(String nickname) { this.nickname = nickname; }
 	void setIdentity(HexDigest identity) { this.identity = identity; }
 	void setHostname(String hostname) { this.hostname = hostname; }
@@ -27,31 +27,31 @@ public class VoteAuthorityEntryImpl implements VoteAuthorityEntry {
 	public String getNickname() {
 		return nickname;
 	}
-	
+
 	public HexDigest getIdentity() {
 		return identity;
 	}
-	
+
 	public String getHostname() {
 		return hostname;
 	}
-	
+
 	public IPv4Address getAddress() {
 		return address;
 	}
-	
+
 	public int getDirectoryPort() {
 		return dirport;
 	}
-	
+
 	public int getRouterPort() {
 		return orport;
 	}
-	
+
 	public String getContact() {
 		return contact;
 	}
-	
+
 	public HexDigest getVoteDigest() {
 		return voteDigest;
 	}

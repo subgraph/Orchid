@@ -23,7 +23,7 @@ public class SocksPortListenerImpl implements SocksPortListener {
 	private final Logger logger;
 	private final CircuitManager circuitManager;
 	private final Executor executor;
-	
+
 	public SocksPortListenerImpl(LogManager logManager, CircuitManager circuitManager) {
 		this.logger = logManager.getLogger("socks");
 		logger.enableDebug();
@@ -34,7 +34,7 @@ public class SocksPortListenerImpl implements SocksPortListener {
 	public void addListeningPort(int port) {
 		if(port <= 0 || port > 65535)
 			throw new TorException("Illegal listening port: "+ port);
-		
+
 		synchronized(listeningPorts) {
 			if(listeningPorts.contains(port))
 				return;
@@ -47,16 +47,16 @@ public class SocksPortListenerImpl implements SocksPortListener {
 				throw new TorException("Failed to listen on port "+ port +" : "+ e.getMessage());
 			}
 		}
-		
+
 	}
-	
+
 	private void startListening(int port) throws IOException {
 		final ServerSocket ss = new ServerSocket(port);
 		final Thread listeningThread = createAcceptThread(ss, port);
 		acceptThreads.put(port, listeningThread);
 		listeningThread.start();
 	}
-	
+
 	private Thread createAcceptThread(final ServerSocket ss, final int port) {
 		return new Thread(new Runnable() { public void run() {
 			try {
@@ -67,17 +67,17 @@ public class SocksPortListenerImpl implements SocksPortListener {
 					listeningPorts.remove(port);
 					acceptThreads.remove(port);
 				}
-			}				
+			}
 		}});
 	}
-	
+
 	private void runAcceptLoop(ServerSocket ss) throws IOException {
 		while(true) {
 			final Socket s = ss.accept();
 			executor.execute(newClientSocket(s));
 		}
 	}
-	
+
 	private Runnable newClientSocket(final Socket s) {
 		return new SocksClientTask(s, logger, circuitManager);
 	}

@@ -41,10 +41,10 @@ public class ConnectionHandshakeV2 {
 		this.socket.addHandshakeCompletedListener(new HandshakeCompletedListener() {
 
 			public void handshakeCompleted(HandshakeCompletedEvent event) {
-				processHandshakeCompleted(event);	
+				processHandshakeCompleted(event);
 			}
 		});
-		
+
 		this.remoteVersions = new ArrayList<Integer>();
 		this.remoteAddresses = new ArrayList<IPv4Address>();
 	}
@@ -93,8 +93,8 @@ public class ConnectionHandshakeV2 {
 
 	private void waitForHandshakeFinished() throws InterruptedException {
 		synchronized(lock) {
-			while(!isFinishedHandshake) 
-					lock.wait();		
+			while(!isFinishedHandshake)
+					lock.wait();
 		}
 	}
 
@@ -148,7 +148,7 @@ public class ConnectionHandshakeV2 {
 			throw new ConnectionConnectException("Connection closed while performing handshake");
 		}
 
-		
+
 	}
 
 	private IPv4Address readAddress(Cell cell) {

@@ -15,23 +15,23 @@ public class KeyCertificateParser implements DocumentParser<KeyCertificate> {
 	private final DocumentFieldParser fieldParser;
 	private KeyCertificateImpl currentCertificate;
 	private DocumentParsingResultHandler<KeyCertificate> resultHandler;
-	
+
 	public KeyCertificateParser(DocumentFieldParser fieldParser) {
 		this.fieldParser = fieldParser;
 		this.fieldParser.setHandler(createParsingHandler());
 	}
-	
+
 	private DocumentParsingHandler createParsingHandler() {
 		return new DocumentParsingHandler() {
 			public void parseKeywordLine() {
 				processKeywordLine();
 			}
-			
+
 			public void endOfDocument() {
 			}
 		};
 	}
-	
+
 	private void processKeywordLine() {
 		final KeyCertificateKeyword keyword = KeyCertificateKeyword.findKeyword(fieldParser.getCurrentKeyword());
 		/*
@@ -42,13 +42,13 @@ public class KeyCertificateParser implements DocumentParser<KeyCertificate> {
 		if(!keyword.equals(KeyCertificateKeyword.UNKNOWN_KEYWORD))
 			processKeyword(keyword);
 	}
-	
+
 	private void startNewCertificate() {
 		fieldParser.resetRawDocument();
 		fieldParser.startSignedEntity();
 		currentCertificate = new KeyCertificateImpl();
 	}
-	
+
 	public boolean parse(DocumentParsingResultHandler<KeyCertificate> resultHandler) {
 		this.resultHandler = resultHandler;
 		startNewCertificate();
@@ -60,7 +60,7 @@ public class KeyCertificateParser implements DocumentParser<KeyCertificate> {
 			return false;
 		}
 	}
-	
+
 	private void processKeyword(KeyCertificateKeyword keyword) {
 		switch(keyword) {
 		case DIR_KEY_CERTIFICATE_VERSION:
@@ -92,13 +92,13 @@ public class KeyCertificateParser implements DocumentParser<KeyCertificate> {
 			break;
 		}
 	}
-	
+
 	private void processCertificateVersion() {
 		final int version = fieldParser.parseInteger();
 		if(version != CURRENT_CERTIFICATE_VERSION)
 			throw new TorParsingException("Unexpected certificate version: " + version);
 	}
-	
+
 	private void processDirectoryAddress() {
 		final String addrport = fieldParser.parseString();
 		final String[] args = addrport.split(":");
@@ -107,11 +107,11 @@ public class KeyCertificateParser implements DocumentParser<KeyCertificate> {
 		currentCertificate.setDirectoryAddress(IPv4Address.createFromString(args[0]));
 		currentCertificate.setDirectoryPort(fieldParser.parsePort(args[1]));
 	}
-	
+
 	private void verifyCrossSignature(TorSignature crossSignature) {
 		TorPublicKey identityKey = currentCertificate.getAuthorityIdentityKey();
 		TorPublicKey signingKey = currentCertificate.getAuthoritySigningKey();
-		if(!signingKey.verifySignature(crossSignature, identityKey.getFingerprint())) 
+		if(!signingKey.verifySignature(crossSignature, identityKey.getFingerprint()))
 			throw new TorParsingException("Cross signature on certificate failed.");
 	}
 
@@ -129,7 +129,7 @@ public class KeyCertificateParser implements DocumentParser<KeyCertificate> {
 		}
 		return isValid;
 	}
-	
+
 	private void processCertificateSignature() {
 		fieldParser.endSignedEntity();
 		if(verifyCurrentCertificate(fieldParser.parseSignature())) {

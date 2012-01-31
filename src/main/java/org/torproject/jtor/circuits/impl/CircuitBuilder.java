@@ -18,8 +18,8 @@ import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.logging.Logger;
 
 /*
- * Utility class used by CircuitImpl that manages setting up a circuit 
- * through a specified path of router nodes. 
+ * Utility class used by CircuitImpl that manages setting up a circuit
+ * through a specified path of router nodes.
  */
 class CircuitBuilder {
 
@@ -27,29 +27,29 @@ class CircuitBuilder {
 	private final ConnectionManagerImpl connectionManager;
 	private final Logger logger;
 
-	
+
 	CircuitBuilder(CircuitImpl circuit, ConnectionManagerImpl connectionManager, Logger logger) {
 		this.circuit = circuit;
 		this.connectionManager = connectionManager;
 		this.logger = logger;
 	}
-	
+
 	boolean openCircuit(List<Router> circuitPath, CircuitBuildHandler handler) {
 		if(circuitPath.isEmpty())
 			throw new IllegalArgumentException("Path must contain at least one router to create a circuit.");
 		final Router entryRouter = circuitPath.get(0);
-		return openEntryNodeConnection(entryRouter, handler) && 
+		return openEntryNodeConnection(entryRouter, handler) &&
 			buildCircuit(circuitPath, handler);
 	}
-	
+
 	private boolean openEntryNodeConnection(Router entryRouter, CircuitBuildHandler handler) {
 		final ConnectionImpl entryConnection = createEntryConnection(entryRouter);
 		if(!entryConnection.isConnected() && !connectEntryNodeConnection(entryConnection, handler))
 			return false;
-			
+
 		final int circuitId = entryConnection.allocateCircuitId(circuit);
 		circuit.initializeConnectingCircuit(entryConnection, circuitId);
-		
+
 		if(handler != null)
 			handler.connectionCompleted(entryConnection);
 
@@ -91,7 +91,7 @@ class CircuitBuilder {
 		try {
 			runCircuitBuild(circuitPath, handler);
 		} catch(TorException e) {
-			if(handler != null) 
+			if(handler != null)
 				handler.circuitBuildFailed(e.getMessage());
 			return false;
 		} catch(Exception e) {

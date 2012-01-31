@@ -46,7 +46,7 @@ public class NetworkStatusManager {
 	public void startDownloadingDocuments() {
 		final Thread thread = new Thread(new Runnable() {
 			public void run() {
-				documentDownloadLoop();	
+				documentDownloadLoop();
 			}
 		});
 		thread.start();
@@ -100,7 +100,7 @@ public class NetworkStatusManager {
 			}
 
 			public void documentParsed(ConsensusDocument document) {
-				directory.addConsensusDocument(document);				
+				directory.addConsensusDocument(document);
 			}
 
 			public void documentInvalid(ConsensusDocument document, String message) {
@@ -164,9 +164,9 @@ public class NetworkStatusManager {
 		if(downloadables.isEmpty()) {
 			return;
 		}
-		if(!canDownloadDescriptors(downloadables.size())) 
+		if(!canDownloadDescriptors(downloadables.size()))
 			return;
-		
+
 		lastDescriptorDownload = new Date();
 		logger.debug("Downloading: "+ downloadables.size() +" descriptors");
 		for(List<Router> set: partitionDescriptors(downloadables))
@@ -208,14 +208,14 @@ public class NetworkStatusManager {
 				off += sz;
 			}
 			return partitions;
-			
+
 		} else {
 			int off = 0;
 			while(off < descriptors.size()) {
 				partitions.add(createPartitionList(descriptors, off, MAX_DL_PER_REQUEST));
 				off += MAX_DL_PER_REQUEST;
 			}
-			return partitions;	
+			return partitions;
 		}
 	}
 
@@ -225,7 +225,7 @@ public class NetworkStatusManager {
 			newList.add(descriptors.get(i));
 		return newList;
 	}
-	
+
 	private void requestDescriptors(final List<Router> descriptors) {
 		final Thread requestThread = new Thread(new Runnable() {
 			public void run() {
@@ -270,7 +270,7 @@ public class NetworkStatusManager {
 				logger.warning("Parsing error processing router descriptors: "+ message);
 			}
 		});
-		
+
 		if(success)
 			directory.storeDescriptors();
 	}
@@ -285,7 +285,7 @@ public class NetworkStatusManager {
 			}
 		}
 		throw new TorException("Giving up on direct connection to directory server");
-		
+
 	}
 	private DirectoryConnection openDirectConnectionToDirectoryServer(DirectoryServer server) throws IOException {
 		final InetAddress address = server.getAddress().toInetAddress();
@@ -296,13 +296,13 @@ public class NetworkStatusManager {
 		return new DirectoryConnection(hostString, socket.getInputStream(), socket.getOutputStream());
 
 	}
-	
+
 	private String getHostString(IPv4Address address, int port) {
 		if(port == 80)
 			return address.toString();
 		else
 			return address.toString() +":"+ port;
-		
+
 	}
 
 }

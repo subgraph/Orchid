@@ -9,7 +9,7 @@ import org.torproject.jtor.data.Timestamp;
 import org.torproject.jtor.directory.impl.consensus.DirectorySignature;
 
 public interface ConsensusDocument extends Document {
-	
+
 	Timestamp getValidAfterTime();
 	Timestamp getFreshUntilTime();
 	Timestamp getValidUntilTime();

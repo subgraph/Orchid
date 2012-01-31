@@ -15,28 +15,28 @@ public enum KeyCertificateKeyword {
 	DIR_KEY_CROSSCERT("dir-key-crosscert", 0),
 	DIR_KEY_CERTIFICATION("dir-key-certification", 0),
 	UNKNOWN_KEYWORD("KEYWORD NOT FOUND", 0);
-	
+
 	private final String keyword;
 	private final int argumentCount;
-	
+
 	KeyCertificateKeyword(String keyword, int argumentCount) {
 		this.keyword = keyword;
 		this.argumentCount = argumentCount;
 	}
-	
+
 	String getKeyword() {
 		return keyword;
 	}
-	
+
 	int getArgumentCount() {
 		return argumentCount;
 	}
-	
+
 	static KeyCertificateKeyword findKeyword(String keyword) {
-		for(KeyCertificateKeyword k: values()) 
+		for(KeyCertificateKeyword k: values())
 			if(k.getKeyword().equals(keyword))
 				return k;
 		return UNKNOWN_KEYWORD;
 	}
-	
+
 }

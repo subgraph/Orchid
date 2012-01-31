@@ -7,7 +7,7 @@ import org.torproject.jtor.data.Timestamp;
 import org.torproject.jtor.directory.KeyCertificate;
 
 public class KeyCertificateImpl implements KeyCertificate {
-	
+
 	private IPv4Address directoryAddress;
 	private int directoryPort;
 	private HexDigest fingerprint;
@@ -16,7 +16,7 @@ public class KeyCertificateImpl implements KeyCertificate {
 	private Timestamp keyExpires;
 	private TorPublicKey signingKey;
 	private String rawDocumentData;
-	
+
 	private boolean hasValidSignature = false;
 
 	void setDirectoryPort(int port) { this.directoryPort = port; }
@@ -28,50 +28,50 @@ public class KeyCertificateImpl implements KeyCertificate {
 	void setKeyExpiryTime(Timestamp time) { this.keyExpires = time; }
 	void setValidSignature() { hasValidSignature = true;}
 	void setRawDocumentData(String rawData) { rawDocumentData = rawData; }
-	
+
 	public boolean isValidDocument() {
 		return hasValidSignature && (fingerprint != null) && (identityKey != null) &&
 			(keyPublished != null) && (keyExpires != null) && (signingKey != null);
 	}
-	
+
 	public IPv4Address getDirectoryAddress() {
 		return directoryAddress;
 	}
-	
+
 	public int getDirectoryPort() {
 		return directoryPort;
 	}
-	
+
 	public HexDigest getAuthorityFingerprint() {
 		return fingerprint;
 	}
-	
+
 	public TorPublicKey getAuthorityIdentityKey() {
 		return identityKey;
 	}
-	
+
 	public TorPublicKey getAuthoritySigningKey() {
 		return signingKey;
 	}
-	
+
 	public Timestamp getKeyPublishedTime() {
 		return keyPublished;
 	}
-	
+
 	public Timestamp getKeyExpiryTime() {
 		return keyExpires;
 	}
-	
+
 	public boolean isExpired() {
 		return keyExpires.hasPassed();
 	}
-	
+
 	public String getRawDocumentData() {
 		return rawDocumentData;
 	}
-	
+
 	public String toString() {
-		return "(Certificate: address="+ directoryAddress +":"+ directoryPort 
+		return "(Certificate: address="+ directoryAddress +":"+ directoryPort
 			+" fingerprint="+ fingerprint +" published="+ keyPublished +" expires="+ keyExpires +")"+
 			"\nident="+ identityKey +" sign="+ signingKey;
 	}

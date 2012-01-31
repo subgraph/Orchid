@@ -13,7 +13,7 @@ import org.torproject.jtor.logging.Logger;
 
 /*
  * This class contains the hardcoded 'bootstrap' directory authority
- * server information. 
+ * server information.
  */
 public class TrustedAuthorities {
 	private final static String[] dirServers = {
@@ -28,11 +28,11 @@ public class TrustedAuthorities {
 	};
 
 	private List<DirectoryServer> directoryServers = new ArrayList<DirectoryServer>();
-	
+
     TrustedAuthorities(Logger logger) {
     	initialize(logger);
     }
-    
+
 	void initialize(Logger logger) {
 		final StringBuilder builder = new StringBuilder();
 		for(String entry: dirServers) {
@@ -41,21 +41,21 @@ public class TrustedAuthorities {
 		}
 		final StringReader reader = new StringReader(builder.toString());
 		final DocumentFieldParser parser = new DocumentFieldParserImpl(reader, logger);
-		
+
 		parser.setHandler(new DocumentParsingHandler() {
 			public void endOfDocument() {}
 			public void parseKeywordLine() { processKeywordLine(parser);}
 		});
 		parser.processDocument();
 	}
-	
+
 	private void processKeywordLine(DocumentFieldParser fieldParser) {
 		final DirectoryAuthorityStatus status = new DirectoryAuthorityStatus();
 		status.setNickname(fieldParser.parseNickname());
-		while(fieldParser.argumentsRemaining() > 0) 
+		while(fieldParser.argumentsRemaining() > 0)
 			processArgument(fieldParser, status);
 	}
-	
+
 	private void processArgument(DocumentFieldParser fieldParser, DirectoryAuthorityStatus status) {
 		final String item = fieldParser.parseString();
 		if(Character.isDigit(item.charAt(0))) {
@@ -72,13 +72,13 @@ public class TrustedAuthorities {
 			parseFlag(fieldParser, item, status);
 		}
 	}
-	
+
 	private void parseAddressPort(DocumentFieldParser parser, String item, DirectoryAuthorityStatus status) {
 		final String[] args = item.split(":");
 		status.setAddress(IPv4Address.createFromString(args[0]));
-		status.setDirectoryPort(parser.parsePort(args[1]));	
+		status.setDirectoryPort(parser.parsePort(args[1]));
 	}
-	
+
 	private void parseFlag(DocumentFieldParser parser, String flag, DirectoryAuthorityStatus status) {
 		if(flag.equals("v1")) {
 			status.setV1Authority();
@@ -97,7 +97,7 @@ public class TrustedAuthorities {
 			status.setV3Ident(HexDigest.createFromString(flag.substring(8)));
 		}
 	}
-	
+
 	public List<DirectoryServer> getAuthorityServers() {
 		return directoryServers;
 	}
@@ -106,10 +106,10 @@ public class TrustedAuthorities {
 		int idx = random.nextInt(directoryServers.size());
 		return directoryServers.get(idx);
 	}
-	
+
 	public Collection<DirectoryServer> getAuthorityServers() {
 		return Collections.unmodifiableCollection(directoryServers);
 	}
 	*/
-	
+
 }

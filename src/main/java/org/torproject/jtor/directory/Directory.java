@@ -8,7 +8,7 @@ import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.events.EventHandler;
 
 /**
- * 
+ *
  * Main interface for accessing directory information and interacting
  * with directory authorities and caches.
  *

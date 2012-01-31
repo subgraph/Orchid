@@ -10,7 +10,7 @@ import org.torproject.jtor.data.exitpolicy.ExitPorts;
 import org.torproject.jtor.directory.RouterStatus;
 
 public class RouterStatusImpl implements RouterStatus {
-	
+
 	private String nickname;
 	private HexDigest identity;
 	private HexDigest digest;
@@ -23,7 +23,7 @@ public class RouterStatusImpl implements RouterStatus {
 	private int bandwidthEstimate;
 	private int bandwidthMeasured;
 	private ExitPorts exitPorts;
-	
+
 	void setNickname(String nickname) { this.nickname = nickname; }
 	void setIdentity(HexDigest identity) { this.identity = identity; }
 	void setDigest(HexDigest digest) { this.digest = digest; }
@@ -37,7 +37,7 @@ public class RouterStatusImpl implements RouterStatus {
 	void setMeasuredBandwidth(int bandwidth) { this.bandwidthMeasured = bandwidth; }
 	void setAcceptedPorts(String portList) { this.exitPorts = ExitPorts.createAcceptExitPorts(portList); }
 	void setRejectedPorts(String portList) { this.exitPorts = ExitPorts.createRejectExitPorts(portList); }
-	
+
 	public String toString() {
 		return "Router: ("+ nickname +" "+ identity +" "+ digest +" "+ address +" "+ routerPort +" " + directoryPort
 			+" "+ version +" "+ exitPorts +")";
@@ -45,50 +45,50 @@ public class RouterStatusImpl implements RouterStatus {
 	public String getNickname() {
 		return nickname;
 	}
-	
+
 	public HexDigest getIdentity() {
 		return identity;
 	}
-	
+
 	public HexDigest getDescriptorDigest() {
 		return digest;
 	}
-	
+
 	public Timestamp getPublicationTime() {
 		return publicationTime;
 	}
-	
+
 	public IPv4Address getAddress() {
 		return address;
 	}
-	
+
 	public int getRouterPort() {
 		return routerPort;
 	}
-	
+
 	public boolean isDirectory() {
 		return directoryPort != 0;
 	}
 	public int getDirectoryPort() {
 		return directoryPort;
 	}
-	
+
 	public boolean hasFlag(String flag) {
 		return flags.contains(flag);
 	}
-	
+
 	public String getVersion() {
 		return version;
 	}
-	
+
 	public int getEstimatedBandwidth() {
 		return bandwidthEstimate;
 	}
-	
+
 	public int getMeasuredBandwidth() {
 		return bandwidthMeasured;
 	}
-	
+
 	public ExitPorts getExitPorts() {
 		return exitPorts;
 	}

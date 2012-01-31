@@ -29,7 +29,7 @@ public class TorClient {
 		circuitManager = Tor.createCircuitManager(directory, logManager);
 		networkStatusManager = Tor.createNetworkStatusManager(directory, logManager);
 		socksListener = Tor.createSocksPortListener(logManager, circuitManager);
-		
+
 	}
 
 	/**

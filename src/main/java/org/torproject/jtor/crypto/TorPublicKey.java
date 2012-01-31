@@ -100,7 +100,7 @@ public class TorPublicKey {
 		for(int i = 0; i < a1.length; i++)
 			result += (a1[i] & 0xFF) ^ (a2[i] & 0xFF);
 		return result == 0;
-		
+
 	}
 
 	private Cipher createCipherInstance() {

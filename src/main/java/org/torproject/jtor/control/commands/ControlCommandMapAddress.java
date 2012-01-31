@@ -14,7 +14,7 @@ public class ControlCommandMapAddress {
 		if (in.indexOf("=") == -1) {
 			return false;
 		}
-		
+
 		String[] maps = tc.getMapAddress();
 		if (maps == null) {
 			maps = new String[0];
@@ -36,7 +36,7 @@ public class ControlCommandMapAddress {
 				newmaps = TorConfigParser.addToStringArray(newmaps, maps[i]);
 			}
 		}
-		
+
 		if (reset) { // address is removed, set new value and return
 			tc.setMapAddress(newmaps);
 			return true;
@@ -66,7 +66,7 @@ public class ControlCommandMapAddress {
 			newmaps = TorConfigParser.addToStringArray(newmaps, host + "=" + dest);
 			tc.setMapAddress(newmaps);
 		}
-		
+
 		return true;
 	}
 }

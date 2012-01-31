@@ -11,16 +11,16 @@ import org.torproject.jtor.TorParsingException;
 
 public class TorSignature {
 	private final static String SIGNATURE_BEGIN = "-----BEGIN SIGNATURE-----";
-	private final static String ID_SIGNATURE_BEGIN = "-----BEGIN ID SIGNATURE-----"; 
+	private final static String ID_SIGNATURE_BEGIN = "-----BEGIN ID SIGNATURE-----";
 	private final static String SIGNATURE_END = "-----END SIGNATURE-----";
 	private final static String ID_SIGNATURE_END = "-----END ID SIGNATURE-----";
 
-	static public TorSignature createFromPEMBuffer(String buffer) {		
+	static public TorSignature createFromPEMBuffer(String buffer) {
 		BufferedReader reader = new BufferedReader(new StringReader(buffer));
 		final String header = nextLine(reader);
 		if(!(SIGNATURE_BEGIN.equals(header) || ID_SIGNATURE_BEGIN.equals(header)))
 			throw new TorParsingException("Did not find expected signature BEGIN header");
-		return new TorSignature(Base64.decode(parseBase64Data(reader)));	
+		return new TorSignature(Base64.decode(parseBase64Data(reader)));
 	}
 	static private String parseBase64Data(BufferedReader reader) {
 		final StringBuilder base64Data = new StringBuilder();
@@ -34,30 +34,30 @@ public class TorSignature {
 	static String nextLine(BufferedReader reader) {
 		try {
 			final String line = reader.readLine();
-			if(line == null) 
+			if(line == null)
 				throw new TorParsingException("Did not find expected signature END header");
 			return line;
 		} catch (IOException e) {
 			throw new TorException(e);
 		}
 	}
-	
+
 	private final byte[] signatureBytes;
 	private TorSignature(byte[] signatureBytes) {
 		this.signatureBytes = signatureBytes;
 	}
-	
+
 	public byte[] getSignatureBytes() {
 		return signatureBytes;
 	}
-	
+
 	public boolean verify(TorPublicKey publicKey, TorMessageDigest digest) {
 		return publicKey.verifySignature(this, digest);
 	}
 	public String toString() {
 		return "TorSignature: (" + signatureBytes.length + " bytes) " + new String(Hex.encode(signatureBytes));
 	}
-	
-	
+
+
 
 }

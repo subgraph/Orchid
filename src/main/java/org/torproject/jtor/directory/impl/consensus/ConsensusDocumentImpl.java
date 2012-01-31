@@ -17,7 +17,7 @@ import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.VoteAuthorityEntry;
 
 public class ConsensusDocumentImpl implements ConsensusDocument {
-	
+
 	private int consensusMethod;
 	private Timestamp validAfter;
 	private Timestamp freshUntil;
@@ -27,13 +27,13 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	private Set<String> clientVersions;
 	private Set<String> serverVersions;
 	private Set<String> knownFlags;
-	
+
 	private HexDigest signingHash;
 	private Map<HexDigest, VoteAuthorityEntry> voteAuthorityEntries;
 	private List<RouterStatus> routerStatusEntries;
 	private List<DirectorySignature> signatures;
 	private String rawDocumentData;
-	
+
 	void setConsensusMethod(int method) { consensusMethod = method; }
 	void setValidAfter(Timestamp ts) { validAfter = ts; }
 	void setFreshUntil(Timestamp ts) { freshUntil = ts; }
@@ -45,7 +45,7 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	void addSignature(DirectorySignature signature) { signatures.add(signature); }
 	void setSigningHash(HexDigest hash) { signingHash = hash; }
 	void setRawDocumentData(String rawData) { rawDocumentData = rawData; }
-	
+
 	ConsensusDocumentImpl() {
 		clientVersions = new HashSet<String>();
 		serverVersions = new HashSet<String>();
@@ -54,77 +54,77 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 		routerStatusEntries = new ArrayList<RouterStatus>();
 		signatures = new ArrayList<DirectorySignature>();
 	}
-	
+
 	void addKnownFlag(String flag) {
 		knownFlags.add(flag);
 	}
-	
+
 	void addVoteAuthorityEntry(VoteAuthorityEntry entry) {
 		voteAuthorityEntries.put(entry.getVoteDigest(), entry);
 	}
-	
+
 	void addRouterStatusEntry(RouterStatusImpl entry) {
 		routerStatusEntries.add(entry);
 	}
-	
+
 	public Timestamp getValidAfterTime() {
 		return validAfter;
 	}
-	
+
 	public Timestamp getFreshUntilTime() {
 		return freshUntil;
 	}
-	
+
 	public Timestamp getValidUntilTime() {
 		return validUntil;
 	}
-	
+
 	public int getConsensusMethod() {
 		return consensusMethod;
 	}
-	
+
 	public int getVoteSeconds() {
 		return voteDelaySeconds;
 	}
-	
+
 	public int getDistSeconds() {
 		return distDelaySeconds;
 	}
-	
+
 	public Set<String> getClientVersions() {
 		return clientVersions;
 	}
-	
+
 	public Set<String> getServerVersions() {
 		return serverVersions;
 	}
-	
+
 	public boolean isLive() {
 		return !validUntil.hasPassed();
 	}
-	
+
 	public List<RouterStatus> getRouterStatusEntries() {
 		return Collections.unmodifiableList(routerStatusEntries);
 	}
-	
+
 	public String getRawDocumentData() {
 		return rawDocumentData;
 	}
-	
+
 	public boolean isValidDocument() {
 		return (validAfter != null) && (freshUntil != null) && (validUntil != null) &&
 		(voteDelaySeconds > 0) && (distDelaySeconds > 0) && (signingHash != null) &&
 		(signatures.size() != 0);
 	}
-	
+
 	public HexDigest getSigningHash() {
 		return signingHash;
 	}
-	
+
 	public List<DirectorySignature> getDocumentSignatures() {
 		return Collections.unmodifiableList(signatures);
 	}
-	
+
 	public boolean canVerifySignatures(Map<HexDigest, KeyCertificate> certificates) {
 		for(DirectorySignature s: signatures) {
 			KeyCertificate cert = certificates.get(s.getIdentityDigest());
@@ -133,7 +133,7 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 		}
 		return true;
 	}
-	
+
 	public boolean verifySignatures(Map<HexDigest, KeyCertificate> certificates) {
 		for(DirectorySignature s: signatures) {
 			KeyCertificate cert = certificates.get(s.getIdentityDigest());
@@ -151,10 +151,10 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 		final ConsensusDocumentImpl other = (ConsensusDocumentImpl) o;
 		return other.getSigningHash().equals(signingHash);
 	}
-	
+
 	public int hashCode() {
 		return signingHash.hashCode();
 	}
-	
+
 
 }

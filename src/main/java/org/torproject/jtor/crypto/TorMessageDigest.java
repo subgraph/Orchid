@@ -10,7 +10,7 @@ import org.torproject.jtor.data.HexDigest;
 
 /**
  * This class wraps the default cryptographic message digest algorithm
- * used in Tor (SHA-1). 
+ * used in Tor (SHA-1).
  */
 public class TorMessageDigest {
 
@@ -75,7 +75,7 @@ public class TorMessageDigest {
 
 	/**
 	 * Add the entire contents of the byte array <code>input</code> to the current digest calculation.
-	 * 
+	 *
 	 * @param input An array of input bytes to process.
 	 */
 	public void update(byte[] input) {
@@ -83,9 +83,9 @@ public class TorMessageDigest {
 	}
 
 	/**
-	 * Add <code>length</code> bytes of the contents of the byte array <code>input</code> beginning at 
+	 * Add <code>length</code> bytes of the contents of the byte array <code>input</code> beginning at
 	 * <code>offset</code> into the array to the current digest calculation.
-	 * 
+	 *
 	 * @param input An array of input bytes to process.
 	 * @param offset The offset into the <code>input</code> array to begin processing.
 	 * @param length A count of how many bytes of the <code>input</code> array to process.
@@ -97,7 +97,7 @@ public class TorMessageDigest {
 	/**
 	 * Convert the String <code>input</code> into an array of bytes using the ISO-8859-1 encoding
 	 * and add these bytes to the current digest calculation.
-	 * 
+	 *
 	 * @param input A string to process.
 	 */
 	public void update(String input) {

@@ -17,7 +17,7 @@ import org.torproject.jtor.logging.Logger;
 
 public class DocumentParserFactoryImpl implements DocumentParserFactory {
 	private final Logger logger;
-	
+
 	public DocumentParserFactoryImpl(LogManager logManager) {
 		this.logger = logManager.getLogger("document-parsing");
 	}
@@ -45,13 +45,13 @@ public class DocumentParserFactoryImpl implements DocumentParserFactory {
 	public DocumentParser<ConsensusDocument> createConsensusDocumentParser(Reader reader) {
 		return new ConsensusDocumentParser(createDocumentFieldParser(reader));
 	}
-	
+
 	public DocumentFieldParser createDocumentFieldParser(InputStream input) {
 		return new DocumentFieldParserImpl(input, logger);
 	}
-	
+
 	public DocumentFieldParser createDocumentFieldParser(Reader reader) {
 		return new DocumentFieldParserImpl(reader, logger);
 	}
-	
+
 }

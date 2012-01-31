@@ -19,17 +19,17 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 		this.fieldParser.setHandler(createParsingHandler());
 		this.fieldParser.setRecognizeOpt();
 	}
-	
+
 	private DocumentParsingHandler createParsingHandler() {
 		return new DocumentParsingHandler() {
 			public void endOfDocument() {
 			}
 			public void parseKeywordLine() {
-				processKeywordLine();				
+				processKeywordLine();
 			}
 		};
 	}
-	
+
 	private void processKeywordLine() {
 		final RouterDescriptorKeyword keyword = RouterDescriptorKeyword.findKeyword(fieldParser.getCurrentKeyword());
 		/*
@@ -38,15 +38,15 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 		 * starts with a keyword it doesn't recognize;
 		 */
 		if(!keyword.equals(RouterDescriptorKeyword.UNKNOWN_KEYWORD))
-			processKeyword(keyword);	
+			processKeyword(keyword);
 	}
-	
+
 	private void startNewDescriptor() {
 		fieldParser.resetRawDocument();
 		fieldParser.startSignedEntity();
 		currentDescriptor = new RouterDescriptorImpl();
 	}
-	
+
 	public boolean parse(DocumentParsingResultHandler<RouterDescriptor> resultHandler) {
 		this.resultHandler = resultHandler;
 		startNewDescriptor();
@@ -58,7 +58,7 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 			return false;
 		}
 	}
-	
+
 	private void processKeyword(RouterDescriptorKeyword keyword) {
 		fieldParser.verifyExpectedArgumentCount(keyword.getKeyword(), keyword.getArgumentCount());
 
@@ -89,7 +89,7 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 			break;
 		case SIGNING_KEY:
 			currentDescriptor.setIdentityKey(fieldParser.parsePublicKey());
-			break;			
+			break;
 		case ROUTER_SIGNATURE:
 			processSignature();
 			break;
@@ -103,28 +103,28 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 			currentDescriptor.setContact(fieldParser.parseConcatenatedString());
 			break;
 		case FAMILY:
-			while(fieldParser.argumentsRemaining() > 0) 
+			while(fieldParser.argumentsRemaining() > 0)
 				currentDescriptor.addFamily(fieldParser.parseString());
 			break;
 		case EVENTDNS:
 			if(fieldParser.parseBoolean())
 				currentDescriptor.setEventDNS();
-			break;		
+			break;
 		case PROTOCOLS:
 			processProtocols();
-			break;			
+			break;
 		case CACHES_EXTRA_INFO:
 			currentDescriptor.setCachesExtraInfo();
-			break;			
+			break;
 		case HIDDEN_SERVICE_DIR:
 			currentDescriptor.setHiddenServiceDir();
-			break;			
+			break;
 		case ALLOW_SINGLE_HOP_EXITS:
 			currentDescriptor.setAllowSingleHopExits();
 			break;
 		case EXTRA_INFO_DIGEST:
 			currentDescriptor.setExtraInfoDigest(fieldParser.parseHexDigest());
-			break;		
+			break;
 		case READ_HISTORY:
 			currentDescriptor.setReadHistory(parseHistory());
 			break;
@@ -133,7 +133,7 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 			break;
 		}
 	}
-	
+
 	private BandwidthHistory parseHistory() {
 		final Timestamp ts = fieldParser.parseTimestamp();
 		final String nsec = fieldParser.parseString();
@@ -147,7 +147,7 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 			history.addSample(fieldParser.parseInteger(s));
 		return history;
 	}
-	
+
 	private void processRouter() {
 		currentDescriptor.setNickname(fieldParser.parseNickname());
 		currentDescriptor.setAddress(fieldParser.parseAddress());
@@ -156,7 +156,7 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 		fieldParser.parsePort();
 		currentDescriptor.setDirectoryPort(fieldParser.parsePort());
 	}
-	
+
 	private boolean verifyCurrentDescriptor(TorSignature signature) {
 		if(!fieldParser.verifySignedEntity(currentDescriptor.getIdentityKey(), signature)) {
 			resultHandler.documentInvalid(currentDescriptor, "Signature failed.");
@@ -171,17 +171,17 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 		}
 		return currentDescriptor.isValidDocument();
 	}
-	
+
 	private void processBandwidth() {
 		final int average = fieldParser.parseInteger();
 		final int burst = fieldParser.parseInteger();
 		final int observed = fieldParser.parseInteger();
 		currentDescriptor.setBandwidthValues(average, burst, observed);
 	}
-	
+
 	private void processProtocols() {
 		String kw = fieldParser.parseString();
-		if(!kw.equals("Link")) 
+		if(!kw.equals("Link"))
 			throw new TorParsingException("Expected 'Link' token in protocol line got: " + kw);
 		while(true) {
 			kw = fieldParser.parseString();
@@ -191,9 +191,9 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 		}
 		while(fieldParser.argumentsRemaining() > 0)
 			currentDescriptor.addCircuitProtocolVersion(fieldParser.parseInteger());
-		
+
 	}
-	
+
 	private void processSignature() {
 		fieldParser.endSignedEntity();
 		currentDescriptor.setDescriptorHash(fieldParser.getSignatureMessageDigest().getHexDigest());

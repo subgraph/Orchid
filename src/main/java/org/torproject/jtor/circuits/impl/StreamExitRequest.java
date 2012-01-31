@@ -50,7 +50,7 @@ public class StreamExitRequest implements ExitTarget {
 		this.response = response;
 		circuitManager.streamRequestIsCompleted(this);
 	}
-	
+
 	OpenStreamResponse getResponse() {
 		return response;
 	}
@@ -58,28 +58,28 @@ public class StreamExitRequest implements ExitTarget {
 	boolean isCompleted() {
 		return response != null;
 	}
-	
+
 	synchronized boolean reserveRequest() {
 		if(isReserved) return false;
 		isReserved = true;
 		return true;
 	}
-	
+
 	boolean isReserved() {
 		return isReserved;
 	}
-	
+
 	synchronized void unreserveRequest() {
 		isReserved = false;
 	}
-	
+
 	public String toString() {
 		if(isAddress)
 			return address + ":"+ port;
 		else
 			return hostname + ":"+ port;
 	}
-	
+
 	public boolean equals(Object ob) {
 		if(this == ob) return true;
 		if(!(ob instanceof StreamExitRequest))
@@ -87,10 +87,10 @@ public class StreamExitRequest implements ExitTarget {
 		StreamExitRequest other = (StreamExitRequest) ob;
 		if(address != null && isAddress)
 			return (other.isAddress && address.equals(other.address) && port == other.port);
-		else 
-			return (!other.isAddress && hostname.equals(other.hostname) && port == other.port); 
+		else
+			return (!other.isAddress && hostname.equals(other.hostname) && port == other.port);
 	}
-	
+
 	public int hashCode() {
 		int hash = port;
 		if(address != null) {
@@ -101,6 +101,6 @@ public class StreamExitRequest implements ExitTarget {
 			hash *= 31;
 			hash += hostname.hashCode();
 		}
-		return hash;	
+		return hash;
 	}
 }
