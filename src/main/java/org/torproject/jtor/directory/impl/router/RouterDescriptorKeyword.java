@@ -29,7 +29,7 @@ public enum RouterDescriptorKeyword {
 	ALLOW_SINGLE_HOP_EXITS("allow-single-hop-exits", 0),
 	UNKNOWN_KEYWORD("KEYWORD NOT FOUND");
 
-	public final static int VARIABLE_ARGUMENT_COUNT = -1;
+	public static final int VARIABLE_ARGUMENT_COUNT = -1;
 
 	private final String keyword;
 	private final int argumentCount;

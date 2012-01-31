@@ -3,7 +3,7 @@ package org.torproject.jtor.data;
 import org.torproject.jtor.TorException;
 
 public class Base32 {
-	private final static String BASE32_CHARS = "abcdefghijklmnopqrstuvwxyz234567";
+	private static final String BASE32_CHARS = "abcdefghijklmnopqrstuvwxyz234567";
 
 	public static String base32Encode(byte[] source) {
 		return base32Encode(source, 0, source.length);

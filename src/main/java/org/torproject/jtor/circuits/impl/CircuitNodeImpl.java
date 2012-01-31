@@ -17,8 +17,8 @@ class CircuitNodeImpl implements CircuitNode {
 		return new CircuitNodeImpl(router);
 	}
 
-	private final static int CIRCWINDOW_START = 1000;
-	private final static int CIRCWINDOW_INCREMENT = 100;
+	private static final int CIRCWINDOW_START = 1000;
+	private static final int CIRCWINDOW_INCREMENT = 100;
 	private final TorKeyAgreement dhContext;
 	private final Router router;
 	private CircuitNodeCryptoState cryptoState;

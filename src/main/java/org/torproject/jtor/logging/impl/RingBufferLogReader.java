@@ -8,7 +8,7 @@ import org.torproject.jtor.logging.LogEntry;
 import org.torproject.jtor.logging.LogReader;
 
 public class RingBufferLogReader implements LogReader, Iterable<LogEntry> {
-	private final static int SIZE = 100;
+	private static final int SIZE = 100;
 	final private List<LogEntry> ringBuffer = new ArrayList<LogEntry>(100);
 	int writeIndex;
 	int readIndex;

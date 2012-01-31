@@ -9,7 +9,7 @@ import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.directory.Router;
 
 public class CircuitStatus {
-	private final static int MAXIMUM_TIMEOUT_COUNT = 3;
+	private static final int MAXIMUM_TIMEOUT_COUNT = 3;
 	enum CircuitState {
 		UNCONNECTED("Unconnected"),
 		BUILDING("Building"),

@@ -24,10 +24,10 @@ import org.torproject.jtor.directory.parsing.DocumentParsingHandler;
 import org.torproject.jtor.logging.Logger;
 
 public class DocumentFieldParserImpl implements DocumentFieldParser {
-	private final static String BEGIN_TAG = "-----BEGIN";
-	private final static String END_TAG = "-----END";
-	private final static String TAG_DELIMITER = "-----";
-	private final static String DEFAULT_DELIMITER = " ";
+	private static final String BEGIN_TAG = "-----BEGIN";
+	private static final String END_TAG = "-----END";
+	private static final String TAG_DELIMITER = "-----";
+	private static final String DEFAULT_DELIMITER = " ";
 	private final BufferedReader reader;
 	private final Logger logger;
 	private String delimiter = DEFAULT_DELIMITER;

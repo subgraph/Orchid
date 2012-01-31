@@ -8,7 +8,7 @@ import org.torproject.jtor.directory.impl.consensus.ConsensusDocumentParser.Docu
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 
 public class PreambleSectionParser extends ConsensusDocumentSectionParser {
-	private final static int CURRENT_DOCUMENT_VERSION = 3;
+	private static final int CURRENT_DOCUMENT_VERSION = 3;
 	private boolean isFirstLine = true;
 
 	PreambleSectionParser(DocumentFieldParser parser, ConsensusDocumentImpl document) {

@@ -29,8 +29,8 @@ import org.torproject.jtor.TorException;
  *
  */
 public class TorKeyAgreement {
-	public final static int DH_LEN = 128;
-	public final static int DH_SEC_LEN = 40;
+	public static final int DH_LEN = 128;
+	public static final int DH_SEC_LEN = 40;
 	/*
 	 * tor-spec 0.3
 	 *

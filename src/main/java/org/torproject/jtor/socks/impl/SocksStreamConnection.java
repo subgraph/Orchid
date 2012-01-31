@@ -15,7 +15,7 @@ public class SocksStreamConnection {
 		SocksStreamConnection ssc = new SocksStreamConnection(socket, stream, logger);
 		ssc.run();
 	}
-	private final static int TRANSFER_BUFFER_SIZE = 4096;
+	private static final int TRANSFER_BUFFER_SIZE = 4096;
 	private final Stream stream;
 	private final InputStream torInputStream;
 	private final OutputStream torOutputStream;

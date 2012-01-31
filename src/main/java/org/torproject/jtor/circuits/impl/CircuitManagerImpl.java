@@ -19,7 +19,7 @@ import org.torproject.jtor.logging.LogManager;
 import org.torproject.jtor.logging.Logger;
 
 public class CircuitManagerImpl implements CircuitManager {
-	private final static boolean DEBUG_CIRCUIT_CREATION = true;
+	private static final boolean DEBUG_CIRCUIT_CREATION = true;
 
 	private final ConnectionManagerImpl connectionManager;
 	private final Logger logger;

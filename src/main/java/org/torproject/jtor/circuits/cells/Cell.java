@@ -3,69 +3,69 @@ package org.torproject.jtor.circuits.cells;
 
 public interface Cell {
 	/** Command constant for a PADDING type cell. */
-	final static int PADDING = 0;
+	static final int PADDING = 0;
 
 	/** Command constant for a CREATE type cell. */
-	final static int CREATE = 1;
+	static final int CREATE = 1;
 
 	/** Command constant for a CREATED type cell. */
-	final static int CREATED = 2;
+	static final int CREATED = 2;
 
 	/** Command constant for a RELAY type cell. */
-	final static int RELAY = 3;
+	static final int RELAY = 3;
 
 	/** Command constant for a DESTROY type cell. */
-	final static int DESTROY = 4;
+	static final int DESTROY = 4;
 
 	/** Command constant for a CREATE_FAST type cell. */
-	final static int CREATE_FAST = 5;
+	static final int CREATE_FAST = 5;
 
 	/** Command constant for a CREATED_FAST type cell. */
-	final static int CREATED_FAST = 6;
+	static final int CREATED_FAST = 6;
 
 	/** Command constant for a VERSIONS type cell. */
-	final static int VERSIONS = 7;
+	static final int VERSIONS = 7;
 
 	/** Command constant for a NETINFO type cell. */
-	final static int NETINFO = 8;
+	static final int NETINFO = 8;
 
 	/** Command constant for a RELAY_EARLY type cell. */
-	final static int RELAY_EARLY = 9;
+	static final int RELAY_EARLY = 9;
 
-	final static int ERROR_NONE = 0;
-	final static int ERROR_PROTOCOL = 1;
-	final static int ERROR_INTERNAL = 2;
-	final static int ERROR_REQUESTED = 3;
-	final static int ERROR_HIBERNATING = 4;
-	final static int ERROR_RESOURCELIMIT = 5;
-	final static int ERROR_CONNECTFAILED = 6;
-	final static int ERROR_OR_IDENTITY = 7;
-	final static int ERROR_OR_CONN_CLOSED = 8;
-	final static int ERROR_FINISHED = 9;
-	final static int ERROR_TIMEOUT = 10;
-	final static int ERROR_DESTROYED = 11;
-	final static int ERROR_NOSUCHSERVICE = 12;
+	static final int ERROR_NONE = 0;
+	static final int ERROR_PROTOCOL = 1;
+	static final int ERROR_INTERNAL = 2;
+	static final int ERROR_REQUESTED = 3;
+	static final int ERROR_HIBERNATING = 4;
+	static final int ERROR_RESOURCELIMIT = 5;
+	static final int ERROR_CONNECTFAILED = 6;
+	static final int ERROR_OR_IDENTITY = 7;
+	static final int ERROR_OR_CONN_CLOSED = 8;
+	static final int ERROR_FINISHED = 9;
+	static final int ERROR_TIMEOUT = 10;
+	static final int ERROR_DESTROYED = 11;
+	static final int ERROR_NOSUCHSERVICE = 12;
 
 
 	/**
 	 * The fixed size of a standard cell.
 	 */
-	final static int CELL_LEN = 512;
+	static final int CELL_LEN = 512;
 
 	/**
 	 * The length of a standard cell header.
 	 */
-	final static int CELL_HEADER_LEN = 3;
+	static final int CELL_HEADER_LEN = 3;
 
 	/**
 	 * The header length for a variable length cell (ie: VERSIONS)
 	 */
-	final static int CELL_VAR_HEADER_LEN = 5;
+	static final int CELL_VAR_HEADER_LEN = 5;
 
 	/**
 	 * The length of the payload space in a standard cell.
 	 */
-	final static int CELL_PAYLOAD_LEN = CELL_LEN - CELL_HEADER_LEN;
+	static final int CELL_PAYLOAD_LEN = CELL_LEN - CELL_HEADER_LEN;
 
 	/**
 	 * Return the circuit id field from this cell.

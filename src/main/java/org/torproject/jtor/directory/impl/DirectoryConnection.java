@@ -14,7 +14,7 @@ import org.torproject.jtor.TorException;
 import org.torproject.jtor.data.HexDigest;
 
 public class DirectoryConnection {
-	private final static boolean USE_COMPRESSION = true;
+	private static final boolean USE_COMPRESSION = true;
 	private final HttpConnection http;
 
 	DirectoryConnection(String host, InputStream input, OutputStream output) {

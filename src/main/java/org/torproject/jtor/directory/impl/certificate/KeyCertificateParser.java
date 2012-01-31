@@ -11,7 +11,7 @@ import org.torproject.jtor.directory.parsing.DocumentParsingHandler;
 import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
 
 public class KeyCertificateParser implements DocumentParser<KeyCertificate> {
-	private final static int CURRENT_CERTIFICATE_VERSION = 3;
+	private static final int CURRENT_CERTIFICATE_VERSION = 3;
 	private final DocumentFieldParser fieldParser;
 	private KeyCertificateImpl currentCertificate;
 	private DocumentParsingResultHandler<KeyCertificate> resultHandler;

@@ -33,8 +33,8 @@ public class CircuitImpl implements Circuit {
 		return new CircuitImpl(circuitManager, connectionManager, logger);
 	}
 
-	private final static long CIRCUIT_BUILD_TIMEOUT_MS = 30 * 1000;
-	private final static long CIRCUIT_RELAY_RESPONSE_TIMEOUT = 20 * 1000;
+	private static final long CIRCUIT_BUILD_TIMEOUT_MS = 30 * 1000;
+	private static final long CIRCUIT_RELAY_RESPONSE_TIMEOUT = 20 * 1000;
 
 	private ConnectionImpl entryConnection;
 	private int circuitId;

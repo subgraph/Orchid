@@ -15,8 +15,8 @@ import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.logging.Logger;
 
 public class CircuitCreationTask implements Runnable {
-	private final static int MAX_PENDING_CIRCUITS = 2;
-	private final static int DEFAULT_CLEAN_CIRCUITS = 3;
+	private static final int MAX_PENDING_CIRCUITS = 2;
+	private static final int DEFAULT_CLEAN_CIRCUITS = 3;
 	private final Directory directory;
 	private final CircuitManagerImpl circuitManager;
 	private final Logger logger;

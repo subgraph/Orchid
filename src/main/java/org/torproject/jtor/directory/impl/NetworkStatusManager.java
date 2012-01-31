@@ -26,11 +26,11 @@ import org.torproject.jtor.logging.LogManager;
 import org.torproject.jtor.logging.Logger;
 
 public class NetworkStatusManager {
-	private final static int MAX_DIRECTORY_CONNECT_ATTEMPTS = 5;
-	private final static int MAX_DL_PER_REQUEST = 96;
-	private final static int MAX_DL_TO_DELAY = 16;
-	private final static int MIN_DL_REQUESTS = 3;
-	private final static int MAX_CLIENT_INTERVAL_WITHOUT_REQUEST = 10 * 60 * 1000;
+	private static final int MAX_DIRECTORY_CONNECT_ATTEMPTS = 5;
+	private static final int MAX_DL_PER_REQUEST = 96;
+	private static final int MAX_DL_TO_DELAY = 16;
+	private static final int MIN_DL_REQUESTS = 3;
+	private static final int MAX_CLIENT_INTERVAL_WITHOUT_REQUEST = 10 * 60 * 1000;
 
 	private final Directory directory;
 	private final Logger logger;

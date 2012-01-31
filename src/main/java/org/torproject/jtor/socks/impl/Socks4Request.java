@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.net.Socket;
 
 public class Socks4Request extends SocksRequest {
-	private final static int SOCKS_COMMAND_CONNECT = 1;
-	private final static int SOCKS_STATUS_SUCCESS = 0x5a;
-	private final static int SOCKS_STATUS_FAILURE = 0x5b;
+	private static final int SOCKS_COMMAND_CONNECT = 1;
+	private static final int SOCKS_STATUS_SUCCESS = 0x5a;
+	private static final int SOCKS_STATUS_FAILURE = 0x5b;
 	private int command;
 
 	Socks4Request(Socket socket) {

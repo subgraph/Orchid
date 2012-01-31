@@ -35,7 +35,7 @@ enum DocumentKeyword {
 	UNKNOWN_KEYWORD("KEYWORD NOT FOUND");
 
 
-	public final static int VARIABLE_ARGUMENT_COUNT = -1;
+	public static final int VARIABLE_ARGUMENT_COUNT = -1;
 
 	private final String keyword;
 	private final DocumentSection section;

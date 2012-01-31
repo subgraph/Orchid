@@ -31,7 +31,7 @@ import org.torproject.jtor.logging.Logger;
  */
 public class ConnectionImpl implements Connection {
 
-	private final static int DEFAULT_CONNECT_TIMEOUT = 10000;
+	private static final int DEFAULT_CONNECT_TIMEOUT = 10000;
 
 	private final SSLSocket socket;
 	private final ConnectionManagerImpl manager;

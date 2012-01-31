@@ -6,15 +6,15 @@ import java.net.Socket;
 import org.torproject.jtor.TorException;
 
 public class Socks5Request extends SocksRequest {
-	final static int SOCKS5_VERSION = 5;
-	final static int SOCKS5_AUTH_NONE = 0;
-	final static int SOCKS5_COMMAND_CONNECT = 1;
-	final static int SOCKS5_ADDRESS_IPV4 = 1;
-	final static int SOCKS5_ADDRESS_HOSTNAME = 3;
-	final static int SOCKS5_ADDRESS_IPV6 = 4;
-	final static int SOCKS5_STATUS_SUCCESS = 0;
-	final static int SOCKS5_STATUS_FAILURE = 1;
-	final static int SOCKS5_STATUS_CONNECTION_REFUSED = 5;
+	static final int SOCKS5_VERSION = 5;
+	static final int SOCKS5_AUTH_NONE = 0;
+	static final int SOCKS5_COMMAND_CONNECT = 1;
+	static final int SOCKS5_ADDRESS_IPV4 = 1;
+	static final int SOCKS5_ADDRESS_HOSTNAME = 3;
+	static final int SOCKS5_ADDRESS_IPV6 = 4;
+	static final int SOCKS5_STATUS_SUCCESS = 0;
+	static final int SOCKS5_STATUS_FAILURE = 1;
+	static final int SOCKS5_STATUS_CONNECTION_REFUSED = 5;
 
 	private int command;
 	private int addressType;

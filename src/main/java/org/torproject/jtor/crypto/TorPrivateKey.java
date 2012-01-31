@@ -19,7 +19,7 @@ import org.torproject.jtor.data.HexDigest;
 
 public class TorPrivateKey {
 
-	static public TorPrivateKey generateNewKeypair() {
+	public static TorPrivateKey generateNewKeypair() {
 		KeyPairGenerator generator = createGenerator();
 		generator.initialize(1024, new SecureRandom());
 		KeyPair pair = generator.generateKeyPair();
@@ -36,7 +36,7 @@ public class TorPrivateKey {
 		}
 	}
 
-	static public TorPrivateKey createFromPEMBuffer(String buffer) {
+	public static TorPrivateKey createFromPEMBuffer(String buffer) {
 		final PEMReader pemReader = new PEMReader(new StringReader(buffer));
 		final KeyPair kp = readPEMKeyPair(pemReader);
 		if(kp.getPublic() instanceof RSAPublicKey && kp.getPrivate() instanceof RSAPrivateKey)
@@ -45,7 +45,7 @@ public class TorPrivateKey {
 			throw new TorParsingException("Failed to extract PEM private key");
 	}
 
-	static private KeyPair readPEMKeyPair(PEMReader reader) {
+	private static KeyPair readPEMKeyPair(PEMReader reader) {
 		try {
 			final Object ob = reader.readObject();
 			return verifyObjectAsKeyPair(ob);
@@ -54,7 +54,7 @@ public class TorPrivateKey {
 		}
 	}
 
-	static private KeyPair verifyObjectAsKeyPair(Object ob) {
+	private static KeyPair verifyObjectAsKeyPair(Object ob) {
 		if(ob instanceof KeyPair)
 			return ((KeyPair)ob);
 		else

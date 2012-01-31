@@ -17,13 +17,13 @@ class CircuitNodeCryptoState {
 	private final TorStreamCipher forwardCipher;
 	private final TorStreamCipher backwardCipher;
 
-	static private byte[] extractDigestBytes(byte[] keyMaterial, int offset) {
+	private static byte[] extractDigestBytes(byte[] keyMaterial, int offset) {
 		final byte[] digestBytes = new byte[TorMessageDigest.TOR_DIGEST_SIZE];
 		System.arraycopy(keyMaterial, offset, digestBytes, 0, TorMessageDigest.TOR_DIGEST_SIZE);
 		return digestBytes;
 	}
 
-	static private byte[] extractCipherKey(byte[] keyMaterial, int offset) {
+	private static byte[] extractCipherKey(byte[] keyMaterial, int offset) {
 		final byte[] keyBytes = new byte[TorStreamCipher.KEY_LEN];
 		System.arraycopy(keyMaterial, offset, keyBytes, 0, TorStreamCipher.KEY_LEN);
 		return keyBytes;

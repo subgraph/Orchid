@@ -12,10 +12,10 @@ import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.circuits.cells.RelayCell;
 
 public class StreamImpl implements Stream {
-	private final static int STREAM_CONNECT_TIMEOUT = 20 * 1000;
-	private final static int STREAMWINDOW_START = 500;
-	private final static int STREAMWINDOW_INCREMENT = 50;
-	private final static int STREAMWINDOW_MAX_UNFLUSHED = 10;
+	private static final int STREAM_CONNECT_TIMEOUT = 20 * 1000;
+	private static final int STREAMWINDOW_START = 500;
+	private static final int STREAMWINDOW_INCREMENT = 50;
+	private static final int STREAMWINDOW_MAX_UNFLUSHED = 10;
 	private final CircuitImpl circuit;
 	private final int streamId;
 	private final CircuitNode targetNode;

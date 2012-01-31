@@ -13,7 +13,7 @@ public class ConsensusDocumentParser implements DocumentParser<ConsensusDocument
 	// dir-spec.txt 3.2
 	// Unlike other formats described above, a SP in these documents must be a
 	// single space character (hex 20).
-	private final static String ITEM_DELIMITER = " ";
+	private static final String ITEM_DELIMITER = " ";
 
 	private final PreambleSectionParser preambleParser;
 	private final AuthoritySectionParser authorityParser;

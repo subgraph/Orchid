@@ -24,12 +24,12 @@ import org.torproject.jtor.data.HexDigest;
  * This class wraps the RSA public keys used in the Tor protocol.
  */
 public class TorPublicKey {
-	static public TorPublicKey createFromPEMBuffer(String buffer) {
+	public static TorPublicKey createFromPEMBuffer(String buffer) {
 		final PEMReader pemReader = new PEMReader( new StringReader(buffer));
 		return new TorPublicKey(readPEMPublicKey(pemReader));
 	}
 
-	static private RSAPublicKey readPEMPublicKey(PEMReader reader) {
+	private static RSAPublicKey readPEMPublicKey(PEMReader reader) {
 		try {
 			final Object ob = reader.readObject();
 			return verifyObjectAsKey(ob);
@@ -38,7 +38,7 @@ public class TorPublicKey {
 		}
 	}
 
-	static private RSAPublicKey verifyObjectAsKey(Object ob) {
+	private static RSAPublicKey verifyObjectAsKey(Object ob) {
 		if(ob instanceof RSAPublicKey)
 			return ((RSAPublicKey) ob);
 		else if(ob instanceof KeyPair) {

@@ -4,7 +4,7 @@ import org.torproject.jtor.TorParsingException;
 import org.torproject.jtor.data.IPv4Address;
 
 public class PolicyRule {
-	private final static String WILDCARD = "*";
+	private static final String WILDCARD = "*";
 
 	public static PolicyRule createAcceptFromString(String rule) {
 		return createRule(rule, true);

@@ -26,8 +26,8 @@ public class PortRange {
 			throw new TorParsingException("Could not parse port value: "+ port);
 		}
 	}
-	private final static int MAX_PORT = 0xFFFF;
-	public final static PortRange ALL_PORTS = new PortRange(1,MAX_PORT);
+	private static final int MAX_PORT = 0xFFFF;
+	public static final PortRange ALL_PORTS = new PortRange(1,MAX_PORT);
 	private final int portStart;
 	private final int portEnd;
 
@@ -42,7 +42,7 @@ public class PortRange {
 		portEnd = end;
 	}
 
-	static private boolean isValidRange(int start, int end) {
+	private static boolean isValidRange(int start, int end) {
 		if(!(isValidPort(start) && isValidPort(end)))
 				return false;
 		else if(start > end)
@@ -51,7 +51,7 @@ public class PortRange {
 			return true;
 	}
 
-	static private boolean isValidPort(int port) {
+	private static boolean isValidPort(int port) {
 		return port >= 0 && port <= MAX_PORT;
 	}
 

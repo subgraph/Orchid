@@ -17,7 +17,7 @@ import org.torproject.jtor.socks.impl.SocksPortListenerImpl;
  * various subsystem modules.
  */
 public class Tor {
-	private final static String version = "JTor 0.0.0";
+	private static final String version = "JTor 0.0.0";
 
 	/**
 	 * Return a string describing the version of this software.
@@ -34,7 +34,7 @@ public class Tor {
 	 * @return A new <code>LogManager</code>
 	 * @see LogManager
 	 */
-	static public LogManager createLogManager() {
+	public static LogManager createLogManager() {
 		return new LogManagerImpl();
 	}
 
@@ -46,7 +46,7 @@ public class Tor {
 	 * @return A new <code>TorConfig</code> instance.
 	 * @see TorConfig
 	 */
-	static public TorConfig createConfig(LogManager logManager) {
+	public static TorConfig createConfig(LogManager logManager) {
 		return new TorConfigImpl(logManager);
 	}
 
@@ -60,7 +60,7 @@ public class Tor {
 	 * @return A new <code>Directory</code> instance.
 	 * @see Directory
 	 */
-	static public Directory createDirectory(LogManager logManager, TorConfig config) {
+	public static Directory createDirectory(LogManager logManager, TorConfig config) {
 		return new DirectoryImpl(logManager, config);
 	}
 
@@ -74,7 +74,7 @@ public class Tor {
 	 * @return A new <code>CircuitManager</code> instance.
 	 * @see CircuitManager
 	 */
-	static public CircuitManager createCircuitManager(Directory directory, LogManager logManager) {
+	public static CircuitManager createCircuitManager(Directory directory, LogManager logManager) {
 		final ConnectionManagerImpl connectionManager = new ConnectionManagerImpl(logManager);
 		return new CircuitManagerImpl(directory, connectionManager, logManager);
 	}
@@ -89,7 +89,7 @@ public class Tor {
 	 * @return A new <code>SocksPortListener</code> instance.
 	 * @see SocksPortListener
 	 */
-	static public SocksPortListener createSocksPortListener(LogManager logManager, CircuitManager circuitManager) {
+	public static SocksPortListener createSocksPortListener(LogManager logManager, CircuitManager circuitManager) {
 		return new SocksPortListenerImpl(logManager, circuitManager);
 	}
 
@@ -103,7 +103,7 @@ public class Tor {
 	 * @return A new <code>NetworkStatusManager</code> instance.
 	 * @see NetworkStatusManager
 	 */
-	static public NetworkStatusManager createNetworkStatusManager(Directory directory, LogManager logManager) {
+	public static NetworkStatusManager createNetworkStatusManager(Directory directory, LogManager logManager) {
 		return new NetworkStatusManager(directory, logManager);
 	}
 }

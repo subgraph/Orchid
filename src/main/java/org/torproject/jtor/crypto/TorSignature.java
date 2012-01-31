@@ -10,19 +10,19 @@ import org.torproject.jtor.TorException;
 import org.torproject.jtor.TorParsingException;
 
 public class TorSignature {
-	private final static String SIGNATURE_BEGIN = "-----BEGIN SIGNATURE-----";
-	private final static String ID_SIGNATURE_BEGIN = "-----BEGIN ID SIGNATURE-----";
-	private final static String SIGNATURE_END = "-----END SIGNATURE-----";
-	private final static String ID_SIGNATURE_END = "-----END ID SIGNATURE-----";
+	private static final String SIGNATURE_BEGIN = "-----BEGIN SIGNATURE-----";
+	private static final String ID_SIGNATURE_BEGIN = "-----BEGIN ID SIGNATURE-----";
+	private static final String SIGNATURE_END = "-----END SIGNATURE-----";
+	private static final String ID_SIGNATURE_END = "-----END ID SIGNATURE-----";
 
-	static public TorSignature createFromPEMBuffer(String buffer) {
+	public static TorSignature createFromPEMBuffer(String buffer) {
 		BufferedReader reader = new BufferedReader(new StringReader(buffer));
 		final String header = nextLine(reader);
 		if(!(SIGNATURE_BEGIN.equals(header) || ID_SIGNATURE_BEGIN.equals(header)))
 			throw new TorParsingException("Did not find expected signature BEGIN header");
 		return new TorSignature(Base64.decode(parseBase64Data(reader)));
 	}
-	static private String parseBase64Data(BufferedReader reader) {
+	private static String parseBase64Data(BufferedReader reader) {
 		final StringBuilder base64Data = new StringBuilder();
 		while(true) {
 			final String line = nextLine(reader);

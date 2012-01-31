@@ -19,9 +19,9 @@ import java.util.zip.InflaterInputStream;
 import org.torproject.jtor.TorException;
 
 public class HttpConnection {
-	private final static String HTTP_RESPONSE_REGEX = "HTTP/1\\.(\\d) (\\d+) (.*)";
-	private final static String CONTENT_LENGTH_HEADER = "Content-Length";
-	private final static String CONTENT_ENCODING_HEADER = "Content-Encoding";
+	private static final String HTTP_RESPONSE_REGEX = "HTTP/1\\.(\\d) (\\d+) (.*)";
+	private static final String CONTENT_LENGTH_HEADER = "Content-Length";
+	private static final String CONTENT_ENCODING_HEADER = "Content-Encoding";
 	private final Date ifModifiedSince = null;
 	private final String host;
 	private final BufferedReader reader;
