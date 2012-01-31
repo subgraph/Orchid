@@ -167,7 +167,7 @@
 		<module name="LeftCurly">
 			<property name="option" value="nlow"/>
 		</module>
-		<module name="NeedBraces"/>
+		<!--<module name="NeedBraces"/>-->
 		<!--<module name="RightCurly">
 			<property name="option" value="alone"/>
 		</module>-->
