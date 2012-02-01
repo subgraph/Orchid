@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 
 import org.torproject.jtor.TorConfig;
@@ -20,7 +21,7 @@ import org.torproject.jtor.logging.LogManager;
  */
 public class ControlServerTCP extends ControlServer implements EventHandler {
 
-	private Vector<ControlConnectionHandler> connections = new Vector<ControlConnectionHandler>();
+	private List<ControlConnectionHandler> connections = new Vector<ControlConnectionHandler>();
 	private ServerSocket ss;
 
 	public ControlServerTCP(Directory directory, TorConfig tc, LogManager logManager) {

@@ -67,11 +67,11 @@ public class PreambleSectionParser extends ConsensusDocumentSectionParser {
 			break;
 
 		case CLIENT_VERSIONS:
-			for(String version: parseVersions(fieldParser.parseString()))
+			for(String version : parseVersions(fieldParser.parseString()))
 				document.addClientVersion(version);
 			break;
 		case SERVER_VERSIONS:
-			for(String version: parseVersions(fieldParser.parseString()))
+			for(String version : parseVersions(fieldParser.parseString()))
 				document.addServerVersion(version);
 			break;
 		case KNOWN_FLAGS:

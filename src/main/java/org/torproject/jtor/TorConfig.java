@@ -61,7 +61,7 @@ public interface TorConfig {
 
 	public String getReachableAddresses();
 
-	public void setReachableAddresses(String ReachableAddresses);
+	public void setReachableAddresses(String reachableAddresses);
 
 	public void setDefaultReachableAddresses();
 

@@ -171,8 +171,11 @@ class CellImpl implements Cell {
 		return cellBuffer.array();
 	}
 
+	@Override
 	public String toString() {
-		return "Cell: circuit_id="+ circuitId +" command="+ command +" payload_len="+ cellBuffer.position();
+		return "Cell: circuit_id=" + circuitId
+				+ " command=" + command
+				+ " payload_len=" + cellBuffer.position();
 	}
 
 	public static String errorToDescription(int errorCode) {

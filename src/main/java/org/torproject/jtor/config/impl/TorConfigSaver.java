@@ -21,7 +21,7 @@ public class TorConfigSaver {
 		StringBuilder output = new StringBuilder();
 		Map opts = configToHash(tc);
 		HashMap written = new HashMap();
-		final String EOL_OUT = "\n";
+		final String eolOut = "\n";
 		try {
 			fileReader = new FileReader(torrc);
 			reader = new BufferedReader(fileReader);
@@ -31,7 +31,7 @@ public class TorConfigSaver {
 
 					// TODO check comments for values that have changed and inject them here instead of the end of file
 
-					output.append(line).append(EOL_OUT);
+					output.append(line).append(eolOut);
 					continue;
 				}
 
@@ -53,7 +53,7 @@ public class TorConfigSaver {
 				}
 
 				if (((String)opts.get(key.toLowerCase())).indexOf("\n") == -1) {
-					output.append(key).append(" ").append((String)opts.get(key.toLowerCase())).append(" ").append(comment).append(EOL_OUT);
+					output.append(key).append(" ").append((String)opts.get(key.toLowerCase())).append(" ").append(comment).append(eolOut);
 					written.put(key.toLowerCase(), "");
 					continue;
 				}
@@ -61,7 +61,7 @@ public class TorConfigSaver {
 				String[] out = ((String)opts.get(key.toLowerCase())).split("\n");
 				written.put(key.toLowerCase(), "");
 				for (int i = 0; i < out.length; i++) {
-					output.append(key).append(" ").append(out[i]).append(EOL_OUT);
+					output.append(key).append(" ").append(out[i]).append(eolOut);
 				}
 			}
 		} catch (FileNotFoundException e) {
@@ -95,11 +95,11 @@ public class TorConfigSaver {
 				}
 
 				if (((String)opts.get(key)).indexOf("\n") == -1) {
-					output.append(key).append(" ").append(val).append(EOL_OUT);
+					output.append(key).append(" ").append(val).append(eolOut);
 				} else {
 					String[] out = ((String)opts.get(key)).split("\n");
 					for (int i = 0; i < out.length; i++) {
-						output.append(key).append(" ").append(out[i]).append(EOL_OUT);
+						output.append(key).append(" ").append(out[i]).append(eolOut);
 					}
 				}
 			}

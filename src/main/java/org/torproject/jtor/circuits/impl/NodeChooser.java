@@ -97,9 +97,11 @@ public class NodeChooser {
 	private List<Router> filterForExitDestination(List<Router> routers, IPv4Address address, int port) {
 		final List<Router> resultRouters = new ArrayList<Router>();
 		for(Router r : routers) {
-			if(r.isRunning() && r.isValid() && !(r.isHibernating() || r.isBadExit()) &&
-					routerAcceptsDestination(r, address, port))
+			if(r.isRunning() && r.isValid() && !(r.isHibernating() || r.isBadExit())
+					&& routerAcceptsDestination(r, address, port))
+			{
 				resultRouters.add(r);
+			}
 		}
 		return resultRouters;
 	}
@@ -112,7 +114,7 @@ public class NodeChooser {
 		final int[] nSupport = new int[routers.size()];
 		for(int i = 0; i < routers.size(); i++) {
 			final Router r = routers.get(i);
-			for(StreamExitRequest request: pendingStreams) {
+			for(StreamExitRequest request : pendingStreams) {
 				if(request.isAddressTarget()) {
 					if(r.exitPolicyAccepts(request.getAddress(), request.getPort()))
 						nSupport[i]++;
@@ -205,10 +207,10 @@ public class NodeChooser {
 				long bw = bandwidths[i];
 				if(bw >= 0)
 					continue;
-				boolean isExit = ((-bw)&2) != 0;
-				boolean isGuard = ((-bw) & 4) != 0;
-				boolean isFast = ((-bw) & 1) != 0;
-				bandwidths[i] = (isFast)? avgFast : avgSlow;
+				boolean isExit =  (((-bw) & 2) != 0);
+				boolean isGuard = (((-bw) & 4) != 0);
+				boolean isFast =  (((-bw) & 1) != 0);
+				bandwidths[i] = isFast ? avgFast : avgSlow;
 				if(isExit)
 					totalExitBandwidth += bandwidths[i];
 				else

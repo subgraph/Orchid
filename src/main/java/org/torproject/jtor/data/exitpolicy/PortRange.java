@@ -43,12 +43,7 @@ public class PortRange {
 	}
 
 	private static boolean isValidRange(int start, int end) {
-		if(!(isValidPort(start) && isValidPort(end)))
-				return false;
-		else if(start > end)
-			return false;
-		else
-			return true;
+		return isValidPort(start) && isValidPort(end) && (start <= end);
 	}
 
 	private static boolean isValidPort(int port) {

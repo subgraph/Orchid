@@ -17,7 +17,7 @@ import org.torproject.jtor.socks.impl.SocksPortListenerImpl;
  * various subsystem modules.
  */
 public class Tor {
-	private static final String version = "JTor 0.0.0";
+	private static final String VERSION = "JTor 0.0.0";
 
 	/**
 	 * Return a string describing the version of this software.
@@ -25,7 +25,7 @@ public class Tor {
 	 * @return A string representation of the software version.
 	 */
 	public static String getVersion() {
-		return version;
+		return VERSION;
 	}
 
 	/**

@@ -29,8 +29,8 @@ public class DirectoryServerImpl extends RouterImpl implements DirectoryServer {
 	/**
 	 * Return true if this DirectoryServer entry has
 	 * complete and valid information.
-	 * @return
 	 */
+	@Override
 	public boolean isValid() {
 		return true;
 	}
@@ -59,12 +59,12 @@ public class DirectoryServerImpl extends RouterImpl implements DirectoryServer {
 		return v3Ident;
 	}
 
+	@Override
 	public String toString() {
-		if(v3Ident != null)
-			return "(Directory: "+ getNickname() +" "+ getAddress() +":"+ port +" fingerprint="+ getIdentityHash() +" v3ident="+
-				v3Ident +")";
-		else
-			return "(Directory: "+ getNickname() +" "+ getAddress() +":"+ port +" fingerprint="+ getIdentityHash() +")";
+		return "(Directory: " + getNickname() + " " + getAddress() + ":" + port
+				+ " fingerprint=" + getIdentityHash()
+				+ ((v3Ident == null) ? "" : (" v3ident=" + v3Ident))
+				+ ")";
 
 	}
 }

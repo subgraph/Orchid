@@ -271,7 +271,8 @@ public class TorConfigImpl implements TorConfig {
 	}
 
 	public void set__HashedControlSessionPassword(
-			String hashedControlSessionPassword) {
+			String hashedControlSessionPassword)
+	{
 		setConfigChanged(true);
 		__HashedControlSessionPassword = hashedControlSessionPassword;
 	}
@@ -817,8 +818,8 @@ public class TorConfigImpl implements TorConfig {
 		return reachableAddresses;
 	}
 
-	public void setReachableAddresses(String ReachableAddresses) {
-		this.reachableAddresses = ReachableAddresses;
+	public void setReachableAddresses(String reachableAddresses) {
+		this.reachableAddresses = reachableAddresses;
 		setConfigChanged(true);
 	}
 

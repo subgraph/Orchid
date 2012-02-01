@@ -85,8 +85,7 @@ public class HttpConnection {
 		try {
 			int n1 = Integer.parseInt(m.group(1));
 			int n2 = Integer.parseInt(m.group(2));
-			if( (n1 != 0 && n1 != 1) ||
-					(n2 < 100 || n2 >= 600))
+			if((n1 != 0 && n1 != 1) || (n2 < 100 || n2 >= 600))
 				throw new TorException("Failed to parse header: "+ line);
 			responseCode = n2;
 			responseMessage = m.group(3);

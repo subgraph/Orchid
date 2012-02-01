@@ -143,7 +143,7 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 		if(fieldParser.argumentsRemaining() == 0)
 			return history;
 		final String[] samples = fieldParser.parseString().split(",");
-		for(String s: samples)
+		for(String s : samples)
 			history.addSample(fieldParser.parseInteger(s));
 		return history;
 	}

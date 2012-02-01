@@ -4,15 +4,15 @@ import org.torproject.jtor.events.Event;
 
 public class TorConfigEventThread extends Thread {
 
-	private static final int sleeptime = 2000;
+	private static final int SLEEP_TIME = 2000;
 
 	private TorConfigImpl tc;
 	private boolean running = false;
 
 	public TorConfigEventThread(TorConfigImpl tc) {
 		this.tc = tc;
-		running = true;
-		this.start();
+		this.running = true;
+		start();
 	}
 
 	public void run() {
@@ -23,7 +23,7 @@ public class TorConfigEventThread extends Thread {
 			}
 			try {
 				Thread.yield();
-				Thread.sleep(sleeptime);
+				Thread.sleep(SLEEP_TIME);
 			} catch (InterruptedException e) {}
 		}
 	}

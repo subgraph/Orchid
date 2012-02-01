@@ -29,7 +29,7 @@ public class OpenCircuitTask implements Runnable {
 	private String pathToString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("[");
-		for(Router r: circuitPath) {
+		for(Router r : circuitPath) {
 			if(sb.length() > 1)
 				sb.append(",");
 			sb.append(r.getNickname());

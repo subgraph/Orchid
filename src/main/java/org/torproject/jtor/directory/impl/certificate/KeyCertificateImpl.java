@@ -30,8 +30,8 @@ public class KeyCertificateImpl implements KeyCertificate {
 	void setRawDocumentData(String rawData) { rawDocumentData = rawData; }
 
 	public boolean isValidDocument() {
-		return hasValidSignature && (fingerprint != null) && (identityKey != null) &&
-			(keyPublished != null) && (keyExpires != null) && (signingKey != null);
+		return hasValidSignature && (fingerprint != null) && (identityKey != null)
+			&& (keyPublished != null) && (keyExpires != null) && (signingKey != null);
 	}
 
 	public IPv4Address getDirectoryAddress() {
@@ -70,9 +70,10 @@ public class KeyCertificateImpl implements KeyCertificate {
 		return rawDocumentData;
 	}
 
+	@Override
 	public String toString() {
 		return "(Certificate: address="+ directoryAddress +":"+ directoryPort
-			+" fingerprint="+ fingerprint +" published="+ keyPublished +" expires="+ keyExpires +")"+
-			"\nident="+ identityKey +" sign="+ signingKey;
+			+ " fingerprint="+ fingerprint +" published="+ keyPublished +" expires="+ keyExpires +")\n"
+			+ "ident="+ identityKey +" sign="+ signingKey;
 	}
 }

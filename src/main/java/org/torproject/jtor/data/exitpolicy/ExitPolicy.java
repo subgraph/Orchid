@@ -27,7 +27,7 @@ public class ExitPolicy {
 		if(address == null)
 			return acceptsPort(port);
 
-		for(PolicyRule r: rules) {
+		for(PolicyRule r : rules) {
 			if(r.matchesDestination(address, port))
 				return r.isAcceptRule();
 		}
@@ -36,7 +36,7 @@ public class ExitPolicy {
 	}
 
 	public boolean acceptsPort(int port) {
-		for(PolicyRule r: rules) {
+		for(PolicyRule r : rules) {
 			if(r.matchesPort(port))
 				return r.isAcceptRule();
 		}

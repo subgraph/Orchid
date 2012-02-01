@@ -62,11 +62,11 @@ public class TorConfigDefaults {
 	private boolean strictEntryNodes = false;
 
 	private boolean fascistFirewall = false;
-	private short[] firewallPorts = { 80, 443 };
+	private short[] firewallPorts = {80, 443};
 	private String[] firewallIPs = new String[0];
 	private String reachableAddresses = "accept *:*";
 
-	private short[] longLivedPorts = { 21, 22, 706, 1863, 5050, 5190, 5222, 5223, 6667, 8300, 8888 };
+	private short[] longLivedPorts = {21, 22, 706, 1863, 5050, 5190, 5222, 5223, 6667, 8300, 8888};
 
 	private String[] mapAddress = new String[0];
 

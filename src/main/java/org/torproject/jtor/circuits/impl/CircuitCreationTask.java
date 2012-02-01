@@ -54,7 +54,7 @@ public class CircuitCreationTask implements Runnable {
 		if(pendingExitStreams.isEmpty())
 			return;
 
-		for(Circuit c: circuitManager.getRandomlyOrderedListOfActiveCircuits()) {
+		for(Circuit c : circuitManager.getRandomlyOrderedListOfActiveCircuits()) {
 			final Iterator<StreamExitRequest> it = pendingExitStreams.iterator();
 			while(it.hasNext()) {
 				if(attemptHandleStreamRequest(c, it.next()))
@@ -67,7 +67,7 @@ public class CircuitCreationTask implements Runnable {
 		if(pendingExitStreams.isEmpty())
 			return;
 
-		for(Circuit c: circuitManager.getPendingCircuits()) {
+		for(Circuit c : circuitManager.getPendingCircuits()) {
 			final Iterator<StreamExitRequest> it = pendingExitStreams.iterator();
 			while(it.hasNext()) {
 				if(c.canHandleExitTo(it.next()))
@@ -81,12 +81,12 @@ public class CircuitCreationTask implements Runnable {
 			return;
 
 		System.out.println("Building new circuits to handle "+ pendingExitStreams.size() +" pending streams");
-		for(StreamExitRequest r: pendingExitStreams) {
+		for(StreamExitRequest r : pendingExitStreams) {
 			System.out.println("Request: "+ r);
 
 		}
 
-		for(StreamExitRequest req: pendingExitStreams)
+		for(StreamExitRequest req : pendingExitStreams)
 			createCircuitForExitRequest(req);
 	}
 
@@ -137,8 +137,9 @@ public class CircuitCreationTask implements Runnable {
 			return;
 		}
 
-		if((circuitManager.getCleanCircuitCount() + circuitManager.getPendingCircuitCount()) < DEFAULT_CLEAN_CIRCUITS &&
-				circuitManager.getPendingCircuitCount() < MAX_PENDING_CIRCUITS) {
+		if(((circuitManager.getCleanCircuitCount() + circuitManager.getPendingCircuitCount()) < DEFAULT_CLEAN_CIRCUITS)
+				&& (circuitManager.getPendingCircuitCount() < MAX_PENDING_CIRCUITS))
+		{
 			final List<Router> path = choosePreemptiveExitPath();
 			final Circuit circuit = circuitManager.createNewCircuit();
 			executor.execute(new OpenCircuitTask(circuit, path, createCircuitBuildHandler(), logger));
@@ -185,7 +186,7 @@ public class CircuitCreationTask implements Runnable {
 
 	private void circuitOpenedHandler(Circuit circuit) {
 		final List<StreamExitRequest> pendingExitStreams = circuitManager.getPendingExitStreams();
-		for(StreamExitRequest req: pendingExitStreams) {
+		for(StreamExitRequest req : pendingExitStreams) {
 			if(circuit.canHandleExitTo(req) && req.reserveRequest())
 				executor.execute(newExitStreamTask(circuit, req));
 		}

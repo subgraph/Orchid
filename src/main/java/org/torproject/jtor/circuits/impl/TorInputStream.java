@@ -46,9 +46,11 @@ public class TorInputStream extends InputStream {
 		checkOpen();
 		if(b == null)
 			throw new NullPointerException();
-		if( (off < 0) || (off > b.length) || (len < 0) ||
-				((off + len) > b.length) || ((off + len) < 0))
+		if( (off < 0) || (off > b.length) || (len < 0)
+				|| ((off + len) > b.length) || ((off + len) < 0))
+		{
 			throw new IndexOutOfBoundsException();
+		}
 		if(len == 0)
 			return 0;
 

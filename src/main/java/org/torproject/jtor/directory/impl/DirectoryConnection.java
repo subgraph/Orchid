@@ -43,7 +43,7 @@ public class DirectoryConnection {
 
 	private String fingerprintsToRequestString(List<HexDigest> fingerprints) {
 		final StringBuilder sb = new StringBuilder();
-		for(HexDigest fp: fingerprints) {
+		for(HexDigest fp : fingerprints) {
 			if(sb.length() > 0)
 				sb.append("+");
 			sb.append(fp.toString());

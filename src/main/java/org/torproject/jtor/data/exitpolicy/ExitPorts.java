@@ -38,7 +38,7 @@ public class ExitPorts {
 			return !contains(port);
 	}
 	public boolean contains(int port) {
-		for(PortRange r: ranges)
+		for(PortRange r : ranges)
 			if(r.rangeContains(port))
 				return true;
 		return false;
@@ -46,7 +46,7 @@ public class ExitPorts {
 
 	private void parsePortRanges(String portRanges) {
 		final String[] args = portRanges.split(",");
-		for(String arg: args)
+		for(String arg : args)
 			ranges.add(PortRange.createFromString(arg));
 	}
 

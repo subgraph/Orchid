@@ -185,7 +185,7 @@ public class CircuitImpl implements Circuit {
 	}
 
 	private RelayCell decryptRelayCell(Cell cell) {
-		for(CircuitNodeImpl node: nodeList) {
+		for(CircuitNodeImpl node : nodeList) {
 			if(node.decryptBackwardCell(cell)) {
 				return RelayCellImpl.createFromCell(node, cell);
 			}
@@ -325,7 +325,7 @@ public class CircuitImpl implements Circuit {
 		entryConnection.removeCircuit(this);
 		synchronized(streamMap) {
 			final List<StreamImpl> tmpList = new ArrayList<StreamImpl>(streamMap.values());
-			for(StreamImpl s: tmpList)
+			for(StreamImpl s : tmpList)
 				s.close();
 		}
 		circuitManager.circuitInactive(this);
@@ -372,7 +372,7 @@ public class CircuitImpl implements Circuit {
 	private  String pathToString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("[");
-		for(CircuitNode node: nodeList) {
+		for(CircuitNode node : nodeList) {
 			if(sb.length() > 1)
 				sb.append(",");
 			sb.append(node.toString());

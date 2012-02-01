@@ -411,7 +411,7 @@ public class TorConfigParser {
 			return Long.parseLong(in);
 		}
 
-		String[] map = { "b", "kb", "mb", "gb", "tb" };
+		String[] map = {"b", "kb", "mb", "gb", "tb"};
 		String mp = in.replaceAll("^\\d+ ?(\\w+)$", "$1");
 		long num = Long.parseLong(in.replaceAll("^(\\d+) ?\\w*$", "$1"));
 		for (int i = 0; i < map.length; i++) {

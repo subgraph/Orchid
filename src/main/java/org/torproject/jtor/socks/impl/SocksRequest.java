@@ -52,7 +52,7 @@ public abstract class SocksRequest {
 		addressData = data;
 
 		int addressValue = 0;
-		for(byte b: addressData) {
+		for(byte b : addressData) {
 			addressValue <<= 8;
 			addressValue |= (b & 0xFF);
 		}

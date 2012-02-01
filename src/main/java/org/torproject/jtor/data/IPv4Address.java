@@ -17,7 +17,7 @@ public class IPv4Address {
 		final int[] shifts = {24, 16, 8, 0};
 		int addressData = 0;
 		int i = 0;
-		for(String o: octets)
+		for(String o : octets)
 			addressData |= (octetStringToInt(o) << shifts[i++]);
 
 		return addressData;
@@ -62,10 +62,11 @@ public class IPv4Address {
 	}
 
 	public static String stringFormat(int addressData) {
-		return ((addressData >> 24) & 0xFF) +"."+
-			((addressData >> 16) & 0xFF) +"."+
-			((addressData >> 8) & 0xFF) +"."+
-			(addressData & 0xFF);
+		return
+				  ((addressData >> 24) & 0xFF) + "."
+				+ ((addressData >> 16) & 0xFF) + "."
+				+ ((addressData >> 8)  & 0xFF) + "."
+				+  (addressData        & 0xFF);
 	}
 
 	public String toString() {

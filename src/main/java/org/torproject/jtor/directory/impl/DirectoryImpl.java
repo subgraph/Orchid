@@ -84,7 +84,7 @@ public class DirectoryImpl implements Directory {
 
 		int routerCount = 0;
 		int descriptorCount = 0;
-		for(Router r: routersByIdentity.values()) {
+		for(Router r : routersByIdentity.values()) {
 			routerCount++;
 			if(!r.isDescriptorDownloadable())
 				descriptorCount++;
@@ -135,7 +135,7 @@ public class DirectoryImpl implements Directory {
 
 	public void storeCertificates() {
 		final List<KeyCertificate> certs = new ArrayList<KeyCertificate>();
-		for(KeyCertificate c: certificates.values())
+		for(KeyCertificate c : certificates.values())
 			certs.add(c);
 		store.saveCertificates(certs);
 	}
@@ -153,7 +153,7 @@ public class DirectoryImpl implements Directory {
 		if(!descriptorsDirty)
 			return;
 		final List<RouterDescriptor> descriptors = new ArrayList<RouterDescriptor>();
-		for(Router router: routersByIdentity.values()) {
+		for(Router router : routersByIdentity.values()) {
 			final RouterDescriptor descriptor = router.getCurrentDescriptor();
 			if(descriptor != null)
 				descriptors.add(descriptor);
@@ -175,7 +175,7 @@ public class DirectoryImpl implements Directory {
 			if(!consensus.canVerifySignatures(certificates)) {
 				logger.warning("Need more certificates to verify consensus document.");
 				consensusWaitingForCertificates = consensus;
-				for(DirectorySignature s: consensus.getDocumentSignatures()) {
+				for(DirectorySignature s : consensus.getDocumentSignatures()) {
 					if(!certificates.containsKey(s.getIdentityDigest()))
 						requiredCertificates.add(s.getIdentityDigest());
 				}
@@ -190,7 +190,7 @@ public class DirectoryImpl implements Directory {
 		final Map<HexDigest, RouterImpl> oldRouterByIdentity = new HashMap<HexDigest, RouterImpl>(routersByIdentity);
 		clearAll();
 
-		for(RouterStatus status: consensus.getRouterStatusEntries()) {
+		for(RouterStatus status : consensus.getRouterStatusEntries()) {
 			if(status.hasFlag("Running") && status.hasFlag("Valid")) {
 				final RouterImpl router = updateOrCreateRouter(status, oldRouterByIdentity);
 				addRouter(router);
@@ -273,7 +273,7 @@ public class DirectoryImpl implements Directory {
 
 	public synchronized List<Router> getRoutersWithDownloadableDescriptors() {
 		final List<Router> routers = new ArrayList<Router>();
-		for(RouterImpl router: routersByIdentity.values()) {
+		for(RouterImpl router : routersByIdentity.values()) {
 			if(router.isDescriptorDownloadable())
 				routers.add(router);
 		}
@@ -324,7 +324,7 @@ public class DirectoryImpl implements Directory {
 
 	public List<Router> getRouterListByNames(List<String> names) {
 		final List<Router> routers = new ArrayList<Router>();
-		for(String n: names) {
+		for(String n : names) {
 			final Router r = getRouterByName(n);
 			if(r == null)
 				throw new TorException("Could not find router named: "+ n);

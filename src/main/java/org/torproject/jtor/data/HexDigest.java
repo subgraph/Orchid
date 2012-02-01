@@ -27,7 +27,7 @@ import org.torproject.jtor.crypto.TorMessageDigest;
 public class HexDigest {
 	public static HexDigest createFromStringList(List<String> strings) {
 		StringBuilder builder = new StringBuilder();
-		for(String chunk: strings)
+		for(String chunk : strings)
 			builder.append(chunk);
 		return createFromString(builder.toString());
 	}

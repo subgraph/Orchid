@@ -33,9 +33,10 @@ public enum KeyCertificateKeyword {
 	}
 
 	static KeyCertificateKeyword findKeyword(String keyword) {
-		for(KeyCertificateKeyword k: values())
+		for(KeyCertificateKeyword k : values()) {
 			if(k.getKeyword().equals(keyword))
 				return k;
+		}
 		return UNKNOWN_KEYWORD;
 	}
 

@@ -31,8 +31,9 @@ public class ControlCommandGetInfo {
 					throw new FeatureNotSupportedException();
 				}
 
-				if (ip.getHostAddress().startsWith("192.168") || ip.getHostAddress().startsWith("10.") ||
-						ip.getHostAddress().matches("^172\\.(1[6-9]]|2[0-9]|3[01])\\..*")) {
+				if (ip.getHostAddress().startsWith("192.168") || ip.getHostAddress().startsWith("10.")
+						|| ip.getHostAddress().matches("^172\\.(1[6-9]]|2[0-9]|3[01])\\..*"))
+				{
 					throw new FeatureNotSupportedException();
 				}
 
@@ -48,7 +49,7 @@ public class ControlCommandGetInfo {
 
 		else if (key.equals("events/names")) {
 			StringBuilder ret = new StringBuilder();
-			for (String event : ControlCommandSetEvents.supportedEvents) {
+			for (String event : ControlCommandSetEvents.SUPPORTED_EVENTS) {
 				ret.append(event).append(" ");
 			}
 			return ret.toString().replaceAll("(.*)\\s+$", "$1"); // strip trailing whitespace

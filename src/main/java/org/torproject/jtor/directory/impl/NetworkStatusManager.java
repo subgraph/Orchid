@@ -169,7 +169,7 @@ public class NetworkStatusManager {
 
 		lastDescriptorDownload = new Date();
 		logger.debug("Downloading: "+ downloadables.size() +" descriptors");
-		for(List<Router> set: partitionDescriptors(downloadables))
+		for(List<Router> set : partitionDescriptors(downloadables))
 			requestDescriptors(set);
 	}
 
@@ -188,9 +188,9 @@ public class NetworkStatusManager {
 	/*
 	 * dir-spec.txt section 5.3
 	 */
-	private List< List<Router> > partitionDescriptors(List<Router> descriptors) {
+	private List<List<Router>> partitionDescriptors(List<Router> descriptors) {
 		final int size = descriptors.size();
-		final List< List<Router> > partitions = new ArrayList< List<Router> >();
+		final List<List<Router>> partitions = new ArrayList<List<Router>>();
 		if(size <= 10) {
 			partitions.add(createPartitionList(descriptors, 0, size));
 			return partitions;
@@ -253,7 +253,8 @@ public class NetworkStatusManager {
 		final boolean success = parser.parse(new DocumentParsingResultHandler<RouterDescriptor>() {
 
 			public void documentInvalid(RouterDescriptor document,
-					String message) {
+					String message)
+			{
 				logger.warning("Router descriptor "+ document.getNickname() +" invalid: "+ message);
 				directory.markDescriptorInvalid(document);
 			}

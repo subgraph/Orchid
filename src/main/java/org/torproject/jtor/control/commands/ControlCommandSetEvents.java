@@ -31,7 +31,7 @@ public class ControlCommandSetEvents {
 
 	}
 
-	static final String[] supportedEvents = {
+	static final String[] SUPPORTED_EVENTS = {
 		"CIRC" , "STREAM" , "ORCONN" , "BW" , "DEBUG" ,
 		"INFO" , "NOTICE" , "WARN" , "ERR" , "NEWDESC" , "ADDRMAP" ,
 		"AUTHDIR_NEWDESCS" , "DESCCHANGED" , "STATUS_GENERAL" ,
@@ -41,7 +41,7 @@ public class ControlCommandSetEvents {
 
 
 	private static boolean verifyEvent(String event) {
-		for (String sup : supportedEvents) {
+		for (String sup : SUPPORTED_EVENTS) {
 			if (event.equalsIgnoreCase(sup)) {
 				return true;
 			}

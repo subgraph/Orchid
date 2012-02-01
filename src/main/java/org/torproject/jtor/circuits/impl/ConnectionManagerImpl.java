@@ -30,11 +30,13 @@ public class ConnectionManagerImpl {
 		new X509TrustManager() {
 			private final X509Certificate[] empty = {};
 			public void checkClientTrusted(X509Certificate[] chain, String authType)
-					throws CertificateException {
+					throws CertificateException
+			{
 			}
 
 			public void checkServerTrusted(X509Certificate[] chain, String authType)
-					throws CertificateException {
+					throws CertificateException
+			{
 			}
 
 			public X509Certificate[] getAcceptedIssuers() {

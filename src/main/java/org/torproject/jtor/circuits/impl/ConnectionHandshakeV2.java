@@ -100,7 +100,7 @@ public class ConnectionHandshakeV2 {
 
 	private  void sendVersions() throws IOException {
 		final Cell cell = CellImpl.createVarCell(0, Cell.VERSIONS, SUPPORTED_CONNECTION_VERSIONS.length * 2);
-		for(int v: SUPPORTED_CONNECTION_VERSIONS)
+		for(int v : SUPPORTED_CONNECTION_VERSIONS)
 			cell.putShort(v);
 
 		connection.sendCell(cell);

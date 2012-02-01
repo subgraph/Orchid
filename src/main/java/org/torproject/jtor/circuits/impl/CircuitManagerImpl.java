@@ -108,12 +108,14 @@ public class CircuitManagerImpl implements CircuitManager {
 	}
 
 	public OpenStreamResponse openExitStreamTo(String hostname, int port)
-			throws InterruptedException {
+			throws InterruptedException
+	{
 		return openExitStreamByRequest(new StreamExitRequest(this, hostname, port));
 	}
 
 	public OpenStreamResponse openExitStreamTo(IPv4Address address, int port)
-			throws InterruptedException {
+			throws InterruptedException
+	{
 		return openExitStreamByRequest(new StreamExitRequest(this, address, port));
 	}
 

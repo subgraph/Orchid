@@ -38,8 +38,8 @@ class CircuitBuilder {
 		if(circuitPath.isEmpty())
 			throw new IllegalArgumentException("Path must contain at least one router to create a circuit.");
 		final Router entryRouter = circuitPath.get(0);
-		return openEntryNodeConnection(entryRouter, handler) &&
-			buildCircuit(circuitPath, handler);
+		return openEntryNodeConnection(entryRouter, handler)
+				&& buildCircuit(circuitPath, handler);
 	}
 
 	private boolean openEntryNodeConnection(Router entryRouter, CircuitBuildHandler handler) {

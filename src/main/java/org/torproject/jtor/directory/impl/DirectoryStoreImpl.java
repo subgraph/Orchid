@@ -39,7 +39,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 		try {
 			final FileOutputStream fos = new FileOutputStream(outFile);
 			final Writer writer = new OutputStreamWriter(fos, "ISO-8859-1");
-			for(KeyCertificate cert: certificates)
+			for(KeyCertificate cert : certificates)
 				writer.write(cert.getRawDocumentData());
 			writer.close();
 		} catch(IOException e) {
@@ -97,7 +97,8 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			parser.parse(new DocumentParsingResultHandler<ConsensusDocument>() {
 
 				public void documentInvalid(ConsensusDocument document,
-						String message) {
+						String message)
+				{
 					logger.warning("Stored consensus document is invalid: "+ message);
 				}
 
@@ -119,7 +120,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 		try {
 			final FileOutputStream fos = new FileOutputStream(outFile);
 			final Writer writer = new OutputStreamWriter(fos, "ISO-8859-1");
-			for(RouterDescriptor router: descriptors)
+			for(RouterDescriptor router : descriptors)
 				writer.write(router.getRawDocumentData());
 			writer.close();
 		} catch(IOException e) {
@@ -138,7 +139,8 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			parser.parse(new DocumentParsingResultHandler<RouterDescriptor>() {
 
 				public void documentInvalid(RouterDescriptor document,
-						String message) {
+						String message)
+				{
 					logger.warning("Router descriptor "+ document.getNickname() +" invalid: "+ message);
 					directory.markDescriptorInvalid(document);
 				}

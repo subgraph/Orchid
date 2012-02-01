@@ -52,7 +52,7 @@ public enum RouterDescriptorKeyword {
 	}
 
 	static RouterDescriptorKeyword findKeyword(String keyword) {
-		for(RouterDescriptorKeyword k: values())
+		for(RouterDescriptorKeyword k : values())
 			if(k.getKeyword().equals(keyword))
 				return k;
 

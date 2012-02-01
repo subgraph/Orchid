@@ -112,9 +112,10 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	}
 
 	public boolean isValidDocument() {
-		return (validAfter != null) && (freshUntil != null) && (validUntil != null) &&
-		(voteDelaySeconds > 0) && (distDelaySeconds > 0) && (signingHash != null) &&
-		(signatures.size() != 0);
+		return (validAfter != null) && (freshUntil != null)
+				&& (validUntil != null) && (voteDelaySeconds > 0)
+				&& (distDelaySeconds > 0) && (signingHash != null)
+				&& !signatures.isEmpty();
 	}
 
 	public HexDigest getSigningHash() {
@@ -126,7 +127,7 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	}
 
 	public boolean canVerifySignatures(Map<HexDigest, KeyCertificate> certificates) {
-		for(DirectorySignature s: signatures) {
+		for(DirectorySignature s : signatures) {
 			KeyCertificate cert = certificates.get(s.getIdentityDigest());
 			if(cert == null || !s.getSigningKeyDigest().equals(cert.getAuthoritySigningKey().getFingerprint()))
 				return false;
@@ -135,7 +136,7 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	}
 
 	public boolean verifySignatures(Map<HexDigest, KeyCertificate> certificates) {
-		for(DirectorySignature s: signatures) {
+		for(DirectorySignature s : signatures) {
 			KeyCertificate cert = certificates.get(s.getIdentityDigest());
 			if(cert == null) return false;
 			TorPublicKey signingKey = cert.getAuthoritySigningKey();
