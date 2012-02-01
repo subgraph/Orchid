@@ -30,8 +30,8 @@ public class ControlServerTCP extends ControlServer implements EventHandler {
 
 	@Override
 	public void startServer() {
-		if (tc.getControlPort() > 0 && !running) {
-			running = true;
+		if (getTorConfig().getControlPort() > 0 && !isRunning()) {
+			setRunning(true);
 			this.start();
 		}
 	}
@@ -39,24 +39,24 @@ public class ControlServerTCP extends ControlServer implements EventHandler {
 	@Override
 	public void run() {
 		try {
-			if (host != null) {
-				ss = new ServerSocket(tc.getControlPort(), 0, host);
+			if (getInetAddress() != null) {
+				ss = new ServerSocket(getTorConfig().getControlPort(), 0, getInetAddress());
 			} else {
-				ss = new ServerSocket(tc.getControlPort());
+				ss = new ServerSocket(getTorConfig().getControlPort());
 			}
 		} catch (IOException ex) {
-			running = false;
+			setRunning(false);
 		}
 
-		tc.registerConfigChangedHandler(this);
+		getTorConfig().registerConfigChangedHandler(this);
 
-		while (running) {
+		while (isRunning()) {
 			try {
 				Socket s = ss.accept();
 				ControlConnectionHandler cch = new ControlConnectionHandlerTCP(this, s);
 				connections.add(cch);
 
-				logger.debug("Opening new TCP Control Connection on port " + s.getLocalPort());
+				getLogger().debug("Opening new TCP Control Connection on port " + s.getLocalPort());
 			} catch (Throwable t) {}
 		}
 
@@ -65,13 +65,13 @@ public class ControlServerTCP extends ControlServer implements EventHandler {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void stopServer() {
-		running = false;
+		setRunning(false);
 		this.interrupt();
 		Iterator i = connections.iterator();
 		while (i.hasNext()) {
 			((ControlConnectionHandler)i.next()).disconnect();
 		}
-		tc.unregisterConfigChangedHandler(this);
+		getTorConfig().unregisterConfigChangedHandler(this);
 	}
 
 	public void disconnectHandler(ControlConnectionHandler cch) {
@@ -91,7 +91,7 @@ public class ControlServerTCP extends ControlServer implements EventHandler {
 	 * @see org.torproject.jtor.events.EventHandler#handleEvent(org.torproject.jtor.events.Event)
 	 */
 	public void handleEvent(Event event) {
-		if (tc.getControlPort() != ss.getLocalPort()) {
+		if (getTorConfig().getControlPort() != ss.getLocalPort()) {
 			stopServer();
 			startServer();
 		}

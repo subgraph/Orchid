@@ -9,9 +9,9 @@ public class NewConsensusHandler extends ControlEventHandler {
 	}
 
 	public void handleEvent(Event event) {
-		ceq.addMessage("650+NEWCONSENSUS");
+		getControlEventQueue().addMessage("650+NEWCONSENSUS");
 		//TODO add networkstatus here
-		ceq.addMessage("650 OK");
+		getControlEventQueue().addMessage("650 OK");
 	}
 
 }

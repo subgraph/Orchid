@@ -105,7 +105,7 @@ public class TorConfigImpl implements TorConfig {
 	private String __HashedControlSessionPassword;
 	private boolean __ReloadTorrcOnSIGHUP;
 
-	protected Logger logger;
+	private Logger logger;
 
 	public TorConfigImpl(LogManager logManager) {
 		this.logger = logManager.getLogger("config");

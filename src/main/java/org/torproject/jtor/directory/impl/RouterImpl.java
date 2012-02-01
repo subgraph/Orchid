@@ -16,7 +16,7 @@ public class RouterImpl implements Router {
 	}
 
 	private final HexDigest identityHash;
-	protected RouterStatus status;
+	private RouterStatus status;
 	private RouterDescriptor descriptor;
 
 	protected RouterImpl(RouterStatus status) {

@@ -14,11 +14,11 @@ import org.torproject.jtor.logging.Logger;
  */
 public abstract class ControlServer extends Thread {
 
-	protected InetAddress host;
-	protected TorConfig tc;
+	private InetAddress inetAddress;
+	private TorConfig tc;
 	private final Directory directory;
-	protected Logger logger;
-	protected boolean running = false;
+	private Logger logger;
+	private boolean running = false;
 
 	public abstract void startServer();
 	public abstract void stopServer();
@@ -34,12 +34,20 @@ public abstract class ControlServer extends Thread {
 		}
 	}
 
-	public void setInetAddress(InetAddress host) {
-		this.host = host;
+	protected InetAddress getInetAddress() {
+		return inetAddress;
+	}
+
+	public void setInetAddress(InetAddress inetAddress) {
+		this.inetAddress = inetAddress;
 	}
 
 	public boolean isRunning() {
 		return running;
+	}
+
+	protected void setRunning(boolean running) {
+		this.running = running;
 	}
 
 	public TorConfig getTorConfig() {

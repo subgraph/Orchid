@@ -8,10 +8,9 @@ import org.torproject.jtor.control.events.ControlEventQueue;
  */
 public abstract class ControlConnectionHandler extends Thread {
 
-	protected boolean authenticated = false;
-	protected boolean requestedProtocolinfo = false;
-	protected ControlServer cs;
-	protected ControlEventQueue eq = new ControlEventQueue();
+	private boolean authenticated = false;
+	private boolean requestedProtocolinfo = false;
+	private ControlEventQueue eq = new ControlEventQueue();
 
 	public boolean isAuthenticated() {
 		return authenticated;
@@ -21,9 +20,7 @@ public abstract class ControlConnectionHandler extends Thread {
 		this.authenticated = authenticated;
 	}
 
-	public ControlServer getControlServer() {
-		return cs;
-	}
+	public abstract ControlServer getControlServer();
 
 	public boolean isRequestedProtocolinfo() {
 		return requestedProtocolinfo;

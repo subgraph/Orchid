@@ -4,7 +4,7 @@ import org.torproject.jtor.events.EventHandler;
 
 public abstract class ControlEventHandler implements EventHandler {
 
-	protected ControlEventQueue ceq;
+	private ControlEventQueue ceq;
 
 	public ControlEventHandler(ControlEventQueue ceq) {
 		this.ceq = ceq;
@@ -12,4 +12,7 @@ public abstract class ControlEventHandler implements EventHandler {
 
 	public ControlEventHandler() {}
 
+	public ControlEventQueue getControlEventQueue() {
+		return ceq;
+	}
 }

@@ -14,14 +14,19 @@ import org.torproject.jtor.control.ControlServer;
  */
 public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
 
+	private ControlServer cs;
 	private Socket s;
 	private boolean running = false;
 
 	public ControlConnectionHandlerTCP(ControlServer cs, Socket s) {
 		this.s = s;
 		this.cs = cs;
-		running = true;
-		this.start();
+		this.running = true;
+		start();
+	}
+
+	public ControlServer getControlServer() {
+		return cs;
 	}
 
 	@Override
@@ -38,7 +43,7 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
 				recv.length(); // trigger NullPointerException
 				cs.getLogger().debug("Control Connection TCP: received " + recv);
 
-				eq.writeQueue(this);
+				getEventQueue().writeQueue(this);
 
 				ControlCommandParser.execute(this, recv);
 			}
