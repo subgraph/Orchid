@@ -31,13 +31,13 @@ public class ControlCommandSetEvents {
 
 	}
 
-    static final String[] supportedEvents = {
-        "CIRC" , "STREAM" , "ORCONN" , "BW" , "DEBUG" ,
-        "INFO" , "NOTICE" , "WARN" , "ERR" , "NEWDESC" , "ADDRMAP" ,
-        "AUTHDIR_NEWDESCS" , "DESCCHANGED" , "STATUS_GENERAL" ,
-        "STATUS_CLIENT" , "STATUS_SERVER" , "GUARD" , "NS" , "STREAM_BW" ,
-        "CLIENTS_SEEN" , "NEWCONSENSUS"
-    };
+	static final String[] supportedEvents = {
+		"CIRC" , "STREAM" , "ORCONN" , "BW" , "DEBUG" ,
+		"INFO" , "NOTICE" , "WARN" , "ERR" , "NEWDESC" , "ADDRMAP" ,
+		"AUTHDIR_NEWDESCS" , "DESCCHANGED" , "STATUS_GENERAL" ,
+		"STATUS_CLIENT" , "STATUS_SERVER" , "GUARD" , "NS" , "STREAM_BW" ,
+		"CLIENTS_SEEN" , "NEWCONSENSUS"
+	};
 
 
 	private static boolean verifyEvent(String event) {

@@ -36,7 +36,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 	private int currentItemsPosition;
 	private boolean recognizeOpt;
 	/* If a line begins with this string do not include it in the current signature. */
- 	private String signatureIgnoreToken;
+	private String signatureIgnoreToken;
 	private boolean isProcessingSignedEntity = false;
 	private TorMessageDigest signatureDigest;
 	private StringBuilder rawDocumentBuffer;

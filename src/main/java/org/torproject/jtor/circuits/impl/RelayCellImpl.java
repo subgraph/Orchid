@@ -22,13 +22,13 @@ public class RelayCellImpl extends CellImpl implements RelayCell {
 
 	/*
 	 * The payload of each unencrypted RELAY cell consists of:
-     *     Relay command           [1 byte]
-     *     'Recognized'            [2 bytes]
-     *     StreamID                [2 bytes]
-     *     Digest                  [4 bytes]
-     *     Length                  [2 bytes]
-     *     Data                    [CELL_LEN-14 bytes]
-     */
+	 *     Relay command           [1 byte]
+	 *     'Recognized'            [2 bytes]
+	 *     StreamID                [2 bytes]
+	 *     Digest                  [4 bytes]
+	 *     Length                  [2 bytes]
+	 *     Data                    [CELL_LEN-14 bytes]
+	 */
 	 RelayCellImpl(CircuitNode node, int circuit, int stream, int relayCommand) {
 		super(circuit, Cell.RELAY);
 		this.circuitNode = node;

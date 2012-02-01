@@ -32,35 +32,35 @@ public class ControlCommandParser {
 		args = removeQuotes(args);
 
 		if (command.startsWith("quit")) {
-            cch.disconnect();
-        }
+			cch.disconnect();
+		}
 
 		else if (command.startsWith("authenticate")) {
-            if (ControlAuthenticator.authenticate(cch.getControlServer().getTorConfig(), args)) {
-                cch.setAuthenticated(true);
-                cch.write("250 OK");
-            } else {
-                cch.write("515 Bad authentication");
-                cch.disconnect();
-            }
+			if (ControlAuthenticator.authenticate(cch.getControlServer().getTorConfig(), args)) {
+				cch.setAuthenticated(true);
+				cch.write("250 OK");
+			} else {
+				cch.write("515 Bad authentication");
+				cch.disconnect();
+			}
 
-        }
+		}
 
-        else if (command.startsWith("protocolinfo")) {
-            if (!cch.isRequestedProtocolinfo() || cch.isAuthenticated()) {
-                cch.setRequestedProtocolinfo(!cch.isAuthenticated());
-                ControlCommandProtocolInfo.handleProtocolInfo(cch);
-            } else {
-            	cch.getControlServer().getLogger().debug("Control command: refused repeated protocolinfo to unauthenticated client");
-                cch.disconnect();
-            }
-        }
+		else if (command.startsWith("protocolinfo")) {
+			if (!cch.isRequestedProtocolinfo() || cch.isAuthenticated()) {
+				cch.setRequestedProtocolinfo(!cch.isAuthenticated());
+				ControlCommandProtocolInfo.handleProtocolInfo(cch);
+			} else {
+				cch.getControlServer().getLogger().debug("Control command: refused repeated protocolinfo to unauthenticated client");
+				cch.disconnect();
+			}
+		}
 
-        else if (!cch.isAuthenticated()) { // user is trying something illegal
-        	cch.disconnect();
-        }
+		else if (!cch.isAuthenticated()) { // user is trying something illegal
+			cch.disconnect();
+		}
 
-        else if (command.equals("setconf")) {
+		else if (command.equals("setconf")) {
 			ControlCommandSetConf.handleSetConf(cch, args);
 		}
 

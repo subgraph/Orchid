@@ -14,43 +14,43 @@ import org.torproject.jtor.logging.Logger;
  */
 public abstract class ControlServer extends Thread {
 
-    protected InetAddress host;
-    protected TorConfig tc;
-    private final Directory directory;
-    protected Logger logger;
-    protected boolean running = false;
+	protected InetAddress host;
+	protected TorConfig tc;
+	private final Directory directory;
+	protected Logger logger;
+	protected boolean running = false;
 
-    public abstract void startServer();
-    public abstract void stopServer();
-    public abstract void disconnectHandler(ControlConnectionHandler cch);
-    public abstract String getProtocol();
+	public abstract void startServer();
+	public abstract void stopServer();
+	public abstract void disconnectHandler(ControlConnectionHandler cch);
+	public abstract String getProtocol();
 
-    public ControlServer(Directory directory, TorConfig tc, LogManager logManager) {
-    	this.directory = directory;
-        this.tc = tc;
-        this.logger = logManager.getLogger("controller");
-        if (tc.isCookieAuthentication()) {
-        	ControlAuthenticator.writeCookie(tc);
-        }
-    }
+	public ControlServer(Directory directory, TorConfig tc, LogManager logManager) {
+		this.directory = directory;
+		this.tc = tc;
+		this.logger = logManager.getLogger("controller");
+		if (tc.isCookieAuthentication()) {
+			ControlAuthenticator.writeCookie(tc);
+		}
+	}
 
-    public void setInetAddress(InetAddress host) {
-        this.host = host;
-    }
+	public void setInetAddress(InetAddress host) {
+		this.host = host;
+	}
 
-    public boolean isRunning() {
-        return running;
-    }
+	public boolean isRunning() {
+		return running;
+	}
 
-    public TorConfig getTorConfig() {
-    	return tc;
-    }
+	public TorConfig getTorConfig() {
+		return tc;
+	}
 
-    public Logger getLogger() {
-    	return logger;
-    }
+	public Logger getLogger() {
+		return logger;
+	}
 
-    public Directory getDirectory() {
-    	return directory;
-    }
+	public Directory getDirectory() {
+		return directory;
+	}
 }

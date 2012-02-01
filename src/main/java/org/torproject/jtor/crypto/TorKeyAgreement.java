@@ -35,22 +35,22 @@ public class TorKeyAgreement {
 	 * tor-spec 0.3
 	 *
 	 * For Diffie-Hellman, we use a generator (g) of 2.  For the modulus (p), we
-     * use the 1024-bit safe prime from rfc2409 section 6.2 whose hex
-     * representation is:
+	 * use the 1024-bit safe prime from rfc2409 section 6.2 whose hex
+	 * representation is:
 	 */
 	private static final BigInteger P1024 = new BigInteger(
 	  "00FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E08"
-    + "8A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B"
-    + "302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9"
-    + "A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE6"
-    + "49286651ECE65381FFFFFFFFFFFFFFFF", 16);
+	+ "8A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B"
+	+ "302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9"
+	+ "A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE6"
+	+ "49286651ECE65381FFFFFFFFFFFFFFFF", 16);
 	private static final BigInteger G = new BigInteger("2");
 
 	/*
 	 * tor-spec 0.3
 	 *
 	 * As an optimization, implementations SHOULD choose DH private keys (x) of
-     * 320 bits.
+	 * 320 bits.
 	 */
 	private static final int PRIVATE_KEY_SIZE = 320;
 	private static final DHParameterSpec DH_PARAMETER_SPEC = new DHParameterSpec(P1024, G, PRIVATE_KEY_SIZE);

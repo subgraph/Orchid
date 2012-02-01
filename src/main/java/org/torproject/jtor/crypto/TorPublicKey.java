@@ -66,11 +66,11 @@ public class TorPublicKey {
 		} catch (IOException e) {
 			throw new TorException(e);
 		} finally {
-            try {
+			try {
 				if (asn1input != null) {
 					asn1input.close();
 				}
-            } catch (IOException ex) {}
+			} catch (IOException ex) {}
 		}
 	}
 

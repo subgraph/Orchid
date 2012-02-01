@@ -23,14 +23,14 @@ public class HybridEncryption {
 	private static final int PK_DATA_LEN_WITH_KEY = PK_DATA_LEN - TorStreamCipher.KEY_LEN; // 70 bytes
 	/*
 	 * The "hybrid encryption" of a byte sequence M with a public key PK is
-   	 * computed as follows:
-   	 *
-     *  1. If M is less than PK_ENC_LEN-PK_PAD_LEN (86), pad and encrypt M with PK.
-     *  2. Otherwise, generate a KEY_LEN byte random key K.
-     *     Let M1 = the first PK_ENC_LEN-PK_PAD_LEN-KEY_LEN (70) bytes of M,
-     *     and let M2 = the rest of M.
-     *     Pad and encrypt K|M1 with PK.  Encrypt M2 with our stream cipher,
-     *     using the key K.  Concatenate these encrypted values.
+	 * computed as follows:
+	 *
+	 *  1. If M is less than PK_ENC_LEN-PK_PAD_LEN (86), pad and encrypt M with PK.
+	 *  2. Otherwise, generate a KEY_LEN byte random key K.
+	 *     Let M1 = the first PK_ENC_LEN-PK_PAD_LEN-KEY_LEN (70) bytes of M,
+	 *     and let M2 = the rest of M.
+	 *     Pad and encrypt K|M1 with PK.  Encrypt M2 with our stream cipher,
+	 *     using the key K.  Concatenate these encrypted values.
 	 */
 	private final Cipher cipher;
 

@@ -7,94 +7,94 @@ import java.net.UnknownHostException;
 public class TorConfigDefaults {
 
 	private String configFile = "torrc";
-    private File dataDirectory = new File(new File(System.getProperty("user.home")), ".jtor");
+	private File dataDirectory = new File(new File(System.getProperty("user.home")), ".jtor");
 
-    private long bandwidthRate = 2097152; // 2 MB
-    private long bandwidthBurst = 5242880; // 5 MB
-    private long maxAdvertisedBandwidth;
+	private long bandwidthRate = 2097152; // 2 MB
+	private long bandwidthBurst = 5242880; // 5 MB
+	private long maxAdvertisedBandwidth;
 
-    private short controlPort;
-    private String hashedControlPassword;
-    private boolean cookieAuthentication = false;
+	private short controlPort;
+	private String hashedControlPassword;
+	private boolean cookieAuthentication = false;
 
-    private long dirFetchPeriod = 3600;
-    private String[] dirServer = {
-    		"moria1 v1 18.244.0.188:9031 FFCB 46DB 1339 DA84 674C 70D7 CB58 6434 C437 0441",
-    		"moria2 v1 18.244.0.114:80 719B E45D E224 B607 C537 07D0 E214 3E2D 423E 74CF",
-    		"tor26 v1 86.59.21.38:80 847B 1F85 0344 D787 6491 A548 92F9 0493 4E4E B85D",
-    };
+	private long dirFetchPeriod = 3600;
+	private String[] dirServer = {
+			"moria1 v1 18.244.0.188:9031 FFCB 46DB 1339 DA84 674C 70D7 CB58 6434 C437 0441",
+			"moria2 v1 18.244.0.114:80 719B E45D E224 B607 C537 07D0 E214 3E2D 423E 74CF",
+			"tor26 v1 86.59.21.38:80 847B 1F85 0344 D787 6491 A548 92F9 0493 4E4E B85D",
+	};
 
 	private boolean tunnelDirConns = true;
 	private boolean preferTunneledDirConns = true;
 
 	private boolean disableAllSwap = false;
-    private String group;
+	private String group;
 
-    private String httpProxy;
-    private String httpProxyAuthenticator;
-    private String httpsProxy;
-    private String httpsProxyAuthenticator;
+	private String httpProxy;
+	private String httpProxyAuthenticator;
+	private String httpsProxy;
+	private String httpsProxyAuthenticator;
 
-    private int keepalivePeriod = 300;
+	private int keepalivePeriod = 300;
 
-    private String[] log = new String[0];
+	private String[] log = new String[0];
 
-    private int maxConn = 1024;
-    private InetAddress outboundBindAddress;
-    private String pidFile;
-    private boolean runAsDaemon = false;
+	private int maxConn = 1024;
+	private InetAddress outboundBindAddress;
+	private String pidFile;
+	private boolean runAsDaemon = false;
 
-    private boolean safeLogging = true;
+	private boolean safeLogging = true;
 
-    private long statusFetchPeriod = 1800;
+	private long statusFetchPeriod = 1800;
 
-    private String user;
+	private String user;
 
-    private boolean hardwareAccel = true;
+	private boolean hardwareAccel = true;
 
-    private String allowUnverifiedNodes = "middle,rendezvous";
-    private boolean clientOnly = false;
+	private String allowUnverifiedNodes = "middle,rendezvous";
+	private boolean clientOnly = false;
 
-    private String[] entryNodes = new String[0];
-    private String[] exitNodes = new String[0];
-    private String[] excludeNodes = new String[0];
-    private boolean strictExitNodes = false;
-    private boolean strictEntryNodes = false;
+	private String[] entryNodes = new String[0];
+	private String[] exitNodes = new String[0];
+	private String[] excludeNodes = new String[0];
+	private boolean strictExitNodes = false;
+	private boolean strictEntryNodes = false;
 
-    private boolean fascistFirewall = false;
-    private short[] firewallPorts = { 80, 443 };
-    private String[] firewallIPs = new String[0];
-    private String reachableAddresses = "accept *:*";
+	private boolean fascistFirewall = false;
+	private short[] firewallPorts = { 80, 443 };
+	private String[] firewallIPs = new String[0];
+	private String reachableAddresses = "accept *:*";
 
-    private short[] longLivedPorts = { 21, 22, 706, 1863, 5050, 5190, 5222, 5223, 6667, 8300, 8888 };
+	private short[] longLivedPorts = { 21, 22, 706, 1863, 5050, 5190, 5222, 5223, 6667, 8300, 8888 };
 
-    private String[] mapAddress = new String[0];
+	private String[] mapAddress = new String[0];
 
-    private long newCircuitPeriod = 30;
-    private long maxCircuitDirtiness = 600;
+	private long newCircuitPeriod = 30;
+	private long maxCircuitDirtiness = 600;
 
-    private String[] nodeFamily = new String[0];
-    private String[] rendNodes = new String[0];
-    private String[] rendExcludeNodes = new String[0];
+	private String[] nodeFamily = new String[0];
+	private String[] rendNodes = new String[0];
+	private String[] rendExcludeNodes = new String[0];
 
-    private short socksPort = 9050;
-    private String socksBindAddress = "127.0.0.1";
-    private String socksPolicy;
+	private short socksPort = 9050;
+	private String socksBindAddress = "127.0.0.1";
+	private String socksPolicy;
 
-    private String[] trackHostExits = new String[0];
-    private long trackHostExitsExpire = 1800;
+	private String[] trackHostExits = new String[0];
+	private long trackHostExitsExpire = 1800;
 
-    private boolean useHelperNodes = true;
-    private int numHelperNodes = 3;
+	private boolean useHelperNodes = true;
+	private int numHelperNodes = 3;
 
-    private String[] hiddenServiceDir = new String[0];
-    private String[] hiddenServicePort = new String[0];
-    private String[] hiddenServiceNodes = new String[0];
-    private String[] hiddenServiceExcludeNodes = new String[0];
-    private String hiddenServiceVersion = "0,2";
-    private long rendPostPeriod = 1200;
+	private String[] hiddenServiceDir = new String[0];
+	private String[] hiddenServicePort = new String[0];
+	private String[] hiddenServiceNodes = new String[0];
+	private String[] hiddenServiceExcludeNodes = new String[0];
+	private String hiddenServiceVersion = "0,2";
+	private long rendPostPeriod = 1200;
 
-    // hidden (not saved) options
+	// hidden (not saved) options
 	private boolean __AllDirOptionsPrivate = false;
 	private boolean __DisablePredictedCircuits = false;
 	private boolean __LeaveStreamsUnattached = false;
@@ -102,12 +102,12 @@ public class TorConfigDefaults {
 	private boolean __ReloadTorrcOnSIGHUP = true;
 
 	public TorConfigDefaults() {
-    	try {
+		try {
 			outboundBindAddress = InetAddress.getLocalHost();
 		} catch (UnknownHostException e) {}
-    }
+	}
 
-    public boolean isTunnelDirConns() {
+	public boolean isTunnelDirConns() {
 		return tunnelDirConns;
 	}
 
@@ -115,7 +115,7 @@ public class TorConfigDefaults {
 		return preferTunneledDirConns;
 	}
 
-    public boolean is__AllDirOptionsPrivate() {
+	public boolean is__AllDirOptionsPrivate() {
 		return __AllDirOptionsPrivate;
 	}
 

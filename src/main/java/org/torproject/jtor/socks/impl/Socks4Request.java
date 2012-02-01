@@ -44,8 +44,8 @@ public class Socks4Request extends SocksRequest {
 		/*
 		 * For version 4A, if the client cannot resolve the destination host's
 		 * domain name to find its IP address, it should set the first three bytes
-         * of DSTIP to NULL and the last byte to a non-zero value. (This corresponds
-         * to IP address 0.0.0.x, with x nonzero.
+		 * of DSTIP to NULL and the last byte to a non-zero value. (This corresponds
+		 * to IP address 0.0.0.x, with x nonzero.
 		 */
 		if(data.length != 4)
 			return false;
