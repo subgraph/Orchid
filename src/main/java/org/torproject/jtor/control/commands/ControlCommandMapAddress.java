@@ -1,5 +1,7 @@
 package org.torproject.jtor.control.commands;
 
+import java.util.Random;
+
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.config.impl.TorConfigParser;
 import org.torproject.jtor.control.ControlConnectionHandler;
@@ -45,11 +47,12 @@ public class ControlCommandMapAddress {
 		if (host.equals(".") || host.equals("0.0.0.0") || host.equals("::0")) { // null host
 			String ip = "";
 			boolean uniqueip = false;
+			Random random = new Random();
 			while (!uniqueip) {
 				ip = "127";
-				ip += "." + (int)(Math.random()*255);
-				ip += "." + (int)(Math.random()*255);
-				ip += "." + (int)(Math.random()*255);
+				ip += "." + random.nextInt(255);
+				ip += "." + random.nextInt(255);
+				ip += "." + random.nextInt(255);
 				uniqueip = true;
 
 				// check if host doesn't exist yet

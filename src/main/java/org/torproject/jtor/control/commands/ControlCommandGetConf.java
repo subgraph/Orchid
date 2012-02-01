@@ -47,13 +47,12 @@ public class ControlCommandGetConf {
 		}
 
 		else if (key.equals("dirserver")) {
-			String ret = "";
+			StringBuilder ret = new StringBuilder();
 			String[] val = tc.getDirServer();
 			for (int i = 0; i < val.length; i++) {
-				ret += val[i] + "\n";
+				ret.append(val[i]).append("\n");
 			}
-			ret = ret.replaceAll("\\s*$", "");
-			return ret;
+			return ret.toString().replaceAll("\\s*$", "");
 		}
 
 		else if (key.equals("tunneldirconns")) {

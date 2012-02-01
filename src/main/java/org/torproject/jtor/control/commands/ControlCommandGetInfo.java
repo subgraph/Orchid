@@ -47,11 +47,11 @@ public class ControlCommandGetInfo {
 		}
 
 		else if (key.equals("events/names")) {
-			String ret = "";
+			StringBuilder ret = new StringBuilder();
 			for (String event : ControlCommandSetEvents.supportedEvents) {
-				ret += event + " ";
+				ret.append(event).append(" ");
 			}
-			return ret.replaceAll("(.*)\\s+$", "$1"); // strip trailing whitespace
+			return ret.toString().replaceAll("(.*)\\s+$", "$1"); // strip trailing whitespace
 		}
 
 		else if (key.equals("features/names")) {

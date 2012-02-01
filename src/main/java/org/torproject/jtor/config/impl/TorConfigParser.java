@@ -19,8 +19,12 @@ public class TorConfigParser {
 	private TorConfigParser() {}
 
 	public static boolean parseFile(TorConfig tc, Logger logger, File in) {
+
+		BufferedReader reader = null;
+		FileReader fileReader = null;
 		try {
-			BufferedReader reader = new BufferedReader(new FileReader(in));
+			fileReader = new FileReader(in);
+			reader = new BufferedReader(fileReader);
 			String line = null;
 			while ((line=reader.readLine()) != null) {
 
@@ -54,6 +58,16 @@ public class TorConfigParser {
 			return true;
 		} catch (IOException e) {
 			return false;
+		} finally {
+			try {
+				if (reader != null) {
+					reader.close();
+				} else if (fileReader != null) {
+					fileReader.close();
+				}
+			} catch (IOException ex) {
+				logger.warning("torrc: failed to close config-file input stream", ex);
+			}
 		}
 
 		return true;

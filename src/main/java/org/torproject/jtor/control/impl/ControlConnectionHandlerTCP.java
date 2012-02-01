@@ -26,9 +26,11 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
 
     @Override
     public void run() {
+        InputStreamReader inCon = null;
         BufferedReader in = null;
         try {
-            in = new BufferedReader(new InputStreamReader(s.getInputStream()));
+			inCon = new InputStreamReader(s.getInputStream());
+            in = new BufferedReader(inCon);
 
             while (running) {
                 String recv = in.readLine();
@@ -48,7 +50,11 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
         } finally {
             try {
                 disconnect();
-                in.close();
+				if (in != null) {
+					in.close();
+				} else if (inCon != null) {
+					inCon.close();
+				}
             } catch (IOException ex) {}
         }
 

@@ -2,6 +2,7 @@ package org.torproject.jtor.control.commands;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.config.impl.TorConfigParser;
@@ -12,7 +13,7 @@ public class ControlCommandSetConf {
 
 	public static boolean handleSetConf(ControlConnectionHandler cch, String in) {
 		String[] confs = in.split(" ");
-		HashMap<String, String> oldvals = new HashMap<String, String>();
+		Map<String, String> oldvals = new HashMap<String, String>();
 		for (int i = 0; i < confs.length; i++) {
 			String key, value = "";
 			if (confs[i].indexOf("=") < 0) { // only a key
@@ -46,11 +47,9 @@ public class ControlCommandSetConf {
 			}
 			if (!success) {
 				//restore all settings done by this command because one has failed
-				Iterator<String> it = oldvals.keySet().iterator();
-				while (it.hasNext()) {
-					String oldkey = (String)it.next();
-					String oldval = (String)oldvals.get(oldkey);
-					TorConfigParser.setConf(cch.getControlServer().getTorConfig(), oldkey, oldval);
+				Iterator<Map.Entry<String, String>> it = oldvals.entrySet().iterator();
+				for (Map.Entry<String, String> oldEntry : oldvals.entrySet()) {
+					TorConfigParser.setConf(cch.getControlServer().getTorConfig(), oldEntry.getKey(), oldEntry.getValue());
 				}
 				cch.write("552 Unrecognized option");
 				return false;

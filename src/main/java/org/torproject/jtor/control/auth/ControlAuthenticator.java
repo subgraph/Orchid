@@ -28,7 +28,7 @@ public class ControlAuthenticator {
 				reader.close();
 
 				auth = new String(PasswordDigest.hexStringToByteArray(auth));
-				return magic.equals(auth);
+				return (magic != null) && magic.equals(auth);
 			} catch (Throwable t) {
 				return false;
 			}

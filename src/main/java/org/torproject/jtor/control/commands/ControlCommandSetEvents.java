@@ -31,8 +31,8 @@ public class ControlCommandSetEvents {
 
 	}
 
-	public static String[] supportedEvents = {
-		"CIRC" , "STREAM" , "ORCONN" , "BW" , "DEBUG" ,
+    static final String[] supportedEvents = {
+        "CIRC" , "STREAM" , "ORCONN" , "BW" , "DEBUG" ,
         "INFO" , "NOTICE" , "WARN" , "ERR" , "NEWDESC" , "ADDRMAP" ,
         "AUTHDIR_NEWDESCS" , "DESCCHANGED" , "STATUS_GENERAL" ,
         "STATUS_CLIENT" , "STATUS_SERVER" , "GUARD" , "NS" , "STREAM_BW" ,

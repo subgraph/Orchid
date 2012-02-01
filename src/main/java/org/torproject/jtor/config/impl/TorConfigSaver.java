@@ -16,19 +16,22 @@ public class TorConfigSaver {
 
 	@SuppressWarnings("unchecked")
 	public static boolean save(File torrc, TorConfig tc) {
-		BufferedReader reader;
-		String output = "";
+		BufferedReader reader = null;
+		FileReader fileReader = null;
+		StringBuilder output = new StringBuilder();
 		Map opts = configToHash(tc);
 		HashMap written = new HashMap();
+		final String EOL_OUT = "\n";
 		try {
-			reader = new BufferedReader(new FileReader(torrc));
+			fileReader = new FileReader(torrc);
+			reader = new BufferedReader(fileReader);
 			String line = null;
 			while ((line=reader.readLine()) != null) {
 				if (line.startsWith("#") || line.matches("^\\s*$")) { // copy comments directly
 
 					// TODO check comments for values that have changed and inject them here instead of the end of file
 
-					output += line + "\n";
+					output.append(line).append(EOL_OUT);
 					continue;
 				}
 
@@ -50,7 +53,7 @@ public class TorConfigSaver {
 				}
 
 				if (((String)opts.get(key.toLowerCase())).indexOf("\n") == -1) {
-					output += key + " " + (String)opts.get(key.toLowerCase()) + " " + comment + "\n";
+					output.append(key).append(" ").append((String)opts.get(key.toLowerCase())).append(" ").append(comment).append(EOL_OUT);
 					written.put(key.toLowerCase(), "");
 					continue;
 				}
@@ -58,12 +61,23 @@ public class TorConfigSaver {
 				String[] out = ((String)opts.get(key.toLowerCase())).split("\n");
 				written.put(key.toLowerCase(), "");
 				for (int i = 0; i < out.length; i++) {
-					output += key + " " + out[i] + "\n";
+					output.append(key).append(" ").append(out[i]).append(EOL_OUT);
 				}
 			}
 		} catch (FileNotFoundException e) {
 			torrc.setWritable(true);
-		} catch (IOException e) {}
+		} catch (IOException e) {
+		} finally {
+			try {
+				if (reader != null) {
+					reader.close();
+				} else if (fileReader != null) {
+					fileReader.close();
+				}
+			} catch (IOException ex) {
+				System.err.println("torrc: failed to close config-file input stream: " + ex);
+			}
+		}
 
 		Map defaults = defaultConfigToHash(new TorConfigDefaults());
 
@@ -81,11 +95,11 @@ public class TorConfigSaver {
 				}
 
 				if (((String)opts.get(key)).indexOf("\n") == -1) {
-					output += key + " " + val + "\n";
+					output.append(key).append(" ").append(val).append(EOL_OUT);
 				} else {
 					String[] out = ((String)opts.get(key)).split("\n");
 					for (int i = 0; i < out.length; i++) {
-						output += key + " " + out[i] + "\n";
+						output.append(key).append(" ").append(out[i]).append(EOL_OUT);
 					}
 				}
 			}
@@ -94,7 +108,7 @@ public class TorConfigSaver {
 		try {
 			torrc.delete();
 			FileOutputStream fos = new FileOutputStream(torrc);
-			fos.write(output.getBytes());
+			fos.write(output.toString().getBytes());
 			fos.flush();
 			fos.close();
 		} catch (FileNotFoundException e) {

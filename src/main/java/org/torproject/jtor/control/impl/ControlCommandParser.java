@@ -2,6 +2,7 @@ package org.torproject.jtor.control.impl;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import org.torproject.jtor.control.ControlConnectionHandler;
 import org.torproject.jtor.control.FeatureNotSupportedException;
@@ -69,7 +70,7 @@ public class ControlCommandParser {
 
 		else if (command.equals("getconf")) {
 			String[] confs = args.split(" ");
-			HashMap pairs = new HashMap();
+			Map<String, String> pairs = new HashMap<String, String>();
 			for (int i = 0; i < confs.length; i++) {
 				try {
 					if (confs[i].toLowerCase().equals("hiddenserviceoptions")) {
@@ -89,10 +90,9 @@ public class ControlCommandParser {
 			}
 
 			// reply with key=value pairs
-			Iterator it = pairs.keySet().iterator();
-			while (it.hasNext()) {
-				String key = (String)it.next();
-				String val = ((String)pairs.get(key));
+			for (Map.Entry<String, String> pair : pairs.entrySet()) {
+				String key = pair.getKey();
+				String val = pair.getValue();
 
 				if (val == null || val.equals("")) {
 					cch.write("250 " + key);

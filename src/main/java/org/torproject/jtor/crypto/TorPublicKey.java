@@ -58,12 +58,19 @@ public class TorPublicKey {
 
 	private byte[] toASN1Raw() {
 		byte[] encoded = key.getEncoded();
-		ASN1InputStream asn1input = new ASN1InputStream(encoded);
+		ASN1InputStream asn1input = null;
 		try {
+			asn1input = new ASN1InputStream(encoded);
 			SubjectPublicKeyInfo info = SubjectPublicKeyInfo.getInstance(asn1input.readObject());
 			return info.getPublicKey().getDEREncoded();
 		} catch (IOException e) {
 			throw new TorException(e);
+		} finally {
+            try {
+				if (asn1input != null) {
+					asn1input.close();
+				}
+            } catch (IOException ex) {}
 		}
 	}
 
