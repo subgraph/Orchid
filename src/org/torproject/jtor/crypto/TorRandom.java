@@ -20,7 +20,12 @@ public class TorRandom {
 			throw new TorException(e);
 		}
 	}
-	
+
+	public long nextLong(long n) {
+		// XXX not uniformly distributed
+		return random.nextLong() % n;
+	}
+
 	public int nextInt(int n) {
 		return random.nextInt(n);
 	}

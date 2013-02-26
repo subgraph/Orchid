@@ -258,8 +258,7 @@ public class NodeChooser {
 				bw = bandwidths[i];
 			totalBandwidth += bw;
 		}
-		// XXX should be 64 bit random
-		long randBw = random.nextInt((int) totalBandwidth);
+		long randBw = random.nextLong(totalBandwidth);
 		long tmp = 0;
 		for(int i = 0; i < routers.size(); i++) {
 			boolean isExit = exitBits.get(i);
