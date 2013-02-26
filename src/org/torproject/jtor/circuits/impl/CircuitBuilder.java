@@ -178,7 +178,7 @@ class CircuitBuilder {
 	}
 
 	private RelayCell createRelayExtendCell(CircuitNodeImpl newNode) {
-		final RelayCell cell = new RelayCellImpl(circuit.getFinalCircuitNode(), circuit.getCircuitId(), 0, RelayCell.RELAY_EXTEND);
+		final RelayCell cell = new RelayCellImpl(circuit.getFinalCircuitNode(), circuit.getCircuitId(), 0, RelayCell.RELAY_EXTEND, true);
 		final Router router = newNode.getRouter();
 		cell.putByteArray(router.getAddress().getAddressDataBytes());
 		cell.putShort(router.getOnionPort());

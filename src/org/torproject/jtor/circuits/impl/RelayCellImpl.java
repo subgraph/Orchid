@@ -29,8 +29,13 @@ public class RelayCellImpl extends CellImpl implements RelayCell {
      *     Length                  [2 bytes]
      *     Data                    [CELL_LEN-14 bytes]
      */
+	
 	 RelayCellImpl(CircuitNode node, int circuit, int stream, int relayCommand) {
-		super(circuit, Cell.RELAY);
+		 this(node, circuit, stream, relayCommand, false);
+	 }
+	 
+	 RelayCellImpl(CircuitNode node, int circuit, int stream, int relayCommand, boolean isRelayEarly) {
+		super(circuit, (isRelayEarly) ? (Cell.RELAY_EARLY) : (Cell.RELAY));
 		this.circuitNode = node;
 		this.relayCommand = relayCommand;
 		this.streamId = stream;
