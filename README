@@ -1,0 +1,14 @@
+Parent project description:
+	Tor protects your privacy on the internet by hiding the connection
+	between your Internet address and the services you use.
+
+JTor is the Java version of Tor, and currently still in an unstable state.
+
+To build JTor from source & run it:
+
+	mvn package
+	java -jar target/jtor-*.jar
+
+Home page:
+        https://www.torproject.org/getinvolved/volunteer.html.en#project-jtor
+
