@@ -12,7 +12,7 @@ import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.circuits.cells.RelayCell;
 
 public class StreamImpl implements Stream {
-	private final static int STREAM_CONNECT_TIMEOUT = 20 * 1000;
+	private final static int STREAM_CONNECT_TIMEOUT = 60 * 1000;
 	private final static int STREAMWINDOW_START = 500;
 	private final static int STREAMWINDOW_INCREMENT = 50;
 	private final static int STREAMWINDOW_MAX_UNFLUSHED = 10;
