@@ -27,13 +27,13 @@ public class NodeChooser {
 		ncc.setNeedGuard(true);
 		ncc.setWeightAsGuard(true);
 		final List<Router> filteredRouters = filterForRouterList(
-				filterForConstraintFlags(directory.getAllRouters(), ncc), 
+				filterForConstraintFlags(getAvailableRouters(), ncc), 
 				ncc.getExcludedRouters());
 		return chooseRandomRouterByBandwidth(filteredRouters, ncc);
 	}
 
 	Router chooseMiddleNode(NodeChoiceConstraints ncc) {
-		final List<Router> filteredRouters = filterForRouterList(directory.getAllRouters(), ncc.getExcludedRouters());
+		final List<Router> filteredRouters = filterForRouterList(getAvailableRouters(), ncc.getExcludedRouters());
 		return chooseRandomRouterByBandwidth(filteredRouters, ncc);
 	}
 
@@ -69,7 +69,7 @@ public class NodeChooser {
 
 	Router chooseExitNodeForAddress(IPv4Address address, int port, NodeChoiceConstraints ncc) {
 		final List<StreamExitRequest> pendingExitStreams = circuitManager.getPendingExitStreams();
-		final List<Router> allRouters = directory.getAllRouters();
+		final List<Router> allRouters = getAvailableRouters();
 		final List<Router> exitRouters = filterForExitDestination(allRouters, address, port);
 		final List<Router> filteredPending = filterForPendingStreams(exitRouters, pendingExitStreams);
 		return chooseRandomRouterByBandwidth(filteredPending, ncc);
@@ -140,6 +140,20 @@ public class NodeChooser {
 			return router.exitPolicyAccepts(port);
 		else
 			return router.exitPolicyAccepts(address, port);
+	}
+
+	private List<Router> getAvailableRouters() {
+		return filterForHasDescriptor(directory.getAllRouters());
+	}
+
+	private List<Router> filterForHasDescriptor(List<Router> routers) {
+		final List<Router> result = new ArrayList<Router>();
+		for(Router r: routers) {
+			if(r.getCurrentDescriptor() != null) {
+				result.add(r);
+			}
+		}
+		return result;
 	}
 
 	private Router chooseRandomRouterByBandwidth(List<Router> routers, NodeChoiceConstraints ncc) {
