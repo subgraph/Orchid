@@ -16,8 +16,10 @@ import org.torproject.jtor.data.HexDigest;
 public class DirectoryConnection {
 	private final static boolean USE_COMPRESSION = true;
 	private final HttpConnection http;
+	private final String host;
 	
 	DirectoryConnection(String host, InputStream input, OutputStream output) {
+		this.host = host;
 		try {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(input, "ISO-8859-1"));
 			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(output, "ISO-8859-1"));
@@ -58,7 +60,7 @@ public class DirectoryConnection {
 		if(http.getStatusCode() == 200) {
 			return http.getBodyReader();
 		} else {
-			throw new TorException("HTTP server returned error code: "+ http.getStatusCode() +" "+ http.getStatusMessage());
+			throw new TorException("Request "+ request +" to directory "+ host  +" HTTP server returned error code: "+ http.getStatusCode() +" "+ http.getStatusMessage());
 		}
 		
 	}

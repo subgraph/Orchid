@@ -115,7 +115,7 @@ public class HttpConnection {
 				throw new TorException("Unexpected EOF reading HTTP response");
 			return line;
 		} catch (IOException e) {
-			throw new TorException("IO error reading HTTP response", e);
+			throw new TorException("IO error reading HTTP response:"+ e.getMessage(), e);
 		}
 	}
 	
