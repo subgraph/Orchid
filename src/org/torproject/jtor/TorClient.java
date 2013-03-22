@@ -6,7 +6,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.directory.Directory;
-import org.torproject.jtor.directory.impl.NetworkStatusManager;
+import org.torproject.jtor.directory.downloader.DirectoryDownloader;
 import org.torproject.jtor.logging.LogManager;
 import org.torproject.jtor.socks.SocksPortListener;
 
@@ -20,7 +20,7 @@ public class TorClient {
 	private final Directory directory;
 	private final CircuitManager circuitManager;
 	private final SocksPortListener socksListener;
-	private final NetworkStatusManager networkStatusManager;
+	private final DirectoryDownloader directoryDownloader;
 
 	private boolean isStarted = false;
 	
@@ -30,7 +30,7 @@ public class TorClient {
 		config = Tor.createConfig(logManager);
 		directory = Tor.createDirectory(logManager, config);
 		circuitManager = Tor.createCircuitManager(directory, logManager);
-		networkStatusManager = Tor.createNetworkStatusManager(directory, logManager);
+		directoryDownloader = Tor.createDirectoryDownloader(logManager, directory, circuitManager);
 		socksListener = Tor.createSocksPortListener(logManager, circuitManager);
 	}
 
@@ -47,7 +47,7 @@ public class TorClient {
 		}
 		
 		directory.loadFromStore();
-		networkStatusManager.startDownloadingDocuments();
+		directoryDownloader.start();
 		circuitManager.startBuildingCircuits();
 		isStarted = true;
 	}

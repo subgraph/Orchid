@@ -2,11 +2,11 @@ package org.torproject.jtor;
 
 import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.circuits.impl.CircuitManagerImpl;
-import org.torproject.jtor.circuits.impl.ConnectionManagerImpl;
 import org.torproject.jtor.config.impl.TorConfigImpl;
+import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.directory.Directory;
+import org.torproject.jtor.directory.downloader.DirectoryDownloader;
 import org.torproject.jtor.directory.impl.DirectoryImpl;
-import org.torproject.jtor.directory.impl.NetworkStatusManager;
 import org.torproject.jtor.logging.LogManager;
 import org.torproject.jtor.logging.impl.LogManagerImpl;
 import org.torproject.jtor.socks.SocksPortListener;
@@ -75,8 +75,8 @@ public class Tor {
 	 * @see CircuitManager
 	 */
 	static public CircuitManager createCircuitManager(Directory directory, LogManager logManager) {
-		final ConnectionManagerImpl connectionManager = new ConnectionManagerImpl(logManager);
-		return new CircuitManagerImpl(directory, connectionManager, logManager);
+		final ConnectionCache connectionCache = new ConnectionCache(logManager);
+		return new CircuitManagerImpl(directory, connectionCache, logManager);
 	}
 
 	/**
@@ -94,16 +94,21 @@ public class Tor {
 	}
 
 	/**
-	 * Create and return a new <code>NetworkStatusManager</code> instance.
-	 * 
-	 * @param directory This is a required dependency.  You must create a <code>Directory</code>
-	 *                  before calling this method to create a <code>NetworkStatusManager</code>
+	 * Create and return a new <code>DirectoryDownloader</code> instance.
+	 *
 	 * @param logManager This is a required dependency.  You must create a <code>LogManager</code>
-	 *                   before calling this method to create a <code>NetworkStatusManager</code>.
-	 * @return A new <code>NetworkStatusManager</code> instance.
-	 * @see NetworkStatusManager
+	 *                   before calling this method to create a <code>DirectoryDownloader</code>.
+
+	 * @param directory This is a required dependency.  You must create a <code>Directory</code>
+	 *                  before calling this method to create a <code>DirectoryDownloader</code>
+	 *                  
+	 * @param circuitManager This is a required dependency.  You must create a <code>CircuitManager</code>
+	 *                       before calling this method to create a <code>DirectoryDownloader</code>.
+	 *                       
+	 * @return A new <code>DirectoryDownloader</code> instance.
+	 * @see DirectoryDownloader
 	 */
-	static public NetworkStatusManager createNetworkStatusManager(Directory directory, LogManager logManager) {
-		return new NetworkStatusManager(directory, logManager);
+	static public DirectoryDownloader createDirectoryDownloader(LogManager logManager, Directory directory, CircuitManager circuitManager) {
+		return new DirectoryDownloader(logManager, directory, circuitManager);
 	}
 }
