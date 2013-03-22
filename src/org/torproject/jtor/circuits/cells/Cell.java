@@ -46,6 +46,9 @@ public interface Cell {
 	final static int ERROR_DESTROYED = 11;
 	final static int ERROR_NOSUCHSERVICE = 12;
 
+	final static int ADDRESS_TYPE_HOSTNAME = 0x00;
+	final static int ADDRESS_TYPE_IPV4     = 0x04;
+	final static int ADRESS_TYPE_IPV6      = 0x06;
 
 	/**
 	 * The fixed size of a standard cell.
