@@ -1,6 +1,9 @@
 package org.torproject.jtor;
 
 import java.security.Security;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.torproject.jtor.circuits.CircuitManager;
@@ -65,8 +68,21 @@ public class TorClient {
 	}
 
 	public static void main(String[] args) {
+		setupLogging();
 		final TorClient client = new TorClient();
 		client.start();
 		client.enableSocksListener();
+	}
+	
+	public static void setupLogging() {
+		System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tT] %4$s: %5$s%6$s%n");
+		setLogHandlerLevel(Level.FINE);
+		Logger.getLogger("org.torproject.jtor.circuits").setLevel(Level.FINE);
+	}
+	
+	private static void setLogHandlerLevel(Level level) {
+		for(Handler handler: Logger.getLogger("").getHandlers()) {
+			handler.setLevel(level);
+		}
 	}
 }
