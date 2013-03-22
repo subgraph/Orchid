@@ -6,24 +6,27 @@ import java.nio.ByteBuffer;
 
 import org.torproject.jtor.circuits.cells.Cell;
 
-class CellImpl implements Cell {
+public class CellImpl implements Cell {
 
-	static CellImpl createCell(int circuitId, int command) {
+	public static CellImpl createCell(int circuitId, int command) {
 		return new CellImpl(circuitId, command);
 	}
 
-	static CellImpl createVarCell(int circuitId, int command, int payloadLength) {
+	public static CellImpl createVarCell(int circuitId, int command, int payloadLength) {
 		return new CellImpl(circuitId, command, payloadLength);
 	}
 
-	static CellImpl readFromInputStream(InputStream input) throws IOException {
+	public static CellImpl readFromInputStream(InputStream input) throws IOException {
 		final ByteBuffer header = readHeaderFromInputStream(input);
 		final int circuitId = header.getShort() & 0xFFFF;
 		final int command = header.get() & 0xFF;
+		
 		if(command == VERSIONS)
 			return readVarCell(circuitId, command, input);
+
 		final CellImpl cell = new CellImpl(circuitId, command);
 		readAll(input, cell.getCellBytes(), CELL_HEADER_LEN, CELL_PAYLOAD_LEN);
+
 		return cell;
 	}
 
