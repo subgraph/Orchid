@@ -3,9 +3,9 @@ package org.torproject.jtor.crypto;
 import java.io.IOException;
 import java.io.StringReader;
 import java.security.InvalidKeyException;
-import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.PublicKey;
 import java.security.interfaces.RSAPublicKey;
 
 import javax.crypto.BadPaddingException;
@@ -15,7 +15,8 @@ import javax.crypto.NoSuchPaddingException;
 
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.openssl.PEMReader;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.TorParsingException;
 import org.torproject.jtor.data.HexDigest;
@@ -25,28 +26,27 @@ import org.torproject.jtor.data.HexDigest;
  */
 public class TorPublicKey {
 	static public TorPublicKey createFromPEMBuffer(String buffer) {
-		final PEMReader pemReader = new PEMReader( new StringReader(buffer));
-		return new TorPublicKey(readPEMPublicKey(pemReader));
+		final PEMParser parser = new PEMParser(new StringReader(buffer));
+		
+		return new TorPublicKey(readPEMPublicKey(parser));
 	}
 
-	static private RSAPublicKey readPEMPublicKey(PEMReader reader) {
+	static private RSAPublicKey readPEMPublicKey(PEMParser parser) {
 		try {
-			final Object ob = reader.readObject();
-			return verifyObjectAsKey(ob);
+			final SubjectPublicKeyInfo info = SubjectPublicKeyInfo.getInstance(parser.readObject());
+			return extractPublicKey(info);
 		} catch (IOException e) {
 			throw new TorException(e);
 		}
 	}
 
-	static private RSAPublicKey verifyObjectAsKey(Object ob) {
-		if(ob instanceof RSAPublicKey)
-			return ((RSAPublicKey) ob);
-		else if(ob instanceof KeyPair) {
-			KeyPair kp = (KeyPair)ob;
-			if(kp.getPublic() instanceof RSAPublicKey)
-				return ((RSAPublicKey)kp.getPublic());
+	static private RSAPublicKey extractPublicKey(SubjectPublicKeyInfo info) throws IOException {
+		final JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+		final PublicKey publicKey = converter.getPublicKey(info);
+		if(publicKey instanceof RSAPublicKey) {
+			return (RSAPublicKey) publicKey;
 		}
-		throw new TorParsingException("Failed to extract PEM public key.");
+		throw new TorParsingException("Failed to extract PEM public key.  Key was not expected type.");
 	}
 
 	private final RSAPublicKey key;
@@ -61,9 +61,14 @@ public class TorPublicKey {
 		ASN1InputStream asn1input = new ASN1InputStream(encoded);
 		try {
 			SubjectPublicKeyInfo info = SubjectPublicKeyInfo.getInstance(asn1input.readObject());
-			return info.getPublicKey().getDEREncoded();
+			return info.parsePublicKey().getEncoded();
 		} catch (IOException e) {
 			throw new TorException(e);
+		} finally {
+			try {
+				asn1input.close();
+			} catch (IOException e) {
+			}
 		}
 	}
 

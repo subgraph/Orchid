@@ -61,7 +61,16 @@ public class JTorSocketImpl extends SocketImpl {
 			throw new IllegalArgumentException("Unsupported address type");
 		}
 		final InetSocketAddress inetAddress = (InetSocketAddress) address;
-		doConnect(inetAddress.getHostString(), inetAddress.getPort());
+		
+		doConnect(addressToName(inetAddress), inetAddress.getPort());
+	}
+	
+	private String addressToName(InetSocketAddress address) {
+		if(address.getAddress() != null) {
+			return address.getAddress().getHostAddress();
+		} else {
+			return address.getHostName();
+		}
 	}
 
 	private void doConnect(String host, int port) throws IOException {

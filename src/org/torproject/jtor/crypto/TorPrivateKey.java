@@ -12,7 +12,9 @@ import java.security.interfaces.RSAPublicKey;
 
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.bouncycastle.openssl.PEMReader;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.TorParsingException;
 import org.torproject.jtor.data.HexDigest;
@@ -36,29 +38,19 @@ public class TorPrivateKey {
 		}
 	}
 
-	static public TorPrivateKey createFromPEMBuffer(String buffer) {
-		final PEMReader pemReader = new PEMReader(new StringReader(buffer));
-		final KeyPair kp = readPEMKeyPair(pemReader);
-		if(kp.getPublic() instanceof RSAPublicKey && kp.getPrivate() instanceof RSAPrivateKey) 
-			return new TorPrivateKey((RSAPrivateKey)kp.getPrivate(), (RSAPublicKey)kp.getPublic());
-		else
-			throw new TorParsingException("Failed to extract PEM private key");
-	}
-
-	static private KeyPair readPEMKeyPair(PEMReader reader) {
+	static public TorPrivateKey createFromPEMBuffer(String buffer) throws IOException {
+		final PEMParser parser = new PEMParser(new StringReader(buffer));
 		try {
-			final Object ob = reader.readObject();
-			return verifyObjectAsKeyPair(ob);
-		} catch (IOException e) {
-			throw new TorException(e);
-		}
-	}
+			JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+			KeyPair kp = converter.getKeyPair((PEMKeyPair) parser.readObject());
 
-	static private KeyPair verifyObjectAsKeyPair(Object ob) {
-		if(ob instanceof KeyPair)
-			return ((KeyPair)ob);
-		else
-			throw new TorParsingException("Failed to extract PEM private key");
+			if(kp.getPublic() instanceof RSAPublicKey && kp.getPrivate() instanceof RSAPrivateKey) 
+				return new TorPrivateKey((RSAPrivateKey)kp.getPrivate(), (RSAPublicKey)kp.getPublic());
+			else
+				throw new TorParsingException("Failed to extract PEM private key");
+		} finally {
+			parser.close();
+		}
 	}
 
 	private final TorPublicKey publicKey;
@@ -94,9 +86,14 @@ public class TorPrivateKey {
 		ASN1InputStream asn1input = new ASN1InputStream(encoded);
 		try {
 			PrivateKeyInfo info = PrivateKeyInfo.getInstance(asn1input.readObject());
-			return info.getDEREncoded();
+			return info.getEncoded();
 		} catch (IOException e) {
 			throw new TorException(e);
+		} finally {
+			try {
+				asn1input.close();
+			} catch (IOException e) {
+			}
 		}
 	}
 }
