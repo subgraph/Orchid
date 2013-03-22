@@ -113,10 +113,10 @@ public class StreamImpl implements Stream {
 		}
 	}
 
-	void openDirectory() {
+	OpenStreamResponse openDirectory() {
 		final RelayCell cell = new RelayCellImpl(circuit.getFinalCircuitNode(), circuit.getCircuitId(), streamId, RelayCell.RELAY_BEGIN_DIR);
 		circuit.sendRelayCellToFinalNode(cell);
-		waitForRelayConnected();
+		return waitForRelayConnected();
 	}
 
 	OpenStreamResponse openExit(String target, int port) {

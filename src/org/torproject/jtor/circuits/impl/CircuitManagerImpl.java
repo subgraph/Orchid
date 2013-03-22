@@ -1,6 +1,7 @@
 package org.torproject.jtor.circuits.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,18 +11,23 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.torproject.jtor.circuits.Circuit;
+import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitManager;
+import org.torproject.jtor.circuits.CircuitNode;
+import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.OpenStreamResponse;
+import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Directory;
+import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.logging.LogManager;
 import org.torproject.jtor.logging.Logger;
 
 public class CircuitManagerImpl implements CircuitManager {
 	private final static boolean DEBUG_CIRCUIT_CREATION = true;
 
-	private final ConnectionManagerImpl connectionManager;
+	private final ConnectionCache connectionCache;
 	private final Logger logger;
 	private final Set<Circuit> pendingCircuits;
 	private final Set<Circuit> activeCircuits;
@@ -31,8 +37,8 @@ public class CircuitManagerImpl implements CircuitManager {
 	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 	private final Runnable circuitCreationTask;
 
-	public CircuitManagerImpl(Directory directory, ConnectionManagerImpl connectionManager, LogManager logManager) {
-		this.connectionManager = connectionManager;
+	public CircuitManagerImpl(Directory directory, ConnectionCache connectionCache, LogManager logManager) {
+		this.connectionCache = connectionCache;
 		this.logger = logManager.getLogger("circuits");
 		this.logger.enableDebug();
 		this.circuitCreationTask = new CircuitCreationTask(directory, this, logger);
@@ -60,7 +66,7 @@ public class CircuitManagerImpl implements CircuitManager {
 	}
 
 	public Circuit createNewCircuit() {
-		return CircuitImpl.create(this, connectionManager, logger);
+		return CircuitImpl.create(this, connectionCache, logger);
 	}
 
 	synchronized void circuitStartConnect(Circuit circuit) {
@@ -143,5 +149,35 @@ public class CircuitManagerImpl implements CircuitManager {
 			pendingExitStreams.remove(request);
 			pendingExitStreams.notifyAll();
 		}
+	}
+
+	public OpenStreamResponse openDirectoryStreamTo(Router directory) {
+		final Circuit circuit = createNewCircuit();
+		circuit.openCircuit(Arrays.asList(directory), new CircuitBuildHandler() {
+			
+			public void nodeAdded(CircuitNode node) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			public void connectionFailed(String reason) {
+				logger.debug("Connection failed: "+ reason);
+			}
+			
+			public void connectionCompleted(Connection connection) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			public void circuitBuildFailed(String reason) {
+				logger.debug("Circuit Build Failed: "+ reason);
+			}
+			
+			public void circuitBuildCompleted(Circuit circuit) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		return circuit.openDirectoryStream();
 	}
 }

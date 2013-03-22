@@ -15,10 +15,11 @@ import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
-import org.torproject.jtor.circuits.ConnectionClosedException;
+import org.torproject.jtor.circuits.ConnectionIOException;
 import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
+import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Router;
@@ -29,14 +30,14 @@ import org.torproject.jtor.logging.Logger;
  *
  */
 public class CircuitImpl implements Circuit {
-	static CircuitImpl create(CircuitManagerImpl circuitManager, ConnectionManagerImpl connectionManager, Logger logger) {
-		return new CircuitImpl(circuitManager, connectionManager, logger);
+	static CircuitImpl create(CircuitManagerImpl circuitManager, ConnectionCache connectionCache, Logger logger) {
+		return new CircuitImpl(circuitManager, connectionCache, logger);
 	}
 
 	private final static long CIRCUIT_BUILD_TIMEOUT_MS = 30 * 1000;
 	private final static long CIRCUIT_RELAY_RESPONSE_TIMEOUT = 20 * 1000;
 
-	private ConnectionImpl entryConnection;
+	private Connection entryConnection;
 	private int circuitId;
 	private final CircuitManagerImpl circuitManager;
 	private final Logger logger;
@@ -49,7 +50,7 @@ public class CircuitImpl implements Circuit {
 	private final CircuitStatus status;
 	private final Object relaySendLock = new Object();
 	
-	private CircuitImpl(CircuitManagerImpl circuitManager, ConnectionManagerImpl connectionManager, Logger logger) {
+	private CircuitImpl(CircuitManagerImpl circuitManager, ConnectionCache connectionCache, Logger logger) {
 		nodeList = new ArrayList<CircuitNodeImpl>();
 		this.circuitManager = circuitManager;
 		this.logger = logger;
@@ -58,10 +59,10 @@ public class CircuitImpl implements Circuit {
 		this.streamMap = new HashMap<Integer, StreamImpl>();
 		this.failedExitRequests = new HashSet<ExitTarget>();
 		status = new CircuitStatus();
-		circuitBuilder = new CircuitBuilder(this, connectionManager, logger);
+		circuitBuilder = new CircuitBuilder(this, connectionCache, logger);
 	}
 
-	void initializeConnectingCircuit(ConnectionImpl entryConnection, int circuitId) {
+	void initializeConnectingCircuit(Connection entryConnection, int circuitId) {
 		this.circuitId = circuitId;
 		this.entryConnection = entryConnection;
 	}
@@ -74,12 +75,15 @@ public class CircuitImpl implements Circuit {
 		status.setStateConnected();
 	}
 
-	public void openCircuit(List<Router> circuitPath, CircuitBuildHandler handler)  {
+	public boolean openCircuit(List<Router> circuitPath, CircuitBuildHandler handler)  {
 		startCircuitOpen(circuitPath);	
-		if(circuitBuilder.openCircuit(circuitPath, handler)) 
+		if(circuitBuilder.openCircuit(circuitPath, handler)) { 
 			circuitOpenSucceeded();
-		else
+			return true;
+		} else {
 			circuitOpenFailed();
+			return false;
+		}
 	}
 
 	private void startCircuitOpen(List<Router> circuitPath) {
@@ -147,7 +151,7 @@ public class CircuitImpl implements Circuit {
 		try {
 			status.updateDirtyTimestamp();
 			entryConnection.sendCell(cell);
-		} catch (ConnectionClosedException e) {
+		} catch (ConnectionIOException e) {
 			destroyCircuit();
 		}
 	}
@@ -223,16 +227,17 @@ public class CircuitImpl implements Circuit {
 	 * This is called by the cell reading thread in ConnectionImpl to deliver control cells 
 	 * associated with this circuit (CREATED or CREATED_FAST).
 	 */
-	void deliverControlCell(Cell cell) {
+	public void deliverControlCell(Cell cell) {
 		status.updateDirtyTimestamp();
 		controlCellResponseQueue.add(cell);
 	}
 
 	/* This is called by the cell reading thread in ConnectionImpl to deliver RELAY cells. */
-	void deliverRelayCell(Cell cell) {
+	public void deliverRelayCell(Cell cell) {
 		status.updateDirtyTimestamp();
 		final RelayCell relayCell = decryptRelayCell(cell);
-		logger.debug("Dispatching: "+ relayCell);
+		if(relayCell.getRelayCommand() != RelayCell.RELAY_DATA)
+			logger.debug("Dispatching: "+ relayCell);
 		switch(relayCell.getRelayCommand()) {
 		case RelayCell.RELAY_EXTENDED:
 		case RelayCell.RELAY_RESOLVED:
@@ -288,7 +293,10 @@ public class CircuitImpl implements Circuit {
 	}
 
 	public OpenStreamResponse openDirectoryStream() {
-		return null;
+		final StreamImpl stream = createNewStream();
+		final OpenStreamResponse response = stream.openDirectory();
+		processOpenStreamResponse(stream, response);
+		return response;
 	}
 
 	public OpenStreamResponse openExitStream(IPv4Address address, int port) {
@@ -298,6 +306,11 @@ public class CircuitImpl implements Circuit {
 	public OpenStreamResponse openExitStream(String target, int port) {
 		final StreamImpl stream = createNewStream();
 		final OpenStreamResponse response = stream.openExit(target, port);
+		processOpenStreamResponse(stream, response);
+		return response;
+	}
+
+	private void processOpenStreamResponse(StreamImpl stream, OpenStreamResponse response) {
 		switch(response.getStatus()) {
 		case STATUS_STREAM_TIMEOUT:
 			logger.info("Timeout opening stream: "+ stream);
@@ -311,16 +324,16 @@ public class CircuitImpl implements Circuit {
 			logger.info("Error opening stream: "+ stream +" reason: "+ response.getErrorCodeMessage());
 			removeStream(stream);
 			break;
-
+		case STATUS_STREAM_OPENED:
+			break;
 		}
-		return response;
 	}
 
 	boolean isFinalNodeDirectory() {
 		return getFinalCircuitNode().getRouter().getDirectoryPort() != 0;
 	}
 
-	void destroyCircuit() {
+	public void destroyCircuit() {
 		status.setStateDestroyed();
 		entryConnection.removeCircuit(this);
 		synchronized(streamMap) {
