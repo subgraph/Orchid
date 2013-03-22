@@ -11,6 +11,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.TorInitializationListener;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitManager;
@@ -35,6 +36,7 @@ public class CircuitManagerImpl implements CircuitManager {
 	private final List<StreamExitRequest> pendingExitStreams = new LinkedList<StreamExitRequest>();
 	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 	private final Runnable circuitCreationTask;
+	private final TorInitializationTracker initializationTracker;
 
 	public CircuitManagerImpl(Directory directory, ConnectionCache connectionCache) {
 		this.connectionCache = connectionCache;
@@ -43,6 +45,20 @@ public class CircuitManagerImpl implements CircuitManager {
 		this.pendingCircuits = new HashSet<Circuit>();
 		this.cleanCircuits = new HashSet<Circuit>();
 		this.random = new TorRandom();
+		this.initializationTracker = new TorInitializationTracker();
+		connectionCache.setInitializationTracker(initializationTracker);
+	}
+
+	public void addInitializationListener(TorInitializationListener listener) {
+		initializationTracker.addListener(listener);
+	}
+	
+	public void removeInitializationListener(TorInitializationListener listener) {
+		initializationTracker.removeListener(listener);
+	}
+	
+	public void notifyInitializationEvent(int eventCode) {
+		initializationTracker.notifyEvent(eventCode);
 	}
 
 	public void startBuildingCircuits() {
@@ -62,8 +78,8 @@ public class CircuitManagerImpl implements CircuitManager {
 		}};
 	}
 
-	public Circuit createNewCircuit() {
-		return CircuitImpl.create(this, connectionCache);
+	public Circuit createNewCircuit(boolean isDirectoryCircuit) {
+		return CircuitImpl.create(this, connectionCache, isDirectoryCircuit);
 	}
 
 	synchronized void circuitStartConnect(Circuit circuit) {
@@ -148,8 +164,8 @@ public class CircuitManagerImpl implements CircuitManager {
 		}
 	}
 
-	public OpenStreamResponse openDirectoryStreamTo(Router directory) {
-		final Circuit circuit = createNewCircuit();
+	public Circuit openDirectoryCircuitTo(Router directory) {
+		final Circuit circuit = createNewCircuit(true);
 		circuit.openCircuit(Arrays.asList(directory), new CircuitBuildHandler() {
 			
 			public void nodeAdded(CircuitNode node) {
@@ -174,7 +190,7 @@ public class CircuitManagerImpl implements CircuitManager {
 				// TODO Auto-generated method stub
 				
 			}
-		});
-		return circuit.openDirectoryStream();
+		}, true);
+		return circuit;
 	}
 }

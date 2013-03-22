@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.Tor;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitNode;
@@ -30,19 +31,21 @@ class CircuitBuilder {
 	private final static Logger logger = Logger.getLogger(CircuitBuilder.class.getName());
 	private final CircuitImpl circuit;
 	private final ConnectionCache connectionCache;
+	private final boolean isDirectoryCircuit;
 
 	
-	CircuitBuilder(CircuitImpl circuit, ConnectionCache connectionCache) {
+	CircuitBuilder(CircuitImpl circuit, ConnectionCache connectionCache, boolean isDirectoryCircuit) {
 		this.circuit = circuit;
 		this.connectionCache = connectionCache;
+		this.isDirectoryCircuit = isDirectoryCircuit;
 	}
 	
-	boolean openCircuit(List<Router> circuitPath, CircuitBuildHandler handler) {
+	boolean openCircuit(List<Router> circuitPath, CircuitBuildHandler handler, boolean isDirectoryCircuit) {
 		if(circuitPath.isEmpty())
 			throw new IllegalArgumentException("Path must contain at least one router to create a circuit.");
 		final Router entryRouter = circuitPath.get(0);
 		try {
-			return openEntryNodeConnection(entryRouter, handler) && 
+			return openEntryNodeConnection(entryRouter, handler, isDirectoryCircuit) && 
 				buildCircuit(circuitPath, handler);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
@@ -58,8 +61,8 @@ class CircuitBuilder {
 		}
 	}
 
-	private boolean openEntryNodeConnection(Router entryRouter, CircuitBuildHandler handler) throws InterruptedException, ConnectionTimeoutException, ConnectionFailedException, ConnectionHandshakeException {
-		final Connection entryConnection = connectionCache.getConnectionTo(entryRouter);
+	private boolean openEntryNodeConnection(Router entryRouter, CircuitBuildHandler handler, boolean isDirectoryCircuit) throws InterruptedException, ConnectionTimeoutException, ConnectionFailedException, ConnectionHandshakeException {
+		final Connection entryConnection = connectionCache.getConnectionTo(entryRouter, isDirectoryCircuit);
 			
 		final int circuitId = entryConnection.allocateCircuitId(circuit);
 		circuit.initializeConnectingCircuit(entryConnection, circuitId);
@@ -88,6 +91,12 @@ class CircuitBuilder {
 		circuit.setConnected();
 		if(handler != null)
 			handler.circuitBuildCompleted(circuit);
+		
+		final TorInitializationTracker tracker = connectionCache.getInitializationTracker();
+		if(tracker != null && !isDirectoryCircuit) {
+			tracker.notifyEvent(Tor.BOOTSTRAP_STATUS_DONE);
+		}
+	
 		return true;
 	}
 
@@ -105,6 +114,7 @@ class CircuitBuilder {
 	}
 
 	CircuitNode createTo(Router targetRouter) {
+		notifyInitialization();
 		final CircuitNodeImpl newNode = new CircuitNodeImpl(targetRouter, null);
 		sendCreateCell(newNode);
 		receiveAndProcessCreateResponse(newNode);
@@ -112,10 +122,19 @@ class CircuitBuilder {
 	}
 	
 	CircuitNode createFastTo(Router targetRouter) {
+		notifyInitialization();
 		final CircuitNodeImpl newNode = new CircuitNodeImpl(targetRouter, null);
 		sendCreateFastCell(newNode);
 		receiveAndProcessCreateFastResponse(newNode);
 		return newNode;
+	}
+
+	private void notifyInitialization() {
+		final TorInitializationTracker tracker = connectionCache.getInitializationTracker();
+		if(tracker == null) {
+			return;
+		}
+		tracker.notifyEvent(isDirectoryCircuit ? Tor.BOOTSTRAP_STATUS_ONEHOP_CREATE : Tor.BOOTSTRAP_STATUS_CIRCUIT_CREATE);
 	}
 
 	private void sendCreateFastCell(CircuitNodeImpl node) {

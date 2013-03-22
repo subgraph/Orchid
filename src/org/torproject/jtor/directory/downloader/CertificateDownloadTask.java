@@ -3,6 +3,7 @@ package org.torproject.jtor.directory.downloader;
 import java.io.Reader;
 import java.util.List;
 
+import org.torproject.jtor.Tor;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.directory.KeyCertificate;
 import org.torproject.jtor.directory.parsing.DocumentParser;
@@ -14,16 +15,16 @@ public class CertificateDownloadTask extends AbstractDirectoryDownloadTask{
 	
 	
 	CertificateDownloadTask(List<HexDigest> fingerprints, DirectoryDownloader downloader) {
-		super(downloader);
+		super(downloader, Tor.BOOTSTRAP_STATUS_REQUESTING_KEYS, Tor.BOOTSTRAP_STATUS_LOADING_KEYS);
 		this.fingerprints = fingerprints;
 	}
-
+    
 	@Override
 	protected String getRequestPath() {
 		final String fps = fingerprintsToRequestString(fingerprints);
 		return "/tor/keys/fp/"+ fps;
 	}
-
+	
 	@Override
 	protected void processResponse(Reader response) {
 		final DocumentParser<KeyCertificate> parser = getParserFactory().createKeyCertificateParser(response);
@@ -51,5 +52,4 @@ public class CertificateDownloadTask extends AbstractDirectoryDownloadTask{
 	protected void finishRequest(DirectoryDownloader downloader) {
 		downloader.clearDownloadingCertificates();
 	}
-
 }

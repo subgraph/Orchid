@@ -24,7 +24,7 @@ public class OpenCircuitTask implements Runnable {
 		if(logger.isLoggable(Level.FINE)) {
 			logger.fine("Opening a new circuit to "+ pathToString());
 		}
-		circuit.openCircuit(circuitPath, buildHandler);		
+		circuit.openCircuit(circuitPath, buildHandler, false);		
 	}
 	
 	private String pathToString() {

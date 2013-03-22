@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.torproject.jtor.Tor;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.directory.RouterDescriptor;
 import org.torproject.jtor.directory.parsing.DocumentParser;
@@ -15,7 +16,7 @@ public class DescriptorDownloadTask extends AbstractDirectoryDownloadTask{
 	private final List<HexDigest> fingerprints;
 	
 	DescriptorDownloadTask(List<HexDigest> fingerprints, DirectoryDownloader downloader) {
-		super(downloader);
+		super(downloader, Tor.BOOTSTRAP_STATUS_REQUESTING_DESCRIPTORS, Tor.BOOTSTRAP_STATUS_LOADING_DESCRIPTORS);
 		this.fingerprints = fingerprints;
 	}
 
@@ -24,7 +25,7 @@ public class DescriptorDownloadTask extends AbstractDirectoryDownloadTask{
 		final String fps = fingerprintsToRequestString(fingerprints);
 		return "/tor/server/d/" + fps;
 	}
-
+	
 	@Override
 	protected void processResponse(Reader response) {
 		final Set<HexDigest> requested = new HashSet<HexDigest>();

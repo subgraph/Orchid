@@ -24,7 +24,7 @@ public interface Circuit {
 	 *                
 	 * @see CircuitBuildHandler
 	 */
-	boolean openCircuit(List<Router> circuitPath, CircuitBuildHandler callback);
+	boolean openCircuit(List<Router> circuitPath, CircuitBuildHandler callback, boolean isDirectoryCircuit);
 	
 	/**
 	 * Extend an already connected circuit to add an additional <code>Router</code> to the path.

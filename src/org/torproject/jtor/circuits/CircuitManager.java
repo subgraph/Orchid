@@ -1,5 +1,6 @@
 package org.torproject.jtor.circuits;
 
+import org.torproject.jtor.TorInitializationListener;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Router;
 
@@ -10,7 +11,7 @@ public interface CircuitManager {
 	 * 
 	 * @return The new {@link Circuit} instance.
 	 */
-	Circuit createNewCircuit();
+	Circuit createNewCircuit(boolean isDirectoryCircuit);
 
 	/**
 	 * Begin automatically building new circuits in the background.
@@ -37,5 +38,11 @@ public interface CircuitManager {
 	 */
 	OpenStreamResponse openExitStreamTo(IPv4Address address, int port) throws InterruptedException;
 	
-	OpenStreamResponse openDirectoryStreamTo(Router directory);
+	
+	Circuit openDirectoryCircuitTo(Router directory);
+	
+	void addInitializationListener(TorInitializationListener listener);
+	void removeInitializationListener(TorInitializationListener listener);
+	void notifyInitializationEvent(int eventCode);
+
 }

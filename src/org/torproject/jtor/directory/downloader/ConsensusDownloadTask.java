@@ -2,6 +2,7 @@ package org.torproject.jtor.directory.downloader;
 
 import java.io.Reader;
 
+import org.torproject.jtor.Tor;
 import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
@@ -9,14 +10,14 @@ import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
 public class ConsensusDownloadTask extends AbstractDirectoryDownloadTask {
 
 	ConsensusDownloadTask(DirectoryDownloader downloader) {
-		super(downloader);
+		super(downloader, Tor.BOOTSTRAP_STATUS_REQUESTING_STATUS, Tor.BOOTSTRAP_STATUS_LOADING_STATUS);
 	}
 
 	@Override
 	protected String getRequestPath() {
 		return "/tor/status-vote/current/consensus";
 	}
-
+	
 	@Override
 	protected void processResponse(Reader response) {
 		final DocumentParser<ConsensusDocument> parser = getParserFactory().createConsensusDocumentParser(response);

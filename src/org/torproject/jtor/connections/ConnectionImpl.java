@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 
 import javax.net.ssl.SSLSocket;
 
+import org.torproject.jtor.Tor;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.Connection;
@@ -24,6 +25,7 @@ import org.torproject.jtor.circuits.ConnectionIOException;
 import org.torproject.jtor.circuits.ConnectionTimeoutException;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.impl.CellImpl;
+import org.torproject.jtor.circuits.impl.TorInitializationTracker;
 import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.directory.Router;
 
@@ -42,19 +44,24 @@ public class ConnectionImpl implements Connection {
 	private final Router router;
 	private final Map<Integer, Circuit> circuitMap;
 	private final BlockingQueue<Cell> connectionControlCells;
+	private final TorInitializationTracker initializationTracker;
+	private final boolean isDirectoryConnection;
+	
 	private int currentId = 1;
 	private boolean isConnected;
 	private volatile boolean isClosed;
 	private final Thread readCellsThread;
 	private final Object connectLock = new Object();
 
-	public ConnectionImpl(SSLSocket socket, Router router) {
+	public ConnectionImpl(SSLSocket socket, Router router, TorInitializationTracker tracker, boolean isDirectoryConnection) {
 		this.socket = socket;
 		this.router = router;
 		this.circuitMap = new HashMap<Integer, Circuit>();
 		this.readCellsThread = new Thread(createReadCellsRunnable());
 		this.readCellsThread.setDaemon(true);
 		this.connectionControlCells = new LinkedBlockingQueue<Cell>();
+		this.initializationTracker = tracker;
+		this.isDirectoryConnection = isDirectoryConnection;
 		initializeCurrentCircuitId();
 	}
 	
@@ -112,12 +119,32 @@ public class ConnectionImpl implements Connection {
 	}
 
 	private void doConnect() throws IOException, InterruptedException, ConnectionIOException {
-		final ConnectionHandshakeV2 handshake = new ConnectionHandshakeV2(this, socket);
-		socket.connect(routerToSocketAddress(router), DEFAULT_CONNECT_TIMEOUT);
+		connectSocket();
+		final ConnectionHandshakeV2 handshake = new ConnectionHandshakeV2(this, socket);		
 		input = socket.getInputStream();
 		output = socket.getOutputStream();
 		readCellsThread.start();
-		handshake.runHandshake();		
+		handshake.runHandshake();
+	}
+	
+	private void connectSocket() throws IOException {
+		if(initializationTracker != null) {
+			if(isDirectoryConnection) {
+				initializationTracker.notifyEvent(Tor.BOOTSTRAP_STATUS_CONN_DIR);
+			} else {
+				initializationTracker.notifyEvent(Tor.BOOTSTRAP_STATUS_CONN_OR);
+			}
+		}
+
+		socket.connect(routerToSocketAddress(router), DEFAULT_CONNECT_TIMEOUT);
+		
+		if(initializationTracker != null) {
+			if(isDirectoryConnection) {
+				initializationTracker.notifyEvent(Tor.BOOTSTRAP_STATUS_HANDSHAKE_DIR);
+			} else {
+				initializationTracker.notifyEvent(Tor.BOOTSTRAP_STATUS_HANDSHAKE_OR);
+			}
+		}
 	}
 
 	private SocketAddress routerToSocketAddress(Router router) {

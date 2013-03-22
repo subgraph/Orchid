@@ -70,6 +70,7 @@ public class TorClient {
 	public static void main(String[] args) {
 		setupLogging();
 		final TorClient client = new TorClient();
+		client.circuitManager.addInitializationListener(createInitalizationListner());
 		client.start();
 		client.enableSocksListener();
 	}
@@ -77,12 +78,25 @@ public class TorClient {
 	public static void setupLogging() {
 		System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tT] %4$s: %5$s%6$s%n");
 		setLogHandlerLevel(Level.FINE);
-		Logger.getLogger("org.torproject.jtor.circuits").setLevel(Level.FINE);
+		//Logger.getLogger("org.torproject.jtor.circuits").setLevel(Level.FINE);
 	}
 	
 	private static void setLogHandlerLevel(Level level) {
 		for(Handler handler: Logger.getLogger("").getHandlers()) {
 			handler.setLevel(level);
 		}
+	}
+	
+	private static TorInitializationListener createInitalizationListner() {
+		return new TorInitializationListener() {
+			
+			public void initializationProgress(String message, int percent) {
+				System.out.println(">>> [ "+ percent + "% ]: "+ message);
+			}
+			
+			public void initializationCompleted() {
+				System.out.println("Tor is ready to go!");
+			}
+		};
 	}
 }

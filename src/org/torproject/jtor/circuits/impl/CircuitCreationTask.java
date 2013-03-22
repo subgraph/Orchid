@@ -115,7 +115,7 @@ public class CircuitCreationTask implements Runnable {
 		if(circuitManager.getPendingCircuitCount() >= MAX_PENDING_CIRCUITS)
 			return;
 
-		final Circuit circuit = circuitManager.createNewCircuit();
+		final Circuit circuit = circuitManager.createNewCircuit(false);
 		final NodeChoiceConstraints ncc = new NodeChoiceConstraints();
 		// XXX
 		ncc.setNeedCapacity(true);
@@ -141,7 +141,7 @@ public class CircuitCreationTask implements Runnable {
 		if((circuitManager.getCleanCircuitCount() + circuitManager.getPendingCircuitCount()) < DEFAULT_CLEAN_CIRCUITS &&
 				circuitManager.getPendingCircuitCount() < MAX_PENDING_CIRCUITS) {
 			final List<Router> path = choosePreemptiveExitPath();
-			final Circuit circuit = circuitManager.createNewCircuit();
+			final Circuit circuit = circuitManager.createNewCircuit(false);
 			executor.execute(new OpenCircuitTask(circuit, path, createCircuitBuildHandler()));
 		}
 	}

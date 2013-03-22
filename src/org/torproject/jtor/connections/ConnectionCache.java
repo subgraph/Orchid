@@ -15,6 +15,7 @@ import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.ConnectionFailedException;
 import org.torproject.jtor.circuits.ConnectionHandshakeException;
 import org.torproject.jtor.circuits.ConnectionTimeoutException;
+import org.torproject.jtor.circuits.impl.TorInitializationTracker;
 import org.torproject.jtor.directory.Router;
 
 public class ConnectionCache {
@@ -23,25 +24,36 @@ public class ConnectionCache {
 	private class ConnectionTask implements Callable<ConnectionImpl> {
 
 		private final Router router;
+		private final boolean isDirectoryConnection;
 		
-		ConnectionTask(Router router) {
+		ConnectionTask(Router router, boolean isDirectoryConnection) {
 			this.router = router;
+			this.isDirectoryConnection = isDirectoryConnection;
 		}
 
 		public ConnectionImpl call() throws Exception {
 			SSLSocket socket = factory.createSocket();
-			ConnectionImpl conn = new ConnectionImpl(socket, router);
+			ConnectionImpl conn = new ConnectionImpl(socket, router, initializationTracker, isDirectoryConnection);
 			conn.connect();
 			return conn;
 		}
 	}
 	private final ConcurrentMap<Router, Future<ConnectionImpl>> activeConnections = new ConcurrentHashMap<Router, Future<ConnectionImpl>>();
 	private final ConnectionSocketFactory factory = new ConnectionSocketFactory();
+	private TorInitializationTracker initializationTracker;
 	
-	public Connection getConnectionTo(Router router) throws InterruptedException, ConnectionTimeoutException, ConnectionFailedException, ConnectionHandshakeException {
+	public void setInitializationTracker(TorInitializationTracker tracker) {
+		this.initializationTracker = tracker;
+	}
+	
+	public TorInitializationTracker getInitializationTracker() {
+		return initializationTracker;
+	}
+
+	public Connection getConnectionTo(Router router, boolean isDirectoryConnection) throws InterruptedException, ConnectionTimeoutException, ConnectionFailedException, ConnectionHandshakeException {
 		logger.fine("Get connection to "+ router.getAddress() + " "+ router.getOnionPort() + " " + router.getNickname());
 		while(true) {
-			Future<ConnectionImpl> f = getFutureFor(router);
+			Future<ConnectionImpl> f = getFutureFor(router, isDirectoryConnection);
 			try {
 				ConnectionImpl c = f.get();
 				if(c.isClosed()) {
@@ -66,12 +78,12 @@ public class ConnectionCache {
 		}
 	}
 	
-	private Future<ConnectionImpl> getFutureFor(Router router) {
+	private Future<ConnectionImpl> getFutureFor(Router router, boolean isDirectoryConnection) {
 		Future<ConnectionImpl> f = activeConnections.get(router);
 		if(f != null) {
 			return f;
 		}
-		FutureTask<ConnectionImpl> ft = new FutureTask<ConnectionImpl>(new ConnectionTask(router));
+		FutureTask<ConnectionImpl> ft = new FutureTask<ConnectionImpl>(new ConnectionTask(router, isDirectoryConnection));
 		f = activeConnections.putIfAbsent(router, ft);
 		if(f == null) {
 			ft.run();
