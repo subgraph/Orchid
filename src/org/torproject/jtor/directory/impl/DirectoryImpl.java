@@ -186,6 +186,7 @@ public class DirectoryImpl implements Directory {
 			}
 		}
 		final Map<HexDigest, RouterImpl> oldRouterByIdentity = new HashMap<HexDigest, RouterImpl>(routersByIdentity);
+
 		clearAll();
 
 		for(RouterStatus status: consensus.getRouterStatusEntries()) {
@@ -216,10 +217,11 @@ public class DirectoryImpl implements Directory {
 	}
 
 	private void classifyRouter(RouterImpl router) {
-		if(isValidDirectoryCache(router)) 
+		if(isValidDirectoryCache(router)) {
 			directoryCaches.add(router);
-		else
+		} else {
 			directoryCaches.remove(router);
+		}
 	}
 
 	private boolean isValidDirectoryCache(RouterImpl router) {
@@ -233,8 +235,6 @@ public class DirectoryImpl implements Directory {
 	private void addRouter(RouterImpl router) {
 		routersByIdentity.put(router.getIdentityHash(), router);
 		addRouterByNickname(router);
-		if(router.getDirectoryPort() != 0)
-			directoryCaches.add(router);
 	}
 
 	private void addRouterByNickname(RouterImpl router) {
