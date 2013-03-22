@@ -80,9 +80,9 @@ public class CircuitCreationTask implements Runnable {
 		if(pendingExitStreams.isEmpty())
 			return;
 
-		System.out.println("Building new circuits to handle "+ pendingExitStreams.size() +" pending streams");
+		logger.debug("Building new circuits to handle "+ pendingExitStreams.size() +" pending streams");
 		for(StreamExitRequest r: pendingExitStreams) {
-			System.out.println("Request: "+ r);
+			logger.debug("Request: "+ r);
 
 		}
 
