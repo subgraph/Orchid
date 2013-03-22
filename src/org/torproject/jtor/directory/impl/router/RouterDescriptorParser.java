@@ -161,7 +161,6 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 		if(!fieldParser.verifySignedEntity(currentDescriptor.getIdentityKey(), signature)) {
 			resultHandler.documentInvalid(currentDescriptor, "Signature failed.");
 			fieldParser.logWarn("Signature failed for router: " + currentDescriptor.getNickname());
-			System.out.println("XX"+ currentDescriptor.getRawDocumentData());
 			return false;
 		}
 		currentDescriptor.setValidSignature();
