@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
 
 import javax.net.ssl.SSLSocket;
 
@@ -25,7 +26,6 @@ import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.impl.CellImpl;
 import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.directory.Router;
-import org.torproject.jtor.logging.Logger;
 
 /**
  * This class represents a transport link between two onion routers or
@@ -33,11 +33,10 @@ import org.torproject.jtor.logging.Logger;
  *
  */
 public class ConnectionImpl implements Connection {
-
+	private final static Logger logger = Logger.getLogger(ConnectionImpl.class.getName());
 	private final static int DEFAULT_CONNECT_TIMEOUT = 5000;
 
 	private final SSLSocket socket;
-	private final Logger logger;
 	private InputStream input;
 	private OutputStream output;
 	private final Router router;
@@ -49,8 +48,7 @@ public class ConnectionImpl implements Connection {
 	private final Thread readCellsThread;
 	private final Object connectLock = new Object();
 
-	public ConnectionImpl(Logger logger, SSLSocket socket, Router router) {
-		this.logger = logger;
+	public ConnectionImpl(SSLSocket socket, Router router) {
 		this.socket = socket;
 		this.router = router;
 		this.circuitMap = new HashMap<Integer, Circuit>();
@@ -254,7 +252,7 @@ public class ConnectionImpl implements Connection {
 	}
 
 	private void processDestroyCell(Cell cell) {
-		logger.debug("DESTROY cell received ("+ CellImpl.errorToDescription(cell.getByte() & 0xFF) +")");
+		logger.fine("DESTROY cell received ("+ CellImpl.errorToDescription(cell.getByte() & 0xFF) +")");
 		synchronized(circuitMap) {
 			final Circuit circuit = circuitMap.remove(cell.getCircuitId());
 			if(circuit == null)

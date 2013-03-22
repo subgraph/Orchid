@@ -1,28 +1,29 @@
 package org.torproject.jtor.circuits.impl;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.directory.Router;
-import org.torproject.jtor.logging.Logger;
 
 public class OpenCircuitTask implements Runnable {
-
+	private final static Logger logger = Logger.getLogger(OpenCircuitTask.class.getName());
 	private final Circuit circuit;
 	private final List<Router> circuitPath;
 	private final CircuitBuildHandler buildHandler;
-	private final Logger logger;
 	
-	OpenCircuitTask(Circuit circuit, List<Router> circuitPath, CircuitBuildHandler handler, Logger logger) {
+	OpenCircuitTask(Circuit circuit, List<Router> circuitPath, CircuitBuildHandler handler) {
 		this.circuit = circuit;
 		this.circuitPath = circuitPath;
 		this.buildHandler = handler;
-		this.logger = logger;
 	}
 	
 	public void run() {
-		logger.debug("Opening a new circuit to "+ pathToString());
+		if(logger.isLoggable(Level.FINE)) {
+			logger.fine("Opening a new circuit to "+ pathToString());
+		}
 		circuit.openCircuit(circuitPath, buildHandler);		
 	}
 	

@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.Circuit;
@@ -23,15 +24,15 @@ import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Router;
-import org.torproject.jtor.logging.Logger;
 
 /**
  * This class represents an established circuit through the Tor network.
  *
  */
 public class CircuitImpl implements Circuit {
-	static CircuitImpl create(CircuitManagerImpl circuitManager, ConnectionCache connectionCache, Logger logger) {
-		return new CircuitImpl(circuitManager, connectionCache, logger);
+	private final static Logger logger = Logger.getLogger(CircuitImpl.class.getName());
+	static CircuitImpl create(CircuitManagerImpl circuitManager, ConnectionCache connectionCache) {
+		return new CircuitImpl(circuitManager, connectionCache);
 	}
 
 	private final static long CIRCUIT_BUILD_TIMEOUT_MS = 30 * 1000;
@@ -40,7 +41,6 @@ public class CircuitImpl implements Circuit {
 	private Connection entryConnection;
 	private int circuitId;
 	private final CircuitManagerImpl circuitManager;
-	private final Logger logger;
 	private final List<CircuitNodeImpl> nodeList;
 	private final BlockingQueue<RelayCell> relayCellResponseQueue;
 	private final BlockingQueue<Cell> controlCellResponseQueue;
@@ -50,16 +50,15 @@ public class CircuitImpl implements Circuit {
 	private final CircuitStatus status;
 	private final Object relaySendLock = new Object();
 	
-	private CircuitImpl(CircuitManagerImpl circuitManager, ConnectionCache connectionCache, Logger logger) {
+	private CircuitImpl(CircuitManagerImpl circuitManager, ConnectionCache connectionCache) {
 		nodeList = new ArrayList<CircuitNodeImpl>();
 		this.circuitManager = circuitManager;
-		this.logger = logger;
 		this.relayCellResponseQueue = new LinkedBlockingQueue<RelayCell>();
 		this.controlCellResponseQueue = new LinkedBlockingQueue<Cell>();
 		this.streamMap = new HashMap<Integer, StreamImpl>();
 		this.failedExitRequests = new HashSet<ExitTarget>();
 		status = new CircuitStatus();
-		circuitBuilder = new CircuitBuilder(this, connectionCache, logger);
+		circuitBuilder = new CircuitBuilder(this, connectionCache);
 	}
 
 	void initializeConnectingCircuit(Connection entryConnection, int circuitId) {
@@ -130,7 +129,7 @@ public class CircuitImpl implements Circuit {
 
 	private void sendRelayCellTo(RelayCell cell, CircuitNode targetNode) {
 		synchronized(relaySendLock) {
-			logger.debug("Sending:     "+ cell);
+			logger.fine("Sending:     "+ cell);
 			cell.setLength();
 			targetNode.updateForwardDigest(cell);
 			cell.setDigest(targetNode.getForwardDigestBytes());
@@ -237,7 +236,7 @@ public class CircuitImpl implements Circuit {
 		status.updateDirtyTimestamp();
 		final RelayCell relayCell = decryptRelayCell(cell);
 		if(relayCell.getRelayCommand() != RelayCell.RELAY_DATA)
-			logger.debug("Dispatching: "+ relayCell);
+			logger.fine("Dispatching: "+ relayCell);
 		switch(relayCell.getRelayCommand()) {
 		case RelayCell.RELAY_EXTENDED:
 		case RelayCell.RELAY_RESOLVED:
@@ -284,7 +283,7 @@ public class CircuitImpl implements Circuit {
 			if(stream != null)
 				stream.addInputCell(cell);
 			else
-				logger.debug("Stream not found for stream id="+ cell.getStreamId());	
+				logger.fine("Stream not found for stream id="+ cell.getStreamId());	
 		}
 	}
 

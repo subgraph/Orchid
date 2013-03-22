@@ -9,6 +9,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.directory.Directory;
@@ -19,19 +20,17 @@ import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParserFactory;
 import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
-import org.torproject.jtor.logging.LogManager;
-import org.torproject.jtor.logging.Logger;
 
 public class DirectoryStoreImpl implements DirectoryStore {
-	private final Logger logger;
+	private final static Logger logger = Logger.getLogger(DirectoryStoreImpl.class.getName());
+
 	private final TorConfig config;
 	private final DocumentParserFactory parserFactory;
 
 
-	DirectoryStoreImpl(LogManager logManager, TorConfig config) {
-		this.logger = logManager.getLogger("directory-store");
+	DirectoryStoreImpl(TorConfig config) {
 		this.config = config;
-		this.parserFactory = new DocumentParserFactoryImpl(logManager);
+		this.parserFactory = new DocumentParserFactoryImpl();
 	}
 
 	public void saveCertificates(List<KeyCertificate> certificates) {
@@ -58,7 +57,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			parser.parse(new DocumentParsingResultHandler<KeyCertificate>() {
 
 				public void parsingError(String message) {
-					logger.error("Parsing error loading certificates: "+ message);
+					logger.warning("Parsing error loading certificates: "+ message);
 				}
 
 				public void documentParsed(KeyCertificate document) {

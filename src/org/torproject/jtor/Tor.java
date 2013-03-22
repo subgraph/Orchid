@@ -7,8 +7,6 @@ import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.downloader.DirectoryDownloader;
 import org.torproject.jtor.directory.impl.DirectoryImpl;
-import org.torproject.jtor.logging.LogManager;
-import org.torproject.jtor.logging.impl.LogManagerImpl;
 import org.torproject.jtor.socks.SocksPortListener;
 import org.torproject.jtor.socks.impl.SocksPortListenerImpl;
 
@@ -29,16 +27,6 @@ public class Tor {
 	}
 	
 	/**
-	 * Create and return a new <code>LogManager</code> instance.
-	 * 
-	 * @return A new <code>LogManager</code>
-	 * @see LogManager
-	 */
-	static public LogManager createLogManager() {
-		return new LogManagerImpl();
-	}
-
-	/**
 	 * Create and return a new <code>TorConfig</code> instance.
 	 * 
 	 * @param logManager This is a required dependency.  You must create a <code>LogManager</code>
@@ -46,8 +34,8 @@ public class Tor {
 	 * @return A new <code>TorConfig</code> instance.
 	 * @see TorConfig
 	 */
-	static public TorConfig createConfig(LogManager logManager) {
-		return new TorConfigImpl(logManager);
+	static public TorConfig createConfig() {
+		return new TorConfigImpl();
 	}
 
 	/**
@@ -60,8 +48,8 @@ public class Tor {
 	 * @return A new <code>Directory</code> instance.
 	 * @see Directory
 	 */
-	static public Directory createDirectory(LogManager logManager, TorConfig config) {
-		return new DirectoryImpl(logManager, config);
+	static public Directory createDirectory(TorConfig config) {
+		return new DirectoryImpl(config);
 	}
 
 	/**
@@ -74,9 +62,9 @@ public class Tor {
 	 * @return A new <code>CircuitManager</code> instance.
 	 * @see CircuitManager
 	 */
-	static public CircuitManager createCircuitManager(Directory directory, LogManager logManager) {
-		final ConnectionCache connectionCache = new ConnectionCache(logManager);
-		return new CircuitManagerImpl(directory, connectionCache, logManager);
+	static public CircuitManager createCircuitManager(Directory directory) {
+		final ConnectionCache connectionCache = new ConnectionCache();
+		return new CircuitManagerImpl(directory, connectionCache);
 	}
 
 	/**
@@ -89,8 +77,8 @@ public class Tor {
 	 * @return A new <code>SocksPortListener</code> instance.
 	 * @see SocksPortListener
 	 */
-	static public SocksPortListener createSocksPortListener(LogManager logManager, CircuitManager circuitManager) {
-		return new SocksPortListenerImpl(logManager, circuitManager);
+	static public SocksPortListener createSocksPortListener(CircuitManager circuitManager) {
+		return new SocksPortListenerImpl(circuitManager);
 	}
 
 	/**
@@ -108,7 +96,7 @@ public class Tor {
 	 * @return A new <code>DirectoryDownloader</code> instance.
 	 * @see DirectoryDownloader
 	 */
-	static public DirectoryDownloader createDirectoryDownloader(LogManager logManager, Directory directory, CircuitManager circuitManager) {
-		return new DirectoryDownloader(logManager, directory, circuitManager);
+	static public DirectoryDownloader createDirectoryDownloader(Directory directory, CircuitManager circuitManager) {
+		return new DirectoryDownloader(directory, circuitManager);
 	}
 }

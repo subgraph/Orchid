@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.TorException;
@@ -26,12 +27,11 @@ import org.torproject.jtor.directory.impl.consensus.DirectorySignature;
 import org.torproject.jtor.events.Event;
 import org.torproject.jtor.events.EventHandler;
 import org.torproject.jtor.events.EventManager;
-import org.torproject.jtor.logging.LogManager;
-import org.torproject.jtor.logging.Logger;
 
 public class DirectoryImpl implements Directory {
+	private final static Logger logger = Logger.getLogger(DirectoryImpl.class.getName());
+
 	private final DirectoryStore store;
-	private final Logger logger;
 	private final Map<HexDigest, KeyCertificate> certificates;
 	private final Map<HexDigest, RouterImpl> routersByIdentity;
 	private final Map<String, RouterImpl> routersByNickname;
@@ -45,10 +45,8 @@ public class DirectoryImpl implements Directory {
 	private ConsensusDocument consensusWaitingForCertificates;
 	private boolean descriptorsDirty;
 
-	public DirectoryImpl(LogManager logManager, TorConfig config) {
-		this.logger = logManager.getLogger("directory");
-		logger.enableDebug();
-		store = new DirectoryStoreImpl(logManager, config);
+	public DirectoryImpl(TorConfig config) {
+		store = new DirectoryStoreImpl(config);
 		certificates = new HashMap<HexDigest, KeyCertificate>();
 		routersByIdentity = new HashMap<HexDigest, RouterImpl>();
 		routersByNickname = new HashMap<String, RouterImpl>();
@@ -68,7 +66,7 @@ public class DirectoryImpl implements Directory {
 	}
 
 	private void loadAuthorityServers() {
-		final TrustedAuthorities trusted = new TrustedAuthorities(logger);
+		final TrustedAuthorities trusted = new TrustedAuthorities();
 		directoryAuthorities = trusted.getAuthorityServers();
 	}
 
@@ -197,7 +195,7 @@ public class DirectoryImpl implements Directory {
 				classifyRouter(router);
 			}
 		}
-		logger.debug("Loaded "+ routersByIdentity.size() +" routers from consensus document");
+		logger.fine("Loaded "+ routersByIdentity.size() +" routers from consensus document");
 		currentConsensus = consensus;
 		store.saveConsensus(consensus);
 		consensusChangedManager.fireEvent(new Event() {});
@@ -294,7 +292,7 @@ public class DirectoryImpl implements Directory {
 	}
 
 	private void removeRouterByIdentity(HexDigest identity) {
-		logger.debug("Removing: "+ identity);
+		logger.fine("Removing: "+ identity);
 		final RouterImpl router = routersByIdentity.remove(identity);
 		if(router == null)
 			return;

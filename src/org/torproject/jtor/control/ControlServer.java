@@ -5,8 +5,6 @@ import java.net.InetAddress;
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.control.auth.ControlAuthenticator;
 import org.torproject.jtor.directory.Directory;
-import org.torproject.jtor.logging.LogManager;
-import org.torproject.jtor.logging.Logger;
 
 /**
  *
@@ -17,7 +15,6 @@ public abstract class ControlServer extends Thread {
     protected InetAddress host;
     protected TorConfig tc;
     private final Directory directory;
-    protected Logger logger;
     protected boolean running = false;
 
     public abstract void startServer();
@@ -25,10 +22,9 @@ public abstract class ControlServer extends Thread {
     public abstract void disconnectHandler(ControlConnectionHandler cch);
     public abstract String getProtocol();
 
-    public ControlServer(Directory directory, TorConfig tc, LogManager logManager) {
+    public ControlServer(Directory directory, TorConfig tc) {
     	this.directory = directory;
         this.tc = tc;
-        this.logger = logManager.getLogger("controller");
         if (tc.isCookieAuthentication()) {
         	ControlAuthenticator.writeCookie(tc);
         }
@@ -45,11 +41,7 @@ public abstract class ControlServer extends Thread {
     public TorConfig getTorConfig() {
     	return tc;
     }
-    
-    public Logger getLogger() {
-    	return logger;
-    }
-    
+  
     public Directory getDirectory() {
     	return directory;
     }

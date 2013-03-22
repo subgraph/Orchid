@@ -3,6 +3,8 @@ package org.torproject.jtor.circuits.impl;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
@@ -19,23 +21,20 @@ import org.torproject.jtor.crypto.TorKeyAgreement;
 import org.torproject.jtor.crypto.TorMessageDigest;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.directory.Router;
-import org.torproject.jtor.logging.Logger;
 
 /*
  * Utility class used by CircuitImpl that manages setting up a circuit 
  * through a specified path of router nodes. 
  */
 class CircuitBuilder {
-
+	private final static Logger logger = Logger.getLogger(CircuitBuilder.class.getName());
 	private final CircuitImpl circuit;
 	private final ConnectionCache connectionCache;
-	private final Logger logger;
 
 	
-	CircuitBuilder(CircuitImpl circuit, ConnectionCache connectionCache, Logger logger) {
+	CircuitBuilder(CircuitImpl circuit, ConnectionCache connectionCache) {
 		this.circuit = circuit;
 		this.connectionCache = connectionCache;
-		this.logger = logger;
 	}
 	
 	boolean openCircuit(List<Router> circuitPath, CircuitBuildHandler handler) {
@@ -81,7 +80,7 @@ class CircuitBuilder {
 				handler.circuitBuildFailed(e.getMessage());
 			return false;
 		} catch(Exception e) {
-			logger.error("Unexpected exception building circuit.", e);
+			logger.log(Level.WARNING, "Unexpected exception building circuit.", e);
 			if(handler != null)
 				handler.circuitBuildFailed("Unexpected exception: "+ e.getMessage());
 			return false;

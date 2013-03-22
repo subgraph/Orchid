@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.util.logging.Logger;
+
 import org.torproject.jtor.control.ControlConnectionHandler;
 import org.torproject.jtor.control.ControlServer;
 
@@ -13,7 +15,7 @@ import org.torproject.jtor.control.ControlServer;
  * @author Merlijn Hofstra
  */
 public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
-
+	private final static Logger logger = Logger.getLogger(ControlConnectionHandlerTCP.class.getName());
     private Socket s;
     private boolean running = false;
 
@@ -34,7 +36,7 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
                 String recv = in.readLine();
                 
                 recv.length(); // trigger NullPointerException
-                cs.getLogger().debug("Control Connection TCP: received " + recv);
+                logger.fine("Control Connection TCP: received " + recv);
                 
                 eq.writeQueue(this);
                 
@@ -42,7 +44,7 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
             }
             
         } catch (IOException ex) {
-        	cs.getLogger().debug("Control Connection TCP: IOException during receiving");
+        	logger.fine("Control Connection TCP: IOException during receiving");
         } catch (NullPointerException e) {
             // may happen upon disconnect
         } finally {
@@ -58,12 +60,12 @@ public class ControlConnectionHandlerTCP extends ControlConnectionHandler {
         try {
             OutputStreamWriter out = new OutputStreamWriter(s.getOutputStream());
 
-            cs.getLogger().debug("Control Connection TCP:  sending " + w);
+            logger.fine("Control Connection TCP:  sending " + w);
 
             out.write(w + "\r\n");
             out.flush();
         } catch (IOException ex) {
-        	cs.getLogger().debug("Control Connection TCP: IOException during sending");
+        	logger.fine("Control Connection TCP: IOException during sending");
         	disconnect();
         }
 

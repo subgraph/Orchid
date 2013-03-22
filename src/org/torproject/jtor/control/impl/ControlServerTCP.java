@@ -5,6 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Iterator;
 import java.util.Vector;
+import java.util.logging.Logger;
 
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.control.ControlConnectionHandler;
@@ -12,19 +13,18 @@ import org.torproject.jtor.control.ControlServer;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.events.Event;
 import org.torproject.jtor.events.EventHandler;
-import org.torproject.jtor.logging.LogManager;
 
 /**
  *
  * @author Merlijn Hofstra
  */
 public class ControlServerTCP extends ControlServer implements EventHandler {
-
+	private final static Logger logger = Logger.getLogger(ControlServerTCP.class.getName());
 	private Vector<ControlConnectionHandler> connections = new Vector<ControlConnectionHandler>();
 	private ServerSocket ss;
 	
-	public ControlServerTCP(Directory directory, TorConfig tc, LogManager logManager) {
-		super(directory, tc, logManager);
+	public ControlServerTCP(Directory directory, TorConfig tc) {
+		super(directory, tc);
 	}
 
 	@Override
@@ -55,7 +55,7 @@ public class ControlServerTCP extends ControlServer implements EventHandler {
 				ControlConnectionHandler cch = new ControlConnectionHandlerTCP(this, s);
 				connections.add(cch);
 				
-				logger.debug("Opening new TCP Control Connection on port " + s.getLocalPort());
+				logger.fine("Opening new TCP Control Connection on port " + s.getLocalPort());
 			} catch (Throwable t) {}
 		}
 

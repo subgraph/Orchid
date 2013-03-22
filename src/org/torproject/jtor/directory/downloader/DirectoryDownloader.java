@@ -12,7 +12,6 @@ import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.impl.DocumentParserFactoryImpl;
 import org.torproject.jtor.directory.parsing.DocumentParserFactory;
-import org.torproject.jtor.logging.LogManager;
 
 public class DirectoryDownloader implements Runnable {
 	
@@ -27,10 +26,10 @@ public class DirectoryDownloader implements Runnable {
 	private volatile boolean isDownloadingConsensus;
 	private final AtomicInteger outstandingDescriptorTasks;
 	
-	public DirectoryDownloader(LogManager logManager, Directory directory, CircuitManager circuitManager) {
+	public DirectoryDownloader(Directory directory, CircuitManager circuitManager) {
 		this.directory = directory;
 		this.circuitManager = circuitManager;
-		this.parserFactory = new DocumentParserFactoryImpl(logManager);
+		this.parserFactory = new DocumentParserFactoryImpl();
 		this.descriptorProcessor = new DescriptorProcessor(directory);
 		this.outstandingDescriptorTasks = new AtomicInteger();
 		this.thread = new Thread(this);

@@ -6,8 +6,6 @@ import java.net.InetAddress;
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.events.EventHandler;
 import org.torproject.jtor.events.EventManager;
-import org.torproject.jtor.logging.LogManager;
-import org.torproject.jtor.logging.Logger;
 
 public class TorConfigImpl implements TorConfig {
 
@@ -105,10 +103,7 @@ public class TorConfigImpl implements TorConfig {
 	private String __HashedControlSessionPassword;
 	private boolean __ReloadTorrcOnSIGHUP;
 
-	protected Logger logger;
-
-	public TorConfigImpl(LogManager logManager) {
-		this.logger = logManager.getLogger("config");
+	public TorConfigImpl() {
 		new TorConfigEventThread(this);
 		loadDefaults();
 	}
@@ -131,7 +126,7 @@ public class TorConfigImpl implements TorConfig {
 	 * @see org.torproject.jtor.config.impl.TorConfig#loadConf()
 	 */
 	public void loadConf() {
-		boolean success = TorConfigParser.parseFile(this, logger, new File(dataDirectory, configFile));
+		boolean success = TorConfigParser.parseFile(this, new File(dataDirectory, configFile));
 		if (!success) {
 			System.err.println("Unable to parse config file - Quitting");
 			System.exit(1);

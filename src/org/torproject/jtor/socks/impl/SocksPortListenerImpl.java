@@ -9,24 +9,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.logging.Logger;
 
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.CircuitManager;
-import org.torproject.jtor.logging.LogManager;
-import org.torproject.jtor.logging.Logger;
 import org.torproject.jtor.socks.SocksPortListener;
 
 public class SocksPortListenerImpl implements SocksPortListener {
-
+	private final static Logger logger = Logger.getLogger(SocksPortListenerImpl.class.getName());
 	private final Set<Integer> listeningPorts = new HashSet<Integer>();
 	private final Map<Integer, Thread> acceptThreads = new HashMap<Integer, Thread>();
-	private final Logger logger;
 	private final CircuitManager circuitManager;
 	private final Executor executor;
 	
-	public SocksPortListenerImpl(LogManager logManager, CircuitManager circuitManager) {
-		this.logger = logManager.getLogger("socks");
-		logger.enableDebug();
+	public SocksPortListenerImpl(CircuitManager circuitManager) {
 		this.circuitManager = circuitManager;
 		executor = Executors.newFixedThreadPool(25);
 	}
@@ -41,7 +37,7 @@ public class SocksPortListenerImpl implements SocksPortListener {
 			listeningPorts.add(port);
 			try {
 				startListening(port);
-				logger.debug("Listening for SOCKS connections on port "+ port);
+				logger.fine("Listening for SOCKS connections on port "+ port);
 			} catch (IOException e) {
 				listeningPorts.remove(port);
 				throw new TorException("Failed to listen on port "+ port +" : "+ e.getMessage());
@@ -62,7 +58,7 @@ public class SocksPortListenerImpl implements SocksPortListener {
 			try {
 				runAcceptLoop(ss);
 			} catch (IOException e) {
-				logger.error("System error accepting SOCKS socket connections: "+ e.getMessage());
+				logger.warning("System error accepting SOCKS socket connections: "+ e.getMessage());
 				synchronized(listeningPorts) {
 					listeningPorts.remove(port);
 					acceptThreads.remove(port);
@@ -79,6 +75,6 @@ public class SocksPortListenerImpl implements SocksPortListener {
 	}
 	
 	private Runnable newClientSocket(final Socket s) {
-		return new SocksClientTask(s, logger, circuitManager);
+		return new SocksClientTask(s, circuitManager);
 	}
 }

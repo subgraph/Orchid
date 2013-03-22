@@ -7,7 +7,6 @@ import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.downloader.DirectoryDownloader;
-import org.torproject.jtor.logging.LogManager;
 import org.torproject.jtor.socks.SocksPortListener;
 
 /**
@@ -15,7 +14,6 @@ import org.torproject.jtor.socks.SocksPortListener;
  * or client.
  */
 public class TorClient {
-	private final LogManager logManager;
 	private final TorConfig config;
 	private final Directory directory;
 	private final CircuitManager circuitManager;
@@ -26,12 +24,11 @@ public class TorClient {
 	
 	public TorClient() {
 		Security.addProvider(new BouncyCastleProvider());
-		logManager = Tor.createLogManager();
-		config = Tor.createConfig(logManager);
-		directory = Tor.createDirectory(logManager, config);
-		circuitManager = Tor.createCircuitManager(directory, logManager);
-		directoryDownloader = Tor.createDirectoryDownloader(logManager, directory, circuitManager);
-		socksListener = Tor.createSocksPortListener(logManager, circuitManager);
+		config = Tor.createConfig();
+		directory = Tor.createDirectory(config);
+		circuitManager = Tor.createCircuitManager(directory);
+		directoryDownloader = Tor.createDirectoryDownloader(directory, circuitManager);
+		socksListener = Tor.createSocksPortListener(circuitManager);
 	}
 
 	public TorConfig getConfig() {

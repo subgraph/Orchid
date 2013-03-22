@@ -8,6 +8,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.bouncycastle.util.encoders.Base64;
 import org.torproject.jtor.TorException;
@@ -21,15 +22,14 @@ import org.torproject.jtor.data.Timestamp;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 import org.torproject.jtor.directory.parsing.DocumentObject;
 import org.torproject.jtor.directory.parsing.DocumentParsingHandler;
-import org.torproject.jtor.logging.Logger;
 
 public class DocumentFieldParserImpl implements DocumentFieldParser {
+	private final static Logger logger = Logger.getLogger(DocumentFieldParserImpl.class.getName());
 	private final static String BEGIN_TAG = "-----BEGIN";
 	private final static String END_TAG = "-----END";
 	private final static String TAG_DELIMITER = "-----";
 	private final static String DEFAULT_DELIMITER = " ";
 	private final BufferedReader reader;
-	private final Logger logger;
 	private String delimiter = DEFAULT_DELIMITER;
 	private String currentKeyword;
 	private List<String> currentItems;
@@ -43,23 +43,21 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 
 	private DocumentParsingHandler callbackHandler;
 
-	public DocumentFieldParserImpl(InputStream input, Logger logger) {
+	public DocumentFieldParserImpl(InputStream input) {
 		try {
 			reader = new BufferedReader(new InputStreamReader(input, "ISO-8859-1"));
 		} catch (UnsupportedEncodingException e) {
 			throw new TorException(e);
 		}
-		this.logger = logger;
 		rawDocumentBuffer = new StringBuilder();
 	}
 
-	public DocumentFieldParserImpl(Reader reader, Logger logger) {
+	public DocumentFieldParserImpl(Reader reader) {
 		if(reader instanceof BufferedReader) {
 			this.reader = (BufferedReader) reader;
 		} else {
 			this.reader = new BufferedReader(reader);
 		}
-		this.logger = logger;
 		rawDocumentBuffer = new StringBuilder();
 	}
 
@@ -334,15 +332,15 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 	}
 
 	public void logDebug(String message) {
-		logger.debug(message);
+		logger.fine(message);
 	}
 
 	public void logError(String message) {
-		logger.error(message);
+		logger.warning(message);
 	}
 
 	public void logWarn(String message) {
-		logger.warning(message);
+		logger.info(message);
 	}
 
 }

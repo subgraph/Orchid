@@ -5,6 +5,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
@@ -12,24 +14,22 @@ import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.Router;
-import org.torproject.jtor.logging.Logger;
 
 public class CircuitCreationTask implements Runnable {
+	private final static Logger logger = Logger.getLogger(CircuitCreationTask.class.getName());
 	private final static int MAX_PENDING_CIRCUITS = 2;
 	private final static int DEFAULT_CLEAN_CIRCUITS = 3;
 	private final Directory directory;
 	private final CircuitManagerImpl circuitManager;
-	private final Logger logger;
 	private final NodeChooser nodeChooser;
 	private final Executor executor;
 
 	// To avoid obnoxiously printing a warning every second
 	private int notEnoughDirectoryInformationWarningCounter = 0;
 
-	CircuitCreationTask(Directory directory, CircuitManagerImpl circuitManager, Logger logger) {
+	CircuitCreationTask(Directory directory, CircuitManagerImpl circuitManager) {
 		this.directory = directory;
 		this.circuitManager = circuitManager;
-		this.logger = logger;
 		this.nodeChooser = new NodeChooser(circuitManager, directory);
 		this.executor = Executors.newCachedThreadPool();
 	}
@@ -80,10 +80,11 @@ public class CircuitCreationTask implements Runnable {
 		if(pendingExitStreams.isEmpty())
 			return;
 
-		logger.debug("Building new circuits to handle "+ pendingExitStreams.size() +" pending streams");
-		for(StreamExitRequest r: pendingExitStreams) {
-			logger.debug("Request: "+ r);
-
+		if(logger.isLoggable(Level.FINE)) {
+			logger.fine("Building new circuits to handle "+ pendingExitStreams.size() +" pending streams");
+			for(StreamExitRequest r: pendingExitStreams) {
+				logger.fine("Request: "+ r);
+			}
 		}
 
 		for(StreamExitRequest req: pendingExitStreams)
@@ -101,7 +102,7 @@ public class CircuitCreationTask implements Runnable {
 	}
 
 	private OpenExitStreamTask newExitStreamTask(Circuit circuit, StreamExitRequest exitRequest) {
-		return new OpenExitStreamTask(circuit, exitRequest, logger);
+		return new OpenExitStreamTask(circuit, exitRequest);
 	}
 
 	private void checkExpiredPendingCircuits() {
@@ -125,7 +126,7 @@ public class CircuitCreationTask implements Runnable {
 		ncc.addExcludedRouter(middleRouter);
 		final Router entryRouter = nodeChooser.chooseEntryNode(ncc);
 		List<Router> path =  Arrays.asList(entryRouter, middleRouter, exitRouter);
-		executor.execute(new OpenCircuitTask(circuit, path, createCircuitBuildHandler(), logger));
+		executor.execute(new OpenCircuitTask(circuit, path, createCircuitBuildHandler()));
 	}
 
 	private void checkCircuitsForCreation() {
@@ -141,7 +142,7 @@ public class CircuitCreationTask implements Runnable {
 				circuitManager.getPendingCircuitCount() < MAX_PENDING_CIRCUITS) {
 			final List<Router> path = choosePreemptiveExitPath();
 			final Circuit circuit = circuitManager.createNewCircuit();
-			executor.execute(new OpenCircuitTask(circuit, path, createCircuitBuildHandler(), logger));
+			executor.execute(new OpenCircuitTask(circuit, path, createCircuitBuildHandler()));
 		}
 	}
 
@@ -161,20 +162,20 @@ public class CircuitCreationTask implements Runnable {
 		return new CircuitBuildHandler() {
 
 			public void circuitBuildCompleted(Circuit circuit) {
-				logger.debug("Circuit completed to: "+ circuit);
+				logger.fine("Circuit completed to: "+ circuit);
 				circuitOpenedHandler(circuit);
 			}
 
 			public void circuitBuildFailed(String reason) {
-				logger.debug("Circuit build failed: "+ reason);
+				logger.fine("Circuit build failed: "+ reason);
 			}
 
 			public void connectionCompleted(Connection connection) {
-				logger.debug("Circuit connection completed to "+ connection);
+				logger.fine("Circuit connection completed to "+ connection);
 			}
 
 			public void connectionFailed(String reason) {
-				logger.debug("Circuit connection failed: "+ reason);
+				logger.fine("Circuit connection failed: "+ reason);
 			}
 
 			public void nodeAdded(CircuitNode node) {

@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.logging.Logger;
 
 import javax.net.ssl.SSLSocket;
 
@@ -15,10 +16,9 @@ import org.torproject.jtor.circuits.ConnectionFailedException;
 import org.torproject.jtor.circuits.ConnectionHandshakeException;
 import org.torproject.jtor.circuits.ConnectionTimeoutException;
 import org.torproject.jtor.directory.Router;
-import org.torproject.jtor.logging.LogManager;
-import org.torproject.jtor.logging.Logger;
 
 public class ConnectionCache {
+	private final static Logger logger = Logger.getLogger(ConnectionCache.class.getName());
 	
 	private class ConnectionTask implements Callable<ConnectionImpl> {
 
@@ -30,22 +30,16 @@ public class ConnectionCache {
 
 		public ConnectionImpl call() throws Exception {
 			SSLSocket socket = factory.createSocket();
-			ConnectionImpl conn = new ConnectionImpl(logger, socket, router);
+			ConnectionImpl conn = new ConnectionImpl(socket, router);
 			conn.connect();
 			return conn;
 		}
 	}
 	private final ConcurrentMap<Router, Future<ConnectionImpl>> activeConnections = new ConcurrentHashMap<Router, Future<ConnectionImpl>>();
 	private final ConnectionSocketFactory factory = new ConnectionSocketFactory();
-	private final Logger logger;
 	
-	
-	public ConnectionCache(LogManager logManager) {
-		logger = logManager.getLogger("connections");
-	}
-
 	public Connection getConnectionTo(Router router) throws InterruptedException, ConnectionTimeoutException, ConnectionFailedException, ConnectionHandshakeException {
-		logger.debug("Get connection to "+ router.getAddress() + " "+ router.getOnionPort() + " " + router.getNickname());
+		logger.fine("Get connection to "+ router.getAddress() + " "+ router.getOnionPort() + " " + router.getNickname());
 		while(true) {
 			Future<ConnectionImpl> f = getFutureFor(router);
 			try {

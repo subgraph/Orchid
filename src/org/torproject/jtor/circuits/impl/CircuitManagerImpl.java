@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
@@ -21,14 +22,12 @@ import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.Router;
-import org.torproject.jtor.logging.LogManager;
-import org.torproject.jtor.logging.Logger;
 
 public class CircuitManagerImpl implements CircuitManager {
+	private final static Logger logger = Logger.getLogger(CircuitManagerImpl.class.getName());
 	private final static boolean DEBUG_CIRCUIT_CREATION = true;
 
 	private final ConnectionCache connectionCache;
-	private final Logger logger;
 	private final Set<Circuit> pendingCircuits;
 	private final Set<Circuit> activeCircuits;
 	private final Set<Circuit> cleanCircuits;
@@ -37,11 +36,9 @@ public class CircuitManagerImpl implements CircuitManager {
 	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 	private final Runnable circuitCreationTask;
 
-	public CircuitManagerImpl(Directory directory, ConnectionCache connectionCache, LogManager logManager) {
+	public CircuitManagerImpl(Directory directory, ConnectionCache connectionCache) {
 		this.connectionCache = connectionCache;
-		this.logger = logManager.getLogger("circuits");
-		this.logger.enableDebug();
-		this.circuitCreationTask = new CircuitCreationTask(directory, this, logger);
+		this.circuitCreationTask = new CircuitCreationTask(directory, this);
 		this.activeCircuits = new HashSet<Circuit>();
 		this.pendingCircuits = new HashSet<Circuit>();
 		this.cleanCircuits = new HashSet<Circuit>();
@@ -59,14 +56,14 @@ public class CircuitManagerImpl implements CircuitManager {
 
 	private Runnable createCircuitCreationDebugTask() {
 		return new Runnable() { public void run() {
-			logger.debug("CLEAN: "+ getCleanCircuitCount() 
+			logger.fine("CLEAN: "+ getCleanCircuitCount() 
 					+ " PENDING: "+ getPendingCircuitCount()
 					+ " ACTIVE: "+ getActiveCircuitCount());
 		}};
 	}
 
 	public Circuit createNewCircuit() {
-		return CircuitImpl.create(this, connectionCache, logger);
+		return CircuitImpl.create(this, connectionCache);
 	}
 
 	synchronized void circuitStartConnect(Circuit circuit) {
@@ -161,7 +158,7 @@ public class CircuitManagerImpl implements CircuitManager {
 			}
 			
 			public void connectionFailed(String reason) {
-				logger.debug("Connection failed: "+ reason);
+				logger.fine("Connection failed: "+ reason);
 			}
 			
 			public void connectionCompleted(Connection connection) {
@@ -170,7 +167,7 @@ public class CircuitManagerImpl implements CircuitManager {
 			}
 			
 			public void circuitBuildFailed(String reason) {
-				logger.debug("Circuit Build Failed: "+ reason);
+				logger.fine("Circuit Build Failed: "+ reason);
 			}
 			
 			public void circuitBuildCompleted(Circuit circuit) {

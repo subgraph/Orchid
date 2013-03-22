@@ -6,19 +6,19 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.logging.Logger;
 
 import org.torproject.jtor.TorConfig;
-import org.torproject.jtor.logging.Logger;
 
 /**
  *
  * @author Merlijn Hofstra
  */
 public class TorConfigParser {
-
+	private final static Logger logger = Logger.getLogger(TorConfigParser.class.getName());
 	private TorConfigParser() {}
 
-	public static boolean parseFile(TorConfig tc, Logger logger, File in) {
+	public static boolean parseFile(TorConfig tc, File in) {
 		try {
 			BufferedReader reader = new BufferedReader(new FileReader(in));
 			String line = null;
@@ -43,7 +43,7 @@ public class TorConfigParser {
 
 				if (!setConf(tc, key, value)) {
 					// syntax error in file
-					logger.error("torrc: Could not parse this line: " + line);
+					logger.warning("torrc: Could not parse this line: " + line);
 					return false;
 				}
 

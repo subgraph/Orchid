@@ -2,6 +2,7 @@ package org.torproject.jtor.control.commands;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.logging.Logger;
 
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.config.impl.TorConfigParser;
@@ -9,7 +10,8 @@ import org.torproject.jtor.control.ControlConnectionHandler;
 import org.torproject.jtor.control.KeyNotFoundException;
 
 public class ControlCommandSetConf {
-
+	private final static Logger logger = Logger.getLogger(ControlCommandSetConf.class.getName());
+	
 	public static boolean handleSetConf(ControlConnectionHandler cch, String in) {
 		String[] confs = in.split(" ");
 		HashMap<String, String> oldvals = new HashMap<String, String>();
@@ -40,7 +42,7 @@ public class ControlCommandSetConf {
 
 
 			} catch (KeyNotFoundException e) {
-				cch.getControlServer().getLogger().warning("Control command setconf key not found: " + key);
+				logger.warning("Control command setconf key not found: " + key);
 				
 				success = false;
 			}

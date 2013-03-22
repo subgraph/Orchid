@@ -9,13 +9,13 @@ import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.DirectoryServer;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 import org.torproject.jtor.directory.parsing.DocumentParsingHandler;
-import org.torproject.jtor.logging.Logger;
 
 /*
  * This class contains the hardcoded 'bootstrap' directory authority
  * server information. 
  */
 public class TrustedAuthorities {
+	
 	private final static String[] dirServers = {
 		"authority moria1 orport=9101 no-v2 v3ident=D586D18309DED4CD6D57C18FDB97EFA96D330566 128.31.0.39:9131 9695 DFC3 5FFE B861 329B 9F1A B04C 4639 7020 CE31",
 	    "authority tor26 v1 orport=443 v3ident=14C131DFC5C6F93646BE72FA1401C02A8DF2E8B4 86.59.21.38:80 847B 1F85 0344 D787 6491 A548 92F9 0493 4E4E B85D",
@@ -30,18 +30,18 @@ public class TrustedAuthorities {
 
 	private List<DirectoryServer> directoryServers = new ArrayList<DirectoryServer>();
 	
-    TrustedAuthorities(Logger logger) {
-    	initialize(logger);
+    TrustedAuthorities() {
+    	initialize();
     }
     
-	void initialize(Logger logger) {
+	void initialize() {
 		final StringBuilder builder = new StringBuilder();
 		for(String entry: dirServers) {
 			builder.append(entry);
 			builder.append('\n');
 		}
 		final StringReader reader = new StringReader(builder.toString());
-		final DocumentFieldParser parser = new DocumentFieldParserImpl(reader, logger);
+		final DocumentFieldParser parser = new DocumentFieldParserImpl(reader);
 		
 		parser.setHandler(new DocumentParsingHandler() {
 			public void endOfDocument() {}
