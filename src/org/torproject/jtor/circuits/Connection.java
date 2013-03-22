@@ -22,16 +22,22 @@ public interface Connection {
 	 * If the network connection is not currently connected, attempt to open it.  If already connected
 	 * return immediately.
 	 * 
-	 * @throws ConnectionConnectException If an error occured while attempting to establish the connection.
+	 * @throws ConnectionFailedException If an error occured while attempting to establish the connection.
+	 * @throws ConnectionTimeoutException If connection failed due to timer expiry.
+	 * @throws ConnectionHandshakeException If connection failed during handshake stage.
 	 */
-	void connect() throws ConnectionConnectException;
+	//void connect() throws ConnectionFailedException, ConnectionTimeoutException, ConnectionHandshakeException;
 
 	/**
 	 * Send a protocol {@link Cell} on this connection.
 	 * 
 	 * @param cell The {@link Cell} to transfer.
-	 * @throws ConnectionClosedException If the cell could not be send because the connection is not connected
+	 * @throws ConnectionIOException If the cell could not be send because the connection is not connected
 	 *                                   or if an error occured while sending the cell data.
 	 */
-	void sendCell(Cell cell);
+	void sendCell(Cell cell) throws ConnectionIOException;
+	
+	void removeCircuit(Circuit circuit);
+	int allocateCircuitId(Circuit circuit);
+
 }

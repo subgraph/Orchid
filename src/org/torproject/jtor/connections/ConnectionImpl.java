@@ -1,4 +1,4 @@
-package org.torproject.jtor.circuits.impl;
+package org.torproject.jtor.connections;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,9 +17,12 @@ import javax.net.ssl.SSLSocket;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.Connection;
-import org.torproject.jtor.circuits.ConnectionClosedException;
-import org.torproject.jtor.circuits.ConnectionConnectException;
+import org.torproject.jtor.circuits.ConnectionFailedException;
+import org.torproject.jtor.circuits.ConnectionHandshakeException;
+import org.torproject.jtor.circuits.ConnectionIOException;
+import org.torproject.jtor.circuits.ConnectionTimeoutException;
 import org.torproject.jtor.circuits.cells.Cell;
+import org.torproject.jtor.circuits.impl.CellImpl;
 import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.logging.Logger;
@@ -31,26 +34,26 @@ import org.torproject.jtor.logging.Logger;
  */
 public class ConnectionImpl implements Connection {
 
-	private final static int DEFAULT_CONNECT_TIMEOUT = 10000;
+	private final static int DEFAULT_CONNECT_TIMEOUT = 5000;
 
 	private final SSLSocket socket;
-	private final ConnectionManagerImpl manager;
 	private final Logger logger;
 	private InputStream input;
 	private OutputStream output;
 	private final Router router;
-	private final Map<Integer, CircuitImpl> circuitMap;
+	private final Map<Integer, Circuit> circuitMap;
 	private final BlockingQueue<Cell> connectionControlCells;
 	private int currentId = 1;
 	private boolean isConnected;
+	private volatile boolean isClosed;
 	private final Thread readCellsThread;
+	private final Object connectLock = new Object();
 
-	ConnectionImpl(ConnectionManagerImpl manager, Logger logger, SSLSocket socket, Router router) {
-		this.manager = manager;
+	public ConnectionImpl(Logger logger, SSLSocket socket, Router router) {
 		this.logger = logger;
 		this.socket = socket;
 		this.router = router;
-		this.circuitMap = new HashMap<Integer, CircuitImpl>();
+		this.circuitMap = new HashMap<Integer, Circuit>();
 		this.readCellsThread = new Thread(createReadCellsRunnable());
 		this.readCellsThread.setDaemon(true);
 		this.connectionControlCells = new LinkedBlockingQueue<Cell>();
@@ -66,7 +69,11 @@ public class ConnectionImpl implements Connection {
 		return router;
 	}
 
-	int allocateCircuitId(CircuitImpl circuit) {
+	public boolean isClosed() {
+		return isClosed;
+	}
+
+	public int allocateCircuitId(Circuit circuit) {
 		synchronized(circuitMap) {
 			while(circuitMap.containsKey(currentId)) 
 				incrementNextId();
@@ -85,30 +92,34 @@ public class ConnectionImpl implements Connection {
 		return isConnected;
 	}
 
-	public void connect() {
-		if(isConnected)
-			return;
-		try {
-			doConnect();
-		} catch (SocketTimeoutException e) {
-			throw new ConnectionConnectException("Connect timed out");
-		} catch (IOException e) {
-			throw new ConnectionConnectException(e.getMessage());
-		} catch (InterruptedException e) {
-			throw new ConnectionConnectException("Handshake interrupted");
+	public void connect() throws ConnectionFailedException, ConnectionTimeoutException, ConnectionHandshakeException {
+		synchronized (connectLock) {
+			if(isConnected) {
+				return;
+			}
+			try {
+				doConnect();
+			} catch (SocketTimeoutException e) {
+				throw new ConnectionTimeoutException();
+			} catch (IOException e) {
+				throw new ConnectionFailedException(e.getClass().getName() + " : "+ e.getMessage());
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				throw new ConnectionHandshakeException("Handshake interrupted");
+			} catch (ConnectionIOException e) {
+				throw new ConnectionFailedException(e.getMessage());
+			}
+			isConnected = true;
 		}
-		manager.addActiveConnection(this);
-		isConnected = true;
 	}
 
-	private void doConnect() throws IOException, InterruptedException {
+	private void doConnect() throws IOException, InterruptedException, ConnectionIOException {
+		final ConnectionHandshakeV2 handshake = new ConnectionHandshakeV2(this, socket);
 		socket.connect(routerToSocketAddress(router), DEFAULT_CONNECT_TIMEOUT);
 		input = socket.getInputStream();
 		output = socket.getOutputStream();
 		readCellsThread.start();
-		final ConnectionHandshakeV2 handshake = new ConnectionHandshakeV2(this, socket);
-
-		handshake.runHandshake();
+		handshake.runHandshake();		
 	}
 
 	private SocketAddress routerToSocketAddress(Router router) {
@@ -116,34 +127,39 @@ public class ConnectionImpl implements Connection {
 		return new InetSocketAddress(address, router.getOnionPort());
 	}
 
-	public void sendCell(Cell cell)  {
-		if(!socket.isConnected())
-			throw new ConnectionClosedException("Cannot send cell because connection is not connected");
+	public void sendCell(Cell cell) throws ConnectionIOException  {
+		if(!socket.isConnected()) {
+			throw new ConnectionIOException("Cannot send cell because connection is not connected");
+		}
 		synchronized(output) {
 			try {
 				output.write(cell.getCellBytes());
 			} catch (IOException e) {
 				closeSocket();
-				manager.removeActiveConnection(this);
-				throw new ConnectionClosedException();
+				// manager.removeActiveConnection(this);
+				throw new ConnectionIOException(e.getClass().getName() + " : "+ e.getMessage());
 			}
 		}
 	}
 
-	private Cell recvCell() {
+	private Cell recvCell() throws ConnectionIOException {
 		try {
 			return CellImpl.readFromInputStream(input);
 		} catch (IOException e) {
-			closeSocket();
-			manager.removeActiveConnection(this);
-			throw new ConnectionClosedException();
+			if(!isClosed) {
+				closeSocket();
+			}
+			// manager.removeActiveConnection(this);
+			throw new ConnectionIOException(e.getClass().getName() + " " + e.getMessage());
 		}
 	}
 
 	private void closeSocket() {
 		try {
+			isClosed = true;
 			socket.close();
 			isConnected = false;
+			
 		} catch (IOException e) {
 			logger.warning("Error closing socket: "+ e.getMessage());
 		}
@@ -152,7 +168,11 @@ public class ConnectionImpl implements Connection {
 	private Runnable createReadCellsRunnable() {
 		return new Runnable() {
 			public void run() {
-				readCellsLoop();
+				try {
+					readCellsLoop();
+				} catch(Exception e) {
+					e.printStackTrace();
+				}
 			}
 		};
 	}
@@ -161,7 +181,7 @@ public class ConnectionImpl implements Connection {
 		while(!Thread.interrupted()) {
 			try {
 				processCell( recvCell() );
-			} catch(ConnectionClosedException e) {
+			} catch(ConnectionIOException e) {
 				notifyCircuitsLinkClosed();
 				return;
 			} catch(TorException e) {
@@ -175,12 +195,12 @@ public class ConnectionImpl implements Connection {
 		
 	}
 
-	Cell readConnectionControlCell() {
+	Cell readConnectionControlCell() throws ConnectionIOException {
 		try {
 			return connectionControlCells.take();
 		} catch (InterruptedException e) {
 			closeSocket();
-			throw new ConnectionClosedException();
+			throw new ConnectionIOException();
 		}
 	}
 
@@ -213,7 +233,7 @@ public class ConnectionImpl implements Connection {
 
 	private void processRelayCell(Cell cell) {
 		synchronized(circuitMap) {
-			final CircuitImpl circuit = circuitMap.get(cell.getCircuitId());
+			final Circuit circuit = circuitMap.get(cell.getCircuitId());
 			if(circuit == null) {
 				logger.warning("Could not deliver relay cell for circuit id = "+ cell.getCircuitId() +" on connection "+ this +". Circuit not found");
 				return;
@@ -224,7 +244,7 @@ public class ConnectionImpl implements Connection {
 
 	private void processControlCell(Cell cell) {
 		synchronized(circuitMap) {
-			final CircuitImpl circuit = circuitMap.get(cell.getCircuitId());
+			final Circuit circuit = circuitMap.get(cell.getCircuitId());
 			if(circuit == null) {
 				logger.warning("Could not deliver control cell for circuit id = "+ cell.getCircuitId() +" on connection "+ this +". Circuit not found");
 				return;
@@ -236,18 +256,17 @@ public class ConnectionImpl implements Connection {
 	private void processDestroyCell(Cell cell) {
 		logger.debug("DESTROY cell received ("+ CellImpl.errorToDescription(cell.getByte() & 0xFF) +")");
 		synchronized(circuitMap) {
-			final CircuitImpl circuit = circuitMap.remove(cell.getCircuitId());
+			final Circuit circuit = circuitMap.remove(cell.getCircuitId());
 			if(circuit == null)
 				return;
 			circuit.destroyCircuit();
 		}
 	}
 
-	void removeCircuit(Circuit circuit) {
+	public void removeCircuit(Circuit circuit) {
 		synchronized(circuitMap) {
 			circuitMap.remove(circuit.getCircuitId());
 			if(circuitMap.size() == 0) {
-				manager.removeActiveConnection(this);
 				closeSocket();
 			}
 		}
