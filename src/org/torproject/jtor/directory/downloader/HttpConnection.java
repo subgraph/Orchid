@@ -1,4 +1,4 @@
-package org.torproject.jtor.directory.impl;
+package org.torproject.jtor.directory.downloader;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -6,9 +6,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,13 +19,25 @@ import java.util.regex.Pattern;
 import java.util.zip.InflaterInputStream;
 
 import org.torproject.jtor.TorException;
+import org.torproject.jtor.circuits.Stream;
 
 public class HttpConnection {
+	
+	public static HttpConnection createFromStream(String host, Stream stream) {
+		Charset cs = Charset.forName("ISO-8859-1");
+		final InputStreamReader isr = new InputStreamReader(stream.getInputStream(), cs);
+		final OutputStreamWriter osw = new OutputStreamWriter(stream.getOutputStream(), cs);
+		final BufferedReader reader = new BufferedReader(isr);
+		final BufferedWriter writer = new BufferedWriter(osw);
+		return new HttpConnection(host, stream, reader, writer);
+	}
+
 	private final static String HTTP_RESPONSE_REGEX = "HTTP/1\\.(\\d) (\\d+) (.*)";
 	private final static String CONTENT_LENGTH_HEADER = "Content-Length";
 	private final static String CONTENT_ENCODING_HEADER = "Content-Encoding";
 	private final Date ifModifiedSince = null;
 	private final String host;
+	private final Stream stream;
 	private final BufferedReader reader;
 	private final BufferedWriter writer;
 	private final Map<String, String> headers;
@@ -32,14 +46,19 @@ public class HttpConnection {
 	private String responseMessage;
 	private Reader bodyReader;
 	
-	HttpConnection(String host, BufferedReader reader, BufferedWriter writer) {
+	public HttpConnection(String host, BufferedReader reader, BufferedWriter writer) {
+		this(host, null, reader, writer);
+	}
+
+	public HttpConnection(String host, Stream stream, BufferedReader reader, BufferedWriter writer) {
 		this.host = host;
+		this.stream = stream;
 		this.reader = reader;
 		this.writer = writer;
 		this.headers = new HashMap<String, String>();
 	}
 
-	void sendGetRequest(String request) {
+	public void sendGetRequest(String request) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("GET ");
 		sb.append(request);
@@ -58,21 +77,34 @@ public class HttpConnection {
 		}
 	}
 	
-	void readResponse() {
+	public String getHost() {
+		return host;
+	}
+
+	public void readResponse() {
 		readStatusLine();
 		readHeaders();
 		readBody();
 	}
 	
-	int getStatusCode() {
+	public int getStatusCode() {
 		return responseCode;
 	}
 	
-	String getStatusMessage() {
+	public String getStatusMessage() {
 		return responseMessage;
 	}
-	Reader getBodyReader() {
+
+	public Reader getBodyReader() {
 		return bodyReader;
+	}
+	
+	public void close() {
+		if(stream == null) {
+			return;
+		}
+		stream.close();
+		stream.getCircuit().destroyCircuit();
 	}
 	
 	private void readStatusLine() {
