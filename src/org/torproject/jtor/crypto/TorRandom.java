@@ -21,6 +21,12 @@ public class TorRandom {
 		}
 	}
 
+	public byte[] getBytes(int n) {
+		final byte[] bs = new byte[n];
+		random.nextBytes(bs);
+		return bs;
+	}
+
 	public long nextLong(long n) {
 		// XXX not uniformly distributed
 		return random.nextLong() % n;

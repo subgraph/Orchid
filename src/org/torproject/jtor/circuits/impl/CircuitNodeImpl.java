@@ -7,6 +7,7 @@ import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.crypto.HybridEncryption;
+import org.torproject.jtor.crypto.TorCreateFastKeyAgreement;
 import org.torproject.jtor.crypto.TorKeyAgreement;
 import org.torproject.jtor.crypto.TorMessageDigest;
 import org.torproject.jtor.data.HexDigest;
@@ -27,6 +28,8 @@ class CircuitNodeImpl implements CircuitNode {
 	private final Object windowLock;
 	private int packageWindow;
 	private int deliverWindow;
+	
+	private TorCreateFastKeyAgreement createFastContext;
 
 	private CircuitNodeImpl(Router router) {
 		this(router, null);
@@ -45,6 +48,14 @@ class CircuitNodeImpl implements CircuitNode {
 		return router;
 	}
 
+	void setCreatedFastValue(byte[] value, HexDigest packetDigest) {
+		createFastContext.setOtherValue(value);
+		deriveKeys(createFastContext.getDerivedValue());
+		if(!cryptoState.verifyPacketDigest(packetDigest)) {
+			throw new TorException("Digest verification failed");
+		}
+	}
+	
 	void setSharedSecret(BigInteger peerPublic, HexDigest packetDigest) {
 		if(!TorKeyAgreement.isValidPublicValue(peerPublic))
 			throw new TorException("Illegal DH public value");
@@ -79,6 +90,13 @@ class CircuitNodeImpl implements CircuitNode {
 		final byte[] yBytes = dhContext.getPublicKeyBytes();
 		final HybridEncryption hybrid = new HybridEncryption();
 		return hybrid.encrypt(yBytes, router.getOnionKey());
+	}
+
+	byte [] getCreateFastPublicValue() {
+		if(createFastContext == null) {
+			createFastContext = new TorCreateFastKeyAgreement();
+		}
+		return createFastContext.getPublicValue();
 	}
 
 	private void deriveKeys(byte[] sharedSecret) {
