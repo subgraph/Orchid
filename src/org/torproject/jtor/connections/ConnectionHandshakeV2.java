@@ -85,7 +85,7 @@ public class ConnectionHandshakeV2 {
 			throw new ConnectionHandshakeException("Certificate public key is not an RSA key as expected");
 		}
 		final TorPublicKey certKey = new TorPublicKey((RSAPublicKey) publicKey);
-		if(!certKey.equals(router.getIdentityKey())) {
+		if(!certKey.getFingerprint().equals(router.getIdentityHash())) {
 			throw new ConnectionHandshakeException("Router identity key does not match certicate key");
 		}
 	}
