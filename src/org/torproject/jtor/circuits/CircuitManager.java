@@ -1,6 +1,7 @@
 package org.torproject.jtor.circuits;
 
 import org.torproject.jtor.data.IPv4Address;
+import org.torproject.jtor.directory.Router;
 
 
 public interface CircuitManager {
@@ -35,4 +36,6 @@ public interface CircuitManager {
 	 * @return The status response result of attempting the open the exit connection.
 	 */
 	OpenStreamResponse openExitStreamTo(IPv4Address address, int port) throws InterruptedException;
+	
+	OpenStreamResponse openDirectoryStreamTo(Router directory);
 }

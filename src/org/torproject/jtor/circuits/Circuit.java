@@ -2,6 +2,7 @@ package org.torproject.jtor.circuits;
 
 import java.util.List;
 
+import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;
@@ -23,7 +24,7 @@ public interface Circuit {
 	 *                
 	 * @see CircuitBuildHandler
 	 */
-	void openCircuit(List<Router> circuitPath, CircuitBuildHandler callback);
+	boolean openCircuit(List<Router> circuitPath, CircuitBuildHandler callback);
 	
 	/**
 	 * Extend an already connected circuit to add an additional <code>Router</code> to the path.
@@ -141,4 +142,10 @@ public interface Circuit {
 	 * @param target The <code>ExitTarget</code> to which a connection has failed through this circuit.
 	 */
 	public void recordFailedExitTarget(ExitTarget target);
+
+	void destroyCircuit();
+
+	void deliverRelayCell(Cell cell);
+
+	void deliverControlCell(Cell cell);
 }
