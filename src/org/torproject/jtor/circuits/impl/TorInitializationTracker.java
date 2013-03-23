@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.torproject.jtor.Tor;
 import org.torproject.jtor.TorInitializationListener;
 
 public class TorInitializationTracker {
-	
+	private final static Logger logger = Logger.getLogger(TorInitializationTracker.class.getName());
 	private final static Map<Integer, String> messageMap = new HashMap<Integer, String>();
 	
 	static {
@@ -69,13 +71,17 @@ public class TorInitializationTracker {
 	private void notifyListeners(int code) {
 		final String message = getMessageForCode(code);
 		for(TorInitializationListener listener: getListeners()) {
-			listener.initializationProgress(message, code);
-			if(code >= 100) {
-				listener.initializationCompleted();
+			try {
+				listener.initializationProgress(message, code);
+				if(code >= 100) {
+					listener.initializationCompleted();
+				}
+			} catch(Exception e) {
+				logger.log(Level.SEVERE, "Exception occurred in TorInitializationListener callback: "+ e.getMessage(), e);
 			}
 		}
 	}
-	
+
 	private String getMessageForCode(int code) {
 		if(messageMap.containsKey(code)) {
 			return messageMap.get(code);
