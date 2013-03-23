@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.circuits.OpenStreamResponse;
+import org.torproject.jtor.circuits.impl.TorInitializationTracker;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.downloader.DirectoryDownloader;
 import org.torproject.jtor.socks.SocksPortListener;
@@ -19,6 +20,7 @@ import org.torproject.jtor.socks.SocksPortListener;
 public class TorClient {
 	private final TorConfig config;
 	private final Directory directory;
+	private final TorInitializationTracker initializationTracker;
 	private final CircuitManager circuitManager;
 	private final SocksPortListener socksListener;
 	private final DirectoryDownloader directoryDownloader;
@@ -29,7 +31,8 @@ public class TorClient {
 		Security.addProvider(new BouncyCastleProvider());
 		config = Tor.createConfig();
 		directory = Tor.createDirectory(config);
-		circuitManager = Tor.createCircuitManager(directory);
+		initializationTracker = Tor.createInitalizationTracker();
+		circuitManager = Tor.createCircuitManager(directory, initializationTracker);
 		directoryDownloader = Tor.createDirectoryDownloader(directory, circuitManager);
 		socksListener = Tor.createSocksPortListener(circuitManager);
 	}
@@ -66,11 +69,19 @@ public class TorClient {
 	public void enableSocksListener() {
 		enableSocksListener(5090);
 	}
+	void addInitializationListener(TorInitializationListener listener) {
+		initializationTracker.addListener(listener);
+	}
 
+	void removeInitializationListener(TorInitializationListener listener) {
+		initializationTracker.removeListener(listener);
+	}
+	
 	public static void main(String[] args) {
 		setupLogging();
 		final TorClient client = new TorClient();
-		client.circuitManager.addInitializationListener(createInitalizationListner());
+		
+		client.addInitializationListener(createInitalizationListner());
 		client.start();
 		client.enableSocksListener();
 	}

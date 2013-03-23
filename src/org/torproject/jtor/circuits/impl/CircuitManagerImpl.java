@@ -11,18 +11,18 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import org.torproject.jtor.TorInitializationListener;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
+import org.torproject.jtor.circuits.DirectoryStreamRequest;
 import org.torproject.jtor.circuits.OpenStreamResponse;
+import org.torproject.jtor.circuits.OpenStreamResponse.OpenStreamStatus;
 import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Directory;
-import org.torproject.jtor.directory.Router;
 
 public class CircuitManagerImpl implements CircuitManager {
 	private final static Logger logger = Logger.getLogger(CircuitManagerImpl.class.getName());
@@ -38,24 +38,16 @@ public class CircuitManagerImpl implements CircuitManager {
 	private final Runnable circuitCreationTask;
 	private final TorInitializationTracker initializationTracker;
 
-	public CircuitManagerImpl(Directory directory, ConnectionCache connectionCache) {
+	public CircuitManagerImpl(Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.connectionCache = connectionCache;
 		this.circuitCreationTask = new CircuitCreationTask(directory, this);
 		this.activeCircuits = new HashSet<Circuit>();
 		this.pendingCircuits = new HashSet<Circuit>();
 		this.cleanCircuits = new HashSet<Circuit>();
 		this.random = new TorRandom();
-		this.initializationTracker = new TorInitializationTracker();
-		connectionCache.setInitializationTracker(initializationTracker);
+		this.initializationTracker = initializationTracker;
 	}
 
-	public void addInitializationListener(TorInitializationListener listener) {
-		initializationTracker.addListener(listener);
-	}
-	
-	public void removeInitializationListener(TorInitializationListener listener) {
-		initializationTracker.removeListener(listener);
-	}
 	
 	public void notifyInitializationEvent(int eventCode) {
 		initializationTracker.notifyEvent(eventCode);
@@ -79,7 +71,7 @@ public class CircuitManagerImpl implements CircuitManager {
 	}
 
 	public Circuit createNewCircuit(boolean isDirectoryCircuit) {
-		return CircuitImpl.create(this, connectionCache, isDirectoryCircuit);
+		return CircuitImpl.create(this, connectionCache, isDirectoryCircuit, initializationTracker);
 	}
 
 	synchronized void circuitStartConnect(Circuit circuit) {
@@ -164,9 +156,9 @@ public class CircuitManagerImpl implements CircuitManager {
 		}
 	}
 
-	public Circuit openDirectoryCircuitTo(Router directory) {
+	public OpenStreamResponse openDirectoryStream(DirectoryStreamRequest request) {
 		final Circuit circuit = createNewCircuit(true);
-		circuit.openCircuit(Arrays.asList(directory), new CircuitBuildHandler() {
+		final boolean success = circuit.openCircuit(Arrays.asList(request.getDirectoryRouter()), new CircuitBuildHandler() {
 			
 			public void nodeAdded(CircuitNode node) {
 				// TODO Auto-generated method stub
@@ -175,6 +167,7 @@ public class CircuitManagerImpl implements CircuitManager {
 			
 			public void connectionFailed(String reason) {
 				logger.fine("Connection failed: "+ reason);
+				
 			}
 			
 			public void connectionCompleted(Connection connection) {
@@ -184,6 +177,8 @@ public class CircuitManagerImpl implements CircuitManager {
 			
 			public void circuitBuildFailed(String reason) {
 				logger.fine("Circuit Build Failed: "+ reason);
+				// TODO Auto-generated method stub
+				
 			}
 			
 			public void circuitBuildCompleted(Circuit circuit) {
@@ -191,6 +186,17 @@ public class CircuitManagerImpl implements CircuitManager {
 				
 			}
 		}, true);
-		return circuit;
+		if(success) {
+			if(request.getRequestEventCode() > 0) {
+				initializationTracker.notifyEvent(request.getRequestEventCode());
+			}
+			final OpenStreamResponse osr =  circuit.openDirectoryStream();
+			if(osr.getStatus() == OpenStreamStatus.STATUS_STREAM_OPENED && request.getLoadingEventCode() > 0) {
+				initializationTracker.notifyEvent(request.getLoadingEventCode());
+			}
+			return osr;
+		} else {
+			return OpenStreamResponseImpl.createConnectionFailError("Failed to open circuit"); 
+		}
 	}
 }

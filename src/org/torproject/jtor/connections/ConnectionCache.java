@@ -42,12 +42,8 @@ public class ConnectionCache {
 	private final ConnectionSocketFactory factory = new ConnectionSocketFactory();
 	private TorInitializationTracker initializationTracker;
 	
-	public void setInitializationTracker(TorInitializationTracker tracker) {
+	public ConnectionCache(TorInitializationTracker tracker) {
 		this.initializationTracker = tracker;
-	}
-	
-	public TorInitializationTracker getInitializationTracker() {
-		return initializationTracker;
 	}
 
 	public Connection getConnectionTo(Router router, boolean isDirectoryConnection) throws InterruptedException, ConnectionTimeoutException, ConnectionFailedException, ConnectionHandshakeException {

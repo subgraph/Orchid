@@ -31,8 +31,8 @@ import org.torproject.jtor.directory.Router;
  */
 public class CircuitImpl implements Circuit {
 	private final static Logger logger = Logger.getLogger(CircuitImpl.class.getName());
-	static CircuitImpl create(CircuitManagerImpl circuitManager, ConnectionCache connectionCache, boolean isDirectoryCircuit) {
-		return new CircuitImpl(circuitManager, connectionCache, isDirectoryCircuit);
+	static CircuitImpl create(CircuitManagerImpl circuitManager, ConnectionCache connectionCache, boolean isDirectoryCircuit, TorInitializationTracker initializationTracker) {
+		return new CircuitImpl(circuitManager, connectionCache, isDirectoryCircuit, initializationTracker);
 	}
 
 	private final static long CIRCUIT_BUILD_TIMEOUT_MS = 30 * 1000;
@@ -50,7 +50,7 @@ public class CircuitImpl implements Circuit {
 	private final CircuitStatus status;
 	private final Object relaySendLock = new Object();
 	
-	private CircuitImpl(CircuitManagerImpl circuitManager, ConnectionCache connectionCache, boolean isDirectoryCircuit) {
+	private CircuitImpl(CircuitManagerImpl circuitManager, ConnectionCache connectionCache, boolean isDirectoryCircuit, TorInitializationTracker initializationTracker) {
 		nodeList = new ArrayList<CircuitNodeImpl>();
 		this.circuitManager = circuitManager;
 		this.relayCellResponseQueue = new LinkedBlockingQueue<RelayCell>();
@@ -58,7 +58,7 @@ public class CircuitImpl implements Circuit {
 		this.streamMap = new HashMap<Integer, StreamImpl>();
 		this.failedExitRequests = new HashSet<ExitTarget>();
 		status = new CircuitStatus();
-		circuitBuilder = new CircuitBuilder(this, connectionCache, isDirectoryCircuit);
+		circuitBuilder = new CircuitBuilder(this, connectionCache, isDirectoryCircuit, initializationTracker);
 	}
 
 	void initializeConnectingCircuit(Connection entryConnection, int circuitId) {

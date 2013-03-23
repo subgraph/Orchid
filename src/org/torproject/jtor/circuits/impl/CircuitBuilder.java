@@ -32,12 +32,14 @@ class CircuitBuilder {
 	private final CircuitImpl circuit;
 	private final ConnectionCache connectionCache;
 	private final boolean isDirectoryCircuit;
+	private final TorInitializationTracker initializationTracker;
 
 	
-	CircuitBuilder(CircuitImpl circuit, ConnectionCache connectionCache, boolean isDirectoryCircuit) {
+	CircuitBuilder(CircuitImpl circuit, ConnectionCache connectionCache, boolean isDirectoryCircuit, TorInitializationTracker initializationTracker) {
 		this.circuit = circuit;
 		this.connectionCache = connectionCache;
 		this.isDirectoryCircuit = isDirectoryCircuit;
+		this.initializationTracker = initializationTracker;
 	}
 	
 	boolean openCircuit(List<Router> circuitPath, CircuitBuildHandler handler, boolean isDirectoryCircuit) {
@@ -92,9 +94,8 @@ class CircuitBuilder {
 		if(handler != null)
 			handler.circuitBuildCompleted(circuit);
 		
-		final TorInitializationTracker tracker = connectionCache.getInitializationTracker();
-		if(tracker != null && !isDirectoryCircuit) {
-			tracker.notifyEvent(Tor.BOOTSTRAP_STATUS_DONE);
+		if(initializationTracker != null && !isDirectoryCircuit) {
+			initializationTracker.notifyEvent(Tor.BOOTSTRAP_STATUS_DONE);
 		}
 	
 		return true;
@@ -113,7 +114,7 @@ class CircuitBuilder {
 		}
 	}
 
-	CircuitNode createTo(Router targetRouter) {
+	private CircuitNode createTo(Router targetRouter) {
 		notifyInitialization();
 		final CircuitNodeImpl newNode = new CircuitNodeImpl(targetRouter, null);
 		sendCreateCell(newNode);
@@ -121,7 +122,7 @@ class CircuitBuilder {
 		return newNode;
 	}
 	
-	CircuitNode createFastTo(Router targetRouter) {
+	private CircuitNode createFastTo(Router targetRouter) {
 		notifyInitialization();
 		final CircuitNodeImpl newNode = new CircuitNodeImpl(targetRouter, null);
 		sendCreateFastCell(newNode);
@@ -130,11 +131,10 @@ class CircuitBuilder {
 	}
 
 	private void notifyInitialization() {
-		final TorInitializationTracker tracker = connectionCache.getInitializationTracker();
-		if(tracker == null) {
+		if(initializationTracker == null) {
 			return;
 		}
-		tracker.notifyEvent(isDirectoryCircuit ? Tor.BOOTSTRAP_STATUS_ONEHOP_CREATE : Tor.BOOTSTRAP_STATUS_CIRCUIT_CREATE);
+		initializationTracker.notifyEvent(isDirectoryCircuit ? Tor.BOOTSTRAP_STATUS_ONEHOP_CREATE : Tor.BOOTSTRAP_STATUS_CIRCUIT_CREATE);
 	}
 
 	private void sendCreateFastCell(CircuitNodeImpl node) {

@@ -2,6 +2,7 @@ package org.torproject.jtor;
 
 import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.circuits.impl.CircuitManagerImpl;
+import org.torproject.jtor.circuits.impl.TorInitializationTracker;
 import org.torproject.jtor.config.impl.TorConfigImpl;
 import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.directory.Directory;
@@ -54,6 +55,10 @@ public class Tor {
 		return new TorConfigImpl();
 	}
 
+	static public TorInitializationTracker createInitalizationTracker() {
+		return new TorInitializationTracker();
+	}
+
 	/**
 	 * Create and return a new <code>Directory</code> instance.
 	 * 
@@ -78,9 +83,9 @@ public class Tor {
 	 * @return A new <code>CircuitManager</code> instance.
 	 * @see CircuitManager
 	 */
-	static public CircuitManager createCircuitManager(Directory directory) {
-		final ConnectionCache connectionCache = new ConnectionCache();
-		return new CircuitManagerImpl(directory, connectionCache);
+	static public CircuitManager createCircuitManager(Directory directory, TorInitializationTracker tracker) {
+		final ConnectionCache connectionCache = new ConnectionCache(tracker);
+		return new CircuitManagerImpl(directory, connectionCache, tracker);
 	}
 
 	/**

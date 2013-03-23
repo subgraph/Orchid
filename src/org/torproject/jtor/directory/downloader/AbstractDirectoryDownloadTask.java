@@ -7,7 +7,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.Circuit;
+import org.torproject.jtor.circuits.DirectoryStreamRequest;
 import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.directory.Directory;
@@ -63,9 +63,9 @@ public abstract class AbstractDirectoryDownloadTask implements Runnable {
 	
 	private OpenStreamResponse openDirectoryTo(Router directory) {
 		try {
-			final Circuit circuit = downloader.getCircuitManager().openDirectoryCircuitTo(directory);
-			downloader.getCircuitManager().notifyInitializationEvent(bootstrapRequestEvent);
-			return circuit.openDirectoryStream();
+			final DirectoryStreamRequest req = new DirectoryStreamRequest(directory);
+			req.setInitializationEvents(bootstrapRequestEvent, bootstrapLoadingEvent);
+			return downloader.getCircuitManager().openDirectoryStream(req);
 		} catch (TorException e) {
 			logger.info("Failed connection to " + describeRouter(directory) + " : " + e.getMessage());
 			return null;
@@ -88,7 +88,6 @@ public abstract class AbstractDirectoryDownloadTask implements Runnable {
 		if(http == null) {
 			return;
 		}
-		downloader.getCircuitManager().notifyInitializationEvent(bootstrapLoadingEvent);
 		final String request = getRequestPath();
 		Reader response = null;
 		try {
