@@ -24,7 +24,7 @@ public class TorInitializationTracker {
 		messageMap.put(Tor.BOOTSTRAP_STATUS_REQUESTING_DESCRIPTORS, "Asking for relay descriptors");
 		messageMap.put(Tor.BOOTSTRAP_STATUS_LOADING_DESCRIPTORS, "Loading relay descriptors");
 		messageMap.put(Tor.BOOTSTRAP_STATUS_CONN_OR, "Connecting to the Tor network");
-		messageMap.put(Tor.BOOTSTRAP_STATUS_HANDSHAKE_OR, "Finshed Handshake with first hop");
+		messageMap.put(Tor.BOOTSTRAP_STATUS_HANDSHAKE_OR, "Finished Handshake with first hop");
 		messageMap.put(Tor.BOOTSTRAP_STATUS_CIRCUIT_CREATE, "Establishing a Tor circuit");
 		messageMap.put(Tor.BOOTSTRAP_STATUS_DONE, "Done");
 	}
@@ -50,8 +50,10 @@ public class TorInitializationTracker {
 	}
 	
 	public void start() {
-		bootstrapState = Tor.BOOTSTRAP_STATUS_STARTING;
-		notifyListeners(Tor.BOOTSTRAP_STATUS_STARTING);
+		synchronized (stateLock) {
+			bootstrapState = Tor.BOOTSTRAP_STATUS_STARTING;
+			notifyListeners(Tor.BOOTSTRAP_STATUS_STARTING);
+		}
 	}
 
 	public void notifyEvent(int eventCode) {
@@ -60,8 +62,8 @@ public class TorInitializationTracker {
 				return;
 			}
 			bootstrapState = eventCode;
+			notifyListeners(eventCode);
 		}
-		notifyListeners(eventCode);
 	}
 
 	private void notifyListeners(int code) {
