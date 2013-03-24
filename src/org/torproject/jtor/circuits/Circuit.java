@@ -1,12 +1,10 @@
 package org.torproject.jtor.circuits;
 
-import java.util.List;
-
+import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;
-import org.torproject.jtor.directory.Router;
 
 /**
  * A Circuit represents a logical path through multiple ORs.  Circuits are described in
@@ -14,25 +12,6 @@ import org.torproject.jtor.directory.Router;
  *
  */
 public interface Circuit {
-	/**
-	 * Open this circuit by connecting the specified <code>circuitPath</code> and notifying
-	 * progress, success, and failure through <code>callback</code>.
-	 * 
-	 * @param circuitPath The path of onion routers to use for this circuit.
-	 * @param callback A callback structure for notifying the caller about the status of the
-	 *                 opening circuit.
-	 *                
-	 * @see CircuitBuildHandler
-	 */
-	boolean openCircuit(List<Router> circuitPath, CircuitBuildHandler callback, boolean isDirectoryCircuit);
-	
-	/**
-	 * Extend an already connected circuit to add an additional <code>Router</code> to the path.
-	 * 
-	 * @param router The router to add to the circuit.
-	 */
-	void extendCircuit(Router router);
-	
 	/**
 	 * Return <code>true</code> if the circuit is presently in the connected state or
 	 * <code>false</code> otherwise.

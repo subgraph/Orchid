@@ -8,13 +8,11 @@ import java.util.logging.Logger;
 
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.Circuit;
-import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
-import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Router;
@@ -25,24 +23,22 @@ import org.torproject.jtor.directory.Router;
  */
 public class CircuitImpl implements Circuit {
 	private final static Logger logger = Logger.getLogger(CircuitImpl.class.getName());
-	static CircuitImpl create(CircuitManagerImpl circuitManager, ConnectionCache connectionCache, boolean isDirectoryCircuit, TorInitializationTracker initializationTracker) {
-		return new CircuitImpl(circuitManager, connectionCache, isDirectoryCircuit, initializationTracker);
+	static CircuitImpl create(CircuitManagerImpl circuitManager) {
+		return new CircuitImpl(circuitManager);
 	}
 
 	private final CircuitManagerImpl circuitManager;
 	private final List<CircuitNodeImpl> nodeList;
 	private final Set<ExitTarget> failedExitRequests;
-	private final CircuitBuilder circuitBuilder;
 	private final CircuitStatus status;
 
 	private CircuitIO io;
 	
-	private CircuitImpl(CircuitManagerImpl circuitManager, ConnectionCache connectionCache, boolean isDirectoryCircuit, TorInitializationTracker initializationTracker) {
+	private CircuitImpl(CircuitManagerImpl circuitManager) {
 		nodeList = new ArrayList<CircuitNodeImpl>();
 		this.circuitManager = circuitManager;
 		this.failedExitRequests = new HashSet<ExitTarget>();
 		status = new CircuitStatus();
-		circuitBuilder = new CircuitBuilder(this, connectionCache, isDirectoryCircuit, initializationTracker);
 	}
 
 	void bindToConnection(Connection connection) {
@@ -65,41 +61,25 @@ public class CircuitImpl implements Circuit {
 		status.setStateConnected();
 	}
 
-	public boolean openCircuit(List<Router> circuitPath, CircuitBuildHandler handler, boolean isDirectoryCircuit)  {
-		startCircuitOpen(circuitPath);	
-		if(circuitBuilder.openCircuit(circuitPath, handler, isDirectoryCircuit)) { 
-			circuitOpenSucceeded();
-			return true;
-		} else {
-			circuitOpenFailed();
-			return false;
-		}
-	}
-
-	private void startCircuitOpen(List<Router> circuitPath) {
-		if(!status.isUnconnected())
+	void notifyCircuitBuildStart(CircuitCreationRequest request) {
+		if(!status.isUnconnected()) {
 			throw new IllegalStateException("Can only connect UNCONNECTED circuits");
+		}
 		status.updateCreatedTimestamp();
-		status.setStateBuilding(circuitPath);
+		status.setStateBuilding(request.getPath());
 		circuitManager.circuitStartConnect(this);
 	}
-
-	private void circuitOpenFailed() {
+	
+	void notifyCircuitBuildFailed() {
 		status.setStateFailed();
 		circuitManager.circuitInactive(this);
 	}
-
-	private void circuitOpenSucceeded() {
+	
+	void notifyCircuitBuildCompleted() {
 		status.setStateOpen();
 		circuitManager.circuitConnected(this);
 	}
-
-	public void extendCircuit(Router router) {
-		if(!isConnected())
-			throw new TorException("Cannot extend an unconnected circuit");
-		circuitBuilder.extendTo(router);
-	}
-
+	
 	public Connection getConnection() {
 		if(!isConnected())
 			throw new TorException("Circuit is not connected.");

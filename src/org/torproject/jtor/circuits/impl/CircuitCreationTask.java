@@ -12,6 +12,7 @@ import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
+import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.Router;
 
@@ -20,16 +21,20 @@ public class CircuitCreationTask implements Runnable {
 	private final static int MAX_PENDING_CIRCUITS = 2;
 	private final static int DEFAULT_CLEAN_CIRCUITS = 3;
 	private final Directory directory;
+	private final ConnectionCache connectionCache;
 	private final CircuitManagerImpl circuitManager;
+	private final TorInitializationTracker initializationTracker;
 	private final NodeChooser nodeChooser;
 	private final Executor executor;
 
 	// To avoid obnoxiously printing a warning every second
 	private int notEnoughDirectoryInformationWarningCounter = 0;
 
-	CircuitCreationTask(Directory directory, CircuitManagerImpl circuitManager) {
+	CircuitCreationTask(Directory directory, ConnectionCache connectionCache, CircuitManagerImpl circuitManager, TorInitializationTracker initializationTracker) {
 		this.directory = directory;
+		this.connectionCache = connectionCache;
 		this.circuitManager = circuitManager;
+		this.initializationTracker = initializationTracker;
 		this.nodeChooser = new NodeChooser(circuitManager, directory);
 		this.executor = Executors.newCachedThreadPool();
 	}
@@ -115,7 +120,7 @@ public class CircuitCreationTask implements Runnable {
 		if(circuitManager.getPendingCircuitCount() >= MAX_PENDING_CIRCUITS)
 			return;
 
-		final Circuit circuit = circuitManager.createNewCircuit(false);
+		final CircuitImpl circuit = circuitManager.createNewCircuit();
 		final NodeChoiceConstraints ncc = new NodeChoiceConstraints();
 		// XXX
 		ncc.setNeedCapacity(true);
@@ -126,7 +131,10 @@ public class CircuitCreationTask implements Runnable {
 		ncc.addExcludedRouter(middleRouter);
 		final Router entryRouter = nodeChooser.chooseEntryNode(ncc);
 		List<Router> path =  Arrays.asList(entryRouter, middleRouter, exitRouter);
-		executor.execute(new OpenCircuitTask(circuit, path, createCircuitBuildHandler()));
+		final CircuitBuildHandler circuitBuildHandler = createCircuitBuildHandler();
+		final CircuitCreationRequest req = new CircuitCreationRequest(circuit, path, circuitBuildHandler, false);
+		executor.execute(new CircuitBuildTask(req, connectionCache, initializationTracker));
+		//executor.execute(new OpenCircuitTask(circuit, path, createCircuitBuildHandler()));
 	}
 
 	private void checkCircuitsForCreation() {
@@ -141,8 +149,11 @@ public class CircuitCreationTask implements Runnable {
 		if((circuitManager.getCleanCircuitCount() + circuitManager.getPendingCircuitCount()) < DEFAULT_CLEAN_CIRCUITS &&
 				circuitManager.getPendingCircuitCount() < MAX_PENDING_CIRCUITS) {
 			final List<Router> path = choosePreemptiveExitPath();
-			final Circuit circuit = circuitManager.createNewCircuit(false);
-			executor.execute(new OpenCircuitTask(circuit, path, createCircuitBuildHandler()));
+			final CircuitImpl circuit = circuitManager.createNewCircuit();
+			final CircuitBuildHandler circuitBuildHandler = createCircuitBuildHandler();
+			final CircuitCreationRequest req = new CircuitCreationRequest(circuit, path, circuitBuildHandler, false);
+			executor.execute(new CircuitBuildTask(req, connectionCache, initializationTracker));
+			//executor.execute(new OpenCircuitTask(circuit, path, createCircuitBuildHandler()));
 		}
 	}
 

@@ -23,6 +23,7 @@ import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Directory;
+import org.torproject.jtor.directory.Router;
 
 public class CircuitManagerImpl implements CircuitManager {
 	private final static Logger logger = Logger.getLogger(CircuitManagerImpl.class.getName());
@@ -40,7 +41,7 @@ public class CircuitManagerImpl implements CircuitManager {
 
 	public CircuitManagerImpl(Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.connectionCache = connectionCache;
-		this.circuitCreationTask = new CircuitCreationTask(directory, this);
+		this.circuitCreationTask = new CircuitCreationTask(directory, connectionCache, this, initializationTracker);
 		this.activeCircuits = new HashSet<Circuit>();
 		this.pendingCircuits = new HashSet<Circuit>();
 		this.cleanCircuits = new HashSet<Circuit>();
@@ -70,8 +71,9 @@ public class CircuitManagerImpl implements CircuitManager {
 		}};
 	}
 
-	public Circuit createNewCircuit(boolean isDirectoryCircuit) {
-		return CircuitImpl.create(this, connectionCache, isDirectoryCircuit, initializationTracker);
+	public CircuitImpl createNewCircuit() {
+		return CircuitImpl.create(this);
+		
 	}
 
 	synchronized void circuitStartConnect(Circuit circuit) {
@@ -157,36 +159,15 @@ public class CircuitManagerImpl implements CircuitManager {
 	}
 
 	public OpenStreamResponse openDirectoryStream(DirectoryStreamRequest request) {
-		final Circuit circuit = createNewCircuit(true);
-		final boolean success = circuit.openCircuit(Arrays.asList(request.getDirectoryRouter()), new CircuitBuildHandler() {
-			
-			public void nodeAdded(CircuitNode node) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-			public void connectionFailed(String reason) {
-				logger.fine("Connection failed: "+ reason);
-				
-			}
-			
-			public void connectionCompleted(Connection connection) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-			public void circuitBuildFailed(String reason) {
-				logger.fine("Circuit Build Failed: "+ reason);
-				// TODO Auto-generated method stub
-				
-			}
-			
-			public void circuitBuildCompleted(Circuit circuit) {
-				// TODO Auto-generated method stub
-				
-			}
-		}, true);
-		if(success) {
+		final CircuitImpl circuit = createNewCircuit();
+		final DirectoryCircuitResult result = new DirectoryCircuitResult();
+		final List<Router> path = Arrays.asList(request.getDirectoryRouter());
+		final CircuitCreationRequest req = new CircuitCreationRequest(circuit, path, result, true);
+		final CircuitBuildTask task = new CircuitBuildTask(req, connectionCache, initializationTracker);
+		task.run();
+
+		
+		if(result.isSuccessful()) {
 			if(request.getRequestEventCode() > 0) {
 				initializationTracker.notifyEvent(request.getRequestEventCode());
 			}
@@ -196,7 +177,36 @@ public class CircuitManagerImpl implements CircuitManager {
 			}
 			return osr;
 		} else {
-			return OpenStreamResponseImpl.createConnectionFailError("Failed to open circuit"); 
+			return OpenStreamResponseImpl.createConnectionFailError(result.getErrorMessage());
 		}
 	}
+	
+	private class DirectoryCircuitResult implements CircuitBuildHandler {
+
+		private String errorMessage;
+		private boolean isFailed;
+		
+		public void connectionCompleted(Connection connection) {}
+		public void nodeAdded(CircuitNode node) {}
+		public void circuitBuildCompleted(Circuit circuit) {}
+		
+		public void connectionFailed(String reason) {
+			errorMessage = reason;
+			isFailed = true;
+		}
+
+		public void circuitBuildFailed(String reason) {
+			errorMessage = reason;
+			isFailed = true;
+		}
+		
+		boolean isSuccessful() {
+			return !isFailed;
+		}
+		
+		String getErrorMessage() {
+			return errorMessage;
+		}
+	}
+	
 }
