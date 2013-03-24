@@ -1,14 +1,9 @@
 package org.torproject.jtor.circuits.impl;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.TorException;
@@ -16,7 +11,6 @@ import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
-import org.torproject.jtor.circuits.ConnectionIOException;
 import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
@@ -35,37 +29,34 @@ public class CircuitImpl implements Circuit {
 		return new CircuitImpl(circuitManager, connectionCache, isDirectoryCircuit, initializationTracker);
 	}
 
-	private final static long CIRCUIT_BUILD_TIMEOUT_MS = 30 * 1000;
-	private final static long CIRCUIT_RELAY_RESPONSE_TIMEOUT = 20 * 1000;
-
-	private Connection entryConnection;
-	private int circuitId;
 	private final CircuitManagerImpl circuitManager;
 	private final List<CircuitNodeImpl> nodeList;
-	private final BlockingQueue<RelayCell> relayCellResponseQueue;
-	private final BlockingQueue<Cell> controlCellResponseQueue;
-	private final Map<Integer, StreamImpl> streamMap;
 	private final Set<ExitTarget> failedExitRequests;
 	private final CircuitBuilder circuitBuilder;
 	private final CircuitStatus status;
-	private final Object relaySendLock = new Object();
+
+	private CircuitIO io;
 	
 	private CircuitImpl(CircuitManagerImpl circuitManager, ConnectionCache connectionCache, boolean isDirectoryCircuit, TorInitializationTracker initializationTracker) {
 		nodeList = new ArrayList<CircuitNodeImpl>();
 		this.circuitManager = circuitManager;
-		this.relayCellResponseQueue = new LinkedBlockingQueue<RelayCell>();
-		this.controlCellResponseQueue = new LinkedBlockingQueue<Cell>();
-		this.streamMap = new HashMap<Integer, StreamImpl>();
 		this.failedExitRequests = new HashSet<ExitTarget>();
 		status = new CircuitStatus();
 		circuitBuilder = new CircuitBuilder(this, connectionCache, isDirectoryCircuit, initializationTracker);
 	}
 
-	void initializeConnectingCircuit(Connection entryConnection, int circuitId) {
-		this.circuitId = circuitId;
-		this.entryConnection = entryConnection;
+	void bindToConnection(Connection connection) {
+		if(io != null) {
+			throw new IllegalStateException("Circuit already bound to a connection");
+		}
+		int id = connection.allocateCircuitId(this);
+		io = new CircuitIO(this, connection, id);
 	}
 
+	CircuitStatus getStatus() {
+		return status;
+	}
+	
 	public boolean isConnected() {
 		return status.isConnected();
 	}
@@ -112,51 +103,27 @@ public class CircuitImpl implements Circuit {
 	public Connection getConnection() {
 		if(!isConnected())
 			throw new TorException("Circuit is not connected.");
-		return entryConnection;
+		return io.getConnection();
 	}
 
 	public int getCircuitId() {
-		return circuitId;
+		return io.getCircuitId();
 	}
 
 	public void sendRelayCell(RelayCell cell) {
-		sendRelayCellTo(cell, cell.getCircuitNode());
+		io.sendRelayCellTo(cell, cell.getCircuitNode());
 	}
 
 	public void sendRelayCellToFinalNode(RelayCell cell) {
-		sendRelayCellTo(cell, getFinalCircuitNode());
-	}
-
-	private void sendRelayCellTo(RelayCell cell, CircuitNode targetNode) {
-		synchronized(relaySendLock) {
-			logger.fine("Sending:     "+ cell);
-			cell.setLength();
-			targetNode.updateForwardDigest(cell);
-			cell.setDigest(targetNode.getForwardDigestBytes());
-
-			for(CircuitNode node = targetNode; node != null; node = node.getPreviousNode())
-				node.encryptForwardCell(cell);
-
-			if(cell.getRelayCommand() == RelayCell.RELAY_DATA) 
-				targetNode.waitForSendWindowAndDecrement();
-			
-			sendCell(cell);
-		}
-	}
-
-	public void sendCell(Cell cell) {
-		if(!(status.isConnected() || status.isBuilding()))
-			return;
-		try {
-			status.updateDirtyTimestamp();
-			entryConnection.sendCell(cell);
-		} catch (ConnectionIOException e) {
-			destroyCircuit();
-		}
+		io.sendRelayCellTo(cell, getFinalCircuitNode());
 	}
 
 	void appendNode(CircuitNodeImpl node) {
 		nodeList.add(node);
+	}
+
+	List<CircuitNodeImpl> getNodeList() {
+		return nodeList;
 	}
 
 	int getCircuitLength() {
@@ -170,56 +137,19 @@ public class CircuitImpl implements Circuit {
 	}
 
 	public RelayCell createRelayCell(int relayCommand, int streamId, CircuitNode targetNode) {
-		return new RelayCellImpl(targetNode, circuitId, streamId, relayCommand);
+		return io.createRelayCell(relayCommand, streamId, targetNode);
 	}
 
 	public RelayCell receiveRelayCell() {
-		return dequeueRelayResponseCell();
+		return io.dequeueRelayResponseCell();
 	}
 
-	private RelayCell dequeueRelayResponseCell() {
-		try {
-			final long timeout = getReceiveTimeout();
-			return relayCellResponseQueue.poll(timeout, TimeUnit.MILLISECONDS);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			return null;
-		}
+	void sendCell(Cell cell) {
+		io.sendCell(cell);
 	}
-
-	private RelayCell decryptRelayCell(Cell cell) {
-		for(CircuitNodeImpl node: nodeList) {
-			if(node.decryptBackwardCell(cell)) {
-				return RelayCellImpl.createFromCell(node, cell);
-			}
-		}
-		destroyCircuit();
-		throw new TorException("Could not decrypt relay cell");
-	}
-
-	// Return null on timeout
+	
 	Cell receiveControlCellResponse() {
-		try {
-			final long timeout = getReceiveTimeout();
-			return controlCellResponseQueue.poll(timeout, TimeUnit.MILLISECONDS);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			return null;
-		}
-	}
-
-	private long getReceiveTimeout() {
-		if(status.isBuilding())
-			return remainingBuildTime();
-		else
-			return CIRCUIT_RELAY_RESPONSE_TIMEOUT;
-	}
-
-	private long remainingBuildTime() {
-		final long elapsed = status.getMillisecondsElapsedSinceCreated();
-		if(elapsed == 0 || elapsed >= CIRCUIT_BUILD_TIMEOUT_MS)
-			return 0;
-		return CIRCUIT_BUILD_TIMEOUT_MS - elapsed;
+		return io.receiveControlCellResponse();
 	}
 
 	/*
@@ -227,72 +157,16 @@ public class CircuitImpl implements Circuit {
 	 * associated with this circuit (CREATED or CREATED_FAST).
 	 */
 	public void deliverControlCell(Cell cell) {
-		status.updateDirtyTimestamp();
-		controlCellResponseQueue.add(cell);
+		io.deliverControlCell(cell);
 	}
 
 	/* This is called by the cell reading thread in ConnectionImpl to deliver RELAY cells. */
 	public void deliverRelayCell(Cell cell) {
-		status.updateDirtyTimestamp();
-		final RelayCell relayCell = decryptRelayCell(cell);
-		if(relayCell.getRelayCommand() != RelayCell.RELAY_DATA)
-			logger.fine("Dispatching: "+ relayCell);
-		switch(relayCell.getRelayCommand()) {
-		case RelayCell.RELAY_EXTENDED:
-		case RelayCell.RELAY_RESOLVED:
-		case RelayCell.RELAY_TRUNCATED:
-			relayCellResponseQueue.add(relayCell);
-			break;	
-		case RelayCell.RELAY_DATA:
-		case RelayCell.RELAY_END:
-		case RelayCell.RELAY_CONNECTED:
-			processRelayDataCell(relayCell);
-			break;
-
-		case RelayCell.RELAY_SENDME:
-			if(relayCell.getStreamId() != 0)
-				processRelayDataCell(relayCell);
-			else
-				processCircuitSendme(relayCell);
-			break;
-		case RelayCell.RELAY_BEGIN:
-		case RelayCell.RELAY_BEGIN_DIR:
-		case RelayCell.RELAY_EXTEND:
-		case RelayCell.RELAY_RESOLVE:
-		case RelayCell.RELAY_TRUNCATE:
-			destroyCircuit();
-			throw new TorException("Unexpected 'forward' direction relay cell type: "+ relayCell.getRelayCommand());
-		}
-	}
-
-	/* Runs in the context of the connection cell reading thread */
-	private void processRelayDataCell(RelayCell cell) {
-		if(cell.getRelayCommand() == RelayCell.RELAY_DATA) {
-			cell.getCircuitNode().decrementDeliverWindow();
-			if(cell.getCircuitNode().considerSendingSendme()) {
-				final RelayCell sendme = createRelayCell(RelayCell.RELAY_SENDME, 0, cell.getCircuitNode());
-				sendRelayCell(sendme);
-			}
-		}
-
-		synchronized(streamMap) {
-			final StreamImpl stream = streamMap.get(cell.getStreamId());
-			// It's not unusual for the stream to not be found.  For example, if a RELAY_CONNECTED arrives after
-			// the client has stopped waiting for it, the stream will never be tracked and eventually the edge node
-			// will send a RELAY_END for this stream.
-			if(stream != null)
-				stream.addInputCell(cell);
-			else
-				logger.fine("Stream not found for stream id="+ cell.getStreamId());	
-		}
-	}
-
-	private void processCircuitSendme(RelayCell cell) {
-		cell.getCircuitNode().incrementSendWindow();
+		io.deliverRelayCell(cell);
 	}
 
 	public OpenStreamResponse openDirectoryStream() {
-		final StreamImpl stream = createNewStream();
+		final StreamImpl stream = io.createNewStream();
 		final OpenStreamResponse response = stream.openDirectory();
 		processOpenStreamResponse(stream, response);
 		return response;
@@ -303,7 +177,7 @@ public class CircuitImpl implements Circuit {
 	}
 
 	public OpenStreamResponse openExitStream(String target, int port) {
-		final StreamImpl stream = createNewStream();
+		final StreamImpl stream = io.createNewStream();
 		final OpenStreamResponse response = stream.openExit(target, port);
 		processOpenStreamResponse(stream, response);
 		return response;
@@ -333,29 +207,13 @@ public class CircuitImpl implements Circuit {
 	}
 
 	public void destroyCircuit() {
-		status.setStateDestroyed();
-		entryConnection.removeCircuit(this);
-		synchronized(streamMap) {
-			final List<StreamImpl> tmpList = new ArrayList<StreamImpl>(streamMap.values());
-			for(StreamImpl s: tmpList)
-				s.close();
-		}
+		io.destroyCircuit();
 		circuitManager.circuitInactive(this);
 	}
 
-	private StreamImpl createNewStream() {
-		synchronized(streamMap) {
-			final int streamId = status.nextStreamId();
-			final StreamImpl stream = new StreamImpl(this, getFinalCircuitNode(), streamId);
-			streamMap.put(streamId, stream);
-			return stream;
-		}
-	}
 
 	void removeStream(StreamImpl stream) {
-		synchronized(streamMap) {
-			streamMap.remove(stream.getStreamId());
-		}
+		io.removeStream(stream);
 	}
 
 	public void recordFailedExitTarget(ExitTarget target) {
@@ -378,7 +236,8 @@ public class CircuitImpl implements Circuit {
 	}
 
 	public String toString() {
-		return "Circuit id="+ circuitId +" state=" + status.getStateAsString() +" "+ pathToString();
+		int id = (io == null) ? 0 : io.getCircuitId();
+		return "Circuit id="+ id +" state=" + status.getStateAsString() +" "+ pathToString();
 	}
 
 	private  String pathToString() {

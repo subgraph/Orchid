@@ -66,8 +66,7 @@ class CircuitBuilder {
 	private boolean openEntryNodeConnection(Router entryRouter, CircuitBuildHandler handler, boolean isDirectoryCircuit) throws InterruptedException, ConnectionTimeoutException, ConnectionFailedException, ConnectionHandshakeException {
 		final Connection entryConnection = connectionCache.getConnectionTo(entryRouter, isDirectoryCircuit);
 			
-		final int circuitId = entryConnection.allocateCircuitId(circuit);
-		circuit.initializeConnectingCircuit(entryConnection, circuitId);
+		circuit.bindToConnection(entryConnection);
 		
 		if(handler != null) {
 			handler.connectionCompleted(entryConnection);
