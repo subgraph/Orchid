@@ -53,12 +53,10 @@ public class SocksStreamConnection {
 			try {
 				socket.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.warning("IOException on SOCKS socket close(): "+ e.getMessage());
 			}
 			closeStream(torInputStream);
 			closeStream(torOutputStream);
-			
 		}
 	}
 
@@ -119,6 +117,7 @@ public class SocksStreamConnection {
 			stream.waitForSendWindow();
 			final int n = socket.getInputStream().read(outgoingBuffer);
 			if(n == -1) {
+				torOutputStream.close();
 				logger.fine("EOF on SOCKS socket connected to "+ stream);
 				return;
 			} else if(n > 0) {
