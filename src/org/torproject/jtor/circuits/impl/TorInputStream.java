@@ -10,6 +10,8 @@ import org.torproject.jtor.circuits.cells.RelayCell;
 
 public class TorInputStream extends InputStream {
 
+	private final static RelayCell closeSentinal = new RelayCellImpl(null, 0, 0, 0);
+	
 	private final BlockingQueue<RelayCell> incomingCells;
 	private final StreamImpl stream;
 	private ByteBuffer currentBuffer;
@@ -91,7 +93,11 @@ public class TorInputStream extends InputStream {
 	}
 
 	public void close() {
+		if(isClosed) {
+			return;
+		}
 		isClosed = true;
+		incomingCells.add(closeSentinal);
 		stream.close();
 	}
 
@@ -123,6 +129,9 @@ public class TorInputStream extends InputStream {
 
 		try {
 			final RelayCell nextCell = incomingCells.take();
+			if(nextCell == closeSentinal) {
+				throw new IOException("Stream closed");
+			}
 			if(nextCell.getRelayCommand() == RelayCell.RELAY_END) {
 				isEOF = true;
 				return;
