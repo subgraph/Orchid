@@ -161,4 +161,8 @@ public class RouterImpl implements Router {
 	public boolean exitPolicyAccepts(int port) {
 		return exitPolicyAccepts(null, port);
 	}
+	
+	public String toString() {
+		return "Router["+ getNickname() +" ("+getAddress() +":"+ getOnionPort() +")]";
+	}
 }
