@@ -24,7 +24,7 @@ public class SocksPortListenerImpl implements SocksPortListener {
 	
 	public SocksPortListenerImpl(CircuitManager circuitManager) {
 		this.circuitManager = circuitManager;
-		executor = Executors.newFixedThreadPool(25);
+		executor = Executors.newCachedThreadPool();
 	}
 
 	public void addListeningPort(int port) {
