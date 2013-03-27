@@ -3,6 +3,7 @@ package org.torproject.jtor.circuits.impl;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
+import java.util.logging.Logger;
 
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.Circuit;
@@ -12,6 +13,7 @@ import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.circuits.cells.RelayCell;
 
 public class StreamImpl implements Stream {
+	private final static Logger logger = Logger.getLogger(StreamImpl.class.getName());
 	private final static int STREAM_CONNECT_TIMEOUT = 60 * 1000;
 	private final static int STREAMWINDOW_START = 500;
 	private final static int STREAMWINDOW_INCREMENT = 50;
@@ -30,6 +32,8 @@ public class StreamImpl implements Stream {
 	private int packageWindow;
 	private int deliverWindow;
 
+	private String streamTarget = "";
+	
 	StreamImpl(CircuitImpl circuit, CircuitNode targetNode, int streamId) {
 		this.circuit = circuit;
 		this.targetNode = targetNode;
@@ -101,6 +105,9 @@ public class StreamImpl implements Stream {
 	public void close() {
 		if(isClosed)
 			return;
+		
+		logger.fine("Closing stream "+ this);
+		
 		isClosed = true;
 		inputStream.close();
 		outputStream.close();
@@ -114,12 +121,14 @@ public class StreamImpl implements Stream {
 	}
 
 	OpenStreamResponse openDirectory() {
+		streamTarget = "[Directory]";
 		final RelayCell cell = new RelayCellImpl(circuit.getFinalCircuitNode(), circuit.getCircuitId(), streamId, RelayCell.RELAY_BEGIN_DIR);
 		circuit.sendRelayCellToFinalNode(cell);
 		return waitForRelayConnected();
 	}
 
 	OpenStreamResponse openExit(String target, int port) {
+		streamTarget = target + ":"+ port;
 		final RelayCell cell = new RelayCellImpl(circuit.getFinalCircuitNode(), circuit.getCircuitId(), streamId, RelayCell.RELAY_BEGIN);
 		cell.putString(target + ":"+ port);
 		circuit.sendRelayCellToFinalNode(cell);
@@ -187,6 +196,6 @@ public class StreamImpl implements Stream {
 	}
 
 	public String toString() {
-		return "[Stream stream_id="+ streamId + " circuit="+ circuit +" ]";
+		return "[Stream stream_id="+ streamId + " circuit="+ circuit +" target="+ streamTarget +"]";
 	}
 }
