@@ -78,6 +78,8 @@ public abstract class AbstractDirectoryDownloadTask implements Runnable {
 	public void run() {
 		try {
 			makeRequest();
+		} catch(TorException e) { 
+			logger.info(e.getMessage());
 		} finally {
 			finishRequest(downloader);
 		}
