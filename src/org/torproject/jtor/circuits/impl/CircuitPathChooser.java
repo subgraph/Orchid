@@ -1,7 +1,9 @@
 package org.torproject.jtor.circuits.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -12,15 +14,44 @@ import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.Router;
 
-public class NodeChooser {
+public class CircuitPathChooser {
 	private final CircuitManagerImpl circuitManager;
 	private final Directory directory;
 	private final TorRandom random;
 
-	NodeChooser(CircuitManagerImpl circuitManager, Directory directory) {
+	CircuitPathChooser(CircuitManagerImpl circuitManager, Directory directory) {
 		this.circuitManager = circuitManager;
 		this.directory = directory;
 		this.random = new TorRandom();
+	}
+
+	List<Router> choosePathForTarget(ExitTarget target) {
+		final Set<Integer> empty = Collections.emptySet();
+		if(target.isAddressTarget()) {
+			return choosePathForAddress(target.getAddress(), target.getPort(), empty);
+		} else {
+			return choosePathForPort(target.getPort());
+		}
+	}
+
+	List<Router> choosePathForPort(int port) {
+		final Set<Integer> empty = Collections.emptySet();
+		return choosePathForAddress(null, port, empty);
+	}
+	
+	
+	List<Router> choosePathForPredictedPorts(Set<Integer> predictedPorts) {
+		return choosePathForAddress(null, -1, predictedPorts);
+	}
+	
+	List<Router> choosePathForAddress(IPv4Address address, int port, Set<Integer> predictedPorts) {
+		final NodeChoiceConstraints ncc = new NodeChoiceConstraints();
+		final Router exitRouter = chooseExitNodeForAddress(address, port, ncc, predictedPorts);
+		ncc.addExcludedRouter(exitRouter);
+		final Router middleRouter = chooseMiddleNode(ncc);
+		ncc.addExcludedRouter(middleRouter);
+		final Router entryRouter = chooseEntryNode(ncc);
+		return Arrays.asList(entryRouter, middleRouter, exitRouter);
 	}
 
 	Router chooseEntryNode(NodeChoiceConstraints ncc) {
@@ -56,22 +87,22 @@ public class NodeChooser {
 		return routerSet;
 	}
 
-	Router chooseExitNodeForTarget(ExitTarget target, NodeChoiceConstraints ncc) {
+	Router chooseExitNodeForTarget(ExitTarget target, NodeChoiceConstraints ncc, Set<Integer> predictedPorts) {
 		if(target.isAddressTarget())
-			return chooseExitNodeForAddress(target.getAddress(), target.getPort(), ncc);
+			return chooseExitNodeForAddress(target.getAddress(), target.getPort(), ncc, predictedPorts);
 		else
-			return chooseExitNodeForPort(target.getPort(), ncc);
+			return chooseExitNodeForPort(target.getPort(), ncc, predictedPorts);
 	}
 
-	Router chooseExitNodeForPort(int port, NodeChoiceConstraints ncc) {
-		return chooseExitNodeForAddress(null, port, ncc);
+	Router chooseExitNodeForPort(int port, NodeChoiceConstraints ncc, Set<Integer> predictedPorts) {
+		return chooseExitNodeForAddress(null, port, ncc, predictedPorts);
 	}
 
-	Router chooseExitNodeForAddress(IPv4Address address, int port, NodeChoiceConstraints ncc) {
+	Router chooseExitNodeForAddress(IPv4Address address, int port, NodeChoiceConstraints ncc, Set<Integer> predictedPorts) {
 		final List<StreamExitRequest> pendingExitStreams = circuitManager.getPendingExitStreams();
 		final List<Router> allRouters = getAvailableRouters();
 		final List<Router> exitRouters = filterForExitDestination(allRouters, address, port);
-		final List<Router> filteredPending = filterForPendingStreams(exitRouters, pendingExitStreams);
+		final List<Router> filteredPending = filterForPendingStreams(exitRouters, pendingExitStreams, predictedPorts);
 		return chooseRandomRouterByBandwidth(filteredPending, ncc);
 	}
 	
@@ -104,9 +135,9 @@ public class NodeChooser {
 		return resultRouters;
 	}
 
-	private List<Router> filterForPendingStreams(List<Router> routers, List<StreamExitRequest> pendingStreams) {
+	private List<Router> filterForPendingStreams(List<Router> routers, List<StreamExitRequest> pendingStreams, Set<Integer> predictedPorts) {
 		int bestSupport = 0;
-		if(pendingStreams.isEmpty())
+		if(pendingStreams.isEmpty() && predictedPorts.isEmpty())
 			return routers;
 		
 		final int[] nSupport = new int[routers.size()];
@@ -121,6 +152,13 @@ public class NodeChooser {
 						nSupport[i]++;
 				}
 			}
+			
+			for(Integer port: predictedPorts) {
+				if(r.exitPolicyAccepts(port)) {
+					nSupport[i]++;
+				}
+			}
+			
 			if(nSupport[i] > bestSupport)
 				bestSupport = nSupport[i];
 		}
@@ -134,12 +172,15 @@ public class NodeChooser {
 		}
 		return results;
 	}
-
+	
 	private boolean routerAcceptsDestination(Router router, IPv4Address address, int port) {
-		if(address == null)
+		if(address == null && port == -1) {
+			return true;
+		} else if(address == null) {
 			return router.exitPolicyAccepts(port);
-		else
+		} else {
 			return router.exitPolicyAccepts(address, port);
+		}
 	}
 
 	private List<Router> getAvailableRouters() {

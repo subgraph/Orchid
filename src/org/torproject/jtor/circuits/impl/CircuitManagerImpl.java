@@ -26,27 +26,32 @@ import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.Router;
 
 public class CircuitManagerImpl implements CircuitManager {
+	
 	private final static Logger logger = Logger.getLogger(CircuitManagerImpl.class.getName());
 	private final static boolean DEBUG_CIRCUIT_CREATION = true;
 
+	interface CircuitFilter {
+		boolean filter(CircuitImpl circuit);
+	}
+
 	private final ConnectionCache connectionCache;
-	private final Set<Circuit> pendingCircuits;
-	private final Set<Circuit> activeCircuits;
-	private final Set<Circuit> cleanCircuits;
+	private final Set<CircuitImpl> activeCircuits;
 	private final TorRandom random;
 	private final List<StreamExitRequest> pendingExitStreams = new LinkedList<StreamExitRequest>();
 	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 	private final Runnable circuitCreationTask;
+	private final CircuitPredictor predictor;
 	private final TorInitializationTracker initializationTracker;
 
 	public CircuitManagerImpl(Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.connectionCache = connectionCache;
-		this.circuitCreationTask = new CircuitCreationTask(directory, connectionCache, this, initializationTracker);
-		this.activeCircuits = new HashSet<Circuit>();
-		this.pendingCircuits = new HashSet<Circuit>();
-		this.cleanCircuits = new HashSet<Circuit>();
+		final CircuitCreationTask task  = new CircuitCreationTask(directory, connectionCache, this, initializationTracker);
+		this.predictor = task.getCircuitPredictor();
+		this.circuitCreationTask = task;
+		this.activeCircuits = new HashSet<CircuitImpl>();
 		this.random = new TorRandom();
 		this.initializationTracker = initializationTracker;
+		
 	}
 
 	
@@ -76,40 +81,70 @@ public class CircuitManagerImpl implements CircuitManager {
 		
 	}
 
-	synchronized void circuitStartConnect(Circuit circuit) {
-		pendingCircuits.add(circuit);
+	void addActiveCircuit(CircuitImpl circuit) {
+		synchronized (activeCircuits) {
+			activeCircuits.add(circuit);
+		}
+	}
+	
+	void removeActiveCircuit(CircuitImpl circuit) {
+		synchronized (activeCircuits) {
+			activeCircuits.remove(circuit);
+		}
 	}
 
-	synchronized void circuitConnected(Circuit circuit) {
-		pendingCircuits.remove(circuit);
-		activeCircuits.add(circuit);
-		cleanCircuits.add(circuit);
+	Set<Circuit> getCleanCircuits() {
+		final Set<Circuit> result = new HashSet<Circuit>();
+		synchronized(activeCircuits) {
+			for(CircuitImpl c: activeCircuits) {
+				if(c.isClean() && !c.isDirectoryCircuit()) {
+					result.add(c);
+				}
+			}
+		}
+		return result;
 	}
-
-	synchronized void circuitDirty(Circuit circuit) {
-		cleanCircuits.remove(circuit);
-	}
-
-	synchronized void circuitInactive(Circuit circuit) {
-		pendingCircuits.remove(circuit);
-		activeCircuits.remove(circuit);
-		cleanCircuits.remove(circuit);
-	}
-
+	
 	synchronized int getCleanCircuitCount() {
-		return cleanCircuits.size();
+		return getCleanCircuits().size();
 	}
 
 	synchronized int getActiveCircuitCount() {
 		return activeCircuits.size();
 	}
 
+	Set<Circuit> getPendingCircuits() {
+		return getCircuitsByFilter(new CircuitFilter() {
+			public boolean filter(CircuitImpl circuit) {
+				return circuit.isPending();
+			}
+		});
+	}
+
 	synchronized int getPendingCircuitCount() {
-		return pendingCircuits.size();
+		return getPendingCircuits().size();
+	}
+	
+	Set<Circuit> getCircuitsByFilter(CircuitFilter filter) {
+		final Set<Circuit> result = new HashSet<Circuit>();
+		synchronized (activeCircuits) {
+			for(CircuitImpl c: activeCircuits) {
+				if(filter.filter(c)) {
+					result.add(c);
+				}
+			}
+		}
+		return result;
 	}
 
 	List<Circuit> getRandomlyOrderedListOfActiveCircuits() {
-		final ArrayList<Circuit> ac = new ArrayList<Circuit>(activeCircuits);
+		final Set<Circuit> notDirectory = getCircuitsByFilter(new CircuitFilter() {
+			
+			public boolean filter(CircuitImpl circuit) {
+				return !circuit.isDirectoryCircuit() && circuit.isConnected();
+			}
+		});
+		final ArrayList<Circuit> ac = new ArrayList<Circuit>(notDirectory);
 		final int sz = ac.size();
 		for(int i = 0; i < sz; i++) {
 			final Circuit tmp = ac.get(i);
@@ -132,6 +167,7 @@ public class CircuitManagerImpl implements CircuitManager {
 	
 	private OpenStreamResponse openExitStreamByRequest(StreamExitRequest request) throws InterruptedException {
 		synchronized(pendingExitStreams) {
+			predictor.addExitPortRequest(request.getPort());
 			pendingExitStreams.add(request);
 			while(!request.isCompleted())
 				pendingExitStreams.wait();
@@ -142,12 +178,6 @@ public class CircuitManagerImpl implements CircuitManager {
 	List<StreamExitRequest> getPendingExitStreams() {
 		synchronized(pendingExitStreams) {
 			return new ArrayList<StreamExitRequest>(pendingExitStreams);
-		}
-	}
-	
-	List<Circuit> getPendingCircuits() {
-		synchronized(pendingCircuits) {
-			return new ArrayList<Circuit>(pendingCircuits);
 		}
 	}
 	

@@ -45,18 +45,20 @@ public class CircuitStatus {
 
 	synchronized void updateCreatedTimestamp() {
 		timestampCreated = new Date();
-		timestampDirty = timestampCreated;
+		timestampDirty = null;
 	}
 
 	synchronized void updateDirtyTimestamp() {
-		timestampDirty = new Date();
+		if(timestampDirty == null) {
+			timestampDirty = new Date();
+		}
 	}
 
 	synchronized long getMillisecondsElapsedSinceCreated() {
 		return millisecondsElapsedSince(timestampCreated);
 	}
 
-	synchronized long getMillisecondsIdle() {
+	synchronized long getMillisecondsDirty() {
 		return millisecondsElapsedSince(timestampDirty);
 	}
 
@@ -68,11 +70,7 @@ public class CircuitStatus {
 	}
 
 	synchronized boolean isDirty() {
-		return timestampDirty != timestampCreated;
-	}
-
-	void setStateConnected() {
-		state = CircuitState.OPEN;
+		return timestampDirty != null;
 	}
 
 	void setStateBuilding(List<Router> circuitPath) {

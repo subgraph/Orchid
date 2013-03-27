@@ -113,7 +113,7 @@ public interface Circuit {
 	 * @return Return true if is likely that the final node of this circuit can connect to the specified exit target.
 	 */
 	boolean canHandleExitTo(ExitTarget target);
-	
+	boolean canHandleExitToPort(int port);
 	/**
 	 * Records the specified <code>ExitTarget</code> as a failed connection so that {@link #canHandleExitTo(ExitTarget)} will
 	 * no longer return true for this exit destination.

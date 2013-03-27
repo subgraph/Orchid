@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.TorException;
@@ -29,6 +30,9 @@ public class CircuitIO {
 	private final BlockingQueue<Cell> controlCellResponseQueue;
 	private final Map<Integer, StreamImpl> streamMap;
 	private final Object relaySendLock = new Object();
+	
+	private boolean isMarkedForClose;
+	private boolean isClosed;
 	
 	CircuitIO(CircuitImpl circuit, Connection connection, int circuitId) {
 		this.circuit = circuit;
@@ -96,19 +100,26 @@ public class CircuitIO {
 
 	/*
 	 * This is called by the cell reading thread in ConnectionImpl to deliver control cells 
-	 * associated with this circuit (CREATED or CREATED_FAST).
+	 * associated with this circuit (CREATED, CREATED_FAST, or DESTROY).
 	 */
 	void deliverControlCell(Cell cell) {
-		circuit.getStatus().updateDirtyTimestamp();
-		controlCellResponseQueue.add(cell);
+		if(cell.getCommand() == Cell.DESTROY) {
+			processDestroyCell(cell.getByte());
+		} else {
+			controlCellResponseQueue.add(cell);
+		}
+	}
+	
+	private void processDestroyCell(int reason) {
+		logger.fine("DESTROY cell received ("+ CellImpl.errorToDescription(reason) +") on "+ circuit);
+		destroyCircuit();
 	}
 
 	/* This is called by the cell reading thread in ConnectionImpl to deliver RELAY cells. */
 	void deliverRelayCell(Cell cell) {
 		circuit.getStatus().updateDirtyTimestamp();
 		final RelayCell relayCell = decryptRelayCell(cell);
-		if(relayCell.getRelayCommand() != RelayCell.RELAY_DATA)
-			logger.fine("Dispatching: "+ relayCell);
+		logRelayCell("Dispatching: ", relayCell);
 		switch(relayCell.getRelayCommand()) {
 		case RelayCell.RELAY_EXTENDED:
 		case RelayCell.RELAY_RESOLVED:
@@ -152,10 +163,9 @@ public class CircuitIO {
 			// It's not unusual for the stream to not be found.  For example, if a RELAY_CONNECTED arrives after
 			// the client has stopped waiting for it, the stream will never be tracked and eventually the edge node
 			// will send a RELAY_END for this stream.
-			if(stream != null)
+			if(stream != null) {
 				stream.addInputCell(cell);
-			else
-				logger.fine("Stream not found for stream id="+ cell.getStreamId());	
+			}
 		}
 	}
 	
@@ -165,7 +175,7 @@ public class CircuitIO {
 
 	void sendRelayCellTo(RelayCell cell, CircuitNode targetNode) {
 		synchronized(relaySendLock) {
-			logger.fine("Sending:     "+ cell);
+			logRelayCell("Sending:     ", cell);
 			cell.setLength();
 			targetNode.updateForwardDigest(cell);
 			cell.setDigest(targetNode.getForwardDigestBytes());
@@ -177,6 +187,25 @@ public class CircuitIO {
 				targetNode.waitForSendWindowAndDecrement();
 			
 			sendCell(cell);
+		}
+	}
+	
+	
+	private void logRelayCell(String message, RelayCell cell) {
+		final Level level = getLogLevelForCell(cell);
+		if(!logger.isLoggable(level)) {
+			return;
+		}
+		logger.log(level, message + cell);
+	}
+	
+	private Level getLogLevelForCell(RelayCell cell) {
+		switch(cell.getRelayCommand()) {
+		case RelayCell.RELAY_DATA:
+		case RelayCell.RELAY_SENDME:
+			return Level.FINEST;
+		default:
+			return Level.FINER;
 		}
 	}
 	
@@ -192,17 +221,56 @@ public class CircuitIO {
 		}
 	}
 
+	void markForClose() {
+		synchronized (streamMap) {
+			if(isMarkedForClose) {
+				return;
+			}
+			isMarkedForClose = true;
+			if(streamMap.isEmpty()) {
+				closeCircuit();
+			}
+		}
+	}
+
+	boolean isMarkedForClose() {
+		return isMarkedForClose;
+	}
+
+	private void closeCircuit() {
+		logger.fine("Closing circuit "+ circuit);
+		sendDestroyCell(Cell.ERROR_NONE);
+		connection.removeCircuit(circuit);
+		circuit.setStateDestroyed();
+		isClosed = true;
+	}
+
+	void sendDestroyCell(int reason) {
+		Cell destroy = CellImpl.createCell(circuitId, Cell.DESTROY);
+		destroy.putByte(reason);
+		try {
+			connection.sendCell(destroy);
+		} catch (ConnectionIOException e) {
+			logger.warning("Connection IO error sending DESTROY cell: "+ e.getMessage());
+		}
+	}
+
 	private void processCircuitSendme(RelayCell cell) {
 		cell.getCircuitNode().incrementSendWindow();
 	}
 
 	void destroyCircuit() {
-		circuit.getStatus().setStateDestroyed();
-		connection.removeCircuit(circuit);
 		synchronized(streamMap) {
+			if(isClosed) {
+				return;
+			}
+			circuit.setStateDestroyed();
+			connection.removeCircuit(circuit);
 			final List<StreamImpl> tmpList = new ArrayList<StreamImpl>(streamMap.values());
-			for(StreamImpl s: tmpList)
+			for(StreamImpl s: tmpList) {
 				s.close();
+			}
+			isClosed = true;
 		}
 	}
 	
@@ -218,6 +286,9 @@ public class CircuitIO {
 	void removeStream(StreamImpl stream) {
 		synchronized(streamMap) {
 			streamMap.remove(stream.getStreamId());
+			if(streamMap.isEmpty() && isMarkedForClose) {
+				closeCircuit();
+			}
 		}
 	}
 }

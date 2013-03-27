@@ -23,20 +23,27 @@ import org.torproject.jtor.directory.Router;
  */
 public class CircuitImpl implements Circuit {
 	private final static Logger logger = Logger.getLogger(CircuitImpl.class.getName());
+	
 	static CircuitImpl create(CircuitManagerImpl circuitManager) {
-		return new CircuitImpl(circuitManager);
+		return new CircuitImpl(circuitManager, false);
+	}
+	
+	static CircuitImpl createDirectoryCircuit(CircuitManagerImpl circuitManager) {
+		return new CircuitImpl(circuitManager, true);
 	}
 
 	private final CircuitManagerImpl circuitManager;
 	private final List<CircuitNodeImpl> nodeList;
 	private final Set<ExitTarget> failedExitRequests;
 	private final CircuitStatus status;
+	private final boolean isDirectoryCircuit;
 
 	private CircuitIO io;
-	
-	private CircuitImpl(CircuitManagerImpl circuitManager) {
+
+	private CircuitImpl(CircuitManagerImpl circuitManager, boolean isDirectoryCircuit) {
 		nodeList = new ArrayList<CircuitNodeImpl>();
 		this.circuitManager = circuitManager;
+		this.isDirectoryCircuit = isDirectoryCircuit;
 		this.failedExitRequests = new HashSet<ExitTarget>();
 		status = new CircuitStatus();
 	}
@@ -49,6 +56,24 @@ public class CircuitImpl implements Circuit {
 		io = new CircuitIO(this, connection, id);
 	}
 
+	void markForClose() {
+		if(io != null) {
+			io.markForClose();
+		}
+	}
+
+	boolean isMarkedForClose() {
+		if(io == null) {
+			return false;
+		} else {
+			return io.isMarkedForClose();
+		}
+	}
+
+	boolean isDirectoryCircuit() {
+		return isDirectoryCircuit;
+	}
+
 	CircuitStatus getStatus() {
 		return status;
 	}
@@ -57,8 +82,16 @@ public class CircuitImpl implements Circuit {
 		return status.isConnected();
 	}
 
-	void setConnected() {
-		status.setStateConnected();
+	boolean isPending() {
+		return status.isBuilding();
+	}
+	
+	boolean isClean() {
+		return status.isConnected() && !status.isDirty();
+	}
+	
+	int getSecondsDirty() {
+		return (int) (status.getMillisecondsDirty() / 1000);
 	}
 
 	void notifyCircuitBuildStart(CircuitCreationRequest request) {
@@ -67,17 +100,17 @@ public class CircuitImpl implements Circuit {
 		}
 		status.updateCreatedTimestamp();
 		status.setStateBuilding(request.getPath());
-		circuitManager.circuitStartConnect(this);
+		circuitManager.addActiveCircuit(this);
 	}
 	
 	void notifyCircuitBuildFailed() {
 		status.setStateFailed();
-		circuitManager.circuitInactive(this);
+		circuitManager.removeActiveCircuit(this);
 	}
 	
 	void notifyCircuitBuildCompleted() {
 		status.setStateOpen();
-		circuitManager.circuitConnected(this);
+		status.updateCreatedTimestamp();
 	}
 	
 	public Connection getConnection() {
@@ -186,9 +219,14 @@ public class CircuitImpl implements Circuit {
 		return getFinalCircuitNode().getRouter().getDirectoryPort() != 0;
 	}
 
+	void setStateDestroyed() {
+		status.setStateDestroyed();
+		circuitManager.removeActiveCircuit(this);
+	}
+
 	public void destroyCircuit() {
 		io.destroyCircuit();
-		circuitManager.circuitInactive(this);
+		circuitManager.removeActiveCircuit(this);
 	}
 
 
@@ -213,6 +251,11 @@ public class CircuitImpl implements Circuit {
 			return lastRouter.exitPolicyAccepts(target.getAddress(), target.getPort());
 		else
 			return lastRouter.exitPolicyAccepts(target.getPort());
+	}
+	
+	public boolean canHandleExitToPort(int port) {
+		final Router lastRouter = status.getFinalRouter();
+		return lastRouter.exitPolicyAccepts(port);
 	}
 
 	public String toString() {

@@ -96,7 +96,6 @@ public class CircuitBuildTask implements Runnable {
 			final CircuitNode extendedNode = extendTo(request.getPathElement(i));
 			request.nodeAdded(extendedNode);
 		}
-		circuit.setConnected();
 		request.circuitBuildCompleted(circuit);
 		notifyDone();
 	}

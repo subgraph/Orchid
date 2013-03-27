@@ -161,7 +161,6 @@ public class ConnectionImpl implements Connection {
 				output.write(cell.getCellBytes());
 			} catch (IOException e) {
 				closeSocket();
-				// manager.removeActiveConnection(this);
 				throw new ConnectionIOException(e.getClass().getName() + " : "+ e.getMessage());
 			}
 		}
@@ -174,7 +173,6 @@ public class ConnectionImpl implements Connection {
 			if(!isClosed) {
 				closeSocket();
 			}
-			// manager.removeActiveConnection(this);
 			throw new ConnectionIOException(e.getClass().getName() + " " + e.getMessage());
 		}
 	}
@@ -184,7 +182,6 @@ public class ConnectionImpl implements Connection {
 			isClosed = true;
 			socket.close();
 			isConnected = false;
-			
 		} catch (IOException e) {
 			logger.warning("Error closing socket: "+ e.getMessage());
 		}
@@ -244,12 +241,9 @@ public class ConnectionImpl implements Connection {
 
 		case Cell.CREATED:
 		case Cell.CREATED_FAST:
+		case Cell.DESTROY:
 			processControlCell(cell);
 			break;
-		case Cell.DESTROY:
-			processDestroyCell(cell);
-			break;
-
 		default:
 			// Ignore everything else
 			break;
@@ -275,16 +269,6 @@ public class ConnectionImpl implements Connection {
 				return;
 			}
 			circuit.deliverControlCell(cell);
-		}
-	}
-
-	private void processDestroyCell(Cell cell) {
-		logger.fine("DESTROY cell received ("+ CellImpl.errorToDescription(cell.getByte() & 0xFF) +")");
-		synchronized(circuitMap) {
-			final Circuit circuit = circuitMap.remove(cell.getCircuitId());
-			if(circuit == null)
-				return;
-			circuit.destroyCircuit();
 		}
 	}
 
