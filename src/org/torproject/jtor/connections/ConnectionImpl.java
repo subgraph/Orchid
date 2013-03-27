@@ -1,5 +1,6 @@
 package org.torproject.jtor.connections;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -7,6 +8,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -36,6 +38,7 @@ import org.torproject.jtor.directory.Router;
  */
 public class ConnectionImpl implements Connection {
 	private final static Logger logger = Logger.getLogger(ConnectionImpl.class.getName());
+	private final static int CONNECTION_IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 	private final static int DEFAULT_CONNECT_TIMEOUT = 5000;
 
 	private final SSLSocket socket;
@@ -52,6 +55,7 @@ public class ConnectionImpl implements Connection {
 	private volatile boolean isClosed;
 	private final Thread readCellsThread;
 	private final Object connectLock = new Object();
+	private Date lastActivity;
 
 	public ConnectionImpl(SSLSocket socket, Router router, TorInitializationTracker tracker, boolean isDirectoryConnection) {
 		this.socket = socket;
@@ -125,6 +129,7 @@ public class ConnectionImpl implements Connection {
 		output = socket.getOutputStream();
 		readCellsThread.start();
 		handshake.runHandshake();
+		updateLastActivity();
 	}
 	
 	private void connectSocket() throws IOException {
@@ -156,10 +161,12 @@ public class ConnectionImpl implements Connection {
 		if(!socket.isConnected()) {
 			throw new ConnectionIOException("Cannot send cell because connection is not connected");
 		}
+		updateLastActivity();
 		synchronized(output) {
 			try {
 				output.write(cell.getCellBytes());
 			} catch (IOException e) {
+				logger.fine("IOException writing cell to connection "+ e.getMessage());
 				closeSocket();
 				throw new ConnectionIOException(e.getClass().getName() + " : "+ e.getMessage());
 			}
@@ -169,8 +176,12 @@ public class ConnectionImpl implements Connection {
 	private Cell recvCell() throws ConnectionIOException {
 		try {
 			return CellImpl.readFromInputStream(input);
+		} catch(EOFException e) {
+			closeSocket();
+			throw new ConnectionIOException();
 		} catch (IOException e) {
 			if(!isClosed) {
+				logger.fine("IOException reading cell from connection "+ this + " : "+ e.getMessage());
 				closeSocket();
 			}
 			throw new ConnectionIOException(e.getClass().getName() + " " + e.getMessage());
@@ -179,6 +190,7 @@ public class ConnectionImpl implements Connection {
 
 	private void closeSocket() {
 		try {
+			logger.fine("Closing connection to "+ this);
 			isClosed = true;
 			socket.close();
 			isConnected = false;
@@ -227,6 +239,7 @@ public class ConnectionImpl implements Connection {
 	}
 
 	private void processCell(Cell cell) {
+		updateLastActivity();
 		final int command = cell.getCommand();
 
 		if(command == Cell.RELAY) {
@@ -272,12 +285,35 @@ public class ConnectionImpl implements Connection {
 		}
 	}
 
+	void idleCloseCheck() {
+		synchronized (circuitMap) {
+			final boolean needClose =  (!isClosed && circuitMap.isEmpty() && getIdleMilliseconds() > CONNECTION_IDLE_TIMEOUT);
+			if(needClose) {
+				logger.fine("Closing connection to "+ this +" on idle timeout");
+				closeSocket();
+			} 
+		}
+	}
+
+	private void updateLastActivity() {
+		synchronized(circuitMap) {
+			lastActivity = new Date();
+		}
+	}
+
+	private long getIdleMilliseconds() {
+		synchronized (circuitMap) {
+			if(lastActivity == null) {
+				return 0;
+			}
+			final Date now = new Date();
+			return now.getTime() - lastActivity.getTime();
+		}
+	}
+
 	public void removeCircuit(Circuit circuit) {
 		synchronized(circuitMap) {
 			circuitMap.remove(circuit.getCircuitId());
-			if(circuitMap.size() == 0) {
-				closeSocket();
-			}
 		}
 	}
 

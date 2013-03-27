@@ -5,8 +5,11 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import javax.net.ssl.SSLSocket;
@@ -38,12 +41,29 @@ public class ConnectionCache {
 			return conn;
 		}
 	}
+	
+	private class CloseIdleConnectionCheckTask implements Runnable {
+		public void run() {
+			for(Future<ConnectionImpl> f: activeConnections.values()) {
+				if(f.isDone()) {
+					try {
+						ConnectionImpl c = f.get();
+						c.idleCloseCheck();
+					} catch (Exception e) { }
+				}
+			}
+		}
+	}
+
 	private final ConcurrentMap<Router, Future<ConnectionImpl>> activeConnections = new ConcurrentHashMap<Router, Future<ConnectionImpl>>();
 	private final ConnectionSocketFactory factory = new ConnectionSocketFactory();
+	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
+
 	private TorInitializationTracker initializationTracker;
 	
 	public ConnectionCache(TorInitializationTracker tracker) {
 		this.initializationTracker = tracker;
+		scheduledExecutor.scheduleAtFixedRate(new CloseIdleConnectionCheckTask(), 5000, 5000, TimeUnit.MILLISECONDS);
 	}
 
 	public Connection getConnectionTo(Router router, boolean isDirectoryConnection) throws InterruptedException, ConnectionTimeoutException, ConnectionFailedException, ConnectionHandshakeException {
