@@ -61,4 +61,9 @@ public class PolicyRule {
 	public boolean isAcceptRule() {
 		return isAcceptRule;
 	}
+	
+	public String toString() {
+		final String keyword = isAcceptRule ? "accept" : "reject";
+		return keyword + " "+ network + ":"+ portRange;
+	}
 }

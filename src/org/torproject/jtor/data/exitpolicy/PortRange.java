@@ -60,10 +60,13 @@ public class PortRange {
 	}
 	
 	public String toString() {
-		if(portStart == portEnd) 
+		if(portStart == 1 && portEnd == MAX_PORT) {
+			return "*";
+		} else if(portStart == portEnd) { 
 			return Integer.toString(portStart);
-		else
+		} else {
 			return Integer.toString(portStart) + "-" + Integer.toString(portEnd);
+		}
 	}
 
 }

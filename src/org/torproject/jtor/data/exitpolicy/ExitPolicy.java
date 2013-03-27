@@ -43,4 +43,12 @@ public class ExitPolicy {
 		return false;
 	}
 
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		for(PolicyRule r: rules) {
+			sb.append(r);
+			sb.append("\n");
+		}
+		return sb.toString();
+	}
 }

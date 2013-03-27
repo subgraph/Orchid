@@ -4,19 +4,19 @@ import org.torproject.jtor.TorParsingException;
 import org.torproject.jtor.data.IPv4Address;
 
 public class Network {
-	public static final Network ALL_ADDRESSES = new Network(IPv4Address.createFromString("0.0.0.0"), 0);
+	public static final Network ALL_ADDRESSES = new Network(IPv4Address.createFromString("0.0.0.0"), 0, "*");
 	public static Network createFromString(String networkString) {
 		final String[] parts = networkString.split("/");
 		final IPv4Address network = IPv4Address.createFromString(parts[0]);
 		if(parts.length == 1)
-			return new Network(network, 32);
+			return new Network(network, 32, networkString);
 		
 		if(parts.length != 2)
 			throw new TorParsingException("Invalid network CIDR notation: " + networkString);
 
 		try {
 			final int maskBits = Integer.parseInt(parts[1]);
-			return new Network(network, maskBits);
+			return new Network(network, maskBits, networkString);
 		} catch(NumberFormatException e) {
 			throw new TorParsingException("Invalid netblock mask bit value: " + parts[1]);
 		}
@@ -24,10 +24,12 @@ public class Network {
 	
 	private final IPv4Address network;
 	private final int maskValue;
+	private final String originalString;
 	
-	Network(IPv4Address network, int bits) {
+	Network(IPv4Address network, int bits, String originalString) {
 		this.network = network;
 		this.maskValue = createMask(bits);
+		this.originalString = originalString;
 	}
 	
 	private static int createMask(int maskBits) {
@@ -36,6 +38,10 @@ public class Network {
 	
 	public boolean contains(IPv4Address address) {
 		return (address.getAddressData() & maskValue) == (network.getAddressData() & maskValue);
+	}
+	
+	public String toString() {
+		return originalString;
 	}
 
 }
