@@ -1,5 +1,6 @@
 package org.torproject.jtor.circuits.impl;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -54,7 +55,7 @@ public class CellImpl implements Cell {
 		while(bytesRead < length) {
 			final int n = input.read(buffer, offset + bytesRead, length - bytesRead);
 			if(n == -1)
-				throw new IOException("EOF reading var cell from stream");
+				throw new EOFException();
 			bytesRead += n;
 		}
 	}
