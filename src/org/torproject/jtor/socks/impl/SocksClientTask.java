@@ -2,6 +2,7 @@ package org.torproject.jtor.socks.impl;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.TorException;
@@ -79,14 +80,11 @@ public class SocksClientTask implements Runnable {
 			}
 			
 		} catch (SocksRequestException e) {
-			logger.warning("Failure reading SOCKS request");
+			logger.log(Level.WARNING, "Failure reading SOCKS request", e);
 		} catch (InterruptedException e) {
 			logger.warning("Stream open interrupted");
 			Thread.currentThread().interrupt();
-		} catch (IOException e) {
-			logger.warning("Error sending SOCKS response: "+ e);
-		}
-		
+		} 
 	}
 		
 	private void runOpenConnection(Stream stream) {

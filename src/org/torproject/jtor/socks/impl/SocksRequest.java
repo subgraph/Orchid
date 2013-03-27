@@ -18,11 +18,11 @@ public abstract class SocksRequest {
 		this.socket = socket;
 	}
 	
-	abstract public void readRequest();
+	abstract public void readRequest() throws SocksRequestException;
 	abstract public boolean isConnectRequest();
-	abstract void sendError() throws IOException;
-	abstract void sendSuccess() throws IOException;
-	abstract void sendConnectionRefused() throws IOException;
+	abstract void sendError() throws SocksRequestException;
+	abstract void sendSuccess() throws SocksRequestException;
+	abstract void sendConnectionRefused() throws SocksRequestException;
 	
 	public int getPort() {
 		return port;
@@ -40,13 +40,13 @@ public abstract class SocksRequest {
 		return hostname;
 	}
 	
-	protected void setPortData(byte[] data) {
+	protected void setPortData(byte[] data) throws SocksRequestException {
 		if(data.length != 2)
 			throw new SocksRequestException();
 		port = ((data[0] & 0xFF) << 8) | (data[1] & 0xFF);
 	}
 	
-	protected void setIPv4AddressData(byte[] data) {
+	protected void setIPv4AddressData(byte[] data) throws SocksRequestException {
 		if(data.length != 4)
 			throw new SocksRequestException();
 		addressData = data;
@@ -63,25 +63,25 @@ public abstract class SocksRequest {
 		hostname = name;
 	}
 	
-	protected byte[] readPortData() {
+	protected byte[] readPortData() throws SocksRequestException {
 		final byte[] data = new byte[2];
 		readAll(data, 0, 2);
 		return data;
 	}
 	
-	protected byte[] readIPv4AddressData() {
+	protected byte[] readIPv4AddressData() throws SocksRequestException {
 		final byte[] data = new byte[4];
 		readAll(data);
 		return data;
 	}
 	
-	protected byte[] readIPv6AddressData() {
+	protected byte[] readIPv6AddressData() throws SocksRequestException {
 		final byte[] data = new byte[16];
 		readAll(data);
 		return data;
 	}
 	
-	protected String readNullTerminatedString() {
+	protected String readNullTerminatedString() throws SocksRequestException {
 		try {
 			final StringBuilder sb = new StringBuilder();
 			while(true) {
@@ -98,7 +98,7 @@ public abstract class SocksRequest {
 		}
 	}
 	
-	protected int readByte() {
+	protected int readByte() throws SocksRequestException {
 		try {
 			final int n = socket.getInputStream().read();
 			if(n == -1)
@@ -109,11 +109,11 @@ public abstract class SocksRequest {
 		}
 	}
 	
-	protected void readAll(byte[] buffer) {
+	protected void readAll(byte[] buffer) throws SocksRequestException {
 		readAll(buffer, 0, buffer.length);
 	}
 	
-	protected void readAll(byte[] buffer, int offset, int length) {
+	protected void readAll(byte[] buffer, int offset, int length) throws SocksRequestException {
 		try {
 			while(length > 0) {
 				int n = socket.getInputStream().read(buffer, offset, length);
@@ -127,8 +127,11 @@ public abstract class SocksRequest {
 		}
 	}
 	
-	protected void socketWrite(byte[] buffer) throws IOException {
-		socket.getOutputStream().write(buffer);
+	protected void socketWrite(byte[] buffer) throws SocksRequestException {
+		try {
+			socket.getOutputStream().write(buffer);
+		} catch(IOException e) {
+			throw new SocksRequestException(e);
+		}
 	}
-
 }

@@ -1,6 +1,5 @@
 package org.torproject.jtor.socks.impl;
 
-import java.io.IOException;
 import java.net.Socket;
 
 import org.torproject.jtor.TorException;
@@ -40,7 +39,7 @@ public class Socks5Request extends SocksRequest {
 		return sb.toString();
 	}
 	
-	public void readRequest() {
+	public void readRequest() throws SocksRequestException {
 		processAuthentication();
 		if(readByte() != SOCKS5_VERSION)
 			throw new SocksRequestException();
@@ -59,19 +58,19 @@ public class Socks5Request extends SocksRequest {
 		setPortData(portBytes);		
 	}
 	
-	public void sendConnectionRefused() throws IOException {
+	public void sendConnectionRefused() throws SocksRequestException {
 		sendResponse(SOCKS5_STATUS_CONNECTION_REFUSED);
 	}
 
-	public void sendError() throws IOException {
+	public void sendError() throws SocksRequestException  {
 		sendResponse(SOCKS5_STATUS_FAILURE);
 	}
 	
-	public void sendSuccess() throws IOException {
+	public void sendSuccess() throws SocksRequestException {
 		sendResponse(SOCKS5_STATUS_SUCCESS);
 	}
 	
-	private void sendResponse(int status) throws IOException {
+	private void sendResponse(int status) throws SocksRequestException {
 		final int responseLength = 4 + addressBytes.length + portBytes.length;
 		final byte[] response = new byte[responseLength];
 		response[0] = SOCKS5_VERSION;
@@ -83,7 +82,7 @@ public class Socks5Request extends SocksRequest {
 		socketWrite(response);
 	}
 	
-	private void processAuthentication() {
+	private boolean processAuthentication() throws SocksRequestException {
 		final int nmethods = readByte();
 		boolean foundAuthNone = false;
 		for(int i = 0; i < nmethods; i++) {
@@ -91,18 +90,25 @@ public class Socks5Request extends SocksRequest {
 			if(meth == SOCKS5_AUTH_NONE)
 				foundAuthNone = true;
 		}
-		final byte[] response = new byte[2];
-		response[0] = SOCKS5_VERSION;
-		response[1] = SOCKS5_AUTH_NONE;
-		
-		try {
-			socketWrite(response);
-		} catch (IOException e) {
-			throw new SocksRequestException(e);
+
+		if(foundAuthNone) {
+			sendAuthenticationResponse(SOCKS5_AUTH_NONE);
+			return true;
+		} else {
+			sendAuthenticationResponse(0xFF);
+			return false;
 		}
 	}
 	
-	private byte[] readAddressBytes() {
+	
+	private void sendAuthenticationResponse(int method) throws SocksRequestException {
+		final byte[] response = new byte[2];
+		response[0] = SOCKS5_VERSION;
+		response[1] = (byte) method;
+		socketWrite(response);
+	}
+
+	private byte[] readAddressBytes() throws SocksRequestException {
 		switch(addressType) {
 		case SOCKS5_ADDRESS_IPV4:
 			return readIPv4AddressData();
@@ -115,7 +121,7 @@ public class Socks5Request extends SocksRequest {
 		}
 	}
 	
-	private byte[] readHostnameData() {
+	private byte[] readHostnameData() throws SocksRequestException {
 		final int length = readByte();
 		final byte[] addrData = new byte[length + 1];
 		addrData[0] = (byte) length;

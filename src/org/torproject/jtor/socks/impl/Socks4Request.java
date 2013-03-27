@@ -1,6 +1,5 @@
 package org.torproject.jtor.socks.impl;
 
-import java.io.IOException;
 import java.net.Socket;
 
 public class Socks4Request extends SocksRequest {
@@ -17,19 +16,19 @@ public class Socks4Request extends SocksRequest {
 		return command == SOCKS_COMMAND_CONNECT;
 	}
 
-	public void sendConnectionRefused() throws IOException {
+	public void sendConnectionRefused() throws SocksRequestException {
 		sendError();
 	}
 
-	public void sendError() throws IOException {
+	public void sendError() throws SocksRequestException  {
 		sendResponse(SOCKS_STATUS_FAILURE);
 	}
 
-	public void sendSuccess() throws IOException {
+	public void sendSuccess() throws SocksRequestException {
 		sendResponse(SOCKS_STATUS_SUCCESS);
 	}
 
-	public void readRequest() {
+	public void readRequest() throws SocksRequestException {
 		command = readByte();
 		setPortData(readPortData());
 		byte[] ipv4Data = readIPv4AddressData();
@@ -55,7 +54,7 @@ public class Socks4Request extends SocksRequest {
 		return data[3] != 0;
 	}
 
-	private void sendResponse(int code) throws IOException {
+	private void sendResponse(int code) throws SocksRequestException {
 		final byte[] responseBuffer = new byte[8];
 		responseBuffer[0] = 0;
 		responseBuffer[1] = (byte) code;
