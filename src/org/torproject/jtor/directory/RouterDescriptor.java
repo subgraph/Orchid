@@ -4,6 +4,7 @@ import org.torproject.jtor.crypto.TorPublicKey;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.Timestamp;
+import org.torproject.jtor.data.exitpolicy.ExitPolicy;
 
 /**
  * Directory information about a single onion router.  This interface
@@ -212,6 +213,8 @@ public interface RouterDescriptor extends Document {
 	boolean isNewerThan(RouterDescriptor other);
 	
 	HexDigest getDescriptorDigest();
+	
+	ExitPolicy getExitPolicy();
 	
 
 }

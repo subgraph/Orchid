@@ -272,4 +272,7 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 			return 0;
 		return descriptorDigest.hashCode();
 	}
+	public ExitPolicy getExitPolicy() {
+		return exitPolicy;
+	}
 }
