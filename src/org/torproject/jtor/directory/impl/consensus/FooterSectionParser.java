@@ -6,11 +6,11 @@ import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.directory.impl.consensus.ConsensusDocumentParser.DocumentSection;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 
-public class SignatureSectionParser extends ConsensusDocumentSectionParser {
+public class FooterSectionParser extends ConsensusDocumentSectionParser {
 
-	private boolean seenFirstLine = false;
+	private boolean seenFirstSignature = false;
 	
-	SignatureSectionParser(DocumentFieldParser parser, ConsensusDocumentImpl document) {
+	FooterSectionParser(DocumentFieldParser parser, ConsensusDocumentImpl document) {
 		super(parser, document);
 	}
 
@@ -21,7 +21,7 @@ public class SignatureSectionParser extends ConsensusDocumentSectionParser {
 
 	@Override
 	DocumentSection getSection() {
-		return DocumentSection.SIGNATURE;
+		return DocumentSection.FOOTER;
 	}
 	
 	DocumentSection nextSection() {
@@ -30,16 +30,17 @@ public class SignatureSectionParser extends ConsensusDocumentSectionParser {
 
 	@Override
 	void parseLine(DocumentKeyword keyword) {
-		if(!seenFirstLine)
-			doFirstLine();
 		switch(keyword) {
 		case DIRECTORY_SIGNATURE:
 			processSignature();
-		}		
+			break;
+		default:
+			break;
+		}
 	}
-	
-	private void doFirstLine() {
-		seenFirstLine = true;
+
+	private void doFirstSignature() {
+		seenFirstSignature = true;
 		fieldParser.endSignedEntity();
 		final TorMessageDigest messageDigest = fieldParser.getSignatureMessageDigest();
 		messageDigest.update("directory-signature ");
@@ -47,10 +48,12 @@ public class SignatureSectionParser extends ConsensusDocumentSectionParser {
 	}
 	
 	private void processSignature() {
+		if(!seenFirstSignature) {
+			doFirstSignature();
+		}
 		HexDigest identity = fieldParser.parseHexDigest();
 		HexDigest signingKey = fieldParser.parseHexDigest();
 		TorSignature signature = fieldParser.parseSignature();
 		document.addSignature(new DirectorySignature(identity, signingKey, signature));
 	}
-
 }

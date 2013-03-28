@@ -8,7 +8,7 @@ import org.torproject.jtor.directory.parsing.DocumentParsingHandler;
 import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
 
 public class ConsensusDocumentParser implements DocumentParser<ConsensusDocument> {
-	public enum DocumentSection { NO_SECTION, PREAMBLE, AUTHORITY, ROUTER_STATUS, SIGNATURE };
+	public enum DocumentSection { NO_SECTION, PREAMBLE, AUTHORITY, ROUTER_STATUS, FOOTER };
 
 	// dir-spec.txt 3.2 
 	// Unlike other formats described above, a SP in these documents must be a
@@ -18,7 +18,7 @@ public class ConsensusDocumentParser implements DocumentParser<ConsensusDocument
 	private final PreambleSectionParser preambleParser;
 	private final AuthoritySectionParser authorityParser;
 	private final RouterStatusSectionParser routerStatusParser;
-	private final SignatureSectionParser signatureParser;
+	private final FooterSectionParser footerParser;
 	private final DocumentFieldParser fieldParser;
 	private DocumentSection currentSection = DocumentSection.PREAMBLE;
 	private final ConsensusDocumentImpl document;
@@ -33,7 +33,7 @@ public class ConsensusDocumentParser implements DocumentParser<ConsensusDocument
 		preambleParser = new PreambleSectionParser(fieldParser, document);
 		authorityParser = new AuthoritySectionParser(fieldParser, document);
 		routerStatusParser = new RouterStatusSectionParser(fieldParser, document);
-		signatureParser = new SignatureSectionParser(fieldParser, document);
+		footerParser = new FooterSectionParser(fieldParser, document);
 	}
 	
 	private void initializeParser() {
@@ -82,8 +82,8 @@ public class ConsensusDocumentParser implements DocumentParser<ConsensusDocument
 			case ROUTER_STATUS:
 				newSection = routerStatusParser.parseKeywordLine();
 				break;
-			case SIGNATURE:
-				newSection = signatureParser.parseKeywordLine();
+			case FOOTER:
+				newSection = footerParser.parseKeywordLine();
 				break;
 			}
 			if(newSection == currentSection)

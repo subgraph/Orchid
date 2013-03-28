@@ -101,7 +101,7 @@ public class RouterStatusSectionParser extends ConsensusDocumentSectionParser {
 	
 	@Override
 	String getNextStateKeyword() {
-		return "directory-signature";
+		return "directory-footer";
 	}
 
 	@Override
@@ -110,7 +110,7 @@ public class RouterStatusSectionParser extends ConsensusDocumentSectionParser {
 	}
 	
 	DocumentSection nextSection() {
-		return DocumentSection.SIGNATURE;
+		return DocumentSection.FOOTER;
 	}
 
 }
