@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.net.ssl.SSLSocket;
@@ -40,6 +41,7 @@ public class ConnectionImpl implements Connection {
 	private final static Logger logger = Logger.getLogger(ConnectionImpl.class.getName());
 	private final static int CONNECTION_IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 	private final static int DEFAULT_CONNECT_TIMEOUT = 5000;
+	private final static Cell connectionClosedSentinel = CellImpl.createCell(0, 0);
 
 	private final SSLSocket socket;
 	private InputStream input;
@@ -205,7 +207,7 @@ public class ConnectionImpl implements Connection {
 				try {
 					readCellsLoop();
 				} catch(Exception e) {
-					e.printStackTrace();
+					logger.log(Level.WARNING, "Unhandled exception processing incoming cells on connection "+ e, e);
 				}
 			}
 		};
@@ -216,11 +218,11 @@ public class ConnectionImpl implements Connection {
 			try {
 				processCell( recvCell() );
 			} catch(ConnectionIOException e) {
+				connectionControlCells.add(connectionClosedSentinel);
 				notifyCircuitsLinkClosed();
 				return;
 			} catch(TorException e) {
-				logger.warning("Unhandled Tor exception reading and processing cells: "+ e.getMessage());
-				e.printStackTrace();
+				logger.log(Level.WARNING, "Unhandled Tor exception reading and processing cells: "+ e.getMessage(), e);
 			}
 		}
 	}
@@ -277,11 +279,9 @@ public class ConnectionImpl implements Connection {
 	private void processControlCell(Cell cell) {
 		synchronized(circuitMap) {
 			final Circuit circuit = circuitMap.get(cell.getCircuitId());
-			if(circuit == null) {
-				logger.warning("Could not deliver control cell for circuit id = "+ cell.getCircuitId() +" on connection "+ this +". Circuit not found");
-				return;
+			if(circuit != null) {
+				circuit.deliverControlCell(cell);
 			}
-			circuit.deliverControlCell(cell);
 		}
 	}
 
