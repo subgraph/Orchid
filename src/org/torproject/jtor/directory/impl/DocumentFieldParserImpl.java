@@ -22,6 +22,7 @@ import org.torproject.jtor.data.Timestamp;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 import org.torproject.jtor.directory.parsing.DocumentObject;
 import org.torproject.jtor.directory.parsing.DocumentParsingHandler;
+import org.torproject.jtor.directory.parsing.NameIntegerParameter;
 
 public class DocumentFieldParserImpl implements DocumentFieldParser {
 	private final static Logger logger = Logger.getLogger(DocumentFieldParserImpl.class.getName());
@@ -192,6 +193,29 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 		final DocumentObject documentObject = parseObject();
 		TorSignature s = TorSignature.createFromPEMBuffer(documentObject.getContent());
 		return s;
+	}
+
+	public NameIntegerParameter parseParameter() {
+		final String item = getItem();
+		final int eq = item.indexOf('=');
+		if(eq == -1) {
+			throw new TorParsingException("Parameter not in expected form name=value");
+		}
+		final String name = item.substring(0, eq);
+		validateParameterName(name);
+		final int value = parseInteger(item.substring(eq + 1));
+		return new NameIntegerParameter(name, value);
+	}
+	
+	private void validateParameterName(String name) {
+		if(name.isEmpty()) {
+			throw new TorParsingException("Parameter name cannot be empty");
+		}
+		for(char c: name.toCharArray()) {
+			if(!(Character.isLetterOrDigit(c) || c == '_')) {
+				throw new TorParsingException("Parameter name can only contain letters.  Rejecting: "+ name);
+			}
+		}
 	}
 
 	public DocumentObject parseTypedObject(String type) {

@@ -24,4 +24,9 @@ public interface ConsensusDocument extends Document {
 	boolean canVerifySignatures(Map<HexDigest, KeyCertificate> certificates);
 	boolean verifySignatures(Map<HexDigest, KeyCertificate> certificates);
 	HexDigest getSigningHash();
+	
+	int getCircWindowParameter();
+	int getWeightScaleParameter();
+	
+	int getBandwidthWeight(String tag);
 }

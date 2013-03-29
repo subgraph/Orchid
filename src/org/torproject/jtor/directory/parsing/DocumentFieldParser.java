@@ -189,6 +189,12 @@ public interface DocumentFieldParser {
 	DocumentObject parseObject();
 	
 	/**
+	 * 
+	 * @return
+	 */
+	
+	NameIntegerParameter parseParameter();
+	/**
 	 * Return the keyword of the current keyword line.  The keyword is the first token on the line 
 	 * unless the first token is 'opt' and 'opt' recognition is enabled.  In this case, the keyword
 	 * is the token immediately following the 'opt' token.

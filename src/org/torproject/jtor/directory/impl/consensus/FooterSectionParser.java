@@ -5,6 +5,7 @@ import org.torproject.jtor.crypto.TorSignature;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.directory.impl.consensus.ConsensusDocumentParser.DocumentSection;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
+import org.torproject.jtor.directory.parsing.NameIntegerParameter;
 
 public class FooterSectionParser extends ConsensusDocumentSectionParser {
 
@@ -31,9 +32,14 @@ public class FooterSectionParser extends ConsensusDocumentSectionParser {
 	@Override
 	void parseLine(DocumentKeyword keyword) {
 		switch(keyword) {
+		case BANDWIDTH_WEIGHTS:
+			processBandwidthWeights();
+			break;
+			
 		case DIRECTORY_SIGNATURE:
 			processSignature();
 			break;
+
 		default:
 			break;
 		}
@@ -55,5 +61,13 @@ public class FooterSectionParser extends ConsensusDocumentSectionParser {
 		HexDigest signingKey = fieldParser.parseHexDigest();
 		TorSignature signature = fieldParser.parseSignature();
 		document.addSignature(new DirectorySignature(identity, signingKey, signature));
+	}
+	
+	private void processBandwidthWeights() {
+		final int remaining = fieldParser.argumentsRemaining();
+		for(int i = 0; i < remaining; i++) {
+			NameIntegerParameter p = fieldParser.parseParameter();
+			document.addBandwidthWeight(p.getName(), p.getValue());
+		}
 	}
 }

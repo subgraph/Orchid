@@ -18,6 +18,17 @@ import org.torproject.jtor.directory.VoteAuthorityEntry;
 
 public class ConsensusDocumentImpl implements ConsensusDocument {
 	
+	private final static String BW_WEIGHT_SCALE_PARAM = "bwweightscale";
+	private final static int BW_WEIGHT_SCALE_DEFAULT = 10000;
+	private final static int BW_WEIGHT_SCALE_MIN = 1;
+	private final static int BW_WEIGHT_SCALE_MAX = Integer.MAX_VALUE;
+	
+	private final static String CIRCWINDOW_PARAM = "circwindow";
+	private final static int CIRCWINDOW_DEFAULT = 1000;
+	private final static int CIRCWINDOW_MIN = 100;
+	private final static int CIRCWINDOW_MAX = 1000;
+	
+	
 	private int consensusMethod;
 	private Timestamp validAfter;
 	private Timestamp freshUntil;
@@ -32,6 +43,9 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	private Map<HexDigest, VoteAuthorityEntry> voteAuthorityEntries;
 	private List<RouterStatus> routerStatusEntries;
 	private List<DirectorySignature> signatures;
+	private Map<String, Integer> bandwidthWeights;
+	private Map<String, Integer> parameters;
+	
 	private String rawDocumentData;
 	
 	void setConsensusMethod(int method) { consensusMethod = method; }
@@ -42,6 +56,9 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	void setVoteDelaySeconds(int seconds) { voteDelaySeconds = seconds; }
 	void addClientVersion(String version) { clientVersions.add(version); }
 	void addServerVersion(String version) { serverVersions.add(version); }
+	void addParameter(String name, int value) { parameters.put(name, value); }
+	void addBandwidthWeight(String name, int value) { bandwidthWeights.put(name, value); }
+		
 	void addSignature(DirectorySignature signature) { signatures.add(signature); }
 	void setSigningHash(HexDigest hash) { signingHash = hash; }
 	void setRawDocumentData(String rawData) { rawDocumentData = rawData; }
@@ -53,6 +70,8 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 		voteAuthorityEntries = new HashMap<HexDigest, VoteAuthorityEntry>();
 		routerStatusEntries = new ArrayList<RouterStatus>();
 		signatures = new ArrayList<DirectorySignature>();
+		bandwidthWeights = new HashMap<String, Integer>();
+		parameters = new HashMap<String, Integer>();
 	}
 	
 	void addKnownFlag(String flag) {
@@ -156,5 +175,33 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 		return signingHash.hashCode();
 	}
 	
-
+	private int getParameterValue(String name, int defaultValue, int minValue, int maxValue) {
+		if(!parameters.containsKey(name)) {
+			return defaultValue;
+		}
+		final int value = parameters.get(name);
+		if(value < minValue) {
+			return minValue;
+		} else if(value > maxValue) {
+			return maxValue;
+		} else {
+			return value;
+		}
+	}
+	
+	public int getCircWindowParameter() {
+		return getParameterValue(CIRCWINDOW_PARAM, CIRCWINDOW_DEFAULT, CIRCWINDOW_MIN, CIRCWINDOW_MAX);
+	}
+	
+	public int getWeightScaleParameter() {
+		return getParameterValue(BW_WEIGHT_SCALE_PARAM, BW_WEIGHT_SCALE_DEFAULT, BW_WEIGHT_SCALE_MIN, BW_WEIGHT_SCALE_MAX);
+	}
+	
+	public int getBandwidthWeight(String tag) {
+		if(bandwidthWeights.containsKey(tag)) {
+			return bandwidthWeights.get(tag);
+		} else {
+			return 0;
+		}
+	}
 }

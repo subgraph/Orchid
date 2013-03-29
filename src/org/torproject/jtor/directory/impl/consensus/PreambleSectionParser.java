@@ -6,6 +6,7 @@ import java.util.List;
 import org.torproject.jtor.TorParsingException;
 import org.torproject.jtor.directory.impl.consensus.ConsensusDocumentParser.DocumentSection;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
+import org.torproject.jtor.directory.parsing.NameIntegerParameter;
 
 public class PreambleSectionParser extends ConsensusDocumentSectionParser {
 	private final static int CURRENT_DOCUMENT_VERSION = 3;
@@ -78,6 +79,13 @@ public class PreambleSectionParser extends ConsensusDocumentSectionParser {
 			while(fieldParser.argumentsRemaining() > 0) 
 				document.addKnownFlag(fieldParser.parseString());
 			break;
+			
+		case PARAMS:
+			parseParams();
+			break;
+			
+		default:
+			break;
 		}
 		
 	}
@@ -96,5 +104,13 @@ public class PreambleSectionParser extends ConsensusDocumentSectionParser {
 	
 	private List<String> parseVersions(String versions) {		
 		return Arrays.asList(versions.split(","));
+	}
+	
+	private void parseParams() {
+		final int remaining = fieldParser.argumentsRemaining();
+		for(int i = 0; i < remaining; i++) {
+			NameIntegerParameter p = fieldParser.parseParameter();
+			document.addParameter(p.getName(), p.getValue());
+		}
 	}
 }
