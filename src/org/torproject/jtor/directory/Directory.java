@@ -35,5 +35,9 @@ public interface Directory {
 	List<Router> getRoutersWithDownloadableDescriptors();
 	List<Router> getAllRouters();
 	void markDescriptorInvalid(RouterDescriptor descriptor);
-
+	
+	GuardEntry createGuardEntryFor(Router router);
+	List<GuardEntry> getGuardEntries();
+	void removeGuardEntry(GuardEntry entry);
+	void addGuardEntry(GuardEntry entry);
 }

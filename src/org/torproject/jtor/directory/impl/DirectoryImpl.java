@@ -18,7 +18,7 @@ import org.torproject.jtor.data.RandomSet;
 import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.DirectoryServer;
-import org.torproject.jtor.directory.DirectoryStore;
+import org.torproject.jtor.directory.GuardEntry;
 import org.torproject.jtor.directory.KeyCertificate;
 import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.directory.RouterDescriptor;
@@ -31,7 +31,8 @@ import org.torproject.jtor.events.EventManager;
 public class DirectoryImpl implements Directory {
 	private final static Logger logger = Logger.getLogger(DirectoryImpl.class.getName());
 
-	private final DirectoryStore store;
+	private final DirectoryStoreImpl store;
+	private final StateFile stateFile;
 	private final Map<HexDigest, KeyCertificate> certificates;
 	private final Map<HexDigest, RouterImpl> routersByIdentity;
 	private final Map<String, RouterImpl> routersByNickname;
@@ -47,6 +48,7 @@ public class DirectoryImpl implements Directory {
 
 	public DirectoryImpl(TorConfig config) {
 		store = new DirectoryStoreImpl(config);
+		stateFile = new StateFile(store);
 		certificates = new HashMap<HexDigest, KeyCertificate>();
 		routersByIdentity = new HashMap<HexDigest, RouterImpl>();
 		routersByNickname = new HashMap<String, RouterImpl>();
@@ -339,5 +341,21 @@ public class DirectoryImpl implements Directory {
 		synchronized(routersByIdentity) {
 			return new ArrayList<Router>(routersByIdentity.values());
 		}
+	}
+
+	public GuardEntry createGuardEntryFor(Router router) {
+		return stateFile.createGuardEntryFor(router);
+	}
+
+	public List<GuardEntry> getGuardEntries() {
+		return stateFile.getGuardEntries();
+	}
+
+	public void removeGuardEntry(GuardEntry entry) {
+		stateFile.removeGuardEntry(entry);
+	}
+
+	public void addGuardEntry(GuardEntry entry) {
+		stateFile.addGuardEntry(entry);
 	}
 }

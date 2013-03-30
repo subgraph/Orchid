@@ -1,22 +1,25 @@
 package org.torproject.jtor.directory.impl;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.TorConfig;
+import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.DirectoryStore;
 import org.torproject.jtor.directory.KeyCertificate;
 import org.torproject.jtor.directory.RouterDescriptor;
-import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParserFactory;
 import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
@@ -154,5 +157,74 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			e.printStackTrace();
 		}
 	}
+	
+	void loadStateFile(StateFile stateFile) {
+		final Reader reader = openReaderFor("state");
+		if(reader == null) {
+			return;
+		}
+		try {
+			stateFile.parseFile(reader);
+		} catch (IOException e) {
+			logger.warning("IO error reading state file: "+ e);
+		} finally {
+			quietClose(reader);
+		}
+	}
+	
+	void saveStateFile(StateFile stateFile) {
+		final Writer writer = openWriterFor("state"); 
+		if(writer == null) {
+			logger.warning("Failed to open state file for writing");
+			return;
+		}
+		try {
+			stateFile.writeFile(writer);
+		} catch (IOException e) {
+			logger.warning("IO error writing to state file: "+ e);
+		} finally {
+			quietClose(writer);
+		}
+		
+	}
+	
+	
+	private Writer openWriterFor(String fileName) {
+		final File file = new File(config.getDataDirectory(), fileName);
+		try {
+			FileOutputStream fos = new FileOutputStream(file);
+			return new OutputStreamWriter(fos, getFileCharset());
+		} catch (FileNotFoundException e) {
+			return null;
+		}
+	}
 
+	private Reader openReaderFor(String fileName) {
+		final File file = new File(config.getDataDirectory(), fileName);
+		if(!file.exists()) {
+			return null;
+		}
+		try {
+			final FileInputStream fis = new FileInputStream(file);
+			return new InputStreamReader(fis, getFileCharset());
+		} catch (FileNotFoundException e) {
+			return null;
+		}
+	}
+	
+	private Charset getFileCharset() {
+		final String csName = "ISO-8859-1";
+		if(Charset.isSupported(csName)) {
+			return Charset.forName(csName);
+		} else {
+			return Charset.defaultCharset();
+		}
+	} 
+	
+	private void quietClose(Closeable closeable) {
+		try {
+			closeable.close();
+		} catch (IOException e) {
+		}
+	}
 }
