@@ -22,6 +22,7 @@ public class RouterStatusImpl implements RouterStatus {
 	private String version;
 	private int bandwidthEstimate;
 	private int bandwidthMeasured;
+	private boolean hasBandwidth;
 	private ExitPorts exitPorts;
 	
 	void setNickname(String nickname) { this.nickname = nickname; }
@@ -33,7 +34,7 @@ public class RouterStatusImpl implements RouterStatus {
 	void setDirectoryPort(int port) { this.directoryPort = port; }
 	void addFlag(String flag) { this.flags.add(flag); }
 	void setVersion(String version) { this.version = version; }
-	void setEstimatedBandwidth(int bandwidth) { this.bandwidthEstimate = bandwidth; }
+	void setEstimatedBandwidth(int bandwidth) { this.bandwidthEstimate = bandwidth; hasBandwidth = true; }
 	void setMeasuredBandwidth(int bandwidth) { this.bandwidthMeasured = bandwidth; }
 	void setAcceptedPorts(String portList) { this.exitPorts = ExitPorts.createAcceptExitPorts(portList); }
 	void setRejectedPorts(String portList) { this.exitPorts = ExitPorts.createRejectExitPorts(portList); }
@@ -81,6 +82,10 @@ public class RouterStatusImpl implements RouterStatus {
 		return version;
 	}
 	
+	public boolean hasBandwidth() {
+		return hasBandwidth;
+	}
+
 	public int getEstimatedBandwidth() {
 		return bandwidthEstimate;
 	}

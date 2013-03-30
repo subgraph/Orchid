@@ -16,6 +16,7 @@ public interface RouterStatus {
 	int getDirectoryPort();
 	boolean hasFlag(String flag);
 	String getVersion();
+	boolean hasBandwidth();
 	int getEstimatedBandwidth();
 	int getMeasuredBandwidth();
 	ExitPorts getExitPorts();

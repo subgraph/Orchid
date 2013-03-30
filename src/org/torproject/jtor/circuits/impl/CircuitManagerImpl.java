@@ -39,22 +39,17 @@ public class CircuitManagerImpl implements CircuitManager {
 	private final TorRandom random;
 	private final List<StreamExitRequest> pendingExitStreams = new LinkedList<StreamExitRequest>();
 	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
-	private final Runnable circuitCreationTask;
-	private final CircuitPredictor predictor;
+	private final CircuitCreationTask circuitCreationTask;
 	private final TorInitializationTracker initializationTracker;
 
 	public CircuitManagerImpl(Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.connectionCache = connectionCache;
-		final CircuitCreationTask task  = new CircuitCreationTask(directory, connectionCache, this, initializationTracker);
-		this.predictor = task.getCircuitPredictor();
-		this.circuitCreationTask = task;
+		this.circuitCreationTask = new CircuitCreationTask(directory, connectionCache, this, initializationTracker);
 		this.activeCircuits = new HashSet<CircuitImpl>();
 		this.random = new TorRandom();
 		this.initializationTracker = initializationTracker;
-		
 	}
 
-	
 	public void notifyInitializationEvent(int eventCode) {
 		initializationTracker.notifyEvent(eventCode);
 	}
@@ -167,15 +162,16 @@ public class CircuitManagerImpl implements CircuitManager {
 	
 	private OpenStreamResponse openExitStreamByRequest(StreamExitRequest request) throws InterruptedException {
 		synchronized(pendingExitStreams) {
-			predictor.addExitPortRequest(request.getPort());
+			circuitCreationTask.predictPort(request.getPort());
 			pendingExitStreams.add(request);
-			while(!request.isCompleted())
+			while(!request.isCompleted()) {
 				pendingExitStreams.wait();
+			}
 		}
 		return request.getResponse();
 	}
-	
-	List<StreamExitRequest> getPendingExitStreams() {
+
+	public List<StreamExitRequest> getPendingExitStreams() {
 		synchronized(pendingExitStreams) {
 			return new ArrayList<StreamExitRequest>(pendingExitStreams);
 		}

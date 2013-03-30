@@ -1,4 +1,4 @@
-package org.torproject.jtor.circuits.impl;
+package org.torproject.jtor.circuits.path;
 
 import java.util.ArrayList;
 import java.util.List;

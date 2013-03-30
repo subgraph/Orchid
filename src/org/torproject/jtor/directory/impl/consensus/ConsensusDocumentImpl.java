@@ -201,7 +201,7 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 		if(bandwidthWeights.containsKey(tag)) {
 			return bandwidthWeights.get(tag);
 		} else {
-			return 0;
+			return -1;
 		}
 	}
 }

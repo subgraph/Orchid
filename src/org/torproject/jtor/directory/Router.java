@@ -14,9 +14,12 @@ public interface Router {
 	HexDigest getIdentityHash();
 	boolean isDescriptorDownloadable();
 
+	String getVersion();
 	RouterDescriptor getCurrentDescriptor();
 	HexDigest getDescriptorDigest();
 	TorPublicKey getOnionKey();
+	
+	boolean hasBandwidth();
 	int getEstimatedBandwidth();
 	int getMeasuredBandwidth();
 

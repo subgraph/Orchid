@@ -1,5 +1,6 @@
 package org.torproject.jtor.circuits.impl;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -13,15 +14,16 @@ import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.impl.CircuitManagerImpl.CircuitFilter;
+import org.torproject.jtor.circuits.path.CircuitPathChooser;
 import org.torproject.jtor.connections.ConnectionCache;
+import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.Router;
 
 public class CircuitCreationTask implements Runnable {
 	private final static Logger logger = Logger.getLogger(CircuitCreationTask.class.getName());
 	private final static int MAX_CIRCUIT_DIRTINESS = 300; // seconds
-	private final static int MAX_PENDING_CIRCUITS = 2;
-	private final static int DEFAULT_CLEAN_CIRCUITS = 3;
+	private final static int MAX_PENDING_CIRCUITS = 4;
 	private final Directory directory;
 	private final ConnectionCache connectionCache;
 	private final CircuitManagerImpl circuitManager;
@@ -39,34 +41,25 @@ public class CircuitCreationTask implements Runnable {
 		this.connectionCache = connectionCache;
 		this.circuitManager = circuitManager;
 		this.initializationTracker = initializationTracker;
-		this.nodeChooser = new CircuitPathChooser(circuitManager, directory);
+		this.nodeChooser = new CircuitPathChooser(directory);
 		this.executor = Executors.newCachedThreadPool();
 		this.buildHandler = createCircuitBuildHandler();
-		this.predictor = new CircuitPredictor(nodeChooser, circuitManager);
+		this.predictor = new CircuitPredictor();
 	}
 
 	public void run() {
 		expireOldCircuits();
-		checkUnassignedPendingStreams();
+		assignPendingStreamsToActiveCircuits();
 		checkExpiredPendingCircuits();
 		checkCircuitsForCreation();		
 	}
 
-	CircuitPredictor getCircuitPredictor() {
-		return predictor;
+	void predictPort(int port) {
+		predictor.addExitPortRequest(port);
 	}
 
-	private void checkUnassignedPendingStreams() {
+	private void assignPendingStreamsToActiveCircuits() {
 		final List<StreamExitRequest> pendingExitStreams = circuitManager.getPendingExitStreams();
-
-		assignPendingStreamsToActiveCircuits(pendingExitStreams);
-
-		removePendingStreamsByPendingCircuits(pendingExitStreams);
-
-		buildCircuitsToHandleExitStreams(pendingExitStreams);
-	}
-
-	private void assignPendingStreamsToActiveCircuits(List<StreamExitRequest> pendingExitStreams) {
 		if(pendingExitStreams.isEmpty())
 			return;
 
@@ -77,34 +70,6 @@ public class CircuitCreationTask implements Runnable {
 					it.remove();
 			}
 		}
-	}
-	
-	private void removePendingStreamsByPendingCircuits(List<StreamExitRequest> pendingExitStreams) {
-		if(pendingExitStreams.isEmpty())
-			return;
-
-		for(Circuit c: circuitManager.getPendingCircuits()) {
-			final Iterator<StreamExitRequest> it = pendingExitStreams.iterator();
-			while(it.hasNext()) {
-				if(c.canHandleExitTo(it.next()))
-					it.remove();
-			}
-		}
-	}
-
-	private void buildCircuitsToHandleExitStreams(List<StreamExitRequest> pendingExitStreams) {
-		if(pendingExitStreams.isEmpty())
-			return;
-
-		if(logger.isLoggable(Level.FINE)) {
-			logger.fine("Building new circuits to handle "+ pendingExitStreams.size() +" pending streams");
-			for(StreamExitRequest r: pendingExitStreams) {
-				logger.fine("Request: "+ r);
-			}
-		}
-
-		for(StreamExitRequest req: pendingExitStreams)
-			createCircuitForExitRequest(req);
 	}
 
 	private boolean attemptHandleStreamRequest(Circuit c, StreamExitRequest request) {
@@ -137,16 +102,6 @@ public class CircuitCreationTask implements Runnable {
 		// TODO Auto-generated method stub
 	}
 
-	private void createCircuitForExitRequest(StreamExitRequest request) {
-		if(!directory.haveMinimumRouterInfo())
-			return;
-		if(circuitManager.getPendingCircuitCount() >= MAX_PENDING_CIRCUITS)
-			return;
-
-		final List<Router> path = nodeChooser.choosePathForTarget(request);
-		launchBuildTaskForPath(path);
-	}
-
 	private void checkCircuitsForCreation() {
 
 		if(!directory.haveMinimumRouterInfo()) {
@@ -156,21 +111,52 @@ public class CircuitCreationTask implements Runnable {
 			return;
 		}
 
-		if((circuitManager.getCleanCircuitCount() + circuitManager.getPendingCircuitCount()) < DEFAULT_CLEAN_CIRCUITS &&
-				circuitManager.getPendingCircuitCount() < MAX_PENDING_CIRCUITS) {
-			Set<Circuit> circuits = circuitManager.getCircuitsByFilter(new CircuitFilter() {
-				
-				public boolean filter(CircuitImpl circuit) {
-					return !circuit.isDirectoryCircuit() && (circuit.isClean() || circuit.isPending());
-				}
-			});
-			final List<CircuitCreationRequest> predictedCircuitRequests = predictor.generatePredictedCircuitRequests(circuits, buildHandler);
-			for(CircuitCreationRequest req: predictedCircuitRequests) {
-				executor.execute(new CircuitBuildTask(req, connectionCache, initializationTracker));
+		final List<StreamExitRequest> pendingExitStreams = circuitManager.getPendingExitStreams();
+		final List<PredictedPortTarget> predictedPorts = predictor.getPredictedPortTargets();
+		final List<ExitTarget> exitTargets = new ArrayList<ExitTarget>();
+		for(StreamExitRequest streamRequest: pendingExitStreams) {
+			if(!streamRequest.isReserved() && countCircuitsSupportingTarget(streamRequest, false) == 0) {
+				exitTargets.add(streamRequest);
 			}
 		}
+		for(PredictedPortTarget ppt: predictedPorts) {
+			if(countCircuitsSupportingTarget(ppt, true) < 2) {
+				exitTargets.add(ppt);
+			}
+		}
+		
+		buildCircuitToHandleExitTargets(exitTargets);
 	}
 
+	private int countCircuitsSupportingTarget(final ExitTarget target, final boolean needClean) {
+		final CircuitFilter filter = new CircuitFilter() {
+			public boolean filter(CircuitImpl circuit) {
+				final boolean notDirectory = !circuit.isDirectoryCircuit();
+				final boolean pendingOrConnected = circuit.isPending() || circuit.isConnected();
+				final boolean isCleanIfNeeded = !(needClean && !circuit.isClean());
+				return notDirectory && pendingOrConnected && isCleanIfNeeded && circuit.canHandleExitTo(target);
+			}
+		};
+		return circuitManager.getCircuitsByFilter(filter).size();
+	}
+
+	private void buildCircuitToHandleExitTargets(List<ExitTarget> exitTargets) {
+		if(exitTargets.isEmpty()) {
+			return;
+		}
+		if(!directory.haveMinimumRouterInfo())
+			return;
+		if(circuitManager.getPendingCircuitCount() >= MAX_PENDING_CIRCUITS)
+			return;
+
+		if(logger.isLoggable(Level.FINE)) { 
+			logger.fine("Building new circuit to handle "+ exitTargets.size() +" pending streams and predicted ports");
+		}
+
+		final List<Router> path = nodeChooser.choosePathForTargets(exitTargets);
+		launchBuildTaskForPath(path);
+
+	}
 
 	private void launchBuildTaskForPath(List<Router> path) {
 		final CircuitImpl circuit = circuitManager.createNewCircuit();

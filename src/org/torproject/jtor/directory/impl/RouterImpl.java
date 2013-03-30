@@ -44,6 +44,10 @@ public class RouterImpl implements Router {
 		return diff > (1000 * 60 * 10);	
 	}
 	
+	public String getVersion() {
+		return status.getVersion();
+	}
+
 	public HexDigest getDescriptorDigest() {
 		return status.getDescriptorDigest();
 	}
@@ -120,6 +124,10 @@ public class RouterImpl implements Router {
 
 	public TorPublicKey getOnionKey() {
 		return descriptor.getOnionKey();
+	}
+
+	public boolean hasBandwidth() {
+		return status.hasBandwidth();
 	}
 
 	public int getEstimatedBandwidth() {

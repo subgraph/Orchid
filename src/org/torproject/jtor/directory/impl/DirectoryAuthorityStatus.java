@@ -61,6 +61,10 @@ public class DirectoryAuthorityStatus implements RouterStatus {
 		return identity;
 	}
 
+	public boolean hasBandwidth() {
+		return false;
+	}
+
 	public int getMeasuredBandwidth() {
 		return 0;
 	}
