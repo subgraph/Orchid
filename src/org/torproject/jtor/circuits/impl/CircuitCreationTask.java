@@ -18,17 +18,17 @@ import org.torproject.jtor.circuits.path.CircuitPathChooser;
 import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Directory;
-import org.torproject.jtor.directory.Router;
 
 public class CircuitCreationTask implements Runnable {
 	private final static Logger logger = Logger.getLogger(CircuitCreationTask.class.getName());
 	private final static int MAX_CIRCUIT_DIRTINESS = 300; // seconds
 	private final static int MAX_PENDING_CIRCUITS = 4;
+
 	private final Directory directory;
 	private final ConnectionCache connectionCache;
 	private final CircuitManagerImpl circuitManager;
 	private final TorInitializationTracker initializationTracker;
-	private final CircuitPathChooser nodeChooser;
+	private final CircuitPathChooser pathChooser;
 	private final Executor executor;
 	private final CircuitBuildHandler buildHandler;
 	// To avoid obnoxiously printing a warning every second
@@ -36,12 +36,12 @@ public class CircuitCreationTask implements Runnable {
 	
 	private final CircuitPredictor predictor;
 
-	CircuitCreationTask(Directory directory, ConnectionCache connectionCache, CircuitManagerImpl circuitManager, TorInitializationTracker initializationTracker) {
+	CircuitCreationTask(Directory directory, ConnectionCache connectionCache, CircuitPathChooser pathChooser, CircuitManagerImpl circuitManager, TorInitializationTracker initializationTracker) {
 		this.directory = directory;
 		this.connectionCache = connectionCache;
 		this.circuitManager = circuitManager;
 		this.initializationTracker = initializationTracker;
-		this.nodeChooser = new CircuitPathChooser(directory);
+		this.pathChooser = pathChooser;
 		this.executor = Executors.newCachedThreadPool();
 		this.buildHandler = createCircuitBuildHandler();
 		this.predictor = new CircuitPredictor();
@@ -153,14 +153,12 @@ public class CircuitCreationTask implements Runnable {
 			logger.fine("Building new circuit to handle "+ exitTargets.size() +" pending streams and predicted ports");
 		}
 
-		final List<Router> path = nodeChooser.choosePathForTargets(exitTargets);
-		launchBuildTaskForPath(path);
-
+		launchBuildTaskForTargets(exitTargets);
 	}
 
-	private void launchBuildTaskForPath(List<Router> path) {
+	private void launchBuildTaskForTargets(List<ExitTarget> exitTargets) {
 		final CircuitImpl circuit = circuitManager.createNewCircuit();
-		final CircuitCreationRequest request = new CircuitCreationRequest(circuit, path, buildHandler, false);
+		final CircuitCreationRequest request = new CircuitCreationRequest(pathChooser, circuit, exitTargets, buildHandler, false);
 		final CircuitBuildTask task = new  CircuitBuildTask(request, connectionCache, initializationTracker);
 		executor.execute(task);
 	}

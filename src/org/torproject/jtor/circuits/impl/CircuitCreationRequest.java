@@ -6,24 +6,35 @@ import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
+import org.torproject.jtor.circuits.path.CircuitPathChooser;
+import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Router;
 
 public class CircuitCreationRequest implements CircuitBuildHandler {
 	private final CircuitImpl circuit;
-	private final List<Router> path;
+	private final CircuitPathChooser pathChooser;
+	private final List<ExitTarget> targets;
 	private final CircuitBuildHandler buildHandler;
 	private final boolean isDirectoryCircuit;
 	
-	CircuitCreationRequest(CircuitImpl circuit, List<Router> path, CircuitBuildHandler buildHandler, boolean isDirectoryCircuit) {
-		if(path.isEmpty()) {
-			throw new IllegalArgumentException("Path must contain at least one router to create a circuit.");
-		}
+	private List<Router> path;
+	
+	CircuitCreationRequest(CircuitPathChooser pathChooser, CircuitImpl circuit, List<ExitTarget> targets, CircuitBuildHandler buildHandler, boolean isDirectoryCircuit) {
+		this.pathChooser = pathChooser;
 		this.circuit = circuit;
-		this.path = path;
+		this.targets = targets;
 		this.buildHandler = buildHandler;
 		this.isDirectoryCircuit = isDirectoryCircuit;
 	}
 	
+	void choosePath() throws InterruptedException {
+		if(isDirectoryCircuit) {
+			path = pathChooser.chooseDirectoryPath();
+		} else {
+			path = pathChooser.choosePathForTargets(targets);
+		}
+	}
+
 	CircuitImpl getCircuit() {
 		return circuit;
 	}

@@ -21,25 +21,27 @@ import org.torproject.jtor.directory.Router;
 
 public class CircuitBuildTask implements Runnable {
 	private final static Logger logger = Logger.getLogger(CircuitBuildTask.class.getName());
-	private final CircuitCreationRequest request;
+	private final CircuitCreationRequest creationRequest;
 	private final ConnectionCache connectionCache;
 	private final TorInitializationTracker initializationTracker;
 	private final CircuitImpl circuit;
 
 	CircuitBuildTask(CircuitCreationRequest request, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
-		this.request = request;
+		this.creationRequest = request;
 		this.connectionCache = connectionCache;
 		this.initializationTracker = initializationTracker;
 		this.circuit = request.getCircuit();
 	}
 
 	public void run() {
-		if(logger.isLoggable(Level.FINE)) {
-			logger.fine("Opening a new circuit to "+ pathToString());
-		}
-		final Router firstRouter = request.getPathElement(0);
+		Router firstRouter = null;
 		try {
-			circuit.notifyCircuitBuildStart(request);
+			creationRequest.choosePath();
+			if(logger.isLoggable(Level.FINE)) {
+				logger.fine("Opening a new circuit to "+ pathToString(creationRequest));
+			}
+			firstRouter = creationRequest.getPathElement(0);
+			circuit.notifyCircuitBuildStart(creationRequest);
 			openEntryNodeConnection(firstRouter);
 			buildCircuit(firstRouter);
 			circuit.notifyCircuitBuildCompleted();
@@ -60,10 +62,10 @@ public class CircuitBuildTask implements Runnable {
 		}
 	}
 
-	private String pathToString() {
+	private String pathToString(CircuitCreationRequest ccr) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("[");
-		for(Router r: request.getPath()) {
+		for(Router r: ccr.getPath()) {
 			if(sb.length() > 1)
 				sb.append(",");
 			sb.append(r.getNickname());
@@ -73,30 +75,30 @@ public class CircuitBuildTask implements Runnable {
 	}
 
 	private void connectionFailed(String message) {
-		request.connectionFailed(message);
+		creationRequest.connectionFailed(message);
 		circuit.notifyCircuitBuildFailed();
 	}
 	
 	private void circuitBuildFailed(String message) {
-		request.circuitBuildFailed(message);
+		creationRequest.circuitBuildFailed(message);
 		circuit.notifyCircuitBuildFailed();
 	}
 	
 	private void openEntryNodeConnection(Router firstRouter) throws ConnectionTimeoutException, ConnectionFailedException, ConnectionHandshakeException, InterruptedException {
-		final Connection connection = connectionCache.getConnectionTo(firstRouter, request.isDirectoryCircuit());
+		final Connection connection = connectionCache.getConnectionTo(firstRouter, creationRequest.isDirectoryCircuit());
 		circuit.bindToConnection(connection);
-		request.connectionCompleted(connection);
+		creationRequest.connectionCompleted(connection);
 	}
 
 	private void buildCircuit(Router firstRouter) throws TorException {
 		final CircuitNode firstNode = createFastTo(firstRouter);
-		request.nodeAdded(firstNode);
+		creationRequest.nodeAdded(firstNode);
 		
-		for(int i = 1; i < request.getPathLength(); i++) {
-			final CircuitNode extendedNode = extendTo(request.getPathElement(i));
-			request.nodeAdded(extendedNode);
+		for(int i = 1; i < creationRequest.getPathLength(); i++) {
+			final CircuitNode extendedNode = extendTo(creationRequest.getPathElement(i));
+			creationRequest.nodeAdded(extendedNode);
 		}
-		request.circuitBuildCompleted(circuit);
+		creationRequest.circuitBuildCompleted(circuit);
 		notifyDone();
 	}
 
@@ -110,14 +112,14 @@ public class CircuitBuildTask implements Runnable {
 
 	private void notifyInitialization() {
 		if(initializationTracker != null) {
-			final int event = request.isDirectoryCircuit() ? 
+			final int event = creationRequest.isDirectoryCircuit() ? 
 					Tor.BOOTSTRAP_STATUS_ONEHOP_CREATE : Tor.BOOTSTRAP_STATUS_CIRCUIT_CREATE;
 			initializationTracker.notifyEvent(event);
 		}
 	}
 
 	private void notifyDone() {
-		if(initializationTracker != null && !request.isDirectoryCircuit()) {
+		if(initializationTracker != null && !creationRequest.isDirectoryCircuit()) {
 			initializationTracker.notifyEvent(Tor.BOOTSTRAP_STATUS_DONE);
 		}
 	}
