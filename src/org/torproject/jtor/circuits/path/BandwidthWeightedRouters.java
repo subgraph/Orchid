@@ -114,6 +114,9 @@ public class BandwidthWeightedRouters {
 	Router chooseRandomRouterByWeight() {
 		final long total = getScaledTotal();
 		if(total == 0) {
+			if(weightedRouters.size() == 0) {
+				return null;
+			}
 			final int idx = random.nextInt(weightedRouters.size());
 			return weightedRouters.get(idx).router;
 		}
