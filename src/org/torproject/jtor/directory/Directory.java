@@ -21,7 +21,6 @@ public interface Directory {
 	void storeDescriptors();
 	Collection<DirectoryServer> getDirectoryAuthorities();
 	DirectoryServer getRandomDirectoryAuthority();
-	Router getRandomDirectoryServer();
 	void addCertificate(KeyCertificate certificate);
 	Set<HexDigest> getRequiredCertificates();
 	void addRouterDescriptor(RouterDescriptor router);
@@ -31,6 +30,7 @@ public interface Directory {
 	void unregisterConsensusChangedHandler(EventHandler handler);
 	KeyCertificate findCertificate(HexDigest authorityFingerprint);
 	Router getRouterByName(String name);
+	Router getRouterByIdentity(HexDigest identity);
 	List<Router> getRouterListByNames(List<String> names);
 	List<Router> getRoutersWithDownloadableDescriptors();
 	List<Router> getAllRouters();

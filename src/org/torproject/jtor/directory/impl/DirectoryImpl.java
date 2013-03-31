@@ -96,6 +96,7 @@ public class DirectoryImpl implements Directory {
 		store.loadCertificates(this);
 		store.loadConsensus(this);
 		store.loadRouterDescriptors(this);
+		store.loadStateFile(stateFile);
 	}
 
 	public Collection<DirectoryServer> getDirectoryAuthorities() {
@@ -105,12 +106,6 @@ public class DirectoryImpl implements Directory {
 	public DirectoryServer getRandomDirectoryAuthority() {
 		final int idx = random.nextInt(directoryAuthorities.size());
 		return directoryAuthorities.get(idx);
-	}
-
-	public Router getRandomDirectoryServer() {
-		if(directoryCaches.isEmpty())
-			return getRandomDirectoryAuthority();
-		return directoryCaches.getRandomElement();
 	}
 
 	public Set<HexDigest> getRequiredCertificates() {
@@ -320,6 +315,12 @@ public class DirectoryImpl implements Directory {
 		if(name.equals("Unnamed"))
 			return null;
 		return routersByNickname.get(name);
+	}
+
+	public Router getRouterByIdentity(HexDigest identity) {
+		synchronized (routersByIdentity) {
+			return routersByIdentity.get(identity);
+		}
 	}
 
 	public List<Router> getRouterListByNames(List<String> names) {
