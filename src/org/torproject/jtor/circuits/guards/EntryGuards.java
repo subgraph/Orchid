@@ -49,7 +49,7 @@ public class EntryGuards {
 			usableGuards = getUsableGuards(excluded);
 			while(usableGuards.size() < MIN_USABLE_GUARDS) {
 				maybeChooseNew(usableGuards.size(), getExcludedForNew(excluded, usableGuards));
-				pendingInitialProbes.wait();
+				pendingInitialProbes.wait(5000);
 				usableGuards = getUsableGuards(excluded);
 			}
 		}
@@ -71,6 +71,7 @@ public class EntryGuards {
 			
 			Router newGuard = chooseNewGuard(excluded);
 			if(newGuard == null) {
+				logger.warning("Need to add entry guards but no suitable guard routers are available");
 				return;
 			}
 			logger.fine("Testing "+ newGuard + " as a new guard since we only have "+ usableSize + " usable guards");
