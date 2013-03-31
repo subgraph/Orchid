@@ -1,7 +1,6 @@
 package org.torproject.jtor.circuits.impl;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,25 +10,27 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.Tor;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
-import org.torproject.jtor.circuits.DirectoryStreamRequest;
 import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.OpenStreamResponse.OpenStreamStatus;
+import org.torproject.jtor.circuits.guards.EntryGuards;
+import org.torproject.jtor.circuits.path.CircuitPathChooser;
 import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Directory;
-import org.torproject.jtor.directory.Router;
 
 public class CircuitManagerImpl implements CircuitManager {
 	
 	private final static Logger logger = Logger.getLogger(CircuitManagerImpl.class.getName());
 	private final static boolean DEBUG_CIRCUIT_CREATION = true;
-
+	private final static boolean USE_ENTRY_GUARDS = true;
+	
 	interface CircuitFilter {
 		boolean filter(CircuitImpl circuit);
 	}
@@ -41,10 +42,16 @@ public class CircuitManagerImpl implements CircuitManager {
 	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 	private final CircuitCreationTask circuitCreationTask;
 	private final TorInitializationTracker initializationTracker;
+	private final CircuitPathChooser pathChooser;
 
 	public CircuitManagerImpl(Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.connectionCache = connectionCache;
-		this.circuitCreationTask = new CircuitCreationTask(directory, connectionCache, this, initializationTracker);
+		this.pathChooser = new CircuitPathChooser(directory);
+		if(USE_ENTRY_GUARDS) {
+			this.pathChooser.enableEntryGuards(new EntryGuards(connectionCache, directory));
+		}
+		
+		this.circuitCreationTask = new CircuitCreationTask(directory, connectionCache, pathChooser, this, initializationTracker);
 		this.activeCircuits = new HashSet<CircuitImpl>();
 		this.random = new TorRandom();
 		this.initializationTracker = initializationTracker;
@@ -184,29 +191,48 @@ public class CircuitManagerImpl implements CircuitManager {
 		}
 	}
 
-	public OpenStreamResponse openDirectoryStream(DirectoryStreamRequest request) {
+	public OpenStreamResponse openDirectoryStream() {
+		return openDirectoryStream(0);
+	}
+
+	public OpenStreamResponse openDirectoryStream(int purpose) {
+		final int requestEventCode = purposeToEventCode(purpose, false);
+		final int loadingEventCode = purposeToEventCode(purpose, true);
+		
 		final CircuitImpl circuit = createNewCircuit();
 		final DirectoryCircuitResult result = new DirectoryCircuitResult();
-		final List<Router> path = Arrays.asList(request.getDirectoryRouter());
-		final CircuitCreationRequest req = new CircuitCreationRequest(circuit, path, result, true);
+		final CircuitCreationRequest req = new CircuitCreationRequest(pathChooser, circuit, null, result, true);
 		final CircuitBuildTask task = new CircuitBuildTask(req, connectionCache, initializationTracker);
 		task.run();
 
 		
 		if(result.isSuccessful()) {
-			if(request.getRequestEventCode() > 0) {
-				initializationTracker.notifyEvent(request.getRequestEventCode());
+			if(requestEventCode > 0) {
+				initializationTracker.notifyEvent(requestEventCode);
 			}
 			final OpenStreamResponse osr =  circuit.openDirectoryStream();
-			if(osr.getStatus() == OpenStreamStatus.STATUS_STREAM_OPENED && request.getLoadingEventCode() > 0) {
-				initializationTracker.notifyEvent(request.getLoadingEventCode());
+			if(osr.getStatus() == OpenStreamStatus.STATUS_STREAM_OPENED && loadingEventCode > 0) {
+				initializationTracker.notifyEvent(loadingEventCode);
 			}
 			return osr;
 		} else {
 			return OpenStreamResponseImpl.createConnectionFailError(result.getErrorMessage());
 		}
 	}
-	
+
+	private int purposeToEventCode(int purpose, boolean getLoadingEvent) {
+		switch(purpose) {
+		case DIRECTORY_PURPOSE_CONSENSUS:
+			return getLoadingEvent ? Tor.BOOTSTRAP_STATUS_LOADING_STATUS : Tor.BOOTSTRAP_STATUS_REQUESTING_STATUS;
+		case DIRECTORY_PURPOSE_CERTIFICATES:
+			 return getLoadingEvent ? Tor.BOOTSTRAP_STATUS_LOADING_KEYS : Tor.BOOTSTRAP_STATUS_REQUESTING_KEYS;
+		case DIRECTORY_PURPOSE_DESCRIPTORS:
+			return getLoadingEvent ? Tor.BOOTSTRAP_STATUS_LOADING_DESCRIPTORS : Tor.BOOTSTRAP_STATUS_REQUESTING_DESCRIPTORS;
+		default:
+			return 0;
+		}
+	}
+
 	private class DirectoryCircuitResult implements CircuitBuildHandler {
 
 		private String errorMessage;

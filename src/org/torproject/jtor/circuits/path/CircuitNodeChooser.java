@@ -12,20 +12,35 @@ import org.torproject.jtor.directory.Router;
 public class CircuitNodeChooser {
 	private final static Logger logger = Logger.getLogger(CircuitNodeChooser.class.getName());
 	
-	enum WeightRule { WEIGHT_FOR_DIR, WEIGHT_FOR_EXIT, WEIGHT_FOR_MID, WEIGHT_FOR_GUARD, NO_WEIGHTING};
+	public enum WeightRule { WEIGHT_FOR_DIR, WEIGHT_FOR_EXIT, WEIGHT_FOR_MID, WEIGHT_FOR_GUARD, NO_WEIGHTING};
 	private final Directory directory;
 	private final TorRandom random = new TorRandom();
 	
-	CircuitNodeChooser(Directory directory) {
+	public CircuitNodeChooser(Directory directory) {
 		this.directory = directory;
 	}
 	
-	Router chooseExitNode(List<Router> candidates) {
+	public Router chooseExitNode(List<Router> candidates) {
 		return chooseByBandwidth(candidates, WeightRule.WEIGHT_FOR_EXIT);
 	}
 	
-	Router chooseRandomNode(WeightRule rule, RouterFilter routerFilter) {
-		final List<Router> candidates = getFilteredRouters(routerFilter);
+	public Router chooseDirectory() {
+		final RouterFilter filter = new RouterFilter() {
+			public boolean filter(Router router) {
+				return router.getDirectoryPort() != 0;
+			}
+		};
+		final List<Router> candidates = getFilteredRouters(filter, false);
+		final Router choice = chooseByBandwidth(candidates, WeightRule.WEIGHT_FOR_DIR);
+		if(choice == null) {
+			return directory.getRandomDirectoryAuthority();
+		} else {
+			return choice;
+		}
+	}
+
+	public Router chooseRandomNode(WeightRule rule, RouterFilter routerFilter) {
+		final List<Router> candidates = getFilteredRouters(routerFilter, true);
 		final Router choice = chooseByBandwidth(candidates, rule);
 		if(choice == null) {
 			// try again with more permissive flags
@@ -34,9 +49,9 @@ public class CircuitNodeChooser {
 		return choice;
 	}
 	
-	private List<Router> getFilteredRouters(RouterFilter rf) {
+	private List<Router> getFilteredRouters(RouterFilter rf, boolean needDescriptor) {
 		final List<Router> routers = new ArrayList<Router>();
-		for(Router r: getUsableRouters()) {
+		for(Router r: getUsableRouters(needDescriptor)) {
 			if(rf.filter(r)) {
 				routers.add(r);
 			}
@@ -44,13 +59,18 @@ public class CircuitNodeChooser {
 		return routers;
 	}
 	
-	List<Router> getUsableRouters() {
+	List<Router> getUsableRouters(boolean needDescriptor) {
 		final List<Router> routers = new ArrayList<Router>();
 		for(Router r: directory.getAllRouters()) {
-			if(r.isRunning() && r.isValid() && !r.isHibernating() && r.getCurrentDescriptor() != null) {
+			if(r.isRunning() && 
+					r.isValid() && 
+					!r.isHibernating() && 
+					!(needDescriptor && r.getCurrentDescriptor() == null)) {
+				
 				routers.add(r);
 			}
 		}
+		
 		return routers;
 	}
 
@@ -99,6 +119,10 @@ public class CircuitNodeChooser {
 		}
 		bwr.fixUnknownValues();
 		if(bwr.isTotalBandwidthZero()) {
+			if(routers.size() == 0) {
+				return null;
+			}
+			
 			final int idx = random.nextInt(routers.size());
 			return routers.get(idx);
 		}

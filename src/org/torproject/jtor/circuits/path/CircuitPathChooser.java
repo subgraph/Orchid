@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.torproject.jtor.circuits.guards.EntryGuards;
 import org.torproject.jtor.circuits.path.CircuitNodeChooser.WeightRule;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Directory;
@@ -13,12 +14,26 @@ import org.torproject.jtor.directory.Router;
 
 public class CircuitPathChooser {
 	private final CircuitNodeChooser nodeChooser;
-
+	private EntryGuards entryGuards;
+	private boolean useEntryGuards;
+	
 	public CircuitPathChooser(Directory directory) {
 		this.nodeChooser = new CircuitNodeChooser(directory);
+		this.entryGuards = null;
+		this.useEntryGuards = false;
 	}
 
-	public List<Router> choosePathForTargets(List<ExitTarget> targets) {
+	public void enableEntryGuards(EntryGuards entryGuards) {
+		this.entryGuards = entryGuards;
+		this.useEntryGuards = true;
+	}
+
+	public List<Router> chooseDirectoryPath() {
+		final Router dir = nodeChooser.chooseDirectory();
+		return Arrays.asList(dir);
+	}
+	
+	public List<Router> choosePathForTargets(List<ExitTarget> targets) throws InterruptedException {
 		final Set<Router> excluded = new HashSet<Router>();
 		final Router exitRouter = chooseExitNodeForTargets(targets);
 		excluded.add(exitRouter);
@@ -28,7 +43,14 @@ public class CircuitPathChooser {
 		return Arrays.asList(entryRouter, middleRouter, exitRouter);
 	}
 
-	Router chooseEntryNode(final Set<Router> excludedRouters) {
+	Router chooseEntryNode(final Set<Router> excludedRouters) throws InterruptedException {
+		if(useEntryGuards) {
+			return entryGuards.chooseRandomGuard(excludedRouters);
+		}
+
+		if(!useEntryGuards) {
+			throw new IllegalStateException();
+		}
 		return nodeChooser.chooseRandomNode(WeightRule.WEIGHT_FOR_GUARD, new RouterFilter() {
 			public boolean filter(Router router) {
 				return router.isPossibleGuard() && !excludedRouters.contains(router);
@@ -52,7 +74,7 @@ public class CircuitPathChooser {
 	
 	private List<Router> getUsableExitRouters() {
 		final List<Router> result = new ArrayList<Router>();
-		for(Router r: nodeChooser.getUsableRouters()) {
+		for(Router r: nodeChooser.getUsableRouters(true)) {
 			if(r.isExit() && !r.isBadExit()) {
 				result.add(r);
 			}
