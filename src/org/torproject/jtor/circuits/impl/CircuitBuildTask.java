@@ -13,6 +13,7 @@ import org.torproject.jtor.circuits.ConnectionHandshakeException;
 import org.torproject.jtor.circuits.ConnectionTimeoutException;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
+import org.torproject.jtor.circuits.path.PathSelectionFailedException;
 import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.crypto.TorKeyAgreement;
 import org.torproject.jtor.crypto.TorMessageDigest;
@@ -54,6 +55,8 @@ public class CircuitBuildTask implements Runnable {
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			circuitBuildFailed("Circuit building thread interrupted");
+		} catch(PathSelectionFailedException e) { 
+			circuitBuildFailed(e.getMessage());
 		} catch (TorException e) {
 			circuitBuildFailed(e.getMessage());
 		} catch(Exception e) {

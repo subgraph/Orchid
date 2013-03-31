@@ -33,13 +33,22 @@ public class CircuitPathChooser {
 		return Arrays.asList(dir);
 	}
 	
-	public List<Router> choosePathForTargets(List<ExitTarget> targets) throws InterruptedException {
+	public List<Router> choosePathForTargets(List<ExitTarget> targets) throws InterruptedException, PathSelectionFailedException {
 		final Set<Router> excluded = new HashSet<Router>();
 		final Router exitRouter = chooseExitNodeForTargets(targets);
+		if(exitRouter == null) {
+			throw new PathSelectionFailedException("Failed to select suitable exit node");
+		}
 		excluded.add(exitRouter);
 		final Router middleRouter = chooseMiddleNode(excluded);
+		if(middleRouter == null) {
+			throw new PathSelectionFailedException("Failed to select suitable middle node");
+		}
 		excluded.add(middleRouter);
 		final Router entryRouter = chooseEntryNode(excluded);
+		if(entryRouter == null) {
+			throw new PathSelectionFailedException("Failed to select suitable entry node");
+		}
 		return Arrays.asList(entryRouter, middleRouter, exitRouter);
 	}
 

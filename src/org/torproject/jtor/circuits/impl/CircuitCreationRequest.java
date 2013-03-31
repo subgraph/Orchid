@@ -7,6 +7,7 @@ import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.path.CircuitPathChooser;
+import org.torproject.jtor.circuits.path.PathSelectionFailedException;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Router;
 
@@ -27,7 +28,7 @@ public class CircuitCreationRequest implements CircuitBuildHandler {
 		this.isDirectoryCircuit = isDirectoryCircuit;
 	}
 	
-	void choosePath() throws InterruptedException {
+	void choosePath() throws InterruptedException, PathSelectionFailedException {
 		if(isDirectoryCircuit) {
 			path = pathChooser.chooseDirectoryPath();
 		} else {
