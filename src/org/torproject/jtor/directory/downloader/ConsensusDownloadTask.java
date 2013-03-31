@@ -2,7 +2,7 @@ package org.torproject.jtor.directory.downloader;
 
 import java.io.Reader;
 
-import org.torproject.jtor.Tor;
+import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
@@ -12,7 +12,7 @@ public class ConsensusDownloadTask extends AbstractDirectoryDownloadTask {
 	private ConsensusDocument newConsensusDocument = null;
 	
 	ConsensusDownloadTask(DirectoryDownloader downloader) {
-		super(downloader, Tor.BOOTSTRAP_STATUS_REQUESTING_STATUS, Tor.BOOTSTRAP_STATUS_LOADING_STATUS);
+		super(downloader, CircuitManager.DIRECTORY_PURPOSE_CONSENSUS);
 	}
 
 	@Override

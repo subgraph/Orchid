@@ -5,6 +5,10 @@ import org.torproject.jtor.data.IPv4Address;
 
 public interface CircuitManager {
 
+	static int DIRECTORY_PURPOSE_CONSENSUS = 1;
+	static int DIRECTORY_PURPOSE_CERTIFICATES = 2;
+	static int DIRECTORY_PURPOSE_DESCRIPTORS = 3;
+	
 	/**
 	 * Begin automatically building new circuits in the background.
 	 */
@@ -30,5 +34,6 @@ public interface CircuitManager {
 	 */
 	OpenStreamResponse openExitStreamTo(IPv4Address address, int port) throws InterruptedException;
 	
-	OpenStreamResponse openDirectoryStream(DirectoryStreamRequest request);
+	OpenStreamResponse openDirectoryStream(int purpose);
+	OpenStreamResponse openDirectoryStream();
 }
