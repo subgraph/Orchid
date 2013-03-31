@@ -20,6 +20,11 @@ public class CircuitNodeChooser {
 		this.directory = directory;
 	}
 	
+	/**
+	 * 
+	 * @param candidates
+	 * @return The chosen exit router or 'null' if no suitable router is available
+	 */
 	public Router chooseExitNode(List<Router> candidates) {
 		return chooseByBandwidth(candidates, WeightRule.WEIGHT_FOR_EXIT);
 	}
@@ -39,6 +44,12 @@ public class CircuitNodeChooser {
 		}
 	}
 
+	/**
+	 * 
+	 * @param rule
+	 * @param routerFilter
+	 * @return The chosen router or 'null' if no suitable router is available.
+	 */
 	public Router chooseRandomNode(WeightRule rule, RouterFilter routerFilter) {
 		final List<Router> candidates = getFilteredRouters(routerFilter, true);
 		final Router choice = chooseByBandwidth(candidates, rule);
