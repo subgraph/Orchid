@@ -9,6 +9,8 @@ import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
 
 public class ConsensusDownloadTask extends AbstractDirectoryDownloadTask {
 
+	private ConsensusDocument newConsensusDocument = null;
+	
 	ConsensusDownloadTask(DirectoryDownloader downloader) {
 		super(downloader, Tor.BOOTSTRAP_STATUS_REQUESTING_STATUS, Tor.BOOTSTRAP_STATUS_LOADING_STATUS);
 	}
@@ -28,6 +30,7 @@ public class ConsensusDownloadTask extends AbstractDirectoryDownloadTask {
 			}
 			
 			public void documentParsed(ConsensusDocument document) {
+				newConsensusDocument = document;
 				getDirectory().addConsensusDocument(document);
 			}
 			
@@ -43,6 +46,9 @@ public class ConsensusDownloadTask extends AbstractDirectoryDownloadTask {
 
 	@Override
 	protected void finishRequest(DirectoryDownloader downloader) {
+		if(newConsensusDocument != null) {
+			downloader.setCurrentConsensus(newConsensusDocument);
+		}
 		downloader.clearDownloadingConsensus();
 	}
 }
