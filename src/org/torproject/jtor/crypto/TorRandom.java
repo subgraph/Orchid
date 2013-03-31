@@ -6,7 +6,7 @@ import java.security.SecureRandom;
 import org.torproject.jtor.TorException;
 
 public class TorRandom {
-	
+
 	private final SecureRandom random;
 	
 	public TorRandom() {
@@ -29,7 +29,7 @@ public class TorRandom {
 
 	public long nextLong(long n) {
 		// XXX not uniformly distributed
-		return random.nextLong() % n;
+		return nextLong() % n;
 	}
 
 	public int nextInt(int n) {
@@ -41,7 +41,7 @@ public class TorRandom {
 	}
 	
 	public long nextLong() {
-		return random.nextLong();
+		return random.nextLong() & Long.MAX_VALUE;
 	}
 
 }
