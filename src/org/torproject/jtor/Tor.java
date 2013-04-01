@@ -32,8 +32,14 @@ public class Tor {
 	public static int BOOTSTRAP_STATUS_CIRCUIT_CREATE = 90;
 	public static int BOOTSTRAP_STATUS_DONE = 100;
 	
-	private final static String version = "JTor 0.0.0";
 	
+	private final static String implementation = "JTor";
+	private final static String version = "0.0.0";
+	
+	
+	public static String getImplementation() {
+		return implementation;
+	}
 	/**
 	 * Return a string describing the version of this software.
 	 * 

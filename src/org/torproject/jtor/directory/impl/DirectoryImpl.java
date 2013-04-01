@@ -48,7 +48,7 @@ public class DirectoryImpl implements Directory {
 
 	public DirectoryImpl(TorConfig config) {
 		store = new DirectoryStoreImpl(config);
-		stateFile = new StateFile(store);
+		stateFile = new StateFile(store, this);
 		certificates = new HashMap<HexDigest, KeyCertificate>();
 		routersByIdentity = new HashMap<HexDigest, RouterImpl>();
 		routersByNickname = new HashMap<String, RouterImpl>();

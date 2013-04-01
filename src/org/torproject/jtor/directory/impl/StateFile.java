@@ -12,6 +12,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.Tor;
+import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.GuardEntry;
 import org.torproject.jtor.directory.Router;
 
@@ -92,14 +94,17 @@ public class StateFile {
 	}
 
 	private final DirectoryStoreImpl directoryStore;
+	private final Directory directory;
 	
-	StateFile(DirectoryStoreImpl store) {
+	StateFile(DirectoryStoreImpl store, Directory directory) {
 		this.directoryStore = store;
+		this.directory = directory;
 	}
 
 	public GuardEntry createGuardEntryFor(Router router) {
-		final GuardEntryImpl entry = new GuardEntryImpl(this, router.getNickname(), router.getIdentityHash().toString());
-		entry.setVersion("jtor");
+		final GuardEntryImpl entry = new GuardEntryImpl(directory, this, router.getNickname(), router.getIdentityHash().toString());
+		final String version = Tor.getImplementation() + "-" + Tor.getVersion();
+		entry.setVersion(version);
 		entry.setCreatedTime(new Date());
 		return entry;
 	}
@@ -127,10 +132,12 @@ public class StateFile {
 				return;
 			}
 			final GuardEntryImpl impl = (GuardEntryImpl) entry;
-			impl.setAddedFlag();
 			guardEntries.add(impl);
-			if(writeFile) {
-				writeFile();
+			synchronized (impl) {
+				impl.setAddedFlag();
+				if(writeFile) {
+					writeFile();
+				}
 			}
 		}
 	}
@@ -194,7 +201,7 @@ public class StateFile {
 		if(name == null || name.isEmpty() || identity == null || identity.isEmpty()) {
 			
 		}
-		return new GuardEntryImpl(this, name, identity);
+		return new GuardEntryImpl(directory, this, name, identity);
 	}
 	
 	private void processEntryGuardAddedBy(Line line, GuardEntryImpl current) {
@@ -225,10 +232,7 @@ public class StateFile {
 			logger.warning("Failed to parse date field in EntryGuardDownSince line in state file");
 			return;
 		}
-		current.setDownSince(downSince);
-		if(lastTried != null) {
-			current.setLastConnectAttempt(lastTried);
-		}
+		current.setDownSince(downSince, lastTried);
 	}
 	
 	private void processEntryGuardUnlistedSince(Line line, GuardEntryImpl current) {

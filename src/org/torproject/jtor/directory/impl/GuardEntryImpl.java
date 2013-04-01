@@ -2,11 +2,15 @@ package org.torproject.jtor.directory.impl;
 
 import java.util.Date;
 
+import org.torproject.jtor.data.HexDigest;
+import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.GuardEntry;
+import org.torproject.jtor.directory.Router;
 
 public class GuardEntryImpl implements GuardEntry {
 	private final static String NL = System.getProperty("line.separator");
 	
+	private final Directory directory;
 	private final StateFile stateFile;
 	private final String nickname;
 	private final String identity;
@@ -18,7 +22,8 @@ public class GuardEntryImpl implements GuardEntry {
 	private Date downSince;
 	private Date lastConnect;
 	
-	GuardEntryImpl(StateFile stateFile, String nickname, String identity) {
+	GuardEntryImpl(Directory directory, StateFile stateFile, String nickname, String identity) {
+		this.directory = directory;
 		this.stateFile = stateFile;
 		this.nickname = nickname;
 		this.identity = identity;
@@ -36,21 +41,32 @@ public class GuardEntryImpl implements GuardEntry {
 		this.createdTime = date;
 	}
 
-	public void setDownSince(Date date) {
-		downSince = date;
+	synchronized void setUnlistedSince(Date date) {
+		unlistedSince = date;
+	}
+	
+	synchronized void setDownSince(Date downSince, Date lastTried) {
+		this.downSince = downSince;
+		this.lastConnect = lastTried;
+	}
+
+	public boolean isAdded() {
+		return isAdded;
+	}
+
+	public synchronized void markAsDown() {
+		final Date now = new Date();
+		if(downSince == null) {
+			downSince = now;
+		} else {
+			lastConnect = now;
+		}
 		if(isAdded) {
 			stateFile.writeFile();
 		}
 	}
-
-	public void setLastConnectAttempt(Date date) {
-		lastConnect = date;
-		if(isAdded) {
-			stateFile.writeFile();
-		}
-	}
-
-	public void clearDownSince() {
+	
+	public synchronized void clearDownSince() {
 		downSince = null;
 		lastConnect = null;
 		if(isAdded) {
@@ -58,14 +74,7 @@ public class GuardEntryImpl implements GuardEntry {
 		}
 	}
 
-	public void setUnlistedSince(Date date) {
-		unlistedSince = date;
-		if(isAdded) {
-			stateFile.writeFile();
-		}
-	}
-
-	public void clearUnlistedSince() {
+	public synchronized void clearUnlistedSince() {
 		unlistedSince = null;
 		if(isAdded) {
 			stateFile.writeFile();
@@ -161,4 +170,75 @@ public class GuardEntryImpl implements GuardEntry {
 	private String formatDate(Date date) {
 		return StateFile.formatDate(date);
 	}
+
+	public Router getRouterForEntry() {
+		final HexDigest id = HexDigest.createFromString(identity);
+		return directory.getRouterByIdentity(id);
+	}
+
+	public boolean testCurrentlyUsable() {
+		final Router router = getRouterForEntry();
+		boolean isUsable = router != null && router.isValid() && router.isPossibleGuard() && router.isRunning();
+		if(isUsable) {
+			markUsable();
+			return true;
+		} else {
+			markUnusable();
+			return false;
+		}
+	}
+	
+	private synchronized void markUsable() {
+		if(unlistedSince != null) {
+			unlistedSince = null;
+			if(isAdded) {
+				stateFile.writeFile();
+			}
+		}
+	}
+	
+	private synchronized void markUnusable() {
+		if(unlistedSince == null) {
+			unlistedSince = new Date();
+			if(isAdded) {
+				stateFile.writeFile();
+			}
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((identity == null) ? 0 : identity.hashCode());
+		result = prime * result
+				+ ((nickname == null) ? 0 : nickname.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		GuardEntryImpl other = (GuardEntryImpl) obj;
+		if (identity == null) {
+			if (other.identity != null)
+				return false;
+		} else if (!identity.equals(other.identity))
+			return false;
+		if (nickname == null) {
+			if (other.nickname != null)
+				return false;
+		} else if (!nickname.equals(other.nickname))
+			return false;
+		return true;
+	}
+
+
+	
 }

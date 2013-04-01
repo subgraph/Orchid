@@ -3,11 +3,9 @@ package org.torproject.jtor.directory;
 import java.util.Date;
 
 public interface GuardEntry {
-	void setDownSince(Date date);
-	void setLastConnectAttempt(Date date);
+	boolean isAdded();
+	void markAsDown();
 	void clearDownSince();
-	void setUnlistedSince(Date date);
-	void clearUnlistedSince();
 	String getNickname();
 	String getIdentity();
 	String getVersion();
@@ -15,4 +13,6 @@ public interface GuardEntry {
 	Date getDownSince();
 	Date getLastConnectAttempt();
 	Date getUnlistedSince();
+	boolean testCurrentlyUsable();
+	Router getRouterForEntry();
 }

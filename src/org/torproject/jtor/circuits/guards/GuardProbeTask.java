@@ -1,36 +1,42 @@
 package org.torproject.jtor.circuits.guards;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.torproject.jtor.circuits.ConnectionIOException;
 import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.directory.GuardEntry;
 import org.torproject.jtor.directory.Router;
 
 public class GuardProbeTask implements Runnable{
-
+	private final static Logger logger = Logger.getLogger(GuardProbeTask.class.getName());
 	private final ConnectionCache connectionCache;
 	private final EntryGuards entryGuards;
-	private final Router router;
 	private final GuardEntry entry;
-	private boolean isInitialProbe;
 	
-	public GuardProbeTask(ConnectionCache connectionCache, EntryGuards entryGuards, Router router, GuardEntry entry, boolean isInitialProbe) {
+	public GuardProbeTask(ConnectionCache connectionCache, EntryGuards entryGuards, GuardEntry entry) {
 		this.connectionCache = connectionCache;
 		this.entryGuards = entryGuards;
-		this.router = router;
 		this.entry = entry;
-		this.isInitialProbe = isInitialProbe;
 	}
 	
 	public void run() {
+		final Router router = entry.getRouterForEntry();
+		if(router == null) {
+			entryGuards.probeConnectionFailed(entry);
+			return;
+		}
 		try {
 			connectionCache.getConnectionTo(router, false);
-			entryGuards.probeConnectionSucceeded(router, entry, isInitialProbe);
+			entryGuards.probeConnectionSucceeded(entry);
 			return;
 		} catch (ConnectionIOException e) {
-			entryGuards.probeConnectionFailed(router, entry, isInitialProbe);
-			return;
+			logger.fine("IO exception probing entry guard "+ router + " : "+ e);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
+		} catch(Exception e) {
+			logger.log(Level.WARNING, "Unexpected exception probing entry guard: "+ e, e);
 		}
+		entryGuards.probeConnectionFailed(entry);
 	}
 }
