@@ -33,12 +33,9 @@ public class CircuitPathChooser {
 		return Arrays.asList(dir);
 	}
 	
-	public List<Router> choosePathForTargets(List<ExitTarget> targets) throws InterruptedException, PathSelectionFailedException {
+
+	public List<Router> choosePathWithExit(Router exitRouter) throws InterruptedException, PathSelectionFailedException {
 		final Set<Router> excluded = new HashSet<Router>();
-		final Router exitRouter = chooseExitNodeForTargets(targets);
-		if(exitRouter == null) {
-			throw new PathSelectionFailedException("Failed to select suitable exit node");
-		}
 		excluded.add(exitRouter);
 		final Router middleRouter = chooseMiddleNode(excluded);
 		if(middleRouter == null) {
@@ -52,14 +49,11 @@ public class CircuitPathChooser {
 		return Arrays.asList(entryRouter, middleRouter, exitRouter);
 	}
 
-	Router chooseEntryNode(final Set<Router> excludedRouters) throws InterruptedException {
+	public Router chooseEntryNode(final Set<Router> excludedRouters) throws InterruptedException {
 		if(useEntryGuards) {
 			return entryGuards.chooseRandomGuard(excludedRouters);
 		}
 
-		if(!useEntryGuards) {
-			throw new IllegalStateException();
-		}
 		return nodeChooser.chooseRandomNode(WeightRule.WEIGHT_FOR_GUARD, new RouterFilter() {
 			public boolean filter(Router router) {
 				return router.isPossibleGuard() && !excludedRouters.contains(router);
@@ -75,7 +69,7 @@ public class CircuitPathChooser {
 		});
 	}
 
-	Router chooseExitNodeForTargets(List<ExitTarget> targets) {
+	public Router chooseExitNodeForTargets(List<ExitTarget> targets) {
 		final List<Router> routers = filterForExitTargets(
 				getUsableExitRouters(), targets);
 		return nodeChooser.chooseExitNode(routers);

@@ -25,7 +25,7 @@ public class CircuitBuildTask implements Runnable {
 	private final CircuitCreationRequest creationRequest;
 	private final ConnectionCache connectionCache;
 	private final TorInitializationTracker initializationTracker;
-	private final CircuitImpl circuit;
+	private final CircuitBase circuit;
 
 	CircuitBuildTask(CircuitCreationRequest request, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.creationRequest = request;

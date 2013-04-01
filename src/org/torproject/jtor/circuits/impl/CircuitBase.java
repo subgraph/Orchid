@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.TorException;
@@ -17,6 +15,8 @@ import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
+import org.torproject.jtor.circuits.path.CircuitPathChooser;
+import org.torproject.jtor.circuits.path.PathSelectionFailedException;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Router;
@@ -25,33 +25,31 @@ import org.torproject.jtor.directory.Router;
  * This class represents an established circuit through the Tor network.
  *
  */
-public class CircuitImpl implements Circuit {
-	private final static Logger logger = Logger.getLogger(CircuitImpl.class.getName());
+abstract class CircuitBase implements Circuit {
+	private final static Logger logger = Logger.getLogger(CircuitBase.class.getName());
 	
-	static CircuitImpl create(CircuitManagerImpl circuitManager) {
-		return new CircuitImpl(circuitManager, false);
+	static ExitCircuit create(CircuitManagerImpl circuitManager, Router exitRouter) {
+		return new ExitCircuit(circuitManager, exitRouter);
 	}
 	
-	static CircuitImpl createDirectoryCircuit(CircuitManagerImpl circuitManager) {
-		return new CircuitImpl(circuitManager, true);
+	static DirectoryCircuit createDirectoryCircuit(CircuitManagerImpl circuitManager) {
+		return new DirectoryCircuit(circuitManager);
 	}
 
 	private final CircuitManagerImpl circuitManager;
 	private final List<CircuitNodeImpl> nodeList;
-	private final Set<ExitTarget> failedExitRequests;
 	private final CircuitStatus status;
-	private final boolean isDirectoryCircuit;
 
 	private CircuitIO io;
 
-	private CircuitImpl(CircuitManagerImpl circuitManager, boolean isDirectoryCircuit) {
+	protected CircuitBase(CircuitManagerImpl circuitManager) {
 		nodeList = new ArrayList<CircuitNodeImpl>();
 		this.circuitManager = circuitManager;
-		this.isDirectoryCircuit = isDirectoryCircuit;
-		this.failedExitRequests = new HashSet<ExitTarget>();
 		status = new CircuitStatus();
 	}
 
+	abstract List<Router> choosePath(CircuitPathChooser pathChooser) throws InterruptedException, PathSelectionFailedException;
+	
 	void bindToConnection(Connection connection) {
 		if(io != null) {
 			throw new IllegalStateException("Circuit already bound to a connection");
@@ -75,7 +73,7 @@ public class CircuitImpl implements Circuit {
 	}
 
 	boolean isDirectoryCircuit() {
-		return isDirectoryCircuit;
+		return false;
 	}
 
 	CircuitStatus getStatus() {
@@ -183,24 +181,22 @@ public class CircuitImpl implements Circuit {
 	}
 
 	public OpenStreamResponse openDirectoryStream() {
-		final StreamImpl stream = io.createNewStream();
-		final OpenStreamResponse response = stream.openDirectory();
-		processOpenStreamResponse(stream, response);
-		return response;
+		throw new UnsupportedOperationException();
 	}
 
 	public OpenStreamResponse openExitStream(IPv4Address address, int port) {
-		return openExitStream(address.toString(), port);
+		throw new UnsupportedOperationException();
 	}
 
 	public OpenStreamResponse openExitStream(String target, int port) {
-		final StreamImpl stream = io.createNewStream();
-		final OpenStreamResponse response = stream.openExit(target, port);
-		processOpenStreamResponse(stream, response);
-		return response;
+		throw new UnsupportedOperationException();
 	}
 
-	private void processOpenStreamResponse(StreamImpl stream, OpenStreamResponse response) {
+	protected StreamImpl createNewStream() {
+		return io.createNewStream();
+	}
+
+	protected void processOpenStreamResponse(StreamImpl stream, OpenStreamResponse response) {
 		switch(response.getStatus()) {
 		case STATUS_STREAM_TIMEOUT:
 			logger.info("Timeout opening stream: "+ stream);
@@ -239,34 +235,19 @@ public class CircuitImpl implements Circuit {
 	}
 
 	public void recordFailedExitTarget(ExitTarget target) {
-		synchronized(failedExitRequests) {
-			failedExitRequests.add(target);
-		}
+		throw new UnsupportedOperationException();
 	}
 
 	public boolean canHandleExitTo(ExitTarget target) {
-		synchronized(failedExitRequests) {
-			if(failedExitRequests.contains(target))
-				return false;
-		}
-
-		final Router lastRouter = status.getFinalRouter();
-		if(target.isAddressTarget())
-			return lastRouter.exitPolicyAccepts(target.getAddress(), target.getPort());
-		else
-			return lastRouter.exitPolicyAccepts(target.getPort());
+		return false;
 	}
 	
 	public boolean canHandleExitToPort(int port) {
-		final Router lastRouter = status.getFinalRouter();
-		return lastRouter.exitPolicyAccepts(port);
+		return false;
 	}
 
 	public String toString() {
 		int id = (io == null) ? 0 : io.getCircuitId();
-		if(status.isDirty()) {
-			
-		}
 		return "  Circuit id="+ id +" state=" + status.getStateAsString() +" "+ pathToString();
 	}
 
@@ -292,8 +273,8 @@ public class CircuitImpl implements Circuit {
 	}
 
 	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
-		writer.println(toString());
 		if(io != null) {
+			writer.println(toString());
 			io.dashboardRender(writer, flags);
 		}
 	}

@@ -26,6 +26,7 @@ import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Directory;
+import org.torproject.jtor.directory.Router;
 
 public class CircuitManagerImpl implements CircuitManager {
 	
@@ -34,11 +35,11 @@ public class CircuitManagerImpl implements CircuitManager {
 	private final static boolean USE_ENTRY_GUARDS = true;
 	
 	interface CircuitFilter {
-		boolean filter(CircuitImpl circuit);
+		boolean filter(CircuitBase circuit);
 	}
 
 	private final ConnectionCache connectionCache;
-	private final Set<CircuitImpl> activeCircuits;
+	private final Set<CircuitBase> activeCircuits;
 	private final TorRandom random;
 	private final List<StreamExitRequest> pendingExitStreams = new LinkedList<StreamExitRequest>();
 	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -54,7 +55,7 @@ public class CircuitManagerImpl implements CircuitManager {
 		}
 		
 		this.circuitCreationTask = new CircuitCreationTask(directory, connectionCache, pathChooser, this, initializationTracker);
-		this.activeCircuits = new HashSet<CircuitImpl>();
+		this.activeCircuits = new HashSet<CircuitBase>();
 		this.random = new TorRandom();
 		this.initializationTracker = initializationTracker;
 	}
@@ -80,18 +81,17 @@ public class CircuitManagerImpl implements CircuitManager {
 		}};
 	}
 
-	public CircuitImpl createNewCircuit() {
-		return CircuitImpl.create(this);
-		
+	public ExitCircuit createNewExitCircuit(Router exitRouter) {
+		return CircuitBase.create(this, exitRouter);
 	}
 
-	void addActiveCircuit(CircuitImpl circuit) {
+	void addActiveCircuit(CircuitBase circuit) {
 		synchronized (activeCircuits) {
 			activeCircuits.add(circuit);
 		}
 	}
 	
-	void removeActiveCircuit(CircuitImpl circuit) {
+	void removeActiveCircuit(CircuitBase circuit) {
 		synchronized (activeCircuits) {
 			activeCircuits.remove(circuit);
 		}
@@ -100,7 +100,7 @@ public class CircuitManagerImpl implements CircuitManager {
 	Set<Circuit> getCleanCircuits() {
 		final Set<Circuit> result = new HashSet<Circuit>();
 		synchronized(activeCircuits) {
-			for(CircuitImpl c: activeCircuits) {
+			for(CircuitBase c: activeCircuits) {
 				if(c.isClean() && !c.isDirectoryCircuit()) {
 					result.add(c);
 				}
@@ -119,7 +119,7 @@ public class CircuitManagerImpl implements CircuitManager {
 
 	Set<Circuit> getPendingCircuits() {
 		return getCircuitsByFilter(new CircuitFilter() {
-			public boolean filter(CircuitImpl circuit) {
+			public boolean filter(CircuitBase circuit) {
 				return circuit.isPending();
 			}
 		});
@@ -132,7 +132,7 @@ public class CircuitManagerImpl implements CircuitManager {
 	Set<Circuit> getCircuitsByFilter(CircuitFilter filter) {
 		final Set<Circuit> result = new HashSet<Circuit>();
 		synchronized (activeCircuits) {
-			for(CircuitImpl c: activeCircuits) {
+			for(CircuitBase c: activeCircuits) {
 				if(filter == null || filter.filter(c)) {
 					result.add(c);
 				}
@@ -144,7 +144,7 @@ public class CircuitManagerImpl implements CircuitManager {
 	List<Circuit> getRandomlyOrderedListOfActiveCircuits() {
 		final Set<Circuit> notDirectory = getCircuitsByFilter(new CircuitFilter() {
 			
-			public boolean filter(CircuitImpl circuit) {
+			public boolean filter(CircuitBase circuit) {
 				return !circuit.isDirectoryCircuit() && circuit.isConnected();
 			}
 		});
@@ -201,9 +201,9 @@ public class CircuitManagerImpl implements CircuitManager {
 		final int requestEventCode = purposeToEventCode(purpose, false);
 		final int loadingEventCode = purposeToEventCode(purpose, true);
 		
-		final CircuitImpl circuit = createNewCircuit();
+		final CircuitBase circuit = CircuitBase.createDirectoryCircuit(this);
 		final DirectoryCircuitResult result = new DirectoryCircuitResult();
-		final CircuitCreationRequest req = new CircuitCreationRequest(pathChooser, circuit, null, result, true);
+		final CircuitCreationRequest req = new CircuitCreationRequest(pathChooser, circuit, result);
 		final CircuitBuildTask task = new CircuitBuildTask(req, connectionCache, initializationTracker);
 		task.run();
 

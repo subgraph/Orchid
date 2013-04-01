@@ -18,6 +18,7 @@ import org.torproject.jtor.circuits.path.CircuitPathChooser;
 import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Directory;
+import org.torproject.jtor.directory.Router;
 
 public class CircuitCreationTask implements Runnable {
 	private final static Logger logger = Logger.getLogger(CircuitCreationTask.class.getName());
@@ -89,13 +90,13 @@ public class CircuitCreationTask implements Runnable {
 	private void expireOldCircuits() {
 		final Set<Circuit> circuits = circuitManager.getCircuitsByFilter(new CircuitFilter() {
 
-			public boolean filter(CircuitImpl circuit) {
+			public boolean filter(CircuitBase circuit) {
 				return !circuit.isMarkedForClose() && circuit.getSecondsDirty() > MAX_CIRCUIT_DIRTINESS;
 			}
 		});
 		for(Circuit c: circuits) {
 			logger.fine("Closing idle dirty circuit: "+ c);
-			((CircuitImpl)c).markForClose();
+			((CircuitBase)c).markForClose();
 		}
 	}
 	private void checkExpiredPendingCircuits() {
@@ -130,11 +131,10 @@ public class CircuitCreationTask implements Runnable {
 
 	private int countCircuitsSupportingTarget(final ExitTarget target, final boolean needClean) {
 		final CircuitFilter filter = new CircuitFilter() {
-			public boolean filter(CircuitImpl circuit) {
-				final boolean notDirectory = !circuit.isDirectoryCircuit();
+			public boolean filter(CircuitBase circuit) {
 				final boolean pendingOrConnected = circuit.isPending() || circuit.isConnected();
 				final boolean isCleanIfNeeded = !(needClean && !circuit.isClean());
-				return notDirectory && pendingOrConnected && isCleanIfNeeded && circuit.canHandleExitTo(target);
+				return pendingOrConnected && isCleanIfNeeded && circuit.canHandleExitTo(target);
 			}
 		};
 		return circuitManager.getCircuitsByFilter(filter).size();
@@ -157,8 +157,14 @@ public class CircuitCreationTask implements Runnable {
 	}
 
 	private void launchBuildTaskForTargets(List<ExitTarget> exitTargets) {
-		final CircuitImpl circuit = circuitManager.createNewCircuit();
-		final CircuitCreationRequest request = new CircuitCreationRequest(pathChooser, circuit, exitTargets, buildHandler, false);
+		final Router exitRouter = pathChooser.chooseExitNodeForTargets(exitTargets);
+		if(exitRouter == null) {
+			logger.warning("Failed to select suitable exit node for targets");
+			return;
+		}
+		
+		final CircuitBase circuit = circuitManager.createNewExitCircuit(exitRouter);
+		final CircuitCreationRequest request = new CircuitCreationRequest(pathChooser, circuit, buildHandler);
 		final CircuitBuildTask task = new  CircuitBuildTask(request, connectionCache, initializationTracker);
 		executor.execute(task);
 	}

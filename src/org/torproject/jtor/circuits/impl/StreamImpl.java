@@ -20,7 +20,7 @@ public class StreamImpl implements Stream {
 	private final static int STREAMWINDOW_START = 500;
 	private final static int STREAMWINDOW_INCREMENT = 50;
 	private final static int STREAMWINDOW_MAX_UNFLUSHED = 10;
-	private final CircuitImpl circuit;
+	private final CircuitBase circuit;
 	private final int streamId;
 	private final CircuitNode targetNode;
 	private final TorInputStream inputStream;
@@ -36,7 +36,7 @@ public class StreamImpl implements Stream {
 
 	private String streamTarget = "";
 	
-	StreamImpl(CircuitImpl circuit, CircuitNode targetNode, int streamId) {
+	StreamImpl(CircuitBase circuit, CircuitNode targetNode, int streamId) {
 		this.circuit = circuit;
 		this.targetNode = targetNode;
 		this.streamId = streamId;

@@ -8,35 +8,26 @@ import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.path.CircuitPathChooser;
 import org.torproject.jtor.circuits.path.PathSelectionFailedException;
-import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Router;
 
 public class CircuitCreationRequest implements CircuitBuildHandler {
-	private final CircuitImpl circuit;
+	private final CircuitBase circuit;
 	private final CircuitPathChooser pathChooser;
-	private final List<ExitTarget> targets;
 	private final CircuitBuildHandler buildHandler;
-	private final boolean isDirectoryCircuit;
 	
 	private List<Router> path;
 	
-	CircuitCreationRequest(CircuitPathChooser pathChooser, CircuitImpl circuit, List<ExitTarget> targets, CircuitBuildHandler buildHandler, boolean isDirectoryCircuit) {
+	CircuitCreationRequest(CircuitPathChooser pathChooser, CircuitBase circuit, CircuitBuildHandler buildHandler) {
 		this.pathChooser = pathChooser;
 		this.circuit = circuit;
-		this.targets = targets;
 		this.buildHandler = buildHandler;
-		this.isDirectoryCircuit = isDirectoryCircuit;
 	}
 	
 	void choosePath() throws InterruptedException, PathSelectionFailedException {
-		if(isDirectoryCircuit) {
-			path = pathChooser.chooseDirectoryPath();
-		} else {
-			path = pathChooser.choosePathForTargets(targets);
-		}
+		path = circuit.choosePath(pathChooser);
 	}
 
-	CircuitImpl getCircuit() {
+	CircuitBase getCircuit() {
 		return circuit;
 	}
 
@@ -57,7 +48,7 @@ public class CircuitCreationRequest implements CircuitBuildHandler {
 	}
 	
 	boolean isDirectoryCircuit() {
-		return isDirectoryCircuit;
+		return circuit.isDirectoryCircuit();
 	}
 
 	public void connectionCompleted(Connection connection) {
