@@ -87,10 +87,18 @@ public class TorKeyAgreement {
 	public byte[] getPublicKeyBytes() {
 		final byte[] output = new byte[128];
 		final byte[] yBytes = getPublicValue().toByteArray();
-		final int offset = yBytes.length - DH_LEN;
-		System.arraycopy(yBytes, offset, output, 0, DH_LEN);
+		if(yBytes[0] == 0 && yBytes.length == (DH_LEN + 1)) {
+			System.arraycopy(yBytes, 1, output, 0, DH_LEN);
+		} else if (yBytes.length <= DH_LEN) {
+			final int offset = DH_LEN - yBytes.length;
+			System.arraycopy(yBytes, 0, output, offset, yBytes.length);
+		} else {
+			throw new IllegalStateException("Public value is longer than DH_LEN but not because of sign bit");
+		}
 		return output;
 	}
+	
+	
 	
 	/**
 	 * Return <code>true</code> if the specified value is a legal public
