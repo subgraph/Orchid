@@ -176,7 +176,7 @@ public class CircuitCreationTask implements Runnable {
 			}
 
 			public void connectionCompleted(Connection connection) {
-				logger.fine("Circuit connection completed to "+ connection);
+				logger.finer("Circuit connection completed to "+ connection);
 			}
 
 			public void connectionFailed(String reason) {
@@ -184,7 +184,7 @@ public class CircuitCreationTask implements Runnable {
 			}
 
 			public void nodeAdded(CircuitNode node) {
-				logger.fine("Node added to circuit: "+ node);
+				logger.finer("Node added to circuit: "+ node);
 			}	
 		};
 	}

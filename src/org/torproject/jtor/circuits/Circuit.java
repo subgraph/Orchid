@@ -1,8 +1,11 @@
 package org.torproject.jtor.circuits;
 
+import java.util.List;
+
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
+import org.torproject.jtor.dashboard.DashboardRenderable;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;
 
@@ -11,7 +14,7 @@ import org.torproject.jtor.data.exitpolicy.ExitTarget;
  * section 5 of tor-spec.txt.
  *
  */
-public interface Circuit {
+public interface Circuit extends DashboardRenderable {
 	/**
 	 * Return <code>true</code> if the circuit is presently in the connected state or
 	 * <code>false</code> otherwise.
@@ -127,4 +130,6 @@ public interface Circuit {
 	void deliverRelayCell(Cell cell);
 
 	void deliverControlCell(Cell cell);
+	
+	List<Stream> getActiveStreams();
 }

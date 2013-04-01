@@ -4,6 +4,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -30,6 +31,7 @@ import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.impl.CellImpl;
 import org.torproject.jtor.circuits.impl.TorInitializationTracker;
 import org.torproject.jtor.crypto.TorRandom;
+import org.torproject.jtor.dashboard.DashboardRenderable;
 import org.torproject.jtor.directory.Router;
 
 /**
@@ -37,7 +39,7 @@ import org.torproject.jtor.directory.Router;
  * between an onion proxy and an entry router.
  *
  */
-public class ConnectionImpl implements Connection {
+public class ConnectionImpl implements Connection, DashboardRenderable {
 	private final static Logger logger = Logger.getLogger(ConnectionImpl.class.getName());
 	private final static int CONNECTION_IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 	private final static int DEFAULT_CONNECT_TIMEOUT = 5000;
@@ -319,5 +321,14 @@ public class ConnectionImpl implements Connection {
 
 	public String toString() {
 		return "!" + router.getNickname() + "!";
+	}
+
+	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
+		writer.print("  [Connection router="+ router.getNickname());
+		synchronized(circuitMap) {
+			writer.print(" circuits="+ circuitMap.size());
+		}
+		writer.print(" idle="+ (getIdleMilliseconds()/1000) + "s");
+		writer.println("]");
 	}
 }

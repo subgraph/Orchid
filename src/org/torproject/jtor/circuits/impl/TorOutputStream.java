@@ -10,19 +10,26 @@ public class TorOutputStream extends OutputStream {
 	private final StreamImpl stream;
 	private RelayCell currentOutputCell;
 	private volatile boolean isClosed;
+	private long bytesSent;
 
 	TorOutputStream(StreamImpl stream) {
 		this.stream = stream;
+		this.bytesSent = 0;
 	}
 
 	private void flushCurrentOutputCell() {
 		if(currentOutputCell != null && currentOutputCell.cellBytesConsumed() > RelayCell.HEADER_SIZE) {
 			stream.waitForSendWindowAndDecrement();
 			stream.getCircuit().sendRelayCell(currentOutputCell);
+			bytesSent += (currentOutputCell.cellBytesConsumed() - RelayCell.HEADER_SIZE);
 		}
 
 		currentOutputCell = new RelayCellImpl(stream.getTargetNode(), stream.getCircuit().getCircuitId(),
 				stream.getStreamId(), RelayCell.RELAY_DATA);
+	}
+
+	long getBytesSent() {
+		return bytesSent;
 	}
 
 	@Override

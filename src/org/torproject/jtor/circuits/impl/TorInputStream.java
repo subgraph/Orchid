@@ -18,10 +18,17 @@ public class TorInputStream extends InputStream {
 	private int availableBytes;
 	private volatile boolean isClosed;
 	private boolean isEOF;
+	private long bytesReceived;
+	
 	TorInputStream(StreamImpl stream) {
 		this.stream = stream;
 		this.isClosed = false;
+		this.bytesReceived = 0;
 		incomingCells = new LinkedBlockingQueue<RelayCell>();
+	}
+
+	long getBytesReceived() {
+			return bytesReceived;
 	}
 
 	@Override
@@ -111,6 +118,7 @@ public class TorInputStream extends InputStream {
 		if(isClosed)
 			return;
 		synchronized(incomingCells) {
+			bytesReceived += cell.cellBytesRemaining();
 			availableBytes += cell.cellBytesRemaining();
 			incomingCells.add(cell);
 		}

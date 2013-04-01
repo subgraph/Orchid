@@ -9,6 +9,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.impl.TorInitializationTracker;
+import org.torproject.jtor.dashboard.Dashboard;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.downloader.DirectoryDownloader;
 import org.torproject.jtor.socks.SocksPortListener;
@@ -24,6 +25,7 @@ public class TorClient {
 	private final CircuitManager circuitManager;
 	private final SocksPortListener socksListener;
 	private final DirectoryDownloader directoryDownloader;
+	private final Dashboard dashboard;
 
 	private boolean isStarted = false;
 	
@@ -35,6 +37,9 @@ public class TorClient {
 		circuitManager = Tor.createCircuitManager(directory, initializationTracker);
 		directoryDownloader = Tor.createDirectoryDownloader(directory, circuitManager);
 		socksListener = Tor.createSocksPortListener(circuitManager);
+		
+		dashboard = new Dashboard(); 
+		dashboard.addRenderables(circuitManager, directoryDownloader, socksListener);
 	}
 
 	public TorConfig getConfig() {
@@ -67,8 +72,26 @@ public class TorClient {
 	}
 
 	public void enableSocksListener() {
-		enableSocksListener(5090);
+		enableSocksListener(9150);
 	}
+	
+	public void enableDashboard() {
+		if(!dashboard.isListening()) {
+			dashboard.startListening();
+		}
+	}
+	
+	public void enableDashboard(int port) {
+		dashboard.setListeningPort(port);
+		enableDashboard();
+	}
+	
+	public void disableDashboard() {
+		if(dashboard.isListening()) {
+			dashboard.stopListening();
+		}
+	}
+
 	void addInitializationListener(TorInitializationListener listener) {
 		initializationTracker.addListener(listener);
 	}
@@ -84,6 +107,7 @@ public class TorClient {
 		client.addInitializationListener(createInitalizationListner());
 		client.start();
 		client.enableSocksListener();
+		client.enableDashboard();
 	}
 	
 	public static void setupLogging() {

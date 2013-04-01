@@ -1,6 +1,9 @@
 package org.torproject.jtor.circuits.impl;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,6 +14,7 @@ import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.OpenStreamResponse;
+import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.data.IPv4Address;
@@ -260,9 +264,13 @@ public class CircuitImpl implements Circuit {
 
 	public String toString() {
 		int id = (io == null) ? 0 : io.getCircuitId();
-		return "Circuit id="+ id +" state=" + status.getStateAsString() +" "+ pathToString();
+		if(status.isDirty()) {
+			
+		}
+		return "  Circuit id="+ id +" state=" + status.getStateAsString() +" "+ pathToString();
 	}
 
+	
 	private  String pathToString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("[");
@@ -273,5 +281,20 @@ public class CircuitImpl implements Circuit {
 		}
 		sb.append("]");
 		return sb.toString();
+	}
+
+	public List<Stream> getActiveStreams() {
+		if(io == null) {
+			return Collections.emptyList();
+		} else {
+			return io.getActiveStreams();
+		}
+	}
+
+	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
+		writer.println(toString());
+		if(io != null) {
+			io.dashboardRender(writer, flags);
+		}
 	}
 }

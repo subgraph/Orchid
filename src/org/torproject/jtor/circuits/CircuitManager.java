@@ -1,9 +1,10 @@
 package org.torproject.jtor.circuits;
 
+import org.torproject.jtor.dashboard.DashboardRenderable;
 import org.torproject.jtor.data.IPv4Address;
 
 
-public interface CircuitManager {
+public interface CircuitManager extends DashboardRenderable {
 
 	static int DIRECTORY_PURPOSE_CONSENSUS = 1;
 	static int DIRECTORY_PURPOSE_CERTIFICATES = 2;

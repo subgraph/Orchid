@@ -3,7 +3,9 @@ package org.torproject.jtor.circuits;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public interface Stream {
+import org.torproject.jtor.dashboard.DashboardRenderable;
+
+public interface Stream extends DashboardRenderable {
 	/**
 	 * Returns the {@link Circuit} this stream belongs to.
 	 * 

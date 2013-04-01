@@ -1,5 +1,7 @@
 package org.torproject.jtor.circuits.impl;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -131,7 +133,7 @@ public class CircuitManagerImpl implements CircuitManager {
 		final Set<Circuit> result = new HashSet<Circuit>();
 		synchronized (activeCircuits) {
 			for(CircuitImpl c: activeCircuits) {
-				if(filter.filter(c)) {
+				if(filter == null || filter.filter(c)) {
 					result.add(c);
 				}
 			}
@@ -260,5 +262,14 @@ public class CircuitManagerImpl implements CircuitManager {
 			return errorMessage;
 		}
 	}
-	
+
+	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
+		connectionCache.dashboardRender(writer, flags);
+		writer.println("[Circuit Manager]");
+		writer.println();
+		for(Circuit c: getCircuitsByFilter(null)) {
+			c.dashboardRender(writer, flags);
+		}
+		writer.println();
+	}
 }

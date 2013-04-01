@@ -115,9 +115,19 @@ public class CircuitStatus {
 	}
 
 	String getStateAsString() {
+		if(state == CircuitState.OPEN) {
+			return state.toString() + " ["+ getDirtyString() + "]";
+		}
 		return state.toString();
 	}
 
+	private String getDirtyString() {
+		if(!isDirty()) {
+			return "Clean";
+		} else {
+			return "Dirty "+ (getMillisecondsDirty() / 1000) +"s"; 
+		}
+	}
 	int nextStreamId() {
 		synchronized(streamIdLock) {
 			currentStreamId++;

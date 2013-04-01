@@ -1,5 +1,9 @@
 package org.torproject.jtor.connections;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,9 +23,10 @@ import org.torproject.jtor.circuits.ConnectionFailedException;
 import org.torproject.jtor.circuits.ConnectionHandshakeException;
 import org.torproject.jtor.circuits.ConnectionTimeoutException;
 import org.torproject.jtor.circuits.impl.TorInitializationTracker;
+import org.torproject.jtor.dashboard.DashboardRenderable;
 import org.torproject.jtor.directory.Router;
 
-public class ConnectionCache {
+public class ConnectionCache implements DashboardRenderable {
 	private final static Logger logger = Logger.getLogger(ConnectionCache.class.getName());
 	
 	private class ConnectionTask implements Callable<ConnectionImpl> {
@@ -94,6 +99,43 @@ public class ConnectionCache {
 		}
 	}
 	
+	
+	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
+		writer.println("[Connection Cache]");
+		writer.println();
+		for(ConnectionImpl c: getActiveConnections()) {
+			if(!c.isClosed()) {
+				c.dashboardRender(writer, flags);
+			}
+		}
+		writer.println();
+	}
+
+	public List<ConnectionImpl> getActiveConnections() {
+		List<ConnectionImpl> cs = new ArrayList<ConnectionImpl>();
+		for(Future<ConnectionImpl> future: activeConnections.values()) {
+			ConnectionImpl connection = getConnectionFromFuture(future);
+			if(connection != null) {
+				cs.add(connection);
+			}
+		}
+		return cs;
+	}
+
+	private ConnectionImpl getConnectionFromFuture(Future<ConnectionImpl> future) {
+		if(!future.isDone() || future.isCancelled()) {
+			return null;
+		}
+		try {
+			return future.get();
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			return null;
+		} catch (ExecutionException e) {
+			return null;
+		}
+	}
+
 	private Future<ConnectionImpl> getFutureFor(Router router, boolean isDirectoryConnection) {
 		Future<ConnectionImpl> f = activeConnections.get(router);
 		if(f != null) {

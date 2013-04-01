@@ -1,5 +1,7 @@
 package org.torproject.jtor.circuits.impl;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,10 +16,12 @@ import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.ConnectionIOException;
+import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
+import org.torproject.jtor.dashboard.DashboardRenderable;
 
-public class CircuitIO {
+public class CircuitIO implements DashboardRenderable {
 	private static final Logger logger = Logger.getLogger(CircuitIO.class.getName());
 	private final static long CIRCUIT_BUILD_TIMEOUT_MS = 30 * 1000;
 	private final static long CIRCUIT_RELAY_RESPONSE_TIMEOUT = 20 * 1000;
@@ -289,6 +293,18 @@ public class CircuitIO {
 			if(streamMap.isEmpty() && isMarkedForClose) {
 				closeCircuit();
 			}
+		}
+	}
+	
+	List<Stream> getActiveStreams() {
+		synchronized (streamMap) {
+			return new ArrayList<Stream>(streamMap.values());
+		}
+	}
+
+	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
+		for(Stream s: getActiveStreams()) {
+			s.dashboardRender(writer, flags);
 		}
 	}
 }

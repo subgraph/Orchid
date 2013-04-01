@@ -1,7 +1,9 @@
 package org.torproject.jtor.circuits.impl;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.util.Date;
 import java.util.logging.Logger;
 
@@ -197,5 +199,17 @@ public class StreamImpl implements Stream {
 
 	public String toString() {
 		return "[Stream stream_id="+ streamId + " circuit="+ circuit +" target="+ streamTarget +"]";
+	}
+
+	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
+		writer.print("     ");
+		writer.print("[Stream stream_id="+ streamId + " cid="+ circuit.getCircuitId());
+		if(relayConnectedReceived) {
+			writer.print(" sent="+outputStream.getBytesSent() + " recv="+ inputStream.getBytesReceived());
+		} else {
+			writer.print(" (waiting connect)");
+		}
+		writer.print(" target="+ streamTarget);
+		writer.println("]");
 	}
 }
