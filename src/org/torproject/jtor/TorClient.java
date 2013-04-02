@@ -1,6 +1,7 @@
 package org.torproject.jtor;
 
 import java.security.Security;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -63,17 +64,33 @@ public class TorClient {
 	}
 	
 	public void waitUntilReady() throws InterruptedException {
-		waitUntilReady(0);
+		try {
+			waitUntilReady(0);
+		} catch (TimeoutException e) { /* can't happen */ }
 	}
 
-	public void waitUntilReady(long timeout) throws InterruptedException {
+	public void waitUntilReady(long timeout) throws InterruptedException, TimeoutException {
+		final long start = System.currentTimeMillis();
 		synchronized (readyLock) {
 			while(!isReady) {
-				readyLock.wait(timeout);
+				long remaining = timeRemaining(start, timeout);
+				if(timeout > 0 && remaining == 0) {
+					throw new TimeoutException();
+				}
+				readyLock.wait(remaining);
 			}
 		}
 	}
 
+	private long timeRemaining(long start, long timeout) {
+		if(timeout == 0) {
+			return 0;
+		}
+		final long now = System.currentTimeMillis();
+		final long elapsed = now - start;
+		return (elapsed > timeout) ? 0 : (timeout - elapsed);
+	}
+	
 	public OpenStreamResponse openExitStreamTo(String hostname, int port) throws InterruptedException {
 		if(!isStarted) {
 			throw new IllegalStateException("Must call start() first");
