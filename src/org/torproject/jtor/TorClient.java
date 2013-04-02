@@ -28,12 +28,15 @@ public class TorClient {
 	private final Dashboard dashboard;
 
 	private boolean isStarted = false;
+	private volatile boolean isReady = false;
+	private Object readyLock = new Object();
 	
 	public TorClient() {
 		Security.addProvider(new BouncyCastleProvider());
 		config = Tor.createConfig();
 		directory = Tor.createDirectory(config);
 		initializationTracker = Tor.createInitalizationTracker();
+		initializationTracker.addListener(createReadyFlagInitializationListener());
 		circuitManager = Tor.createCircuitManager(directory, initializationTracker);
 		directoryDownloader = Tor.createDirectoryDownloader(directory, circuitManager);
 		socksListener = Tor.createSocksPortListener(circuitManager);
@@ -53,11 +56,22 @@ public class TorClient {
 		if(isStarted) {
 			return;
 		}
-		
 		directory.loadFromStore();
 		directoryDownloader.start();
 		circuitManager.startBuildingCircuits();
 		isStarted = true;
+	}
+	
+	public void waitUntilReady() throws InterruptedException {
+		waitUntilReady(0);
+	}
+
+	public void waitUntilReady(long timeout) throws InterruptedException {
+		synchronized (readyLock) {
+			while(!isReady) {
+				readyLock.wait(timeout);
+			}
+		}
 	}
 
 	public OpenStreamResponse openExitStreamTo(String hostname, int port) throws InterruptedException {
@@ -100,6 +114,18 @@ public class TorClient {
 		initializationTracker.removeListener(listener);
 	}
 	
+	private TorInitializationListener createReadyFlagInitializationListener() {
+		return new TorInitializationListener() {
+			public void initializationProgress(String message, int percent) {}
+			public void initializationCompleted() {
+				synchronized (readyLock) {
+					isReady = true;
+					readyLock.notifyAll();
+				}
+			}
+		};
+	}
+
 	public static void main(String[] args) {
 		setupLogging();
 		final TorClient client = new TorClient();
