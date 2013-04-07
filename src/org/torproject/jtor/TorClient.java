@@ -10,6 +10,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.impl.TorInitializationTracker;
+import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.dashboard.Dashboard;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.downloader.DirectoryDownloader;
@@ -23,6 +24,7 @@ public class TorClient {
 	private final TorConfig config;
 	private final Directory directory;
 	private final TorInitializationTracker initializationTracker;
+	private final ConnectionCache connectionCache;
 	private final CircuitManager circuitManager;
 	private final SocksPortListener socksListener;
 	private final DirectoryDownloader directoryDownloader;
@@ -38,7 +40,8 @@ public class TorClient {
 		directory = Tor.createDirectory(config);
 		initializationTracker = Tor.createInitalizationTracker();
 		initializationTracker.addListener(createReadyFlagInitializationListener());
-		circuitManager = Tor.createCircuitManager(directory, initializationTracker);
+		connectionCache = Tor.createConnectionCache(initializationTracker);
+		circuitManager = Tor.createCircuitManager(directory, connectionCache, initializationTracker);
 		directoryDownloader = Tor.createDirectoryDownloader(directory, circuitManager);
 		socksListener = Tor.createSocksPortListener(circuitManager);
 		
@@ -63,6 +66,18 @@ public class TorClient {
 		isStarted = true;
 	}
 	
+	public Directory getDirectory() {
+		return directory;
+	}
+	
+	public ConnectionCache getConnectionCache() {
+		return connectionCache;
+	}
+
+	public CircuitManager getCircuitManager() {
+		return circuitManager;
+	}
+
 	public void waitUntilReady() throws InterruptedException {
 		try {
 			waitUntilReady(0);
