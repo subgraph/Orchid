@@ -312,8 +312,17 @@ public class DirectoryImpl implements Directory {
 	}
 
 	public Router getRouterByName(String name) {
-		if(name.equals("Unnamed"))
+		if(name.equals("Unnamed")) {
 			return null;
+		}
+		if(name.length() == 41 && name.charAt(0) == '$') {
+			try {
+				final HexDigest identity = HexDigest.createFromString(name.substring(1));
+				return getRouterByIdentity(identity);
+			} catch (Exception e) {
+				return null;
+			}
+		}
 		return routersByNickname.get(name);
 	}
 
