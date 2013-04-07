@@ -17,20 +17,20 @@ import org.torproject.jtor.socks.impl.SocksPortListenerImpl;
  */
 public class Tor {
 	
-	public static int BOOTSTRAP_STATUS_STARTING = 0;
-	public static int BOOTSTRAP_STATUS_CONN_DIR = 5;
-	public static int BOOTSTRAP_STATUS_HANDSHAKE_DIR = 10;
-	public static int BOOTSTRAP_STATUS_ONEHOP_CREATE = 15;
-	public static int BOOTSTRAP_STATUS_REQUESTING_STATUS = 20;
-	public static int BOOTSTRAP_STATUS_LOADING_STATUS = 25;
-	public static int BOOTSTRAP_STATUS_REQUESTING_KEYS = 35;
-	public static int BOOTSTRAP_STATUS_LOADING_KEYS = 40;
-	public static int BOOTSTRAP_STATUS_REQUESTING_DESCRIPTORS = 45;
-	public static int BOOTSTRAP_STATUS_LOADING_DESCRIPTORS = 50;
-	public static int BOOTSTRAP_STATUS_CONN_OR = 80;
-	public static int BOOTSTRAP_STATUS_HANDSHAKE_OR = 85;
-	public static int BOOTSTRAP_STATUS_CIRCUIT_CREATE = 90;
-	public static int BOOTSTRAP_STATUS_DONE = 100;
+	public final static int BOOTSTRAP_STATUS_STARTING = 0;
+	public final static int BOOTSTRAP_STATUS_CONN_DIR = 5;
+	public final static int BOOTSTRAP_STATUS_HANDSHAKE_DIR = 10;
+	public final static int BOOTSTRAP_STATUS_ONEHOP_CREATE = 15;
+	public final static int BOOTSTRAP_STATUS_REQUESTING_STATUS = 20;
+	public final static int BOOTSTRAP_STATUS_LOADING_STATUS = 25;
+	public final static int BOOTSTRAP_STATUS_REQUESTING_KEYS = 35;
+	public final static int BOOTSTRAP_STATUS_LOADING_KEYS = 40;
+	public final static int BOOTSTRAP_STATUS_REQUESTING_DESCRIPTORS = 45;
+	public final static int BOOTSTRAP_STATUS_LOADING_DESCRIPTORS = 50;
+	public final static int BOOTSTRAP_STATUS_CONN_OR = 80;
+	public final static int BOOTSTRAP_STATUS_HANDSHAKE_OR = 85;
+	public final static int BOOTSTRAP_STATUS_CIRCUIT_CREATE = 90;
+	public final static int BOOTSTRAP_STATUS_DONE = 100;
 	
 	
 	private final static String implementation = "JTor";
