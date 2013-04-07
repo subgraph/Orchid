@@ -14,6 +14,7 @@ public class GuardEntryImpl implements GuardEntry {
 	private final StateFile stateFile;
 	private final String nickname;
 	private final String identity;
+	private final Object lock = new Object();
 	private String version;
 	private Date createdTime;
 	
@@ -41,41 +42,51 @@ public class GuardEntryImpl implements GuardEntry {
 		this.createdTime = date;
 	}
 
-	synchronized void setUnlistedSince(Date date) {
-		unlistedSince = date;
+	void setUnlistedSince(Date date) {
+		synchronized(lock) {
+			unlistedSince = date;
+		}
 	}
 	
-	synchronized void setDownSince(Date downSince, Date lastTried) {
-		this.downSince = downSince;
-		this.lastConnect = lastTried;
+	void setDownSince(Date downSince, Date lastTried) {
+		synchronized (lock) {
+			this.downSince = downSince;
+			this.lastConnect = lastTried;
+		}
 	}
 
 	public boolean isAdded() {
 		return isAdded;
 	}
 
-	public synchronized void markAsDown() {
-		final Date now = new Date();
-		if(downSince == null) {
-			downSince = now;
-		} else {
-			lastConnect = now;
+	public void markAsDown() {
+		synchronized(lock) {
+			final Date now = new Date();
+			if(downSince == null) {
+				downSince = now;
+			} else {
+				lastConnect = now;
+			}
 		}
 		if(isAdded) {
 			stateFile.writeFile();
 		}
 	}
 	
-	public synchronized void clearDownSince() {
-		downSince = null;
-		lastConnect = null;
+	public void clearDownSince() {
+		synchronized (lock) {
+			downSince = null;
+			lastConnect = null;
+		}
 		if(isAdded) {
 			stateFile.writeFile();
 		}
 	}
 
-	public synchronized void clearUnlistedSince() {
-		unlistedSince = null;
+	public void clearUnlistedSince() {
+		synchronized (lock) {
+			unlistedSince = null;
+		}
 		if(isAdded) {
 			stateFile.writeFile();
 		}
@@ -94,30 +105,48 @@ public class GuardEntryImpl implements GuardEntry {
 	}
 
 	public Date getCreatedTime() {
-		return createdTime;
+		synchronized (lock) {
+			return dup(createdTime);
+		}
 	}
 
 	public Date getDownSince() {
-		return downSince;
+		synchronized (lock) {
+			return dup(downSince);	
+		}
 	}
 
 	public Date getLastConnectAttempt() {
-		return lastConnect;
+		synchronized (lock) {
+			return dup(lastConnect);
+		}
 	}
 
 	public Date getUnlistedSince() {
-		return unlistedSince;
+		synchronized (lock) {
+			return dup(unlistedSince);
+		}
 	}
 	
+	private Date dup(Date date) {
+		if(date == null) {
+			return null;
+		} else {
+			return new Date(date.getTime());
+		}
+	}
+
 	public String writeToString() {
 		final StringBuilder sb = new StringBuilder();
-		appendEntryGuardLine(sb);
-		appendEntryGuardAddedBy(sb);
-		if(downSince != null) {
-			appendEntryGuardDownSince(sb);
-		}
-		if(unlistedSince != null) {
-			appendEntryGuardUnlistedSince(sb);
+		synchronized (lock) {
+			appendEntryGuardLine(sb);
+			appendEntryGuardAddedBy(sb);
+			if(downSince != null) {
+				appendEntryGuardDownSince(sb);
+			}
+			if(unlistedSince != null) {
+				appendEntryGuardUnlistedSince(sb);
+			}
 		}
 		return sb.toString();
 	}
@@ -168,7 +197,7 @@ public class GuardEntryImpl implements GuardEntry {
 	}
 
 	private String formatDate(Date date) {
-		return StateFile.formatDate(date);
+		return stateFile.formatDate(date);
 	}
 
 	public Router getRouterForEntry() {
@@ -188,20 +217,24 @@ public class GuardEntryImpl implements GuardEntry {
 		}
 	}
 	
-	private synchronized void markUsable() {
-		if(unlistedSince != null) {
-			unlistedSince = null;
-			if(isAdded) {
-				stateFile.writeFile();
+	private void markUsable() {
+		synchronized (lock) {
+			if(unlistedSince != null) {
+				unlistedSince = null;
+				if(isAdded) {
+					stateFile.writeFile();
+				}
 			}
 		}
 	}
 	
 	private synchronized void markUnusable() {
-		if(unlistedSince == null) {
-			unlistedSince = new Date();
-			if(isAdded) {
-				stateFile.writeFile();
+		synchronized (lock) {
+			if(unlistedSince == null) {
+				unlistedSince = new Date();
+				if(isAdded) {
+					stateFile.writeFile();
+				}
 			}
 		}
 	}
@@ -238,7 +271,4 @@ public class GuardEntryImpl implements GuardEntry {
 			return false;
 		return true;
 	}
-
-
-	
 }
