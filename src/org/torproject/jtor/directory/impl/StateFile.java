@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.Tor;
+import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.GuardEntry;
 import org.torproject.jtor.directory.Router;
@@ -29,6 +30,7 @@ public class StateFile {
 	final static String KEYWORD_ENTRY_GUARD_UNLISTED_SINCE = "EntryGuardUnlistedSince";
 	
 	private final List<GuardEntryImpl> guardEntries = new ArrayList<GuardEntryImpl>();
+	private final TorRandom random = new TorRandom();
 	
 	private class Line {
 		final String line;
@@ -105,7 +107,14 @@ public class StateFile {
 		final GuardEntryImpl entry = new GuardEntryImpl(directory, this, router.getNickname(), router.getIdentityHash().toString());
 		final String version = Tor.getImplementation() + "-" + Tor.getVersion();
 		entry.setVersion(version);
-		entry.setCreatedTime(new Date());
+		
+		/* 
+		 * "Choose expiry time smudged over the last month."
+		 * 
+		 * See add_an_entry_guard() in entrynodes.c 
+		 */
+		final long createTime = (new Date()).getTime() - (random.nextInt(3600 * 24 * 30) * 1000);
+		entry.setCreatedTime(new Date(createTime));
 		return entry;
 	}
 
