@@ -171,6 +171,9 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 			break;
 		case 3:
 			string.append("=");
+			break;
+		default:
+			break;
 		}
 		try {
 			return Base64.decode(string.toString().getBytes("ISO-8859-1"));
