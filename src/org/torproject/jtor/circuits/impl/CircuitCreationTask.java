@@ -48,6 +48,10 @@ public class CircuitCreationTask implements Runnable {
 		this.predictor = new CircuitPredictor();
 	}
 
+	CircuitPredictor getCircuitPredictor() {
+		return predictor;
+	}
+
 	public void run() {
 		expireOldCircuits();
 		assignPendingStreamsToActiveCircuits();

@@ -50,7 +50,11 @@ public class TorInitializationTracker {
 			listeners.remove(listener);
 		}
 	}
-	
+
+	public int getBootstrapState() {
+		return bootstrapState;
+	}
+
 	public void start() {
 		synchronized (stateLock) {
 			bootstrapState = Tor.BOOTSTRAP_STATUS_STARTING;

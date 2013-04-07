@@ -235,7 +235,7 @@ public class CircuitManagerImpl implements CircuitManager {
 		}
 	}
 
-	private class DirectoryCircuitResult implements CircuitBuildHandler {
+	private static class DirectoryCircuitResult implements CircuitBuildHandler {
 
 		private String errorMessage;
 		private boolean isFailed;
@@ -265,6 +265,7 @@ public class CircuitManagerImpl implements CircuitManager {
 
 	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
 		connectionCache.dashboardRender(writer, flags);
+		circuitCreationTask.getCircuitPredictor().dashboardRender(writer, flags);
 		writer.println("[Circuit Manager]");
 		writer.println();
 		for(Circuit c: getCircuitsByFilter(null)) {
