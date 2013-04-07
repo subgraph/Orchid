@@ -79,18 +79,16 @@ public class Tor {
 		return new DirectoryImpl(config);
 	}
 
+	static public ConnectionCache createConnectionCache(TorInitializationTracker tracker) {
+		return new ConnectionCache(tracker);
+	}
 	/**
 	 * Create and return a new <code>CircuitManager</code> instance.
 	 * 
-	 * @param directory This is a required dependency.  You must create a <code>Directory</code> 
-	 *                  before calling this method to create a <code>CircuitManager</code>.
-	 * @param logManager This is a required dependency.  You must create a <code>LogManager</code>
-	 *                   before calling this method to create a <code>CircuitManager</code>.
 	 * @return A new <code>CircuitManager</code> instance.
 	 * @see CircuitManager
 	 */
-	static public CircuitManager createCircuitManager(Directory directory, TorInitializationTracker tracker) {
-		final ConnectionCache connectionCache = new ConnectionCache(tracker);
+	static public CircuitManager createCircuitManager(Directory directory, ConnectionCache connectionCache, TorInitializationTracker tracker) {
 		return new CircuitManagerImpl(directory, connectionCache, tracker);
 	}
 
