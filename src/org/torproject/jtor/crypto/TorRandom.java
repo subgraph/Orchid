@@ -28,8 +28,12 @@ public class TorRandom {
 	}
 
 	public long nextLong(long n) {
-		// XXX not uniformly distributed
-		return nextLong() % n;
+		long bits, val;
+		do {
+			bits = nextLong();
+			val = bits % n;
+		} while(bits - val + (n - 1) < 0);
+		return val;
 	}
 
 	public int nextInt(int n) {
@@ -37,9 +41,14 @@ public class TorRandom {
 	}
 	
 	public int nextInt() {
-		return random.nextInt();
+		return random.nextInt() & Integer.MAX_VALUE;
 	}
 	
+	/**
+	 * Return a uniformly distributed positive random value between 0 and Long.MAX_VALUE
+	 * 
+	 * @return A positive random value between 0 and Long.MAX_VALUE.
+	 */
 	public long nextLong() {
 		return random.nextLong() & Long.MAX_VALUE;
 	}
