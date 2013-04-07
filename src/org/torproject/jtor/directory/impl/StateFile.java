@@ -21,7 +21,6 @@ import org.torproject.jtor.directory.Router;
 public class StateFile {
 	private final static Logger logger = Logger.getLogger(StateFile.class.getName());
 	
-	private final static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private final static int DATE_LENGTH = 19;
 	
 	final static String KEYWORD_ENTRY_GUARD = "EntryGuard";
@@ -31,6 +30,7 @@ public class StateFile {
 	
 	private final List<GuardEntryImpl> guardEntries = new ArrayList<GuardEntryImpl>();
 	private final TorRandom random = new TorRandom();
+	private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	private class Line {
 		final String line;
@@ -91,7 +91,7 @@ public class StateFile {
 		}
 	}
 
-	static String formatDate(Date date) {
+	String formatDate(Date date) {
 		return dateFormat.format(date);
 	}
 
@@ -189,7 +189,12 @@ public class StateFile {
 			return current;
 		} else if(keyword.equals(KEYWORD_ENTRY_GUARD)) {
 			addEntryIfValid(current);
-			return processEntryGuardLine(line);
+			GuardEntryImpl newEntry = processEntryGuardLine(line);
+			if(newEntry == null) {
+				return current;
+			} else {
+				return newEntry;
+			}
 		} else if(keyword.equals(KEYWORD_ENTRY_GUARD_ADDED_BY)) {
 			processEntryGuardAddedBy(line, current);
 			return current;
@@ -208,7 +213,8 @@ public class StateFile {
 		final String name = line.nextToken();
 		final String identity = line.nextToken();
 		if(name == null || name.isEmpty() || identity == null || identity.isEmpty()) {
-			
+			logger.warning("Failed to parse EntryGuard line: "+ line.line);
+			return null;
 		}
 		return new GuardEntryImpl(directory, this, name, identity);
 	}
