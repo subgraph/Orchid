@@ -104,7 +104,7 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 			break;
 		case FAMILY:
 			while(fieldParser.argumentsRemaining() > 0) 
-				currentDescriptor.addFamily(fieldParser.parseString());
+				currentDescriptor.addFamilyMember(fieldParser.parseString());
 			break;
 		case EVENTDNS:
 			if(fieldParser.parseBoolean())

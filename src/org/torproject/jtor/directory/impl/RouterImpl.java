@@ -1,6 +1,8 @@
 package org.torproject.jtor.directory.impl;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.Set;
 
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.crypto.TorPublicKey;
@@ -138,6 +140,13 @@ public class RouterImpl implements Router {
 		return status.getMeasuredBandwidth();
 	}
 
+	public Set<String> getFamilyMembers() {
+		if(descriptor == null) {
+			return Collections.emptySet();
+		}
+		return descriptor.getFamilyMembers();
+	}
+	
 	public int getAverageBandwidth() {
 		if(descriptor == null)
 			return 0;

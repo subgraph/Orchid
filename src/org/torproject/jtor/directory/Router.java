@@ -1,5 +1,7 @@
 package org.torproject.jtor.directory;
 
+import java.util.Set;
+
 import org.torproject.jtor.crypto.TorPublicKey;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.IPv4Address;
@@ -23,6 +25,7 @@ public interface Router {
 	int getEstimatedBandwidth();
 	int getMeasuredBandwidth();
 
+	Set<String> getFamilyMembers();
 	int getAverageBandwidth();
 	int getBurstBandwidth();
 	int getObservedBandwidth();

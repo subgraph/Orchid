@@ -37,7 +37,7 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 	private ExitPolicy exitPolicy = new ExitPolicy();
 
 	private String contact;
-	private Set<String> families = Collections.emptySet();
+	private Set<String> familyMembers = Collections.emptySet();
 	private Set<Integer> linkProtocols = Collections.emptySet();
 	private Set<Integer> circuitProtocols = Collections.emptySet();
 
@@ -91,10 +91,11 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 		this.observedBandwidth = observed;
 	}
 
-	void addFamily(String family) {
-		if(families.isEmpty())
-			families = new HashSet<String>();
-		families.add(family);
+	void addFamilyMember(String familyMember) {
+		if(familyMembers.isEmpty()) {
+			familyMembers = new HashSet<String>();
+		}
+		familyMembers.add(familyMember);
 	}
 
 	void addCircuitProtocolVersion(int version) {
@@ -229,10 +230,10 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 		return hiddenServiceDir;
 	}
 
-	public boolean isInFamily(String family) {
-		return families.contains(family);
+	public Set<String> getFamilyMembers() {
+		return familyMembers;
 	}
-
+	
 	public boolean supportsEventDNS() {
 		return eventDNS;
 	}
