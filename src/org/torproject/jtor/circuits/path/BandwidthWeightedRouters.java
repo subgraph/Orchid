@@ -7,7 +7,7 @@ import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.directory.Router;
 
 public class BandwidthWeightedRouters {
-	private class WeightedRouter {
+	private static class WeightedRouter {
 		private final Router router;
 		private boolean isUnknown;
 		private double weightedBandwidth;
