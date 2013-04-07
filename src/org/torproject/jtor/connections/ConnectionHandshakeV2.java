@@ -66,6 +66,13 @@ public class ConnectionHandshakeV2 {
 
 	void runHandshake() throws IOException, InterruptedException, ConnectionIOException {
 		socket.startHandshake();
+		
+		// Swap in V1-only ciphers for second handshake as a workaround for:
+		//
+		//     https://trac.torproject.org/projects/tor/ticket/4591
+		// 
+		socket.setEnabledCipherSuites(ConnectionSocketFactory.V1_CIPHERS_ONLY);
+		
 		final HandshakeFinishedMonitor monitor = new HandshakeFinishedMonitor();
 		socket.addHandshakeCompletedListener(monitor);
 		socket.startHandshake();

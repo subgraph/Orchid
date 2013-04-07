@@ -15,6 +15,12 @@ import javax.net.ssl.X509TrustManager;
 import org.torproject.jtor.TorException;
 
 public class ConnectionSocketFactory {
+	static final String[] V1_CIPHERS_ONLY = {
+		"TLS_DHE_RSA_WITH_AES_256_CBC_SHA",
+	    "TLS_DHE_RSA_WITH_AES_128_CBC_SHA",
+	    "SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA",
+	};
+	
 	private static final String[] MANDATORY_CIPHERS = {
 		"TLS_DHE_RSA_WITH_AES_256_CBC_SHA",
 	    "TLS_DHE_RSA_WITH_AES_128_CBC_SHA",
