@@ -119,6 +119,8 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 				throw new ConnectionHandshakeException("Handshake interrupted");
+			} catch (ConnectionHandshakeException e) { 
+				throw e;
 			} catch (ConnectionIOException e) {
 				throw new ConnectionFailedException(e.getMessage());
 			}
