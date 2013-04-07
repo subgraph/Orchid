@@ -128,7 +128,7 @@ public class EntryGuards {
 
 	private void testStatusOfAllGuards() {
 		for(GuardEntry entry: directory.getGuardEntries()) {
-			if(isPermanentlyUnlisted(entry)) {
+			if(isPermanentlyUnlisted(entry) || isExpired(entry)) {
 				directory.removeGuardEntry(entry);
 			} else if(needsUnreachableTest(entry)) {
 				launchEntryProbe(entry);
@@ -228,6 +228,16 @@ public class EntryGuards {
 		final long unlistedTime = now.getTime() - unlistedSince.getTime();
 		return unlistedTime > THIRTY_DAYS; 
 	}
+	
+	/*
+	 * Expire guards after 60 days since creation time.
+	 */
+	private boolean isExpired(GuardEntry entry) {
+		final Date createdAt = entry.getCreatedTime();
+		final Date now = new Date();
+		final long createdAgo = now.getTime() - createdAt.getTime();
+		return createdAgo > SIXTY_DAYS;
+	}
 
 	private boolean needsUnreachableTest(GuardEntry entry) {
 		final Date downSince = entry.getDownSince();
@@ -250,6 +260,7 @@ public class EntryGuards {
 	private final static long THREE_DAYS = daysToMs(3);
 	private final static long SEVEN_DAYS = daysToMs(7);
 	private final static long THIRTY_DAYS = daysToMs(30);
+	private final static long SIXTY_DAYS = daysToMs(60);
 	
 	private static long hoursToMs(long n) {
 		return TimeUnit.MILLISECONDS.convert(n, TimeUnit.HOURS);
