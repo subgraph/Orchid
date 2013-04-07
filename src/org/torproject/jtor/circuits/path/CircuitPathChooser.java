@@ -8,16 +8,20 @@ import java.util.Set;
 
 import org.torproject.jtor.circuits.guards.EntryGuards;
 import org.torproject.jtor.circuits.path.CircuitNodeChooser.WeightRule;
+import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.Router;
 
 public class CircuitPathChooser {
+	private final Directory directory;
 	private final CircuitNodeChooser nodeChooser;
+	
 	private EntryGuards entryGuards;
 	private boolean useEntryGuards;
 	
 	public CircuitPathChooser(Directory directory) {
+		this.directory = directory;
 		this.nodeChooser = new CircuitNodeChooser(directory);
 		this.entryGuards = null;
 		this.useEntryGuards = false;
@@ -36,12 +40,14 @@ public class CircuitPathChooser {
 
 	public List<Router> choosePathWithExit(Router exitRouter) throws InterruptedException, PathSelectionFailedException {
 		final Set<Router> excluded = new HashSet<Router>();
-		excluded.add(exitRouter);
+		excludeChosenRouterAndRelated(exitRouter, excluded);
+
 		final Router middleRouter = chooseMiddleNode(excluded);
 		if(middleRouter == null) {
 			throw new PathSelectionFailedException("Failed to select suitable middle node");
 		}
-		excluded.add(middleRouter);
+		excludeChosenRouterAndRelated(middleRouter, excluded);
+
 		final Router entryRouter = chooseEntryNode(excluded);
 		if(entryRouter == null) {
 			throw new PathSelectionFailedException("Failed to select suitable entry node");
@@ -85,6 +91,30 @@ public class CircuitPathChooser {
 		return result;
 	}
 
+	private void excludeChosenRouterAndRelated(Router router, Set<Router> excludedRouters) {
+		excludedRouters.add(router);
+		for(Router r: directory.getAllRouters()) {
+			if(areInSameSlash16(router, r)) {
+				excludedRouters.add(r);
+			}
+		}
+		
+		for(String s: router.getFamilyMembers()) {
+			Router r = directory.getRouterByName(s);
+			if(r != null) {
+				excludedRouters.add(r);
+			}
+		}
+	}
+
+	// Are routers r1 and r2 in the same /16 network
+	private boolean areInSameSlash16(Router r1, Router r2) {
+		final IPv4Address a1 = r1.getAddress();
+		final IPv4Address a2 = r2.getAddress();
+		final int mask = 0xFFFF0000;
+		return (a1.getAddressData() & mask) == (a2.getAddressData() & mask);
+	}
+	
 	private List<Router> filterForExitTargets(List<Router> routers, List<ExitTarget> exitTargets) {
 		int bestSupport = 0;
 		if(exitTargets.isEmpty()) {
