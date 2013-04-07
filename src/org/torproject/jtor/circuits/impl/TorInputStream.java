@@ -12,6 +12,7 @@ public class TorInputStream extends InputStream {
 
 	private final static RelayCell closeSentinal = new RelayCellImpl(null, 0, 0, 0);
 	
+	private final Object lock = new Object();
 	private final BlockingQueue<RelayCell> incomingCells;
 	private final StreamImpl stream;
 	private ByteBuffer currentBuffer;
@@ -41,7 +42,7 @@ public class TorInputStream extends InputStream {
 		if(isEOF)
 			return -1;
 
-		synchronized(incomingCells) {
+		synchronized(lock) {
 			availableBytes -= 1;
 		}
 		return currentBuffer.get() & 0xFF;
@@ -68,7 +69,7 @@ public class TorInputStream extends InputStream {
 			return -1;
 
 		int bytesRead = 0;
-		synchronized(incomingCells) {
+		synchronized(lock) {
 			while(availableBytes > 0) {
 				if(currentBuffer.remaining() >= len) {
 					currentBuffer.get(b, off, len);
@@ -94,7 +95,7 @@ public class TorInputStream extends InputStream {
 	}
 
 	public int available() {
-		synchronized(incomingCells) {
+		synchronized(lock) {
 			return availableBytes;
 		}
 	}
@@ -117,7 +118,7 @@ public class TorInputStream extends InputStream {
 	void addInputCell(RelayCell cell) {
 		if(isClosed)
 			return;
-		synchronized(incomingCells) {
+		synchronized(lock) {
 			bytesReceived += cell.cellBytesRemaining();
 			availableBytes += cell.cellBytesRemaining();
 			incomingCells.add(cell);
