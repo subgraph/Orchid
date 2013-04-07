@@ -1,5 +1,7 @@
 package org.torproject.jtor.directory;
 
+import java.util.Set;
+
 import org.torproject.jtor.crypto.TorPublicKey;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.IPv4Address;
@@ -146,14 +148,13 @@ public interface RouterDescriptor extends Document {
 	 */
 	boolean exitPolicyAccepts(int port);
 
+
 	/**
-	 * Return true if this router is a member of the specified family name.
 	 * 
-	 * @param family The name of a router family.
-	 * 
-	 * @return True if this router is a member of the specified family name.
+	 * @return
 	 */
-	boolean isInFamily(String family);
+	Set<String> getFamilyMembers();
+	
 	
 	/**
 	 * Return true if this router is currently hibernating and not suitable for
