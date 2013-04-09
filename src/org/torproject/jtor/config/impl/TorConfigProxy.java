@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.TorConfig.ConfigVar;
@@ -34,39 +35,68 @@ public class TorConfigProxy implements InvocationHandler {
 	
 	void invokeSetMethod(Method method, Object[] args) {
 		final String name = getVariableNameForMethod(method);
-		configValues.put(name, args[0]);
-	}
-	
-	Object invokeGetMethod(Method method) {
-		final String name = getVariableNameForMethod(method);
-		if(configValues.containsKey(name)) {
-			return configValues.get(name);
+		final ConfigVar annotation = getAnnotationForVariable(name);
+		if(annotation != null && annotation.type() == ConfigVarType.INTERVAL) {
+			setIntervalValue(name, args);
 		} else {
-			return getDefaultValueForMethod(method, name);
+			configValues.put(name, args[0]);
 		}
 	}
 	
-	private Object getDefaultValueForMethod(Method method, String name) {
-		final String defaultValue = getDefaultValueString(method);
-		final ConfigVarType type = getVariableType(method);
+	private void setIntervalValue(String varName, Object[] args) {
+		if(!(args[0] instanceof Long && args[1] instanceof TimeUnit)) {
+			throw new IllegalArgumentException();
+		}
+		final long time = (Long) args[0];
+		final TimeUnit unit = (TimeUnit) args[1];
+		final TorConfigInterval interval = new TorConfigInterval(time, unit);
+		configValues.put(varName, interval);
+	}
+
+	private Object invokeGetMethod(Method method) {
+		final String varName = getVariableNameForMethod(method);
+		final Object value = getVariableValue(varName);
+		
+		if(value instanceof TorConfigInterval) {
+			final TorConfigInterval interval = (TorConfigInterval) value;
+			return interval.getMilliseconds();
+		} else {
+			return value;
+		}
+	}
+	
+	private Object getVariableValue(String varName) {
+		if(configValues.containsKey(varName)) {
+			return configValues.get(varName);
+		} else {
+			return getDefaultVariableValue(varName);
+		}
+	}
+
+	private Object getDefaultVariableValue(String varName) {
+		final String defaultValue = getDefaultValueString(varName);
+		final ConfigVarType type = getVariableType(varName);
+		if(defaultValue == null || type == null) {
+			return null;
+		}
 		return parser.parseValue(defaultValue, type);
 	}
 	
-	private String getDefaultValueString(Method method) {
-		final ConfigVar annotation = method.getAnnotation(TorConfig.ConfigVar.class);
-		if(annotation == null) {
+	private String getDefaultValueString(String varName) {
+		final ConfigVar var = getAnnotationForVariable(varName);
+		if(var == null) {
 			return null;
 		} else {
-			return annotation.defaultValue();
+			return var.defaultValue();
 		}
 	}
-	
-	private ConfigVarType getVariableType(Method method) {
-		final ConfigVar annotation = method.getAnnotation(TorConfig.ConfigVar.class);
-		if(annotation == null) {
+
+	private ConfigVarType getVariableType(String varName) {
+		final ConfigVar var = getAnnotationForVariable(varName);
+		if(var == null) {
 			return null;
 		} else {
-			return annotation.type();
+			return var.type();
 		}
 	}
 	
@@ -76,5 +106,15 @@ public class TorConfigProxy implements InvocationHandler {
 			return methodName.substring(3);
 		}
 		throw new IllegalArgumentException();
+	}
+	
+	private ConfigVar getAnnotationForVariable(String varName) {
+		final String getName = "get"+ varName;
+		for(Method m: TorConfig.class.getDeclaredMethods()) {
+			if(getName.equals(m.getName())) {
+				return m.getAnnotation(TorConfig.ConfigVar.class);
+			}
+		}
+		return null;
 	}
 }
