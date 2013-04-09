@@ -9,6 +9,7 @@ import org.torproject.jtor.data.IPv4Address;
 public interface Router {
 
 	String getNickname();
+	String getCountryCode();
 	IPv4Address getAddress();
 	int getOnionPort();
 	int getDirectoryPort();

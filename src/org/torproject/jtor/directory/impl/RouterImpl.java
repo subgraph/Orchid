@@ -182,4 +182,9 @@ public class RouterImpl implements Router {
 	public String toString() {
 		return "Router["+ getNickname() +" ("+getAddress() +":"+ getOnionPort() +")]";
 	}
+
+	public String getCountryCode() {
+		// XXX implement me
+		return "";
+	}
 }
