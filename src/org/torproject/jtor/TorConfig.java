@@ -15,9 +15,9 @@ public interface TorConfig {
 	File getDataDirectory();
 	void setDataDirectory(File directory);
 	
-	@ConfigVar(type=ConfigVarType.INTEGER, defaultValue="60")
-	int getCircuitBuildTimeout();
-	void setCircuitBuildTimeout(int timeout);
+	@ConfigVar(type=ConfigVarType.INTERVAL, defaultValue="60 seconds")
+	long getCircuitBuildTimeout();
+	void setCircuitBuildTimeout(long time, TimeUnit unit);
 	
 	
 	@ConfigVar(type=ConfigVarType.INTERVAL, defaultValue="1 hour")
