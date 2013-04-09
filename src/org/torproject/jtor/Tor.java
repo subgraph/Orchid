@@ -1,9 +1,11 @@
 package org.torproject.jtor;
 
+import java.lang.reflect.Proxy;
+
 import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.circuits.impl.CircuitManagerImpl;
 import org.torproject.jtor.circuits.impl.TorInitializationTracker;
-import org.torproject.jtor.config.impl.TorConfigImpl;
+import org.torproject.jtor.config.impl.TorConfigProxy;
 import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.downloader.DirectoryDownloader;
@@ -58,7 +60,7 @@ public class Tor {
 	 * @see TorConfig
 	 */
 	static public TorConfig createConfig() {
-		return new TorConfigImpl();
+		return (TorConfig) Proxy.newProxyInstance(TorConfigProxy.class.getClassLoader(), new Class[] { TorConfig.class }, new TorConfigProxy());
 	}
 
 	static public TorInitializationTracker createInitalizationTracker() {
