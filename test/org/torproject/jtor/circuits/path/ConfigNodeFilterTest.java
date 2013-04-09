@@ -51,7 +51,6 @@ public class ConfigNodeFilterTest {
 		r2.address = IPv4Address.createFromString("1.3.3.4");
 		
 		RouterFilter f = ConfigNodeFilter.createFilterFor("1.2.3.0/16");
-		System.out.println(f);
 		assertTrue(f.filter(r1));
 		assertFalse(f.filter(r2));
 	}
