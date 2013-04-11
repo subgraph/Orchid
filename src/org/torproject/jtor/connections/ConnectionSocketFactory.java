@@ -1,6 +1,13 @@
 package org.torproject.jtor.connections;
 
 import java.io.IOException;
+
+import java.lang.reflect.Constructor;
+
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketImpl;
+
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -63,14 +70,29 @@ public class ConnectionSocketFactory {
 		socketFactory = createSSLContext().getSocketFactory();
 	}
 	
-	SSLSocket createSocket() {
+	SSLSocket createSocket(SocketAddress address, int timeout) {
 		try {
-			final SSLSocket socket = (SSLSocket) socketFactory.createSocket();
+			Socket s = createOriginalSocket();
+			s.connect(address, timeout);
+			final SSLSocket socket = (SSLSocket) socketFactory.createSocket(s, null, -1, true);
 			socket.setEnabledCipherSuites(MANDATORY_CIPHERS);
 			socket.setUseClientMode(true);
 			return socket;
 		} catch (IOException e) {
 			throw new TorException(e);
+		}
+	}
+
+	Socket createOriginalSocket() throws IOException {
+		try {
+	        Class<?> clazz = Class.forName("java.net.SocksSocketImpl");
+	        Constructor<?> constructor = clazz.getDeclaredConstructor();
+	        // this maybe does not work because of security restrictions:
+	        constructor.setAccessible(true);
+	        SocketImpl impl = (SocketImpl)constructor.newInstance();
+	        return new Socket(impl) {};
+		} catch (Throwable t) {
+			throw new IOException("Cannot create original socket", t);
 		}
 	}
 }

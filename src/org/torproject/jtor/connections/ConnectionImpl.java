@@ -45,7 +45,8 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 	private final static int DEFAULT_CONNECT_TIMEOUT = 5000;
 	private final static Cell connectionClosedSentinel = CellImpl.createCell(0, 0);
 
-	private final SSLSocket socket;
+	private final ConnectionSocketFactory factory = new ConnectionSocketFactory();
+	private SSLSocket socket;
 	private InputStream input;
 	private OutputStream output;
 	private final Router router;
@@ -55,14 +56,11 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 	private final boolean isDirectoryConnection;
 	
 	private int currentId = 1;
-	private boolean isConnected;
-	private volatile boolean isClosed;
 	private final Thread readCellsThread;
 	private final Object connectLock = new Object();
 	private Date lastActivity;
 
-	public ConnectionImpl(SSLSocket socket, Router router, TorInitializationTracker tracker, boolean isDirectoryConnection) {
-		this.socket = socket;
+	public ConnectionImpl(Router router, TorInitializationTracker tracker, boolean isDirectoryConnection) {
 		this.router = router;
 		this.circuitMap = new HashMap<Integer, Circuit>();
 		this.readCellsThread = new Thread(createReadCellsRunnable());
@@ -83,7 +81,7 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 	}
 
 	public boolean isClosed() {
-		return isClosed;
+		return (socket != null && socket.isClosed());
 	}
 
 	public int allocateCircuitId(Circuit circuit) {
@@ -102,12 +100,12 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 	}
 
 	public boolean isConnected() {
-		return isConnected;
+		return (socket != null && socket.isConnected());
 	}
 
 	public void connect() throws ConnectionFailedException, ConnectionTimeoutException, ConnectionHandshakeException {
 		synchronized (connectLock) {
-			if(isConnected) {
+			if(isConnected()) {
 				return;
 			}
 			try {
@@ -124,7 +122,6 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 			} catch (ConnectionIOException e) {
 				throw new ConnectionFailedException(e.getMessage());
 			}
-			isConnected = true;
 		}
 	}
 
@@ -147,8 +144,8 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 			}
 		}
 
-		socket.connect(routerToSocketAddress(router), DEFAULT_CONNECT_TIMEOUT);
-		
+		socket = factory.createSocket(routerToSocketAddress(router), DEFAULT_CONNECT_TIMEOUT);
+
 		if(initializationTracker != null) {
 			if(isDirectoryConnection) {
 				initializationTracker.notifyEvent(Tor.BOOTSTRAP_STATUS_HANDSHAKE_DIR);
@@ -186,7 +183,7 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 			closeSocket();
 			throw new ConnectionIOException();
 		} catch (IOException e) {
-			if(!isClosed) {
+			if(!isClosed()) {
 				logger.fine("IOException reading cell from connection "+ this + " : "+ e.getMessage());
 				closeSocket();
 			}
@@ -197,9 +194,7 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 	private void closeSocket() {
 		try {
 			logger.fine("Closing connection to "+ this);
-			isClosed = true;
 			socket.close();
-			isConnected = false;
 		} catch (IOException e) {
 			logger.warning("Error closing socket: "+ e.getMessage());
 		}
@@ -291,7 +286,7 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 
 	void idleCloseCheck() {
 		synchronized (circuitMap) {
-			final boolean needClose =  (!isClosed && circuitMap.isEmpty() && getIdleMilliseconds() > CONNECTION_IDLE_TIMEOUT);
+			final boolean needClose =  (!isClosed() && circuitMap.isEmpty() && getIdleMilliseconds() > CONNECTION_IDLE_TIMEOUT);
 			if(needClose) {
 				logger.fine("Closing connection to "+ this +" on idle timeout");
 				closeSocket();

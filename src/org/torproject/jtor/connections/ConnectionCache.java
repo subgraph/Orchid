@@ -16,8 +16,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import javax.net.ssl.SSLSocket;
-
 import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.ConnectionFailedException;
 import org.torproject.jtor.circuits.ConnectionHandshakeException;
@@ -40,8 +38,7 @@ public class ConnectionCache implements DashboardRenderable {
 		}
 
 		public ConnectionImpl call() throws Exception {
-			SSLSocket socket = factory.createSocket();
-			ConnectionImpl conn = new ConnectionImpl(socket, router, initializationTracker, isDirectoryConnection);
+			ConnectionImpl conn = new ConnectionImpl(router, initializationTracker, isDirectoryConnection);
 			conn.connect();
 			return conn;
 		}
@@ -61,7 +58,6 @@ public class ConnectionCache implements DashboardRenderable {
 	}
 
 	private final ConcurrentMap<Router, Future<ConnectionImpl>> activeConnections = new ConcurrentHashMap<Router, Future<ConnectionImpl>>();
-	private final ConnectionSocketFactory factory = new ConnectionSocketFactory();
 	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 
 	private TorInitializationTracker initializationTracker;
