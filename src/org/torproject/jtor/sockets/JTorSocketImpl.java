@@ -28,7 +28,7 @@ public class JTorSocketImpl extends SocketImpl {
 	}
 
 	public void setOption(int optID, Object value) throws SocketException {
-		throw new UnsupportedOperationException();
+		// don't throw exception here, this is required for original socket
 	}
 
 	public Object getOption(int optID) throws SocketException {
