@@ -90,8 +90,8 @@ public class Tor {
 	 * @return A new <code>CircuitManager</code> instance.
 	 * @see CircuitManager
 	 */
-	static public CircuitManager createCircuitManager(Directory directory, ConnectionCache connectionCache, TorInitializationTracker tracker) {
-		return new CircuitManagerImpl(directory, connectionCache, tracker);
+	static public CircuitManager createCircuitManager(TorConfig config, Directory directory, ConnectionCache connectionCache, TorInitializationTracker tracker) {
+		return new CircuitManagerImpl(config, directory, connectionCache, tracker);
 	}
 
 	/**

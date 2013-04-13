@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.Tor;
+import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitManager;
@@ -38,6 +39,7 @@ public class CircuitManagerImpl implements CircuitManager {
 		boolean filter(CircuitBase circuit);
 	}
 
+	private final TorConfig config;
 	private final ConnectionCache connectionCache;
 	private final Set<CircuitBase> activeCircuits;
 	private final TorRandom random;
@@ -47,7 +49,8 @@ public class CircuitManagerImpl implements CircuitManager {
 	private final TorInitializationTracker initializationTracker;
 	private final CircuitPathChooser pathChooser;
 
-	public CircuitManagerImpl(Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
+	public CircuitManagerImpl(TorConfig config, Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
+		this.config = config;
 		this.connectionCache = connectionCache;
 		this.pathChooser = new CircuitPathChooser(directory);
 		if(USE_ENTRY_GUARDS) {
