@@ -2,6 +2,7 @@ package org.torproject.jtor.circuits.path;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -102,9 +103,22 @@ public class CircuitPathChooser {
 		for(String s: router.getFamilyMembers()) {
 			Router r = directory.getRouterByName(s);
 			if(r != null) {
-				excludedRouters.add(r);
+				// Is mutual?
+				if(isFamilyMember(r.getFamilyMembers(), router)) {
+					excludedRouters.add(r);
+				}
 			}
 		}
+	}
+	
+	private boolean isFamilyMember(Collection<String> familyMemberNames, Router r) {
+		for(String s: familyMemberNames) {
+			Router member = directory.getRouterByName(s);
+			if(member != null && member.equals(r)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// Are routers r1 and r2 in the same /16 network
