@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.Directory;
@@ -13,10 +14,12 @@ public class CircuitNodeChooser {
 	private final static Logger logger = Logger.getLogger(CircuitNodeChooser.class.getName());
 	
 	public enum WeightRule { WEIGHT_FOR_DIR, WEIGHT_FOR_EXIT, WEIGHT_FOR_MID, WEIGHT_FOR_GUARD, NO_WEIGHTING};
+	private final TorConfig config;
 	private final Directory directory;
 	private final TorRandom random = new TorRandom();
 	
-	public CircuitNodeChooser(Directory directory) {
+	public CircuitNodeChooser(TorConfig config, Directory directory) {
+		this.config = config;
 		this.directory = directory;
 	}
 	

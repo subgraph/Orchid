@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.circuits.guards.EntryGuards;
 import org.torproject.jtor.circuits.path.CircuitNodeChooser.WeightRule;
 import org.torproject.jtor.data.IPv4Address;
@@ -15,15 +16,20 @@ import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.Router;
 
 public class CircuitPathChooser {
+	
+	public static CircuitPathChooser create(TorConfig config, Directory directory) {
+		return new CircuitPathChooser(config, directory, new CircuitNodeChooser(config, directory));
+	}
+
 	private final Directory directory;
 	private final CircuitNodeChooser nodeChooser;
 	
 	private EntryGuards entryGuards;
 	private boolean useEntryGuards;
 	
-	public CircuitPathChooser(Directory directory) {
+	CircuitPathChooser(TorConfig config, Directory directory, CircuitNodeChooser nodeChooser) {
 		this.directory = directory;
-		this.nodeChooser = new CircuitNodeChooser(directory);
+		this.nodeChooser = nodeChooser;
 		this.entryGuards = null;
 		this.useEntryGuards = false;
 	}

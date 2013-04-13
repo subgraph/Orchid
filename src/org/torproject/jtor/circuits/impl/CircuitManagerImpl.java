@@ -52,7 +52,7 @@ public class CircuitManagerImpl implements CircuitManager {
 	public CircuitManagerImpl(TorConfig config, Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.config = config;
 		this.connectionCache = connectionCache;
-		this.pathChooser = new CircuitPathChooser(directory);
+		this.pathChooser = CircuitPathChooser.create(config, directory);
 		if(USE_ENTRY_GUARDS) {
 			this.pathChooser.enableEntryGuards(new EntryGuards(connectionCache, directory));
 		}
