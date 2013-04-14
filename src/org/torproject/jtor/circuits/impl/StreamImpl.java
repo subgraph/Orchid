@@ -100,7 +100,7 @@ public class StreamImpl implements Stream {
 		return circuit;
 	}
 
-	CircuitNode getTargetNode() {
+	public CircuitNode getTargetNode() {
 		return targetNode;
 	}
 

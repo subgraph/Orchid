@@ -20,6 +20,9 @@ public interface Stream extends DashboardRenderable {
 	 */
 	int getStreamId();
 
+	
+	CircuitNode getTargetNode();
+
 	/**
 	 * Close this stream.
 	 */
