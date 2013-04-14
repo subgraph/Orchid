@@ -44,6 +44,7 @@
       <fileset dir="${basedir}/bin" />
       <zipfileset dir="${basedir}/lib" includes="bcprov-jdk15on-148.jar"/>
       <zipfileset dir="${basedir}/lib" includes="bcpkix-jdk15on-148.jar"/>
+      <zipfileset dir="${basedir}/data" includes="GeoIP.dat" fullpath="data/GeoIP.dat" />
     </jar>
   </target>
 
@@ -53,6 +54,7 @@
         <attribute name="Main-Class" value="org.torproject.jtor.TorClient"/>
       </manifest>
       <fileset dir="${basedir}/bin" />
+      <zipfileset dir="${basedir}/data" includes="GeoIP.dat" fullpath="data/GeoIP.dat" />
     </jar>
   </target>
 </project>
