@@ -7,10 +7,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.logging.Logger;
 
 import org.torproject.jtor.data.IPv4Address;
 
 public class CountryCodeService {
+	private final static Logger logger = Logger.getLogger(CountryCodeService.class.getName());
 	private final static String DATABASE_FILENAME = "GeoIP.dat";
 	private final static int COUNTRY_BEGIN = 16776960;
 	private final static int STANDARD_RECORD_LENGTH = 3;
@@ -55,11 +57,13 @@ public class CountryCodeService {
 	private static byte[] loadDatabase() {
 		final InputStream input = openDatabaseStream();
 		if(input == null) {
+			logger.warning("Failed to open '"+ DATABASE_FILENAME + "' database file for country code lookups");
 			return null;
 		}
 		try {
 			return loadEntireStream(input);
 		} catch (IOException e) {
+			logger.warning("IO error reading database file for country code lookups");
 			return null;
 		} finally {
 			try {
@@ -112,17 +116,18 @@ public class CountryCodeService {
 	}
 	
 	public String getCountryCodeForAddress(IPv4Address address) {
-		final int idx = seekCountry(address.getAddressData() & 0xFFFFFFFFL);
-		return COUNTRY_CODES[idx];
+		return COUNTRY_CODES[seekCountry(address)];
 	}
 
-	private int seekCountry(long ip) {
+	private int seekCountry(IPv4Address address) {
 		if(database == null) {
 			return 0;
 		}
 		
-		byte[] record = new byte[2 * MAX_RECORD_LENGTH];
-		int[] x = new int[2];
+		final byte[] record = new byte[2 * MAX_RECORD_LENGTH];
+		final int[] x = new int[2];
+		final long ip = address.getAddressData() & 0xFFFFFFFFL;
+		
 		int offset = 0;
 		for(int depth = 31; depth >= 0; depth--) {
 			loadRecord(offset, record);
@@ -135,6 +140,7 @@ public class CountryCodeService {
 			if(xx >= COUNTRY_BEGIN) {
 				final int idx = xx - COUNTRY_BEGIN;
 				if(idx < 0 || idx > COUNTRY_CODES.length) {
+					logger.warning("Invalid index calculated looking up country code record for ("+ address +") idx = "+ idx);
 					return 0;
 				} else {
 					return idx;
@@ -144,6 +150,7 @@ public class CountryCodeService {
 			}
 			
 		}
+		logger.warning("No record found looking up country code record for ("+ address + ")");
 		return 0;
 	}
 
