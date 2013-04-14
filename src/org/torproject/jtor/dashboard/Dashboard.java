@@ -93,7 +93,7 @@ public class Dashboard implements DashboardRenderable {
 		isListening = false;
 	}
 	
-	public boolean isListening() {
+	public synchronized boolean isListening() {
 		return isListening;
 	}
 

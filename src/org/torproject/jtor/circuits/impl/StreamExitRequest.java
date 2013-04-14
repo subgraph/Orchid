@@ -65,7 +65,7 @@ public class StreamExitRequest implements ExitTarget {
 		return true;
 	}
 	
-	boolean isReserved() {
+	synchronized boolean isReserved() {
 		return isReserved;
 	}
 	
