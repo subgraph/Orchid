@@ -85,6 +85,8 @@ public class ConsensusDocumentParser implements DocumentParser<ConsensusDocument
 			case FOOTER:
 				newSection = footerParser.parseKeywordLine();
 				break;
+			default:
+				break;
 			}
 			if(newSection == currentSection)
 				return;

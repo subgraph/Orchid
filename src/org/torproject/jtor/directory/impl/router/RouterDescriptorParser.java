@@ -131,6 +131,8 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 		case WRITE_HISTORY:
 			currentDescriptor.setWriteHistory(parseHistory());
 			break;
+		default:
+			break;
 		}
 	}
 	

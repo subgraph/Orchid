@@ -90,6 +90,8 @@ public class KeyCertificateParser implements DocumentParser<KeyCertificate> {
 		case DIR_KEY_CERTIFICATION:
 			processCertificateSignature();
 			break;
+		case UNKNOWN_KEYWORD:
+			break;
 		}
 	}
 	

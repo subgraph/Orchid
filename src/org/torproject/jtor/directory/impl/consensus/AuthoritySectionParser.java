@@ -25,6 +25,8 @@ public class AuthoritySectionParser extends ConsensusDocumentSectionParser {
 			currentEntry.setVoteDigest(fieldParser.parseHexDigest());
 			addCurrentEntry();
 			break;
+		default:
+			break;
 		}
 		
 	}

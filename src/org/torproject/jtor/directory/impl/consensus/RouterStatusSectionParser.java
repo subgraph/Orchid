@@ -33,6 +33,8 @@ public class RouterStatusSectionParser extends ConsensusDocumentSectionParser {
 		case P:
 			parsePortList();
 			break;
+		default:
+			break;
 		}
 	}
 
@@ -42,9 +44,8 @@ public class RouterStatusSectionParser extends ConsensusDocumentSectionParser {
 	}
 	
 	private void addCurrentEntry() {
-		assert(currentEntry != null);
-		if(currentEntry != null)
-			document.addRouterStatusEntry(currentEntry);
+		assertCurrentEntry();
+		document.addRouterStatusEntry(currentEntry);
 		currentEntry = null;
 	}
 	

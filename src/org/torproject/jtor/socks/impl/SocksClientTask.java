@@ -51,6 +51,7 @@ public class SocksClientTask implements Runnable {
 			break;
 		default:
 			// fall through, do nothing
+			break;
 		}	
 	}
 	
