@@ -12,6 +12,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.TorConfig;
@@ -37,28 +38,29 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	}
 
 	public void saveCertificates(List<KeyCertificate> certificates) {
-		final File outFile = new File(config.getDataDirectory(), "certificates");
+		final Writer writer = openWriterFor("certificates");
+		if(writer == null) {
+			return;
+		}
 		try {
-			final FileOutputStream fos = new FileOutputStream(outFile);
-			final Writer writer = new OutputStreamWriter(fos, "ISO-8859-1");
-			for(KeyCertificate cert: certificates) 
+			for(KeyCertificate cert: certificates) { 
 				writer.write(cert.getRawDocumentData());
-			writer.close();
+			}
 		} catch(IOException e) {
-			e.printStackTrace();
+			logger.warning("IO Error writing certificates file: "+ e);
+		} finally {
+			quietClose(writer);
 		}
 	}
 
 	public void loadCertificates(final Directory directory) {
-		final File inFile = new File(config.getDataDirectory(), "certificates");
-		if(!inFile.exists())
+		final Reader reader = openReaderFor("certificates");
+		if(reader == null) {
 			return;
+		}
 		try {
-			final FileInputStream fis = new FileInputStream(inFile);
-			final Reader reader = new InputStreamReader(fis, "ISO-8859-1");
 			final DocumentParser<KeyCertificate> parser = parserFactory.createKeyCertificateParser(reader);
 			parser.parse(new DocumentParsingResultHandler<KeyCertificate>() {
-
 				public void parsingError(String message) {
 					logger.warning("Parsing error loading certificates: "+ message);
 				}
@@ -68,41 +70,40 @@ public class DirectoryStoreImpl implements DirectoryStore {
 				}
 
 				public void documentInvalid(KeyCertificate document, String message) {
-					logger.warning("Problem loading certificate: "+ message);
+					logger.warning("Problem loading certificate: " + message);
 				}
 			});
-		} catch(IOException e) {
-			e.printStackTrace();
+		} finally {
+			quietClose(reader);
 		}
-
 	}
+	
 	public void saveConsensus(ConsensusDocument consensus) {
-		final File outFile = new File(config.getDataDirectory(), "consensus");
+		final Writer writer = openWriterFor("consensus");
+		if(writer == null) {
+			return;
+		}
 		try {
-			final FileOutputStream fos = new FileOutputStream(outFile);
-			final Writer writer = new OutputStreamWriter(fos, "ISO-8859-1");
 			writer.write(consensus.getRawDocumentData());
-			writer.close();
 		} catch(IOException e) {
-			e.printStackTrace();
+			logger.warning("IO error writing consensus file: "+ e);
+		} finally {
+			quietClose(writer);
 		}
 	}
 
 	public void loadConsensus(final Directory directory) {
-		final File inFile = new File(config.getDataDirectory(), "consensus");
-		if(!inFile.exists())
+		final Reader reader = openReaderFor("consensus");
+		if(reader == null) {
 			return;
+		}
 		try {
-			final FileInputStream fis = new FileInputStream(inFile);
-			final Reader reader = new InputStreamReader(fis, "ISO-8859-1");
 			final DocumentParser<ConsensusDocument> parser = parserFactory.createConsensusDocumentParser(reader);
 			parser.parse(new DocumentParsingResultHandler<ConsensusDocument>() {
-
-				public void documentInvalid(ConsensusDocument document,
-						String message) {
+				public void documentInvalid(ConsensusDocument document,	String message) {
 					logger.warning("Stored consensus document is invalid: "+ message);
 				}
-
+			
 				public void documentParsed(ConsensusDocument document) {
 					directory.addConsensusDocument(document);
 				}
@@ -111,36 +112,37 @@ public class DirectoryStoreImpl implements DirectoryStore {
 					logger.warning("Parsing error loading stored consensus document: "+ message);
 				}
 			});
-		} catch(IOException e) {
-			e.printStackTrace();
+		} finally { 
+			quietClose(reader);
 		}
 	}
 	
 	public void saveRouterDescriptors(List<RouterDescriptor> descriptors) {
-		final File outFile = new File(config.getDataDirectory(), "routers");
+		final Writer writer = openWriterFor("routers");
+		if(writer == null) {
+			return;
+		}
 		try {
-			final FileOutputStream fos = new FileOutputStream(outFile);
-			final Writer writer = new OutputStreamWriter(fos, "ISO-8859-1");
-			for(RouterDescriptor router: descriptors)
+			for(RouterDescriptor router: descriptors) {
 				writer.write(router.getRawDocumentData());
-			writer.close();
+			}
 		} catch(IOException e) {
-			e.printStackTrace();
+			logger.warning("IO error writing to routers file");
+		} finally {
+			quietClose(writer);
 		}
 	}
 
 	public void loadRouterDescriptors(final Directory directory) {
-		final File inFile = new File(config.getDataDirectory(), "routers");
-		if(!inFile.exists())
+		final Reader reader = openReaderFor("routers");
+		if(reader == null) {
 			return;
+		}
 		try {
-			final FileInputStream fis = new FileInputStream(inFile);
-			final Reader reader = new InputStreamReader(fis, "ISO-8859-1");
 			final DocumentParser<RouterDescriptor> parser = parserFactory.createRouterDescriptorParser(reader);
 			parser.parse(new DocumentParsingResultHandler<RouterDescriptor>() {
 
-				public void documentInvalid(RouterDescriptor document,
-						String message) {
+				public void documentInvalid(RouterDescriptor document,	String message) {
 					logger.warning("Router descriptor "+ document.getNickname() +" invalid: "+ message);
 					directory.markDescriptorInvalid(document);
 				}
@@ -153,8 +155,8 @@ public class DirectoryStoreImpl implements DirectoryStore {
 					logger.warning("Parsing error loading router descriptors: "+ message);
 				}
 			});
-		} catch(IOException e) {
-			e.printStackTrace();
+		} finally {
+			quietClose(reader);
 		}
 	}
 	
@@ -175,7 +177,6 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	void saveStateFile(StateFile stateFile) {
 		final Writer writer = openWriterFor("state"); 
 		if(writer == null) {
-			logger.warning("Failed to open state file for writing");
 			return;
 		}
 		try {
@@ -195,6 +196,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			FileOutputStream fos = new FileOutputStream(file);
 			return new OutputStreamWriter(fos, getFileCharset());
 		} catch (FileNotFoundException e) {
+			logger.log(Level.WARNING, "Failed to open file "+ file + " for writing "+ e);
 			return null;
 		}
 	}
