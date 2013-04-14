@@ -1,5 +1,6 @@
 package org.torproject.jtor.circuits.impl;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.torproject.jtor.circuits.Circuit;
@@ -21,6 +22,7 @@ public class CircuitCreationRequest implements CircuitBuildHandler {
 		this.pathChooser = pathChooser;
 		this.circuit = circuit;
 		this.buildHandler = buildHandler;
+		this.path = Collections.emptyList();
 	}
 	
 	void choosePath() throws InterruptedException, PathSelectionFailedException {
