@@ -195,6 +195,8 @@ public class TorInputStream extends InputStream {
 			currentBuffer = EMPTY_BUFFER;
 			isEOF = true;
 			break;
+		default:
+			throw new IOException("Unexpected RelayCell command type in TorInputStream queue: "+ nextCell.getRelayCommand());
 		}
 	}
 	
