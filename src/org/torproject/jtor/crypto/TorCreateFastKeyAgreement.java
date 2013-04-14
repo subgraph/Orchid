@@ -1,5 +1,7 @@
 package org.torproject.jtor.crypto;
 
+import java.util.Arrays;
+
 public class TorCreateFastKeyAgreement {
 	
 	private final byte[] xValue;
@@ -11,14 +13,14 @@ public class TorCreateFastKeyAgreement {
 	}
 	
 	public byte[] getPublicValue() {
-		return xValue;
+		return Arrays.copyOf(xValue, xValue.length);
 	}
 
 	public void setOtherValue(byte[] yValue) {
 		if(yValue == null || yValue.length != TorMessageDigest.TOR_DIGEST_SIZE) {
 			throw new IllegalArgumentException();
 		}
-		this.yValue = yValue;
+		this.yValue = Arrays.copyOf(yValue, yValue.length);
 	}
 	
 	public byte[] getDerivedValue() {

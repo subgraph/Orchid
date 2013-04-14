@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 
+import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
 import org.torproject.jtor.TorException;
@@ -48,7 +49,7 @@ public class TorSignature {
 	}
 	
 	public byte[] getSignatureBytes() {
-		return signatureBytes;
+		return Arrays.copyOf(signatureBytes, signatureBytes.length);
 	}
 	
 	public boolean verify(TorPublicKey publicKey, TorMessageDigest digest) {

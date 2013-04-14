@@ -27,7 +27,7 @@ public class Timestamp {
 	}
 	
 	public Date getDate() {
-		return date;
+		return new Date(date.getTime());
 	}
 	
 	public boolean hasPassed() {

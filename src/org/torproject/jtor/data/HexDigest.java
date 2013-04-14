@@ -60,7 +60,7 @@ public class HexDigest {
 	}
 
 	public byte[] getRawBytes() {
-		return digestBytes;
+		return Arrays.copyOf(digestBytes, digestBytes.length);
 	}
 
 	public String toString() {
