@@ -1,6 +1,7 @@
 package org.torproject.jtor.circuits.impl;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -9,6 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
 import org.torproject.jtor.circuits.CircuitNode;
@@ -25,6 +27,7 @@ public class CircuitCreationTask implements Runnable {
 	private final static int MAX_CIRCUIT_DIRTINESS = 300; // seconds
 	private final static int MAX_PENDING_CIRCUITS = 4;
 
+	private final TorConfig config;
 	private final Directory directory;
 	private final ConnectionCache connectionCache;
 	private final CircuitManagerImpl circuitManager;
@@ -36,8 +39,11 @@ public class CircuitCreationTask implements Runnable {
 	private int notEnoughDirectoryInformationWarningCounter = 0;
 	
 	private final CircuitPredictor predictor;
+	
+	private Date lastNewCircuit;
 
-	CircuitCreationTask(Directory directory, ConnectionCache connectionCache, CircuitPathChooser pathChooser, CircuitManagerImpl circuitManager, TorInitializationTracker initializationTracker) {
+	CircuitCreationTask(TorConfig config, Directory directory, ConnectionCache connectionCache, CircuitPathChooser pathChooser, CircuitManagerImpl circuitManager, TorInitializationTracker initializationTracker) {
+		this.config = config;
 		this.directory = directory;
 		this.connectionCache = connectionCache;
 		this.circuitManager = circuitManager;
@@ -116,6 +122,13 @@ public class CircuitCreationTask implements Runnable {
 			return;
 		}
 
+		if(lastNewCircuit != null) {
+			final Date now = new Date();
+			if((now.getTime() - lastNewCircuit.getTime()) < config.getNewCircuitPeriod()) {
+				return;
+			}
+		}
+		
 		final List<StreamExitRequest> pendingExitStreams = circuitManager.getPendingExitStreams();
 		final List<PredictedPortTarget> predictedPorts = predictor.getPredictedPortTargets();
 		final List<ExitTarget> exitTargets = new ArrayList<ExitTarget>();
@@ -131,6 +144,7 @@ public class CircuitCreationTask implements Runnable {
 		}
 		
 		buildCircuitToHandleExitTargets(exitTargets);
+		lastNewCircuit = new Date();
 	}
 
 	private int countCircuitsSupportingTarget(final ExitTarget target, final boolean needClean) {
