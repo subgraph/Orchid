@@ -39,7 +39,6 @@ public class CircuitManagerImpl implements CircuitManager {
 		boolean filter(CircuitBase circuit);
 	}
 
-	private final TorConfig config;
 	private final ConnectionCache connectionCache;
 	private final Set<CircuitBase> activeCircuits;
 	private final TorRandom random;
@@ -50,14 +49,13 @@ public class CircuitManagerImpl implements CircuitManager {
 	private final CircuitPathChooser pathChooser;
 
 	public CircuitManagerImpl(TorConfig config, Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
-		this.config = config;
 		this.connectionCache = connectionCache;
 		this.pathChooser = CircuitPathChooser.create(config, directory);
 		if(USE_ENTRY_GUARDS) {
-			this.pathChooser.enableEntryGuards(new EntryGuards(connectionCache, directory));
+			this.pathChooser.enableEntryGuards(new EntryGuards(config, connectionCache, directory));
 		}
 		
-		this.circuitCreationTask = new CircuitCreationTask(directory, connectionCache, pathChooser, this, initializationTracker);
+		this.circuitCreationTask = new CircuitCreationTask(config, directory, connectionCache, pathChooser, this, initializationTracker);
 		this.activeCircuits = new HashSet<CircuitBase>();
 		this.random = new TorRandom();
 		this.initializationTracker = initializationTracker;

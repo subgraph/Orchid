@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.circuits.path.CircuitNodeChooser;
 import org.torproject.jtor.circuits.path.CircuitNodeChooser.WeightRule;
 import org.torproject.jtor.circuits.path.RouterFilter;
@@ -33,9 +34,9 @@ public class EntryGuards {
 	private final Object lock;
 	private final Executor executor;
 	
-	public EntryGuards(ConnectionCache connectionCache, Directory directory) {
+	public EntryGuards(TorConfig config, ConnectionCache connectionCache, Directory directory) {
 		this.random = new TorRandom();
-		this.nodeChooser = new CircuitNodeChooser(directory);
+		this.nodeChooser = new CircuitNodeChooser(config, directory);
 		this.connectionCache = connectionCache;
 		this.directory = directory;
 		this.pendingProbes = new HashSet<GuardEntry>();
