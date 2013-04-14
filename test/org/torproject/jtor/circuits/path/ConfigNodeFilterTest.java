@@ -1,5 +1,9 @@
 package org.torproject.jtor.circuits.path;
 
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -8,6 +12,7 @@ import java.util.List;
 
 import org.junit.Test;
 import org.torproject.jtor.data.IPv4Address;
+import org.torproject.jtor.directory.Router;
 
 public class ConfigNodeFilterTest {
 
@@ -43,16 +48,22 @@ public class ConfigNodeFilterTest {
 		for(String s: invalidStrings) { assertFalse(s, ConfigNodeFilter.isCountryCodeString(s)); }
 	}
 	
+	private Router createRouterMockWithAddress(String ip) {
+		final IPv4Address address = IPv4Address.createFromString(ip);
+		final Router router = createMock("mockRouter", Router.class);
+		expect(router.getAddress()).andReturn(address);
+		replay(router);
+		return router;
+	}
+	
 	@Test
 	public void testMaskFilter() {
-		RouterMock r1 = new RouterMock();
-		RouterMock r2 = new RouterMock();
-		r1.address = IPv4Address.createFromString("1.2.3.4");
-		r2.address = IPv4Address.createFromString("1.3.3.4");
-		
-		RouterFilter f = ConfigNodeFilter.createFilterFor("1.2.3.0/16");
+		final Router r1 = createRouterMockWithAddress("1.2.3.4");
+		final Router r2 = createRouterMockWithAddress("1.7.3.4");
+		final RouterFilter f = ConfigNodeFilter.createFilterFor("1.2.3.0/16");
 		assertTrue(f.filter(r1));
 		assertFalse(f.filter(r2));
+		verify(r1, r2);
 	}
 	
 	
