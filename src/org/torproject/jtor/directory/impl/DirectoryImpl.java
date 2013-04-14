@@ -1,7 +1,5 @@
 package org.torproject.jtor.directory.impl;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -13,6 +11,7 @@ import java.util.logging.Logger;
 
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.TorException;
+import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.RandomSet;
 import org.torproject.jtor.directory.ConsensusDocument;
@@ -41,7 +40,7 @@ public class DirectoryImpl implements Directory {
 	private List<DirectoryServer> directoryAuthorities;
 	private boolean haveMinimumRouterInfo;
 	private final EventManager consensusChangedManager;
-	private final SecureRandom random;
+	private final TorRandom random;
 	private ConsensusDocument currentConsensus;
 	private ConsensusDocument consensusWaitingForCertificates;
 	private boolean descriptorsDirty;
@@ -55,16 +54,8 @@ public class DirectoryImpl implements Directory {
 		directoryCaches = new RandomSet<RouterImpl>();
 		requiredCertificates = new HashSet<HexDigest>();
 		consensusChangedManager = new EventManager();
-		random = createRandom();
+		random = new TorRandom();
 		loadAuthorityServers();
-	}
-
-	private SecureRandom createRandom() {
-		try {
-			return SecureRandom.getInstance("SHA1PRNG");
-		} catch (NoSuchAlgorithmException e) {
-			throw new TorException();
-		}
 	}
 
 	private void loadAuthorityServers() {
@@ -72,7 +63,7 @@ public class DirectoryImpl implements Directory {
 		directoryAuthorities = trusted.getAuthorityServers();
 	}
 
-	public boolean haveMinimumRouterInfo() {
+	public synchronized boolean haveMinimumRouterInfo() {
 		return haveMinimumRouterInfo;
 	}
 
