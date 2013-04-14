@@ -113,7 +113,7 @@ public class StateFile {
 		 * 
 		 * See add_an_entry_guard() in entrynodes.c 
 		 */
-		final long createTime = (new Date()).getTime() - (random.nextInt(3600 * 24 * 30) * 1000);
+		final long createTime = (new Date()).getTime() - (random.nextInt(3600 * 24 * 30) * 1000L);
 		entry.setCreatedTime(new Date(createTime));
 		return entry;
 	}
