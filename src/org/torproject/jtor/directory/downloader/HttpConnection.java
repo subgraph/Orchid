@@ -35,7 +35,6 @@ public class HttpConnection {
 	private final static String HTTP_RESPONSE_REGEX = "HTTP/1\\.(\\d) (\\d+) (.*)";
 	private final static String CONTENT_LENGTH_HEADER = "Content-Length";
 	private final static String CONTENT_ENCODING_HEADER = "Content-Encoding";
-	private final Date ifModifiedSince = null;
 	private final String host;
 	private final Stream stream;
 	private final BufferedReader reader;
@@ -64,9 +63,6 @@ public class HttpConnection {
 		sb.append(request);
 		sb.append(" HTTP/1.0\r\n");
 		sb.append("Host: "+ host +"\r\n");
-		if(ifModifiedSince != null) {
-			
-		}
 		sb.append("\r\n");
 		
 		try {
