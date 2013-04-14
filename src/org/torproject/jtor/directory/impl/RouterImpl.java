@@ -11,6 +11,7 @@ import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.directory.RouterDescriptor;
 import org.torproject.jtor.directory.RouterStatus;
+import org.torproject.jtor.geoip.CountryCodeService;
 
 public class RouterImpl implements Router {
 	static RouterImpl createFromRouterStatus(RouterStatus status) {
@@ -20,7 +21,9 @@ public class RouterImpl implements Router {
 	private final HexDigest identityHash;
 	protected RouterStatus status;
 	private RouterDescriptor descriptor;
-
+	
+	private volatile String cachedCountryCode;
+	
 	protected RouterImpl(RouterStatus status) {
 		identityHash = status.getIdentity();
 		this.status = status;
@@ -30,6 +33,7 @@ public class RouterImpl implements Router {
 		if(!identityHash.equals(status.getIdentity()))
 			throw new TorException("Identity hash does not match status update");
 		this.status = status;
+		this.cachedCountryCode = null;
 	}
 
 	void updateDescriptor(RouterDescriptor descriptor) {
@@ -192,7 +196,11 @@ public class RouterImpl implements Router {
 	}
 
 	public String getCountryCode() {
-		// XXX implement me
-		return "";
+		String cc = cachedCountryCode;
+		if(cc == null) {
+			cc = CountryCodeService.getInstance().getCountryCodeForAddress(getAddress());
+			cachedCountryCode = cc;
+		}
+		return cc;
 	}
 }
