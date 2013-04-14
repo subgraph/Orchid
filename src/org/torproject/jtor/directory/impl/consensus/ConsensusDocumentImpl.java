@@ -119,7 +119,11 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	}
 	
 	public boolean isLive() {
-		return !validUntil.hasPassed();
+		if(validUntil == null) {
+			return false;
+		} else {
+			return !validUntil.hasPassed(); 
+		}
 	}
 	
 	public List<RouterStatus> getRouterStatusEntries() {
@@ -172,7 +176,7 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	}
 	
 	public int hashCode() {
-		return signingHash.hashCode();
+		return (signingHash == null) ? 0 : signingHash.hashCode();
 	}
 	
 	private int getParameterValue(String name, int defaultValue, int minValue, int maxValue) {

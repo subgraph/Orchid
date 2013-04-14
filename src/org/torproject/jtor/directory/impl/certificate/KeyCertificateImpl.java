@@ -63,7 +63,11 @@ public class KeyCertificateImpl implements KeyCertificate {
 	}
 	
 	public boolean isExpired() {
-		return keyExpires.hasPassed();
+		if(keyExpires != null) {
+			return keyExpires.hasPassed();
+		} else {
+			return false;
+		}
 	}
 	
 	public String getRawDocumentData() {

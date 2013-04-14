@@ -113,7 +113,11 @@ public class RouterImpl implements Router {
 	}
 	
 	public TorPublicKey getIdentityKey() {
-		return descriptor.getIdentityKey();
+		if(descriptor != null) {
+			return descriptor.getIdentityKey();
+		} else {
+			return null;
+		}
 	}
 
 	public String getNickname() {
@@ -125,7 +129,11 @@ public class RouterImpl implements Router {
 	}
 
 	public TorPublicKey getOnionKey() {
-		return descriptor.getOnionKey();
+		if(descriptor != null) {
+			return descriptor.getOnionKey();
+		} else {
+			return null;
+		}
 	}
 
 	public boolean hasBandwidth() {

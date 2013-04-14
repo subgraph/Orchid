@@ -17,8 +17,8 @@ public class Socks5Request extends SocksRequest {
 	
 	private int command;
 	private int addressType;
-	private byte[] addressBytes;
-	private byte[] portBytes;
+	private byte[] addressBytes = new byte[0];
+	private byte[] portBytes = new byte[0];
 	
 	Socks5Request(Socket socket) {
 		super(socket);
