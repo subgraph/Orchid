@@ -76,8 +76,8 @@ class CircuitNodeChooserWeightParameters {
 			return new String[] {
 					ONE, ONE, ONE, ONE,
 					ONE, ONE, ONE, ONE };
-		default :
-			return null;
+		default:
+			throw new IllegalArgumentException("Unhandled WeightRule type: "+ rule);
 		}
 	}
 
