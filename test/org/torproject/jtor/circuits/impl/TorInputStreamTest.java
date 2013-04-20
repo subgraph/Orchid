@@ -121,7 +121,7 @@ public class TorInputStreamTest {
 		
 		sendData(1,2,3);
 		sendData(4,5,6);
-		sendEnd();
+
 
 		/* read two bytes at offset 1 */
 		assertEquals(2, inputStream.read(buffer, 1, 2));
@@ -135,7 +135,8 @@ public class TorInputStreamTest {
 		Arrays.fill(buffer, (byte)0);
 		assertEquals(1, inputStream.read(buffer));
 		assertArrayEquals(new byte[] { 6, 0, 0 }, buffer);
-		
+
+		sendEnd();
 		/* read entire buffer at EOF */
 		assertEquals(-1, inputStream.read(buffer));
 	}

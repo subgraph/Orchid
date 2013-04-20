@@ -95,8 +95,10 @@ public class TorInputStream extends InputStream {
 				refillBufferIfNeeded();
 				bytesRead += readFromCurrentBuffer(b, off + bytesRead, len - bytesRead);
 				bytesRemaining = len - bytesRead;
+				if(availableBytes == 0) {
+					return bytesRead;
+				}
 			}
-			
 			return bytesRead;
 		}
 	}
