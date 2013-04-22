@@ -48,4 +48,11 @@ public class TorConfigTest {
 		config.setEnforceDistinctSubnets(false);
 		assertEquals(false, config.getEnforceDistinctSubnets());
 	}
+	
+	@Test
+	public void testCircuitStreamTimeout() {
+		assertEquals(0, config.getCircuitStreamTimeout());
+		config.setCircuitStreamTimeout(30, TimeUnit.SECONDS);
+		assertEquals(30 * 1000, config.getCircuitStreamTimeout());
+	}
 }

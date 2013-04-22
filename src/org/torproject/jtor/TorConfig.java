@@ -19,6 +19,9 @@ public interface TorConfig {
 	long getCircuitBuildTimeout();
 	void setCircuitBuildTimeout(long time, TimeUnit unit);
 	
+	@ConfigVar(type=ConfigVarType.INTERVAL, defaultValue="0")
+	long getCircuitStreamTimeout();
+	void setCircuitStreamTimeout(long time, TimeUnit unit);
 	
 	@ConfigVar(type=ConfigVarType.INTERVAL, defaultValue="1 hour")
 	long getCircuitIdleTimeout();
