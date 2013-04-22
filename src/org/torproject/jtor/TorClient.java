@@ -1,6 +1,5 @@
 package org.torproject.jtor;
 
-import java.io.IOException;
 import java.security.Security;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Handler;
