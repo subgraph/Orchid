@@ -84,6 +84,7 @@ public class DirectoryImpl implements Directory {
 	}
 
 	public void loadFromStore() {
+		logger.info("Loading cached network information from disk");
 		store.loadCertificates(this);
 		store.loadConsensus(this);
 		store.loadRouterDescriptors(this);
