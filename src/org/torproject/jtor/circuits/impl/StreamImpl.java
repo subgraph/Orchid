@@ -4,22 +4,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.util.Date;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitNode;
-import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.Stream;
+import org.torproject.jtor.circuits.StreamConnectFailedException;
 import org.torproject.jtor.circuits.cells.RelayCell;
 
 public class StreamImpl implements Stream {
 	private final static Logger logger = Logger.getLogger(StreamImpl.class.getName());
-	private final static int STREAM_CONNECT_TIMEOUT = 60 * 1000;
+
 	private final static int STREAMWINDOW_START = 500;
 	private final static int STREAMWINDOW_INCREMENT = 50;
 	private final static int STREAMWINDOW_MAX_UNFLUSHED = 10;
+	
 	private final CircuitBase circuit;
 	private final int streamId;
 	private final CircuitNode targetNode;
@@ -122,48 +123,40 @@ public class StreamImpl implements Stream {
 		}
 	}
 
-	OpenStreamResponse openDirectory() {
+	void openDirectory(long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException {
 		streamTarget = "[Directory]";
 		final RelayCell cell = new RelayCellImpl(circuit.getFinalCircuitNode(), circuit.getCircuitId(), streamId, RelayCell.RELAY_BEGIN_DIR);
 		circuit.sendRelayCellToFinalNode(cell);
-		return waitForRelayConnected();
+		waitForRelayConnected(timeout);
 	}
 
-	OpenStreamResponse openExit(String target, int port) {
+	void openExit(String target, int port, long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException {
 		streamTarget = target + ":"+ port;
 		final RelayCell cell = new RelayCellImpl(circuit.getFinalCircuitNode(), circuit.getCircuitId(), streamId, RelayCell.RELAY_BEGIN);
 		cell.putString(target + ":"+ port);
 		circuit.sendRelayCellToFinalNode(cell);
-		return waitForRelayConnected();
+		waitForRelayConnected(timeout);
 	}
-
-	private OpenStreamResponse waitForRelayConnected() {
-		final Date startWait = new Date();
+	
+	private void waitForRelayConnected(long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException {
+		final long start = System.currentTimeMillis();
+		long elapsed = 0;
 		synchronized(waitConnectLock) {
 			while(!relayConnectedReceived) {
 
-				if(relayEndReceived)
-					return OpenStreamResponseImpl.createStreamError(relayEndReason);
-
-
-				if(hasStreamConnectTimedOut(startWait))
-					return OpenStreamResponseImpl.createStreamTimeout();
-
-				try {
-					waitConnectLock.wait(1000);
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-					return OpenStreamResponseImpl.createStreamTimeout();
+				if(relayEndReceived) {
+					throw new StreamConnectFailedException(relayEndReason);
 				}
+
+				if(elapsed > timeout) {
+					throw new TimeoutException();
+				}
+
+				waitConnectLock.wait(timeout - elapsed);
+				
+				elapsed = System.currentTimeMillis() - start;
 			}
 		}
-		return OpenStreamResponseImpl.createStreamOpened(this);
-	}
-
-	private static boolean hasStreamConnectTimedOut(Date startTime) {
-		final Date now = new Date();
-		final long diff = now.getTime() - startTime.getTime();
-		return diff >= STREAM_CONNECT_TIMEOUT;
 	}
 
 	public InputStream getInputStream() {

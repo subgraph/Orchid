@@ -1,33 +1,46 @@
 package org.torproject.jtor.circuits.impl;
 
-import org.torproject.jtor.circuits.OpenStreamResponse;
+import java.util.concurrent.TimeoutException;
+
+import org.torproject.jtor.circuits.OpenFailedException;
+import org.torproject.jtor.circuits.Stream;
+import org.torproject.jtor.circuits.StreamConnectFailedException;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;
+import org.torproject.jtor.misc.GuardedBy;
 
 public class StreamExitRequest implements ExitTarget {
-
+	
+	private enum CompletionStatus {NOT_COMPLETED, SUCCESS, TIMEOUT, STREAM_OPEN_FAILURE, EXIT_FAILURE, INTERRUPTED};
+	
 	private final boolean isAddress;
 	private final IPv4Address address;
 	private final String hostname;
 	private final int port;
 	private final CircuitManagerImpl circuitManager;
-	private OpenStreamResponse response;
-	private boolean isReserved;
+	
+	@GuardedBy("this") private Stream stream;
+	@GuardedBy("this") private boolean isReserved;
+	@GuardedBy("this") private CompletionStatus completionStatus;
+	@GuardedBy("this") private int streamOpenFailReason;
+	@GuardedBy("this") private int retryCount;
+	@GuardedBy("this") private long specificTimeout;
 
 	StreamExitRequest(CircuitManagerImpl circuitManager, IPv4Address address, int port) {
-		this.circuitManager = circuitManager;
-		isAddress = true;
-		this.address = address;
-		this.port = port;
-		this.hostname = "";
+		this(circuitManager, true, "", address, port);
 	}
 
 	StreamExitRequest(CircuitManagerImpl circuitManager, String hostname, int port) {
-		isAddress = false;
+		this(circuitManager, false, hostname, null, port);
+	}
+	
+	private StreamExitRequest(CircuitManagerImpl circuitManager, boolean isAddress, String hostname, IPv4Address address, int port) {
 		this.circuitManager = circuitManager;
-		this.address = null;
+		this.isAddress = isAddress;
 		this.hostname = hostname;
+		this.address = address;
 		this.port = port;
+		this.completionStatus = CompletionStatus.NOT_COMPLETED;
 	}
 
 	public boolean isAddressTarget() {
@@ -46,17 +59,77 @@ public class StreamExitRequest implements ExitTarget {
 		return port;
 	}
 
-	void setCompleted(OpenStreamResponse response) {
-		this.response = response;
+	public synchronized void setStreamTimeout(long timeout) {
+		specificTimeout = timeout;
+	}
+	
+	public synchronized long getStreamTimeout() {
+		if(specificTimeout > 0) {
+			return specificTimeout;
+		} else if(retryCount < 2) {
+			return 10 * 1000;
+		} else {
+			return 15 * 1000;
+		}
+	}
+
+	synchronized void setCompletedTimeout() {
+		newStatus(CompletionStatus.TIMEOUT);
+	}
+	
+	synchronized void setExitFailed() {
+		newStatus(CompletionStatus.EXIT_FAILURE);
+	}
+	
+	synchronized void setStreamOpenFailure(int reason) {
+		streamOpenFailReason = reason;
+		newStatus(CompletionStatus.STREAM_OPEN_FAILURE);
+	}
+	
+	synchronized void setCompletedSuccessfully(Stream stream) {
+		this.stream = stream;
+		newStatus(CompletionStatus.SUCCESS);
+	}
+	
+	synchronized void setInterrupted() {
+		newStatus(CompletionStatus.INTERRUPTED);
+	}
+
+	private void newStatus(CompletionStatus newStatus) {
+		if(completionStatus != CompletionStatus.NOT_COMPLETED) {
+			throw new IllegalStateException("Attempt to set completion state to " + newStatus +" while status is "+ completionStatus);
+		}
+		completionStatus = newStatus;
 		circuitManager.streamRequestIsCompleted(this);
 	}
 	
-	OpenStreamResponse getResponse() {
-		return response;
+	synchronized Stream getStream() throws OpenFailedException, TimeoutException, StreamConnectFailedException, InterruptedException {
+		switch(completionStatus) {
+		case NOT_COMPLETED:
+			throw new IllegalStateException("Request not completed");
+		case EXIT_FAILURE:
+			throw new OpenFailedException();
+		case TIMEOUT:
+			throw new TimeoutException();
+		case STREAM_OPEN_FAILURE:
+			throw new StreamConnectFailedException(streamOpenFailReason);
+		case INTERRUPTED:
+			throw new InterruptedException();
+		case SUCCESS:
+			return stream;
+		default:
+			throw new IllegalStateException("Unknown completion status");
+		}
 	}
 
-	boolean isCompleted() {
-		return response != null;
+	synchronized void resetForRetry() {
+		retryCount += 1;
+		streamOpenFailReason = 0;
+		completionStatus = CompletionStatus.NOT_COMPLETED;
+	}
+
+	synchronized boolean isCompleted() {
+		return completionStatus != CompletionStatus.NOT_COMPLETED;
 	}
 	
 	synchronized boolean reserveRequest() {

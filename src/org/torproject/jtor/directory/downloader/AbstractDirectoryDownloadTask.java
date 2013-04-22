@@ -3,11 +3,12 @@ package org.torproject.jtor.directory.downloader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.OpenStreamResponse;
+import org.torproject.jtor.circuits.OpenFailedException;
 import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.directory.Directory;
@@ -36,26 +37,10 @@ public abstract class AbstractDirectoryDownloadTask implements Runnable {
 		return downloader.getDocumentParserFactory();
 	}
 
-	protected HttpConnection openDirectoryConnection() {
-		while(true) {
-			final OpenStreamResponse osr = downloader.getCircuitManager().openDirectoryStream(purposeCode);
-			if(osr == null) {
-				continue;
-			}
-			switch(osr.getStatus()) {
-			case STATUS_STREAM_OPENED:
-				final String hostname = createHostnameStringFromStream(osr.getStream());
-				logger.info("Directory stream opened to "+ hostname);
-				return HttpConnection.createFromStream(hostname, osr.getStream());
-			case STATUS_STREAM_ERROR:
-				logger.warning("Error opening directory stream: ["+ 
-						osr.getErrorCode() + "] "+ osr.getErrorCodeMessage());
-				return null;
-			case STATUS_STREAM_TIMEOUT:
-				logger.warning("Timeout opening directory stream");
-				return null;
-			}
-		}
+	protected HttpConnection openDirectoryConnection() throws InterruptedException, TimeoutException, OpenFailedException {
+			final Stream stream = downloader.getCircuitManager().openDirectoryStream(purposeCode);
+			final String hostname = createHostnameStringFromStream(stream);
+			return HttpConnection.createFromStream(hostname, stream);
 	}
 	
 	public void run() {
@@ -63,16 +48,19 @@ public abstract class AbstractDirectoryDownloadTask implements Runnable {
 			makeRequest();
 		} catch(TorException e) { 
 			logger.info(e.getMessage());
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		} catch (TimeoutException e) {
+			logger.warning("Timeout opening directory stream");
+		} catch (OpenFailedException e) { 
+			logger.warning("Failed to open directory stream");
 		} finally {
 			finishRequest(downloader);
 		}
 	}
 	
-	private void makeRequest() {
+	private void makeRequest() throws InterruptedException, TimeoutException, OpenFailedException {
 		final HttpConnection http = openDirectoryConnection();
-		if(http == null) {
-			return;
-		}
 		final String request = getRequestPath();
 		Reader response = null;
 		try {

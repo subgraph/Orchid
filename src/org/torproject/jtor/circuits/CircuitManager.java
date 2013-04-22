@@ -1,5 +1,7 @@
 package org.torproject.jtor.circuits;
 
+import java.util.concurrent.TimeoutException;
+
 import org.torproject.jtor.dashboard.DashboardRenderable;
 import org.torproject.jtor.data.IPv4Address;
 
@@ -23,7 +25,7 @@ public interface CircuitManager extends DashboardRenderable {
 	 * @param port The port to open an exit connection to.
 	 * @return The status response result of attempting to open the exit connection.
 	 */
-	OpenStreamResponse openExitStreamTo(String hostname, int port) throws InterruptedException;
+	Stream openExitStreamTo(String hostname, int port) throws InterruptedException, TimeoutException, OpenFailedException;
 
 	/**
 	 * Attempt to open an exit stream to the destination specified by <code>address</code> and
@@ -33,8 +35,8 @@ public interface CircuitManager extends DashboardRenderable {
 	 * @param port The port to open an exit connection to.
 	 * @return The status response result of attempting the open the exit connection.
 	 */
-	OpenStreamResponse openExitStreamTo(IPv4Address address, int port) throws InterruptedException;
+	Stream openExitStreamTo(IPv4Address address, int port) throws InterruptedException, TimeoutException, OpenFailedException;
 	
-	OpenStreamResponse openDirectoryStream(int purpose);
-	OpenStreamResponse openDirectoryStream();
+	Stream openDirectoryStream(int purpose) throws InterruptedException, TimeoutException, OpenFailedException;
+	Stream openDirectoryStream() throws InterruptedException, TimeoutException, OpenFailedException;
 }

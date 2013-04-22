@@ -1,5 +1,6 @@
 package org.torproject.jtor;
 
+import java.io.IOException;
 import java.security.Security;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Handler;
@@ -8,7 +9,8 @@ import java.util.logging.Logger;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.torproject.jtor.circuits.CircuitManager;
-import org.torproject.jtor.circuits.OpenStreamResponse;
+import org.torproject.jtor.circuits.OpenFailedException;
+import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.circuits.impl.TorInitializationTracker;
 import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.dashboard.Dashboard;
@@ -21,6 +23,7 @@ import org.torproject.jtor.socks.SocksPortListener;
  * or client.
  */
 public class TorClient {
+	private final static Logger logger = Logger.getLogger(TorClient.class.getName());
 	private final TorConfig config;
 	private final Directory directory;
 	private final TorInitializationTracker initializationTracker;
@@ -106,7 +109,7 @@ public class TorClient {
 		return (elapsed > timeout) ? 0 : (timeout - elapsed);
 	}
 	
-	public OpenStreamResponse openExitStreamTo(String hostname, int port) throws InterruptedException {
+	public Stream openExitStreamTo(String hostname, int port) throws InterruptedException, TimeoutException, OpenFailedException {
 		if(!isStarted) {
 			throw new IllegalStateException("Must call start() first");
 		}
@@ -160,8 +163,8 @@ public class TorClient {
 
 	public static void main(String[] args) {
 		setupLogging();
+		logger.info("Starting...");
 		final TorClient client = new TorClient();
-		
 		client.addInitializationListener(createInitalizationListner());
 		client.start();
 		client.enableSocksListener();

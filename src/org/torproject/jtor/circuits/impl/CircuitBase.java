@@ -5,14 +5,15 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
-import org.torproject.jtor.circuits.OpenStreamResponse;
 import org.torproject.jtor.circuits.Stream;
+import org.torproject.jtor.circuits.StreamConnectFailedException;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.circuits.path.CircuitPathChooser;
@@ -26,7 +27,7 @@ import org.torproject.jtor.directory.Router;
  *
  */
 abstract class CircuitBase implements Circuit {
-	private final static Logger logger = Logger.getLogger(CircuitBase.class.getName());
+	protected final static Logger logger = Logger.getLogger(CircuitBase.class.getName());
 	
 	static ExitCircuit create(CircuitManagerImpl circuitManager, Router exitRouter) {
 		return new ExitCircuit(circuitManager, exitRouter);
@@ -58,7 +59,7 @@ abstract class CircuitBase implements Circuit {
 		io = new CircuitIO(this, connection, id);
 	}
 
-	void markForClose() {
+	public void markForClose() {
 		if(io != null) {
 			io.markForClose();
 		}
@@ -75,7 +76,7 @@ abstract class CircuitBase implements Circuit {
 	boolean isDirectoryCircuit() {
 		return false;
 	}
-
+	
 	CircuitStatus getStatus() {
 		return status;
 	}
@@ -180,39 +181,20 @@ abstract class CircuitBase implements Circuit {
 		io.deliverRelayCell(cell);
 	}
 
-	public OpenStreamResponse openDirectoryStream() {
+	public Stream openDirectoryStream(long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException {
 		throw new UnsupportedOperationException();
 	}
 
-	public OpenStreamResponse openExitStream(IPv4Address address, int port) {
+	public Stream openExitStream(IPv4Address address, int port, long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException {
 		throw new UnsupportedOperationException();
 	}
 
-	public OpenStreamResponse openExitStream(String target, int port) {
+	public Stream openExitStream(String target, int port, long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException {
 		throw new UnsupportedOperationException();
 	}
 
 	protected StreamImpl createNewStream() {
 		return io.createNewStream();
-	}
-
-	protected void processOpenStreamResponse(StreamImpl stream, OpenStreamResponse response) {
-		switch(response.getStatus()) {
-		case STATUS_STREAM_TIMEOUT:
-			logger.info("Timeout opening stream: "+ stream);
-			if(status.countStreamTimeout()) {
-				// XXX do something
-			}
-			removeStream(stream);
-			break;
-
-		case STATUS_STREAM_ERROR:
-			logger.info("Error opening stream: "+ stream +" reason: "+ response.getErrorCodeMessage());
-			removeStream(stream);
-			break;
-		case STATUS_STREAM_OPENED:
-			break;
-		}
 	}
 
 	boolean isFinalNodeDirectory() {
@@ -246,6 +228,18 @@ abstract class CircuitBase implements Circuit {
 		return false;
 	}
 
+	protected Stream processStreamOpenException(Exception e) throws InterruptedException, TimeoutException, StreamConnectFailedException {
+		if(e instanceof InterruptedException) {
+			throw (InterruptedException) e;
+		} else if(e instanceof TimeoutException) {
+			throw(TimeoutException) e;
+		} else if(e instanceof StreamConnectFailedException) {
+			throw(StreamConnectFailedException) e;
+		} else {
+			throw new IllegalStateException();
+		}
+	}
+	
 	public String toString() {
 		int id = (io == null) ? 0 : io.getCircuitId();
 		return "  Circuit id="+ id +" state=" + status.getStateAsString() +" "+ pathToString();

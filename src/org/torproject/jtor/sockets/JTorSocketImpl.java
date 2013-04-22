@@ -2,8 +2,8 @@ package org.torproject.jtor.sockets;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -11,9 +11,10 @@ import java.net.SocketException;
 import java.net.SocketImpl;
 import java.net.SocketOptions;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeoutException;
 
 import org.torproject.jtor.TorClient;
-import org.torproject.jtor.circuits.OpenStreamResponse;
+import org.torproject.jtor.circuits.OpenFailedException;
 import org.torproject.jtor.circuits.Stream;
 
 public class JTorSocketImpl extends SocketImpl {
@@ -78,25 +79,17 @@ public class JTorSocketImpl extends SocketImpl {
 			if(stream != null) {
 				throw new SocketException("Already connected");
 			}
-			stream = openExitStream(host, port);
-		}
-	}
-	
-	private Stream openExitStream(String host, int port) throws IOException {
-		try {
-			final OpenStreamResponse osr = torClient.openExitStreamTo(host, port);
-			switch(osr.getStatus()) {
-			case STATUS_STREAM_ERROR:
-				throw new SocketException("Connection failed to "+host+ ":"+ port +"["+ osr.getErrorCodeMessage() + "]");
-			case STATUS_STREAM_TIMEOUT:
-				throw new SocketTimeoutException("Timeout connecting to "+host +":"+port);
-			case STATUS_STREAM_OPENED:
-				return osr.getStream();
+			try {
+				stream = torClient.openExitStreamTo(host, port);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				throw new SocketException("connect() interrupted");
+			} catch (TimeoutException e) {
+				throw new SocketTimeoutException();
+			} catch (OpenFailedException e) {
+				throw new ConnectException(e.getMessage());
 			}
-		} catch (InterruptedException e) {
-			throw new InterruptedIOException("Connection interrupted to "+host +":"+ port);
 		}
-		return null;
 	}
 
 	@Override

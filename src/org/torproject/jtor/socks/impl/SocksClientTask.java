@@ -2,14 +2,14 @@ package org.torproject.jtor.socks.impl;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.CircuitManager;
-import org.torproject.jtor.circuits.OpenStreamResponse;
+import org.torproject.jtor.circuits.OpenFailedException;
 import org.torproject.jtor.circuits.Stream;
-import org.torproject.jtor.circuits.cells.RelayCell;
 
 public class SocksClientTask implements Runnable {
 	private final static Logger logger = Logger.getLogger(SocksClientTask.class.getName());
@@ -63,36 +63,34 @@ public class SocksClientTask implements Runnable {
 				request.sendError();
 				return;
 			}
-			final OpenStreamResponse openResponse = openConnectStream(request);
-			switch(openResponse.getStatus()) {
-			case STATUS_STREAM_OPENED:
-				request.sendSuccess();
-				runOpenConnection(openResponse.getStream());
-				break;
-			case STATUS_STREAM_ERROR:
-				if(openResponse.getErrorCode() == RelayCell.REASON_CONNECTREFUSED)
-					request.sendConnectionRefused();
-				else
-					request.sendError();
-				break;
-			default:
-				request.sendError();
-				break;
-			}
 			
+			try {
+				final Stream stream = openConnectStream(request);
+				logger.fine("SOCKS CONNECT to "+ request.getTarget()+ " completed");
+				request.sendSuccess();
+				runOpenConnection(stream);
+			} catch (InterruptedException e) {
+				logger.info("SOCKS CONNECT to "+ request.getTarget() + " was thread interrupted");
+				Thread.currentThread().interrupt();
+				request.sendError();
+			} catch (TimeoutException e) {
+				logger.info("SOCKS CONNECT to "+ request.getTarget() + " timed out");
+				request.sendError();
+			} catch (OpenFailedException e) {
+				logger.info("SOCKS CONNECT to "+ request.getTarget() + " failed at exit node");
+				request.sendConnectionRefused();
+			}
 		} catch (SocksRequestException e) {
 			logger.log(Level.WARNING, "Failure reading SOCKS request", e);
-		} catch (InterruptedException e) {
-			logger.warning("Stream open interrupted");
-			Thread.currentThread().interrupt();
 		} 
 	}
 		
+
 	private void runOpenConnection(Stream stream) {
 		SocksStreamConnection.runConnection(socket, stream);
 	}
 
-	private OpenStreamResponse openConnectStream(SocksRequest request) throws InterruptedException {
+	private Stream openConnectStream(SocksRequest request) throws InterruptedException, TimeoutException, OpenFailedException {
 		if(request.hasHostname()) {
 			logger.fine("SOCKS CONNECT request to "+ request.getHostname() +":"+ request.getPort());
 			return circuitManager.openExitStreamTo(request.getHostname(), request.getPort());

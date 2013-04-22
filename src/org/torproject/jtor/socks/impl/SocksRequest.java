@@ -40,6 +40,14 @@ public abstract class SocksRequest {
 		return hostname;
 	}
 	
+	public String getTarget() {
+		if(hostname != null) {
+			return hostname + ":" + port;
+		} else {
+			return address + ":" + port;
+		}
+	}
+	
 	protected void setPortData(byte[] data) throws SocksRequestException {
 		if(data.length != 2)
 			throw new SocksRequestException();

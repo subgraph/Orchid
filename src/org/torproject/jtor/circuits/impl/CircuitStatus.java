@@ -9,7 +9,7 @@ import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.directory.Router;
 
 public class CircuitStatus {
-	private final static int MAXIMUM_TIMEOUT_COUNT = 3;
+
 	enum CircuitState {
 		UNCONNECTED("Unconnected"),
 		BUILDING("Building"),
@@ -23,7 +23,6 @@ public class CircuitStatus {
 
 	private Date timestampCreated;
 	private Date timestampDirty;
-	private int streamTimeoutErrorCount = 0;
 	private int currentStreamId;
 	private Object streamIdLock = new Object();
 	private CircuitState state = CircuitState.UNCONNECTED;
@@ -36,11 +35,6 @@ public class CircuitStatus {
 	private void initializeCurrentStreamId() {
 		final TorRandom random = new TorRandom();
 		currentStreamId = random.nextInt(0xFFFF) + 1;
-	}
-
-	synchronized boolean countStreamTimeout() {
-		streamTimeoutErrorCount++;
-		return streamTimeoutErrorCount >= MAXIMUM_TIMEOUT_COUNT;
 	}
 
 	synchronized void updateCreatedTimestamp() {

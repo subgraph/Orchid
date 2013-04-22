@@ -1,6 +1,7 @@
 package org.torproject.jtor.circuits;
 
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.cells.Cell;
@@ -47,7 +48,7 @@ public interface Circuit extends DashboardRenderable {
 	 * 
 	 * @return The status response returned by trying to open the stream.
 	 */
-	OpenStreamResponse openDirectoryStream();
+	Stream openDirectoryStream(long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException;
 	
 	/**
 	 * Open an exit stream from the final node in this circuit to the 
@@ -57,7 +58,7 @@ public interface Circuit extends DashboardRenderable {
 	 * @param port The port of the exit target.
 	 * @return The status response returned by trying to open the stream.
 	 */
-	OpenStreamResponse openExitStream(IPv4Address address, int port);
+	Stream openExitStream(IPv4Address address, int port, long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException;
 	
 	/**
 	 * Open an exit stream from the final node in this circuit to the
@@ -67,7 +68,7 @@ public interface Circuit extends DashboardRenderable {
 	 * @param port The port of the exit target.
 	 * @return The status response returned by trying to open the stream.
 	 */
-	OpenStreamResponse openExitStream(String hostname, int port);
+	Stream openExitStream(String hostname, int port, long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException;
 	
 	/**
 	 * Create a new relay cell which is configured for delivery to the specified
@@ -132,4 +133,6 @@ public interface Circuit extends DashboardRenderable {
 	void deliverControlCell(Cell cell);
 	
 	List<Stream> getActiveStreams();
+
+	void markForClose();
 }

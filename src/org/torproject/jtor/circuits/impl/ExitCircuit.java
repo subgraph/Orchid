@@ -3,8 +3,10 @@ package org.torproject.jtor.circuits.impl;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 
-import org.torproject.jtor.circuits.OpenStreamResponse;
+import org.torproject.jtor.circuits.Stream;
+import org.torproject.jtor.circuits.StreamConnectFailedException;
 import org.torproject.jtor.circuits.path.CircuitPathChooser;
 import org.torproject.jtor.circuits.path.PathSelectionFailedException;
 import org.torproject.jtor.data.IPv4Address;
@@ -26,15 +28,18 @@ public class ExitCircuit extends CircuitBase {
 		return exitRouter;
 	}
 	
-	public OpenStreamResponse openExitStream(IPv4Address address, int port) {
-		return openExitStream(address.toString(), port);
+	public Stream openExitStream(IPv4Address address, int port, long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException {
+		return openExitStream(address.toString(), port, timeout);
 	}
 
-	public OpenStreamResponse openExitStream(String target, int port) {
+	public Stream openExitStream(String target, int port, long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException {
 		final StreamImpl stream = createNewStream();
-		final OpenStreamResponse response = stream.openExit(target, port);
-		processOpenStreamResponse(stream, response);
-		return response;
+		try {
+			stream.openExit(target, port, timeout);
+			return stream;
+		} catch (Exception e) {
+			return processStreamOpenException(e);
+		}
 	}
 	
 	public void recordFailedExitTarget(ExitTarget target) {
