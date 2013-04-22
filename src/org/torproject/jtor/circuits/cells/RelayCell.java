@@ -33,6 +33,7 @@ public interface RelayCell extends Cell {
 	final static int REASON_DESTROY = 5;
 	final static int REASON_DONE = 6;
 	final static int REASON_TIMEOUT = 7;
+	final static int REASON_NOROUTE = 8;
 	final static int REASON_HIBERNATING = 9;
 	final static int REASON_INTERNAL = 10;
 	final static int REASON_RESOURCELIMIT = 11;
