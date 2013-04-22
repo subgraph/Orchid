@@ -25,14 +25,17 @@ public class OpenExitStreamTask implements Runnable {
 			Thread.currentThread().interrupt();
 			exitRequest.setInterrupted();
 		} catch (TimeoutException e) {
+			circuit.markForClose();
 			exitRequest.setCompletedTimeout();
 		} catch (StreamConnectFailedException e) {
 			if(!e.isReasonRetryable()) {
 				exitRequest.setExitFailed();
+				circuit.recordFailedExitTarget(exitRequest);
 			} else {
+				circuit.markForClose();
 				exitRequest.setStreamOpenFailure(e.getReason());
 			}
-			circuit.recordFailedExitTarget(exitRequest);
+			
 		}
 	}
 
