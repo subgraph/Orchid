@@ -1,82 +1,78 @@
 package org.torproject.jtor.directory.downloader;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.OutputStream;
 import java.io.Reader;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.InflaterInputStream;
+import java.util.zip.DataFormatException;
+import java.util.zip.Inflater;
 
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.Stream;
+import org.torproject.jtor.directory.Router;
 
 public class HttpConnection {
+	private final static Charset CHARSET = Charset.forName("ISO-8859-1");
 	
-	public static HttpConnection createFromStream(String host, Stream stream) {
-		Charset cs = Charset.forName("ISO-8859-1");
-		final InputStreamReader isr = new InputStreamReader(stream.getInputStream(), cs);
-		final OutputStreamWriter osw = new OutputStreamWriter(stream.getOutputStream(), cs);
-		final BufferedReader reader = new BufferedReader(isr);
-		final BufferedWriter writer = new BufferedWriter(osw);
-		return new HttpConnection(host, stream, reader, writer);
-	}
-
 	private final static String HTTP_RESPONSE_REGEX = "HTTP/1\\.(\\d) (\\d+) (.*)";
 	private final static String CONTENT_LENGTH_HEADER = "Content-Length";
 	private final static String CONTENT_ENCODING_HEADER = "Content-Encoding";
-	private final String host;
+	private final String hostname;
 	private final Stream stream;
-	private final BufferedReader reader;
-	private final BufferedWriter writer;
+	private final InputStream input;
+	private final OutputStream output;
 	private final Map<String, String> headers;
 	private int responseCode;
 	private boolean bodyCompressed;
 	private String responseMessage;
 	private Reader bodyReader;
 	
-	public HttpConnection(String host, BufferedReader reader, BufferedWriter writer) {
-		this(host, null, reader, writer);
-	}
 
-	public HttpConnection(String host, Stream stream, BufferedReader reader, BufferedWriter writer) {
-		this.host = host;
+	public HttpConnection(Stream stream) {
+		this.hostname = getHostnameFromStream(stream);
 		this.stream = stream;
-		this.reader = reader;
-		this.writer = writer;
 		this.headers = new HashMap<String, String>();
+		this.input = stream.getInputStream();
+		this.output = stream.getOutputStream();
+	}
+	
+	private static String getHostnameFromStream(Stream stream) {
+		final StringBuilder sb = new StringBuilder();
+		final Router r = stream.getCircuit().getFinalCircuitNode().getRouter();
+		sb.append(r.getAddress().toString());
+		if(r.getOnionPort() != 80) {
+			sb.append(":");
+			sb.append(r.getOnionPort());
+		}
+		return sb.toString();
 	}
 
-	public void sendGetRequest(String request) {
+	public void sendGetRequest(String request) throws IOException {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("GET ");
 		sb.append(request);
 		sb.append(" HTTP/1.0\r\n");
-		sb.append("Host: "+ host +"\r\n");
+		sb.append("Host: "+ hostname +"\r\n");
 		sb.append("\r\n");
 		
-		try {
-			writer.write(sb.toString());
-			writer.flush();
-		} catch (IOException e) {
-			throw new TorException("IO exception sending GET request", e);
-		}
+		final String requestLine = sb.toString();
+		output.write(requestLine.getBytes(CHARSET));
+		output.flush();
 	}
 	
 	public String getHost() {
-		return host;
+		return hostname;
 	}
 
-	public void readResponse() {
+	public void readResponse() throws IOException {
 		readStatusLine();
 		readHeaders();
 		readBody();
@@ -102,7 +98,7 @@ public class HttpConnection {
 		stream.getCircuit().destroyCircuit();
 	}
 	
-	private void readStatusLine() {
+	private void readStatusLine() throws IOException {
 		final String line = nextResponseLine();	
 		final Pattern p = Pattern.compile(HTTP_RESPONSE_REGEX);
 		final Matcher m = p.matcher(line);
@@ -122,7 +118,7 @@ public class HttpConnection {
 		}
 	}
 	
-	private void readHeaders() {
+	private void readHeaders() throws IOException {
 		headers.clear();
 		while(true) {
 			final String line = nextResponseLine();
@@ -135,24 +131,22 @@ public class HttpConnection {
 		}
 	}
 	
-	private String nextResponseLine() {
-		try {
-			final String line = reader.readLine();
-			if(line == null)
-				throw new TorException("Unexpected EOF reading HTTP response");
-			return line;
-		} catch (IOException e) {
-			throw new TorException("IO error reading HTTP response:"+ e.getMessage(), e);
+	private String nextResponseLine() throws IOException {
+		final String line = readInputLine();
+		if(line == null) {
+			throw new TorException("Unexpected EOF reading HTTP response");
 		}
+		return line;
 	}
 	
-	private void readBody() {
+	private void readBody() throws IOException {
 		processContentEncodingHeader();
 		
-		if(headers.containsKey(CONTENT_LENGTH_HEADER)) 
+		if(headers.containsKey(CONTENT_LENGTH_HEADER)) { 
 			readBodyFromContentLength();
-		else 
+		} else { 
 			readBodyUntilEOF();
+		}
 	}
 	
 	private void processContentEncodingHeader() {
@@ -165,75 +159,75 @@ public class HttpConnection {
 			throw new TorException("Unrecognized content encoding: "+ encoding);
 	}
 	
-	private void readBodyFromContentLength() {
+	private void readBodyFromContentLength() throws IOException {
 		int bodyLength = Integer.parseInt(headers.get(CONTENT_LENGTH_HEADER));
-		char[] bodyBuffer = new char[bodyLength];
+		byte[] bodyBuffer = new byte[bodyLength];
 		readAll(bodyBuffer);
-		
-		bodyReader = charBufferToReader(bodyBuffer, bodyLength);
+		bodyReader = byteBufferToReader(bodyBuffer);
 	}
 	
-	private void readBodyUntilEOF() {
-		char[] bodyBuffer = new char[1024];
-		int offset = 0;
-		while(true) {
-			try {
-				int n = reader.read(bodyBuffer, offset, bodyBuffer.length - offset);
-				if(n == -1) {
-					bodyReader = charBufferToReader(bodyBuffer, offset);
-					return;
-				}
-				offset += n;
-				if(offset == bodyBuffer.length) 
-					bodyBuffer = expandCharBuffer(bodyBuffer);
-					
-			} catch (IOException e) {
-				throw new TorException("IO error reading HTTP response");
-			}		
-		}
+	private void readBodyUntilEOF() throws IOException {
+		final byte[] bodyBuffer = readToEOF();
+		bodyReader = byteBufferToReader(bodyBuffer);
 	}
 	
-	private char[] expandCharBuffer(char[] buffer) {
-		final int newLength = buffer.length * 2;
-		final char[] newBuffer = new char[newLength];
-		System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
-		return newBuffer;
-	}
-	
-	private Reader charBufferToReader(char[] buffer, int length) {
+	private Reader byteBufferToReader(byte[] buffer) throws IOException {
 		if(bodyCompressed) {
-			final byte[] bytes = new byte[length];
-			for(int i = 0; i < length; i++)
-				bytes[i] = (byte) buffer[i];
-			final ByteArrayInputStream byteStream = new ByteArrayInputStream(bytes);
-			final InflaterInputStream inflater = new InflaterInputStream(byteStream);
-			return createInputStreamReader(inflater);
-		} else {
-			return new StringReader(new String(buffer, 0, length));
+			buffer = decompressBuffer(buffer);
+		}
+		final ByteArrayInputStream byteStream = new ByteArrayInputStream(buffer);
+		return new InputStreamReader(byteStream, CHARSET);
+	}
+	
+	private byte[] decompressBuffer(byte[] buffer) throws IOException {
+		final ByteArrayOutputStream output = new ByteArrayOutputStream();
+		final Inflater decompressor = new Inflater();
+		final byte[] decompressBuffer = new byte[4096];
+		decompressor.setInput(buffer);
+		int n;
+		try {
+			while((n = decompressor.inflate(decompressBuffer)) != 0) {
+				output.write(decompressBuffer, 0, n);
+			}
+			return output.toByteArray();
+		} catch (DataFormatException e) {
+			throw new IOException("Error decompressing http body: "+ e);
 		}
 	}
 	
-	private Reader createInputStreamReader(InputStream input) {
-		try {
-			return new InputStreamReader(input, "ISO-8859-1");
-		} catch (UnsupportedEncodingException e) {
-			throw new TorException("Unsupported character set encoding: "+ e.getMessage());
+	private byte[] readToEOF() throws IOException {
+		final ByteArrayOutputStream output = new ByteArrayOutputStream();
+		final byte[] buffer = new byte[2048];
+		int n;
+		while( (n = input.read(buffer, 0, buffer.length)) != -1) {
+			output.write(buffer, 0, n);
 		}
+		return output.toByteArray();
 	}
 
-	private void readAll(char[] buffer) {
+	private void readAll(byte[] buffer) throws IOException {
 		int offset = 0;
 		int remaining = buffer.length;
 		while(remaining > 0) {
-			try {
-				int n = reader.read(buffer, offset, remaining);
-				if(n == -1)
-					throw new TorException("Unexpected EOF reading response");
-				offset += n;
-				remaining -= n;
-			} catch (IOException e) {
-				throw new TorException("IO error reading HTTP response");
+			int n = input.read(buffer, offset, remaining);
+			if(n == -1) {
+				throw new IOException("Unexpected early EOF reading HTTP body");
+			}
+			offset += n;
+			remaining -= n;
+		}
+	}
+	
+	private String readInputLine() throws IOException {
+		final StringBuilder sb = new StringBuilder();
+		int c;
+		while((c = input.read()) != -1) {
+			if(c == '\n') {
+				return sb.toString();
+			} else if(c != '\r') {
+				sb.append((char) c);
 			}
 		}
+		return (sb.length() == 0) ? (null) : (sb.toString());
 	}
 }

@@ -27,7 +27,7 @@ public class DescriptorDownloadTask extends AbstractDirectoryDownloadTask{
 	}
 	
 	@Override
-	protected void processResponse(Reader response) {
+	protected void processResponse(Reader response, final HttpConnection http) {
 		final Set<HexDigest> requested = new HashSet<HexDigest>();
 		requested.addAll(fingerprints);
 		
@@ -35,7 +35,7 @@ public class DescriptorDownloadTask extends AbstractDirectoryDownloadTask{
 		final boolean success = parser.parse(new DocumentParsingResultHandler<RouterDescriptor>() {
 			
 			public void parsingError(String message) {
-				logger.warning("Parsing error processing router descriptors: "+ message);
+				logger.warning("Parsing error processing router descriptors from ["+ http.getHost() +"]: "+ message);
 			}
 			
 			public void documentParsed(RouterDescriptor document) {

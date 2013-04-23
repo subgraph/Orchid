@@ -21,12 +21,12 @@ public class ConsensusDownloadTask extends AbstractDirectoryDownloadTask {
 	}
 	
 	@Override
-	protected void processResponse(Reader response) {
+	protected void processResponse(Reader response, final HttpConnection http) {
 		final DocumentParser<ConsensusDocument> parser = getParserFactory().createConsensusDocumentParser(response);
 		final boolean success = parser.parse(new DocumentParsingResultHandler<ConsensusDocument>() {
 			
 			public void parsingError(String message) {
-				logger.warning("Parsing error processing consensus document: "+ message);
+				logger.warning("Parsing error processing consensus document from ["+ http.getHost() +"]: "+ message);
 			}
 			
 			public void documentParsed(ConsensusDocument document) {

@@ -26,12 +26,12 @@ public class CertificateDownloadTask extends AbstractDirectoryDownloadTask{
 	}
 	
 	@Override
-	protected void processResponse(Reader response) {
+	protected void processResponse(Reader response, final HttpConnection http) {
 		final DocumentParser<KeyCertificate> parser = getParserFactory().createKeyCertificateParser(response);
 		final boolean success = parser.parse(new DocumentParsingResultHandler<KeyCertificate>() {
 			
 			public void parsingError(String message) {
-				logger.warning("Parsing error processing certificate document: "+ message);
+				logger.warning("Parsing error processing certificate document from ["+ http.getHost() +"]: "+ message);
 			}
 			
 			public void documentParsed(KeyCertificate document) {

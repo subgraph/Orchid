@@ -12,7 +12,6 @@ import org.torproject.jtor.circuits.OpenFailedException;
 import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.directory.Directory;
-import org.torproject.jtor.directory.Router;
 import org.torproject.jtor.directory.parsing.DocumentParserFactory;
 
 
@@ -39,8 +38,7 @@ public abstract class AbstractDirectoryDownloadTask implements Runnable {
 
 	protected HttpConnection openDirectoryConnection() throws InterruptedException, TimeoutException, OpenFailedException {
 			final Stream stream = downloader.getCircuitManager().openDirectoryStream(purposeCode);
-			final String hostname = createHostnameStringFromStream(stream);
-			return HttpConnection.createFromStream(hostname, stream);
+			return new HttpConnection(stream);
 	}
 	
 	public void run() {
@@ -66,7 +64,9 @@ public abstract class AbstractDirectoryDownloadTask implements Runnable {
 		try {
 			logger.info("request to "+ http.getHost() + " : "+ request);
 			response = requestDocument(http, request);
-			processResponse(response);
+			processResponse(response, http);
+		} catch(IOException e) {
+			logger.warning("IO error making request "+ request +" to host ["+ http.getHost() + "]: "+ e);
 		} finally {
 			closeReader(response);
 			http.close();
@@ -82,21 +82,12 @@ public abstract class AbstractDirectoryDownloadTask implements Runnable {
 			logger.log(Level.WARNING, "Error closing directory reader "+ e.getMessage(), e);
 		}
 	}
-
-	private String createHostnameStringFromStream(Stream stream) {
-		final Router r = stream.getCircuit().getFinalCircuitNode().getRouter();
-		if(r.getOnionPort() == 80) {
-			return r.getAddress().toString();
-		} else {
-			return r.getAddress().toString() + ":" + r.getOnionPort();
-		}
-	}
 	
 	abstract protected String getRequestPath();
-	abstract protected void processResponse(Reader response);
+	abstract protected void processResponse(Reader response, HttpConnection http);
 	abstract protected void finishRequest(DirectoryDownloader downloader);
 	
-	protected Reader requestDocument(HttpConnection connection, String request) {
+	protected Reader requestDocument(HttpConnection connection, String request) throws IOException {
 		if(USE_COMPRESSION) {
 			request += ".z";
 		}
