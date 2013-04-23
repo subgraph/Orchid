@@ -54,6 +54,11 @@ public class ExitCircuit extends CircuitBase {
 				return false;
 			}
 		}
+		
+		if(isMarkedForClose()) {
+			return false;
+		}
+
 		if(target.isAddressTarget()) {
 			return exitRouter.exitPolicyAccepts(target.getAddress(), target.getPort());
 		} else {

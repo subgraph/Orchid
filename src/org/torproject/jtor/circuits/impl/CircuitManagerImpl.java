@@ -152,7 +152,7 @@ public class CircuitManagerImpl implements CircuitManager {
 		final Set<Circuit> notDirectory = getCircuitsByFilter(new CircuitFilter() {
 			
 			public boolean filter(CircuitBase circuit) {
-				return !circuit.isDirectoryCircuit() && circuit.isConnected();
+				return !circuit.isDirectoryCircuit() && !circuit.isMarkedForClose() && circuit.isConnected();
 			}
 		});
 		final ArrayList<Circuit> ac = new ArrayList<Circuit>(notDirectory);
