@@ -9,11 +9,11 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -59,7 +59,8 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 	private volatile boolean isClosed;
 	private final Thread readCellsThread;
 	private final Object connectLock = new Object();
-	private Date lastActivity;
+	private final AtomicLong lastActivity = new AtomicLong();
+	
 
 	public ConnectionImpl(SSLSocket socket, Router router, TorInitializationTracker tracker, boolean isDirectoryConnection) {
 		this.socket = socket;
@@ -300,19 +301,14 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 	}
 
 	private void updateLastActivity() {
-		synchronized(circuitMap) {
-			lastActivity = new Date();
-		}
+		lastActivity.set(System.currentTimeMillis());
 	}
 
 	private long getIdleMilliseconds() {
-		synchronized (circuitMap) {
-			if(lastActivity == null) {
-				return 0;
-			}
-			final Date now = new Date();
-			return now.getTime() - lastActivity.getTime();
+		if(lastActivity.get() == 0) {
+			return 0;
 		}
+		return System.currentTimeMillis() - lastActivity.get();
 	}
 
 	public void removeCircuit(Circuit circuit) {
