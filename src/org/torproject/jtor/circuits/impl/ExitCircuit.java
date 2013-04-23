@@ -38,6 +38,7 @@ public class ExitCircuit extends CircuitBase {
 			stream.openExit(target, port, timeout);
 			return stream;
 		} catch (Exception e) {
+			removeStream(stream);
 			return processStreamOpenException(e);
 		}
 	}

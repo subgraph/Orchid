@@ -24,6 +24,7 @@ public class DirectoryCircuit extends CircuitBase {
 			stream.openDirectory(timeout);
 			return stream;
 		} catch (Exception e) {
+			removeStream(stream);
 			return processStreamOpenException(e);
 		}
 	}
