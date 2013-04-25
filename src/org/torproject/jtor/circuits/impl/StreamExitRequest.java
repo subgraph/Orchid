@@ -1,5 +1,5 @@
 package org.torproject.jtor.circuits.impl;
-
+ 
 import java.util.concurrent.TimeoutException;
 
 import org.torproject.jtor.circuits.OpenFailedException;
@@ -17,25 +17,26 @@ public class StreamExitRequest implements ExitTarget {
 	private final IPv4Address address;
 	private final String hostname;
 	private final int port;
-	private final CircuitManagerImpl circuitManager;
+	private final Object requestCompletionLock;
 	
-	@GuardedBy("this") private Stream stream;
+	@GuardedBy("requestCompletionLock") private CompletionStatus completionStatus;	
+	@GuardedBy("requestCompletionLock") private Stream stream;
+	@GuardedBy("requestCompletionLock") private int streamOpenFailReason;
+	
 	@GuardedBy("this") private boolean isReserved;
-	@GuardedBy("this") private CompletionStatus completionStatus;
-	@GuardedBy("this") private int streamOpenFailReason;
 	@GuardedBy("this") private int retryCount;
 	@GuardedBy("this") private long specificTimeout;
 
-	StreamExitRequest(CircuitManagerImpl circuitManager, IPv4Address address, int port) {
-		this(circuitManager, true, "", address, port);
+	StreamExitRequest(Object requestCompletionLock, IPv4Address address, int port) {
+		this(requestCompletionLock, true, "", address, port);
 	}
 
-	StreamExitRequest(CircuitManagerImpl circuitManager, String hostname, int port) {
-		this(circuitManager, false, hostname, null, port);
+	StreamExitRequest(Object requestCompletionLock, String hostname, int port) {
+		this(requestCompletionLock, false, hostname, null, port);
 	}
 	
-	private StreamExitRequest(CircuitManagerImpl circuitManager, boolean isAddress, String hostname, IPv4Address address, int port) {
-		this.circuitManager = circuitManager;
+	private StreamExitRequest(Object requestCompletionLock, boolean isAddress, String hostname, IPv4Address address, int port) {
+		this.requestCompletionLock = requestCompletionLock;
 		this.isAddress = isAddress;
 		this.hostname = hostname;
 		this.address = address;
@@ -73,26 +74,36 @@ public class StreamExitRequest implements ExitTarget {
 		}
 	}
 
-	synchronized void setCompletedTimeout() {
-		newStatus(CompletionStatus.TIMEOUT);
+	void setCompletedTimeout() {
+		synchronized (requestCompletionLock) {
+			newStatus(CompletionStatus.TIMEOUT);
+		}
 	}
 	
-	synchronized void setExitFailed() {
-		newStatus(CompletionStatus.EXIT_FAILURE);
+	void setExitFailed() {
+		synchronized (requestCompletionLock) {
+			newStatus(CompletionStatus.EXIT_FAILURE);
+		}
 	}
 	
-	synchronized void setStreamOpenFailure(int reason) {
-		streamOpenFailReason = reason;
-		newStatus(CompletionStatus.STREAM_OPEN_FAILURE);
+	void setStreamOpenFailure(int reason) {
+		synchronized (requestCompletionLock) {
+			streamOpenFailReason = reason;
+			newStatus(CompletionStatus.STREAM_OPEN_FAILURE);
+		}
 	}
 	
-	synchronized void setCompletedSuccessfully(Stream stream) {
-		this.stream = stream;
-		newStatus(CompletionStatus.SUCCESS);
+	void setCompletedSuccessfully(Stream stream) {
+		synchronized (requestCompletionLock) {
+			this.stream = stream;
+			newStatus(CompletionStatus.SUCCESS);
+		}
 	}
 	
-	synchronized void setInterrupted() {
-		newStatus(CompletionStatus.INTERRUPTED);
+	void setInterrupted() {
+		synchronized (requestCompletionLock) {
+			newStatus(CompletionStatus.INTERRUPTED);	
+		}
 	}
 
 	private void newStatus(CompletionStatus newStatus) {
@@ -100,36 +111,44 @@ public class StreamExitRequest implements ExitTarget {
 			throw new IllegalStateException("Attempt to set completion state to " + newStatus +" while status is "+ completionStatus);
 		}
 		completionStatus = newStatus;
-		circuitManager.streamRequestIsCompleted(this);
+		requestCompletionLock.notifyAll();
 	}
+
 	
-	synchronized Stream getStream() throws OpenFailedException, TimeoutException, StreamConnectFailedException, InterruptedException {
-		switch(completionStatus) {
-		case NOT_COMPLETED:
-			throw new IllegalStateException("Request not completed");
-		case EXIT_FAILURE:
-			throw new OpenFailedException();
-		case TIMEOUT:
-			throw new TimeoutException();
-		case STREAM_OPEN_FAILURE:
-			throw new StreamConnectFailedException(streamOpenFailReason);
-		case INTERRUPTED:
-			throw new InterruptedException();
-		case SUCCESS:
-			return stream;
-		default:
-			throw new IllegalStateException("Unknown completion status");
+	Stream getStream() throws OpenFailedException, TimeoutException, StreamConnectFailedException, InterruptedException {
+		synchronized(requestCompletionLock) {
+			switch(completionStatus) {
+			case NOT_COMPLETED:
+				throw new IllegalStateException("Request not completed");
+			case EXIT_FAILURE:
+				throw new OpenFailedException();
+			case TIMEOUT:
+				throw new TimeoutException();
+			case STREAM_OPEN_FAILURE:
+				throw new StreamConnectFailedException(streamOpenFailReason);
+			case INTERRUPTED:
+				throw new InterruptedException();
+			case SUCCESS:
+				return stream;
+			default:
+				throw new IllegalStateException("Unknown completion status");
+			}
 		}
 	}
 
 	synchronized void resetForRetry() {
+		synchronized (requestCompletionLock) {
+			streamOpenFailReason = 0;
+			completionStatus = CompletionStatus.NOT_COMPLETED;
+		}
 		retryCount += 1;
-		streamOpenFailReason = 0;
-		completionStatus = CompletionStatus.NOT_COMPLETED;
+		isReserved = false;
 	}
 
-	synchronized boolean isCompleted() {
-		return completionStatus != CompletionStatus.NOT_COMPLETED;
+	boolean isCompleted() {
+		synchronized (requestCompletionLock) {
+			return completionStatus != CompletionStatus.NOT_COMPLETED;
+		}
 	}
 	
 	synchronized boolean reserveRequest() {
@@ -142,38 +161,10 @@ public class StreamExitRequest implements ExitTarget {
 		return isReserved;
 	}
 	
-	synchronized void unreserveRequest() {
-		isReserved = false;
-	}
-	
 	public String toString() {
 		if(isAddress)
 			return address + ":"+ port;
 		else
 			return hostname + ":"+ port;
-	}
-	
-	public boolean equals(Object ob) {
-		if(this == ob) return true;
-		if(!(ob instanceof StreamExitRequest))
-			return false;
-		StreamExitRequest other = (StreamExitRequest) ob;
-		if(address != null && isAddress)
-			return (other.isAddress && address.equals(other.address) && port == other.port);
-		else 
-			return (!other.isAddress && hostname.equals(other.hostname) && port == other.port); 
-	}
-	
-	public int hashCode() {
-		int hash = port;
-		if(address != null) {
-			hash *= 31;
-			hash += address.hashCode();
-		}
-		if(hostname != null) {
-			hash *= 31;
-			hash += hostname.hashCode();
-		}
-		return hash;	
 	}
 }

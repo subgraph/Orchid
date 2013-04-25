@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -43,27 +42,26 @@ public class CircuitManagerImpl implements CircuitManager {
 		boolean filter(CircuitBase circuit);
 	}
 
-	private final TorConfig config;
 	private final ConnectionCache connectionCache;
 	private final Set<CircuitBase> activeCircuits;
 	private final TorRandom random;
-	private final List<StreamExitRequest> pendingExitStreams = new LinkedList<StreamExitRequest>();
+	private final PendingExitStreams pendingExitStreams;
 	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 	private final CircuitCreationTask circuitCreationTask;
 	private final TorInitializationTracker initializationTracker;
 	private final CircuitPathChooser pathChooser;
 
 	public CircuitManagerImpl(TorConfig config, Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
-		this.config = config;
 		this.connectionCache = connectionCache;
 		this.pathChooser = CircuitPathChooser.create(config, directory);
 		if(USE_ENTRY_GUARDS) {
 			this.pathChooser.enableEntryGuards(new EntryGuards(config, connectionCache, directory));
 		}
-		
+		this.pendingExitStreams = new PendingExitStreams(config);
 		this.circuitCreationTask = new CircuitCreationTask(config, directory, connectionCache, pathChooser, this, initializationTracker);
 		this.activeCircuits = new HashSet<CircuitBase>();
 		this.random = new TorRandom();
+		
 		this.initializationTracker = initializationTracker;
 	}
 
@@ -168,49 +166,16 @@ public class CircuitManagerImpl implements CircuitManager {
 
 	public Stream openExitStreamTo(String hostname, int port)
 			throws InterruptedException, TimeoutException, OpenFailedException {
-		return openExitStreamByRequest(new StreamExitRequest(this, hostname, port));
+		return pendingExitStreams.openExitStream(hostname, port);
 	}
 
 	public Stream openExitStreamTo(IPv4Address address, int port)
 			throws InterruptedException, TimeoutException, OpenFailedException {
-		return openExitStreamByRequest(new StreamExitRequest(this, address, port));
-	}
-	
-	private Stream openExitStreamByRequest(StreamExitRequest request) throws InterruptedException, OpenFailedException {
-		if(config.getCircuitStreamTimeout() != 0) {
-			request.setStreamTimeout(config.getCircuitStreamTimeout());
-		}
-		circuitCreationTask.predictPort(request.getPort());
-		while(true) {
-			synchronized(pendingExitStreams) {
-				if(!pendingExitStreams.contains(request)) {
-					pendingExitStreams.add(request);
-				}
-				while(!request.isCompleted()) {
-					pendingExitStreams.wait();
-				}
-			}
-			try {
-				return request.getStream();
-			} catch (StreamConnectFailedException e) {
-				request.resetForRetry();
-			} catch (TimeoutException e) {
-				request.resetForRetry();
-			}
-		}
+		return pendingExitStreams.openExitStream(address, port);
 	}
 
 	public List<StreamExitRequest> getPendingExitStreams() {
-		synchronized(pendingExitStreams) {
-			return new ArrayList<StreamExitRequest>(pendingExitStreams);
-		}
-	}
-	
-	void streamRequestIsCompleted(StreamExitRequest request) {
-		synchronized(pendingExitStreams) {
-			pendingExitStreams.remove(request);
-			pendingExitStreams.notifyAll();
-		}
+		return pendingExitStreams.getUnreservedPendingRequests();
 	}
 
 	public Stream openDirectoryStream() throws OpenFailedException, InterruptedException, TimeoutException {
@@ -305,6 +270,5 @@ public class CircuitManagerImpl implements CircuitManager {
 		for(Circuit c: getCircuitsByFilter(null)) {
 			c.dashboardRender(writer, flags);
 		}
-		writer.println();
 	}
 }
