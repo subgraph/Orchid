@@ -140,11 +140,11 @@ public class TorClient {
 		}
 	}
 
-	void addInitializationListener(TorInitializationListener listener) {
+	public void addInitializationListener(TorInitializationListener listener) {
 		initializationTracker.addListener(listener);
 	}
 
-	void removeInitializationListener(TorInitializationListener listener) {
+	public void removeInitializationListener(TorInitializationListener listener) {
 		initializationTracker.removeListener(listener);
 	}
 	
