@@ -1,6 +1,8 @@
 package org.torproject.jtor;
 
 import java.security.Security;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -33,8 +35,7 @@ public class TorClient {
 	private final Dashboard dashboard;
 
 	private boolean isStarted = false;
-	private volatile boolean isReady = false;
-	private Object readyLock = new Object();
+	private final CountDownLatch readyLatch;
 	
 	public TorClient() {
 		Security.addProvider(new BouncyCastleProvider());
@@ -46,6 +47,8 @@ public class TorClient {
 		circuitManager = Tor.createCircuitManager(config, directory, connectionCache, initializationTracker);
 		directoryDownloader = Tor.createDirectoryDownloader(directory, circuitManager);
 		socksListener = Tor.createSocksPortListener(circuitManager);
+		
+		readyLatch = new CountDownLatch(1);
 		
 		dashboard = new Dashboard(); 
 		dashboard.addRenderables(circuitManager, directoryDownloader, socksListener);
@@ -81,31 +84,13 @@ public class TorClient {
 	}
 
 	public void waitUntilReady() throws InterruptedException {
-		try {
-			waitUntilReady(0);
-		} catch (TimeoutException e) { /* can't happen */ }
+		readyLatch.await();
 	}
 
 	public void waitUntilReady(long timeout) throws InterruptedException, TimeoutException {
-		final long start = System.currentTimeMillis();
-		synchronized (readyLock) {
-			while(!isReady) {
-				long remaining = timeRemaining(start, timeout);
-				if(timeout > 0 && remaining == 0) {
-					throw new TimeoutException();
-				}
-				readyLock.wait(remaining);
-			}
+		if(!readyLatch.await(timeout, TimeUnit.MILLISECONDS)) {
+			throw new TimeoutException();
 		}
-	}
-
-	private long timeRemaining(long start, long timeout) {
-		if(timeout == 0) {
-			return 0;
-		}
-		final long now = System.currentTimeMillis();
-		final long elapsed = now - start;
-		return (elapsed > timeout) ? 0 : (timeout - elapsed);
 	}
 	
 	public Stream openExitStreamTo(String hostname, int port) throws InterruptedException, TimeoutException, OpenFailedException {
@@ -152,10 +137,7 @@ public class TorClient {
 		return new TorInitializationListener() {
 			public void initializationProgress(String message, int percent) {}
 			public void initializationCompleted() {
-				synchronized (readyLock) {
-					isReady = true;
-					readyLock.notifyAll();
-				}
+				readyLatch.countDown();
 			}
 		};
 	}
