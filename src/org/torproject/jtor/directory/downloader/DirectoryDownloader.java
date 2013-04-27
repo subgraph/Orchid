@@ -50,6 +50,7 @@ public class DirectoryDownloader implements Runnable {
 	}
 
 	public void run() {
+		directory.loadFromStore();
 		while (true) {
 			checkCertificates();
 			checkConsensus();
