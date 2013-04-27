@@ -4,8 +4,6 @@ import java.security.Security;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Handler;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -65,7 +63,6 @@ public class TorClient {
 		if(isStarted) {
 			return;
 		}
-		directory.loadFromStore();
 		directoryDownloader.start();
 		circuitManager.startBuildingCircuits();
 		isStarted = true;
@@ -94,10 +91,14 @@ public class TorClient {
 	}
 	
 	public Stream openExitStreamTo(String hostname, int port) throws InterruptedException, TimeoutException, OpenFailedException {
+		ensureStarted();
+		return circuitManager.openExitStreamTo(hostname, port);
+	}
+	
+	private synchronized void ensureStarted() {
 		if(!isStarted) {
 			throw new IllegalStateException("Must call start() first");
 		}
-		return circuitManager.openExitStreamTo(hostname, port);
 	}
 
 	public void enableSocksListener(int port) {
@@ -143,25 +144,12 @@ public class TorClient {
 	}
 
 	public static void main(String[] args) {
-		setupLogging();
 		logger.info("Starting...");
 		final TorClient client = new TorClient();
 		client.addInitializationListener(createInitalizationListner());
 		client.start();
 		client.enableSocksListener();
 		client.enableDashboard();
-	}
-	
-	public static void setupLogging() {
-		System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tT] %4$s: %5$s%6$s%n");
-		setLogHandlerLevel(Level.FINE);
-		//Logger.getLogger("org.torproject.jtor.circuits").setLevel(Level.FINE);
-	}
-	
-	private static void setLogHandlerLevel(Level level) {
-		for(Handler handler: Logger.getLogger("").getHandlers()) {
-			handler.setLevel(level);
-		}
 	}
 	
 	private static TorInitializationListener createInitalizationListner() {
