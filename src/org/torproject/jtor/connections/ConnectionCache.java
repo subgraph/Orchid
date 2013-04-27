@@ -101,12 +101,24 @@ public class ConnectionCache implements DashboardRenderable {
 	
 	
 	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
-		writer.println("[Connection Cache]");
-		writer.println();
+		if((flags & DASHBOARD_CONNECTIONS) == 0) {
+			return;
+		}
+		printDashboardBanner(writer, flags);
 		for(ConnectionImpl c: getActiveConnections()) {
 			if(!c.isClosed()) {
 				c.dashboardRender(writer, flags);
 			}
+		}
+		writer.println();
+	}
+
+	private void printDashboardBanner(PrintWriter writer, int flags) {
+		final boolean verbose = (flags & DASHBOARD_CONNECTIONS_VERBOSE) != 0;
+		if(verbose) {
+			writer.println("[Connection Cache (verbose)]");
+		} else {
+			writer.println("[Connection Cache]");
 		}
 		writer.println();
 	}

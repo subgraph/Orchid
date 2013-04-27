@@ -68,6 +68,10 @@ public class CircuitPredictor implements DashboardRenderable {
 
 	public void dashboardRender(PrintWriter writer, int flags)
 			throws IOException {
+		
+		if((flags & DASHBOARD_PREDICTED_PORTS) == 0) {
+			return;
+		}
 		writer.println("[Predicted Ports] ");
 		for(int port : portsSeen.keySet()) {
 			writer.write(" "+ port);

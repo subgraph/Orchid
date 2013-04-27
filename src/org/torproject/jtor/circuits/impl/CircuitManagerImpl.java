@@ -263,6 +263,9 @@ public class CircuitManagerImpl implements CircuitManager {
 	}
 
 	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
+		if((flags & DASHBOARD_CIRCUITS) == 0) {
+			return;
+		}
 		connectionCache.dashboardRender(writer, flags);
 		circuitCreationTask.getCircuitPredictor().dashboardRender(writer, flags);
 		writer.println("[Circuit Manager]");

@@ -322,10 +322,15 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 	}
 
 	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
-		writer.print("  [Connection router="+ router.getNickname());
-		synchronized(circuitMap) {
-			writer.print(" circuits="+ circuitMap.size());
+		final int circuitCount;
+		synchronized (circuitMap) {
+			circuitCount = circuitMap.size();
 		}
+		if(circuitCount == 0 && (flags & DASHBOARD_CONNECTIONS_VERBOSE) == 0) {
+			return;
+		}
+		writer.print("  [Connection router="+ router.getNickname());
+		writer.print(" circuits="+ circuitCount);
 		writer.print(" idle="+ (getIdleMilliseconds()/1000) + "s");
 		writer.println("]");
 	}

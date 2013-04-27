@@ -303,6 +303,9 @@ public class CircuitIO implements DashboardRenderable {
 	}
 
 	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
+		if((flags & DASHBOARD_STREAMS) == 0) {
+			return;
+		}
 		for(Stream s: getActiveStreams()) {
 			s.dashboardRender(writer, flags);
 		}
