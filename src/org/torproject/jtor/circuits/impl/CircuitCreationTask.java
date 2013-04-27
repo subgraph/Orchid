@@ -117,7 +117,7 @@ public class CircuitCreationTask implements Runnable {
 
 		if(!directory.haveMinimumRouterInfo()) {
 			if(notEnoughDirectoryInformationWarningCounter % 20 == 0)
-				logger.warning("Cannot build circuits because we don't have enough directory information");
+				logger.info("Cannot build circuits because we don't have enough directory information");
 			notEnoughDirectoryInformationWarningCounter++;
 			return;
 		}

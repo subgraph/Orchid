@@ -62,7 +62,7 @@ public abstract class AbstractDirectoryDownloadTask implements Runnable {
 		final String request = getRequestPath();
 		Reader response = null;
 		try {
-			logger.info("request to "+ http.getHost() + " : "+ request);
+			logger.fine("request to "+ http.getHost() + " : "+ request);
 			response = requestDocument(http, request);
 			processResponse(response, http);
 		} catch(IOException e) {
