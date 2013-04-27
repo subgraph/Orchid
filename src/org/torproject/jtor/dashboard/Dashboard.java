@@ -5,34 +5,37 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.data.IPv4Address;
+import org.torproject.jtor.misc.GuardedBy;
 
+/**
+ * A debugging utility which displays continuously updated information about the internal state
+ * of various components to clients which connect to a network port listening on localhost.
+ */
 public class Dashboard implements DashboardRenderable {
-	
 	private final static Logger logger = Logger.getLogger(Dashboard.class.getName());
+	
 	private final static int DEFAULT_LISTENING_PORT = 12345;
-	private final IPv4Address localhost = IPv4Address.createFromString("127.0.0.1");
+	private final static int DEFAULT_FLAGS = DASHBOARD_CIRCUITS | DASHBOARD_STREAMS;
+	private final static IPv4Address LOCALHOST = IPv4Address.createFromString("127.0.0.1");
 			
-	private int listeningPort = DEFAULT_LISTENING_PORT;
-
-	private int flags;
-
-
-	private ServerSocket listeningSocket;
-	private boolean isListening;
+	@GuardedBy("this") private int listeningPort = DEFAULT_LISTENING_PORT;
+	@GuardedBy("this") private int flags = DEFAULT_FLAGS;
+	@GuardedBy("this") private ServerSocket listeningSocket;
+	@GuardedBy("this") private boolean isListening;
 	
 	private final List<DashboardRenderable> renderables;
 	private final Executor executor;
 	
 	
 	public Dashboard() {
-		renderables = new ArrayList<DashboardRenderable>();
+		renderables = new CopyOnWriteArrayList<DashboardRenderable>();
 		renderables.add(this);
 		executor = Executors.newCachedThreadPool();
 	}
@@ -40,23 +43,26 @@ public class Dashboard implements DashboardRenderable {
 	public void addRenderables(Object...objects) {
 		for(Object ob: objects) {
 			if(ob instanceof DashboardRenderable) {
-				addRenderable((DashboardRenderable) ob);
+				renderables.add((DashboardRenderable) ob);
 			}
 		}
 	}
 
 	public void addRenderable(DashboardRenderable renderable) {
-		synchronized (renderables) {
-			renderables.add(renderable);
-		}
+		renderables.add(renderable);
 	}
 
-	public void enableFlag(int flag) {
+	public synchronized void enableFlag(int flag) {
 		flags |= flag;
 	}
 	
-	public void disableFlag(int flag) {
+	public synchronized void disableFlag(int flag) {
 		flags &= ~flag;
+	}
+	
+	
+	public synchronized boolean isEnabled(int f) {
+		return (flags & f) != 0;
 	}
 	
 	public synchronized void setListeningPort(int port) {
@@ -74,7 +80,7 @@ public class Dashboard implements DashboardRenderable {
 			return;
 		}
 		try {
-			listeningSocket = new ServerSocket(listeningPort, 50, localhost.toInetAddress());
+			listeningSocket = new ServerSocket(listeningPort, 50, LOCALHOST.toInetAddress());
 			isListening = true;
 			executor.execute(createAcceptLoopRunnable(listeningSocket));
 		} catch (IOException e) {
@@ -109,10 +115,10 @@ public class Dashboard implements DashboardRenderable {
 		while(true) {
 			try {
 				Socket s = ss.accept();
-				executor.execute(createHandleConnectionRunnable(s));
+				executor.execute(new DashboardConnection(this, s));
 			} catch (IOException e) {
 				if(!ss.isClosed()) {
-					e.printStackTrace();
+					logger.warning("IOException on dashboard server socket: "+ e);
 				}
 				stopListening();
 				return;
@@ -120,27 +126,12 @@ public class Dashboard implements DashboardRenderable {
 		}
 	}
 	
-	private Runnable createHandleConnectionRunnable(final Socket s) {
-		return new Runnable() {
-			public void run() {
-				runConnection(s);
-			}
-		};
-	}
-	
-	private void runConnection(Socket s) {
-		try {
-			final PrintWriter writer = new PrintWriter(s.getOutputStream());
-			for(DashboardRenderable dr: renderables) {
-				dr.dashboardRender(writer, flags);
-			}
-			writer.flush();
-		} catch (IOException e) {
-			logger.warning("IO error handling dashboard connection "+ e);
-		} finally {
-			closeQuietly(s);
+	void renderAll(PrintWriter writer) throws IOException {
+		for(DashboardRenderable dr: renderables) {
+			dr.dashboardRender(writer, flags);
 		}
 	}
+
 	
 	private void closeQuietly(Closeable closeable) {
 		try {
