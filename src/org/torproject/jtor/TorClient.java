@@ -65,6 +65,9 @@ public class TorClient {
 		}
 		directoryDownloader.start();
 		circuitManager.startBuildingCircuits();
+		if(dashboard.isEnabledByProperty()) {
+			dashboard.startListening();
+		}
 		isStarted = true;
 	}
 	
@@ -149,7 +152,6 @@ public class TorClient {
 		client.addInitializationListener(createInitalizationListner());
 		client.start();
 		client.enableSocksListener();
-		client.enableDashboard();
 	}
 	
 	private static TorInitializationListener createInitalizationListner() {

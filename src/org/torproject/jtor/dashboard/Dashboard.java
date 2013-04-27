@@ -21,11 +21,13 @@ import org.torproject.jtor.misc.GuardedBy;
 public class Dashboard implements DashboardRenderable {
 	private final static Logger logger = Logger.getLogger(Dashboard.class.getName());
 	
+	private final static String DASHBOARD_PORT_PROPERTY = "com.subgraph.orchid.dashboard.port";
+	
 	private final static int DEFAULT_LISTENING_PORT = 12345;
 	private final static int DEFAULT_FLAGS = DASHBOARD_CIRCUITS | DASHBOARD_STREAMS;
 	private final static IPv4Address LOCALHOST = IPv4Address.createFromString("127.0.0.1");
 			
-	@GuardedBy("this") private int listeningPort = DEFAULT_LISTENING_PORT;
+	@GuardedBy("this") private int listeningPort;
 	@GuardedBy("this") private int flags = DEFAULT_FLAGS;
 	@GuardedBy("this") private ServerSocket listeningSocket;
 	@GuardedBy("this") private boolean isListening;
@@ -33,11 +35,33 @@ public class Dashboard implements DashboardRenderable {
 	private final List<DashboardRenderable> renderables;
 	private final Executor executor;
 	
-	
 	public Dashboard() {
 		renderables = new CopyOnWriteArrayList<DashboardRenderable>();
 		renderables.add(this);
 		executor = Executors.newCachedThreadPool();
+		listeningPort = chooseListeningPort();
+	}
+	
+	private static int chooseListeningPort() {
+		final String dbPort = System.getProperty(DASHBOARD_PORT_PROPERTY);
+		final int port = parsePortProperty(dbPort);
+		if(port > 0 && port <= 0xFFFF) {
+			return port;
+		} else if(dbPort != null) {
+			logger.warning(DASHBOARD_PORT_PROPERTY + " was not a valid port value: "+ dbPort);
+		}
+		return DEFAULT_LISTENING_PORT;
+	}
+	
+	private static int parsePortProperty(String dbPort) {
+		if(dbPort == null) {
+			return -1;
+		}
+		try {
+			return Integer.parseInt(dbPort);
+		} catch (NumberFormatException e) {
+			return -1;
+		}
 	}
 	
 	public void addRenderables(Object...objects) {
@@ -75,6 +99,10 @@ public class Dashboard implements DashboardRenderable {
 		}
 	}
 	
+	public boolean isEnabledByProperty() {
+		return System.getProperty(DASHBOARD_PORT_PROPERTY) != null;
+	}
+
 	public synchronized void startListening() {
 		if(isListening) {
 			return;
@@ -82,6 +110,7 @@ public class Dashboard implements DashboardRenderable {
 		try {
 			listeningSocket = new ServerSocket(listeningPort, 50, LOCALHOST.toInetAddress());
 			isListening = true;
+			logger.info("Dashboard listening on "+ LOCALHOST + ":"+ listeningPort);
 			executor.execute(createAcceptLoopRunnable(listeningSocket));
 		} catch (IOException e) {
 			logger.warning("Failed to create listening Dashboard socket on port "+ listeningPort +": "+ e);
