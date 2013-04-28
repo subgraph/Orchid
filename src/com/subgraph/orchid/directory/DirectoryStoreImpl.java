@@ -31,7 +31,8 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	private final TorConfig config;
 	private final DocumentParserFactory parserFactory;
 
-
+	private boolean directoryCreationFailed;
+	
 	DirectoryStoreImpl(TorConfig config) {
 		this.config = config;
 		this.parserFactory = new DocumentParserFactoryImpl();
@@ -191,6 +192,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	
 	
 	private Writer openWriterFor(String fileName) {
+		createDirectoryIfAbsent(config.getDataDirectory());
 		final File file = new File(config.getDataDirectory(), fileName);
 		try {
 			FileOutputStream fos = new FileOutputStream(file);
@@ -201,6 +203,17 @@ public class DirectoryStoreImpl implements DirectoryStore {
 		}
 	}
 
+	private void createDirectoryIfAbsent(File dataDirectory) {
+		if(directoryCreationFailed) {
+			return;
+		}
+		if(!dataDirectory.exists()) {
+			if(!dataDirectory.mkdirs()) {
+				directoryCreationFailed = true;
+				logger.warning("Failed to create data directory "+ dataDirectory);
+			}
+		}
+	}
 	private Reader openReaderFor(String fileName) {
 		final File file = new File(config.getDataDirectory(), fileName);
 		if(!file.exists()) {
