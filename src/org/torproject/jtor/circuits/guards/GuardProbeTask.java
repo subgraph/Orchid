@@ -3,8 +3,8 @@ package org.torproject.jtor.circuits.guards;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.ConnectionCache;
 import org.torproject.jtor.circuits.ConnectionIOException;
-import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.directory.GuardEntry;
 import org.torproject.jtor.directory.Router;
 

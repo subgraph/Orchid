@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.ConnectionCache;
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.circuits.Circuit;
 import org.torproject.jtor.circuits.CircuitBuildHandler;
@@ -17,7 +18,6 @@ import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.impl.CircuitManagerImpl.CircuitFilter;
 import org.torproject.jtor.circuits.path.CircuitPathChooser;
-import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.Router;

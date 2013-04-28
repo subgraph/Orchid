@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.ConnectionCache;
 import org.torproject.jtor.Tor;
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.circuits.Circuit;
@@ -24,7 +25,6 @@ import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.circuits.StreamConnectFailedException;
 import org.torproject.jtor.circuits.guards.EntryGuards;
 import org.torproject.jtor.circuits.path.CircuitPathChooser;
-import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.directory.Directory;

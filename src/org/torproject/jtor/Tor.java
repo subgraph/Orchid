@@ -6,7 +6,7 @@ import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.circuits.impl.CircuitManagerImpl;
 import org.torproject.jtor.circuits.impl.TorInitializationTracker;
 import org.torproject.jtor.config.impl.TorConfigProxy;
-import org.torproject.jtor.connections.ConnectionCache;
+import org.torproject.jtor.connections.ConnectionCacheImpl;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.downloader.DirectoryDownloader;
 import org.torproject.jtor.directory.impl.DirectoryImpl;
@@ -82,7 +82,7 @@ public class Tor {
 	}
 
 	static public ConnectionCache createConnectionCache(TorInitializationTracker tracker) {
-		return new ConnectionCache(tracker);
+		return new ConnectionCacheImpl(tracker);
 	}
 	/**
 	 * Create and return a new <code>CircuitManager</code> instance.

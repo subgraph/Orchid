@@ -10,11 +10,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.ConnectionCache;
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.circuits.path.CircuitNodeChooser;
 import org.torproject.jtor.circuits.path.CircuitNodeChooser.WeightRule;
 import org.torproject.jtor.circuits.path.RouterFilter;
-import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.GuardEntry;

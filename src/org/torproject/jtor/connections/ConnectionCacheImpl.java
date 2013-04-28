@@ -18,16 +18,16 @@ import java.util.logging.Logger;
 
 import javax.net.ssl.SSLSocket;
 
+import org.torproject.jtor.ConnectionCache;
 import org.torproject.jtor.circuits.Connection;
 import org.torproject.jtor.circuits.ConnectionFailedException;
 import org.torproject.jtor.circuits.ConnectionHandshakeException;
 import org.torproject.jtor.circuits.ConnectionTimeoutException;
 import org.torproject.jtor.circuits.impl.TorInitializationTracker;
-import org.torproject.jtor.dashboard.DashboardRenderable;
 import org.torproject.jtor.directory.Router;
 
-public class ConnectionCache implements DashboardRenderable {
-	private final static Logger logger = Logger.getLogger(ConnectionCache.class.getName());
+public class ConnectionCacheImpl implements ConnectionCache {
+	private final static Logger logger = Logger.getLogger(ConnectionCacheImpl.class.getName());
 	
 	private class ConnectionTask implements Callable<ConnectionImpl> {
 
@@ -66,7 +66,7 @@ public class ConnectionCache implements DashboardRenderable {
 
 	private TorInitializationTracker initializationTracker;
 	
-	public ConnectionCache(TorInitializationTracker tracker) {
+	public ConnectionCacheImpl(TorInitializationTracker tracker) {
 		this.initializationTracker = tracker;
 		scheduledExecutor.scheduleAtFixedRate(new CloseIdleConnectionCheckTask(), 5000, 5000, TimeUnit.MILLISECONDS);
 	}

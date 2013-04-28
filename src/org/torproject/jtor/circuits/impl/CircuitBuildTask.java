@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.ConnectionCache;
 import org.torproject.jtor.Tor;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.circuits.CircuitNode;
@@ -14,7 +15,6 @@ import org.torproject.jtor.circuits.ConnectionTimeoutException;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.circuits.path.PathSelectionFailedException;
-import org.torproject.jtor.connections.ConnectionCache;
 import org.torproject.jtor.crypto.TorKeyAgreement;
 import org.torproject.jtor.crypto.TorMessageDigest;
 import org.torproject.jtor.data.HexDigest;
