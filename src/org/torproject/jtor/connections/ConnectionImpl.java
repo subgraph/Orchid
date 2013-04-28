@@ -29,8 +29,8 @@ import org.torproject.jtor.ConnectionTimeoutException;
 import org.torproject.jtor.Router;
 import org.torproject.jtor.Tor;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.impl.CellImpl;
-import org.torproject.jtor.circuits.impl.TorInitializationTracker;
+import org.torproject.jtor.circuits.CellImpl;
+import org.torproject.jtor.circuits.TorInitializationTracker;
 import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.dashboard.DashboardRenderable;
 

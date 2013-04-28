@@ -7,7 +7,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.torproject.jtor.circuits.impl.TorInitializationTracker;
+import org.torproject.jtor.circuits.TorInitializationTracker;
 import org.torproject.jtor.dashboard.Dashboard;
 import org.torproject.jtor.directory.downloader.DirectoryDownloader;
 import org.torproject.jtor.socks.SocksPortListener;

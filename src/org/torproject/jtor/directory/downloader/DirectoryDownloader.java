@@ -13,7 +13,7 @@ import org.torproject.jtor.Directory;
 import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.Timestamp;
-import org.torproject.jtor.directory.impl.DocumentParserFactoryImpl;
+import org.torproject.jtor.directory.DocumentParserFactoryImpl;
 import org.torproject.jtor.directory.parsing.DocumentParserFactory;
 
 public class DirectoryDownloader implements Runnable {

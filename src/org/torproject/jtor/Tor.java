@@ -2,12 +2,12 @@ package org.torproject.jtor;
 
 import java.lang.reflect.Proxy;
 
-import org.torproject.jtor.circuits.impl.CircuitManagerImpl;
-import org.torproject.jtor.circuits.impl.TorInitializationTracker;
-import org.torproject.jtor.config.impl.TorConfigProxy;
+import org.torproject.jtor.circuits.CircuitManagerImpl;
+import org.torproject.jtor.circuits.TorInitializationTracker;
+import org.torproject.jtor.config.TorConfigProxy;
 import org.torproject.jtor.connections.ConnectionCacheImpl;
+import org.torproject.jtor.directory.DirectoryImpl;
 import org.torproject.jtor.directory.downloader.DirectoryDownloader;
-import org.torproject.jtor.directory.impl.DirectoryImpl;
 import org.torproject.jtor.socks.SocksPortListener;
 import org.torproject.jtor.socks.impl.SocksPortListenerImpl;
 

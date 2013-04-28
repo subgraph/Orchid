@@ -6,7 +6,7 @@ import java.util.Set;
 
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.Timestamp;
-import org.torproject.jtor.directory.impl.consensus.DirectorySignature;
+import org.torproject.jtor.directory.consensus.DirectorySignature;
 
 public interface ConsensusDocument extends Document {
 	
