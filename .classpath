@@ -7,7 +7,7 @@
 	<classpathentry kind="lib" path="lib/bcpkix-jdk15on-148.jar"/>
 	<classpathentry kind="lib" path="lib/testing/cglib-2.2.3.jar"/>
 	<classpathentry kind="lib" path="lib/testing/objenesis-1.3.jar"/>
-	<classpathentry kind="lib" path="lib/testing/easymock-3.1.jar" />
+	<classpathentry kind="lib" path="lib/testing/easymock-3.1.jar"/>
 	<classpathentry kind="lib" path="lib/testing/hamcrest-core-1.3.jar"/>
 	<classpathentry kind="lib" path="lib/testing/junit-4.11.jar"/>
 	<classpathentry kind="output" path="bin"/>
