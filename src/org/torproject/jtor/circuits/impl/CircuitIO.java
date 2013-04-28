@@ -12,13 +12,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.Cell;
 import org.torproject.jtor.CircuitNode;
 import org.torproject.jtor.Connection;
 import org.torproject.jtor.ConnectionIOException;
+import org.torproject.jtor.RelayCell;
 import org.torproject.jtor.Stream;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.cells.Cell;
-import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.dashboard.DashboardRenderable;
 
 public class CircuitIO implements DashboardRenderable {

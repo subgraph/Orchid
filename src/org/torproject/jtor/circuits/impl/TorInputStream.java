@@ -6,8 +6,8 @@ import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import org.torproject.jtor.RelayCell;
 import org.torproject.jtor.Stream;
-import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.misc.GuardedBy;
 import org.torproject.jtor.misc.ThreadSafe;
 

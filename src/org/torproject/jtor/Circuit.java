@@ -3,8 +3,6 @@ package org.torproject.jtor;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-import org.torproject.jtor.circuits.cells.Cell;
-import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.dashboard.DashboardRenderable;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;

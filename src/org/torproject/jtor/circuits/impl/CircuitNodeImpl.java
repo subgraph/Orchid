@@ -2,11 +2,11 @@ package org.torproject.jtor.circuits.impl;
 
 import java.math.BigInteger;
 
+import org.torproject.jtor.Cell;
 import org.torproject.jtor.CircuitNode;
+import org.torproject.jtor.RelayCell;
 import org.torproject.jtor.Router;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.cells.Cell;
-import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.crypto.HybridEncryption;
 import org.torproject.jtor.crypto.TorCreateFastKeyAgreement;
 import org.torproject.jtor.crypto.TorKeyAgreement;

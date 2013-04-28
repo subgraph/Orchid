@@ -8,15 +8,15 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.Cell;
 import org.torproject.jtor.Circuit;
 import org.torproject.jtor.CircuitNode;
 import org.torproject.jtor.Connection;
+import org.torproject.jtor.RelayCell;
 import org.torproject.jtor.Router;
 import org.torproject.jtor.Stream;
 import org.torproject.jtor.StreamConnectFailedException;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.cells.Cell;
-import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.circuits.path.CircuitPathChooser;
 import org.torproject.jtor.circuits.path.PathSelectionFailedException;
 import org.torproject.jtor.data.IPv4Address;

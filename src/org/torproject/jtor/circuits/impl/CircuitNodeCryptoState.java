@@ -1,7 +1,7 @@
 package org.torproject.jtor.circuits.impl;
 
-import org.torproject.jtor.circuits.cells.Cell;
-import org.torproject.jtor.circuits.cells.RelayCell;
+import org.torproject.jtor.Cell;
+import org.torproject.jtor.RelayCell;
 import org.torproject.jtor.crypto.TorMessageDigest;
 import org.torproject.jtor.crypto.TorStreamCipher;
 import org.torproject.jtor.data.HexDigest;

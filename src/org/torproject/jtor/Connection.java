@@ -1,6 +1,5 @@
 package org.torproject.jtor;
 
-import org.torproject.jtor.circuits.cells.Cell;
 
 public interface Connection {
 	/**

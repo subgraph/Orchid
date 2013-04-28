@@ -1,4 +1,4 @@
-package org.torproject.jtor.circuits.cells;
+package org.torproject.jtor;
 
 
 public interface Cell {

@@ -14,10 +14,10 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.security.cert.X509Certificate;
 
+import org.torproject.jtor.Cell;
 import org.torproject.jtor.ConnectionHandshakeException;
 import org.torproject.jtor.ConnectionIOException;
 import org.torproject.jtor.Router;
-import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.impl.CellImpl;
 import org.torproject.jtor.crypto.TorPublicKey;
 import org.torproject.jtor.data.IPv4Address;

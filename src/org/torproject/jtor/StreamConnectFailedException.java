@@ -1,6 +1,5 @@
 package org.torproject.jtor;
 
-import org.torproject.jtor.circuits.cells.RelayCell;
 
 public class StreamConnectFailedException extends Exception {
 

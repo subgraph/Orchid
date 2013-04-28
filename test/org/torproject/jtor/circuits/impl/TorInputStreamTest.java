@@ -14,8 +14,8 @@ import java.util.Arrays;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.torproject.jtor.RelayCell;
 import org.torproject.jtor.Stream;
-import org.torproject.jtor.circuits.cells.RelayCell;
 
 public class TorInputStreamTest {
 

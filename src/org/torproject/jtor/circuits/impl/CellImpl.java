@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
-import org.torproject.jtor.circuits.cells.Cell;
+import org.torproject.jtor.Cell;
 
 public class CellImpl implements Cell {
 

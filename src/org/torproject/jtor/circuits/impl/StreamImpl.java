@@ -9,10 +9,10 @@ import java.util.logging.Logger;
 
 import org.torproject.jtor.Circuit;
 import org.torproject.jtor.CircuitNode;
+import org.torproject.jtor.RelayCell;
 import org.torproject.jtor.Stream;
 import org.torproject.jtor.StreamConnectFailedException;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.cells.RelayCell;
 
 public class StreamImpl implements Stream {
 	private final static Logger logger = Logger.getLogger(StreamImpl.class.getName());

@@ -2,10 +2,10 @@ package org.torproject.jtor.circuits.impl;
 
 import java.nio.ByteBuffer;
 
+import org.torproject.jtor.Cell;
 import org.torproject.jtor.CircuitNode;
+import org.torproject.jtor.RelayCell;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.cells.Cell;
-import org.torproject.jtor.circuits.cells.RelayCell;
 
 public class RelayCellImpl extends CellImpl implements RelayCell {
 

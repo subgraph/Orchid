@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 
 import javax.net.ssl.SSLSocket;
 
+import org.torproject.jtor.Cell;
 import org.torproject.jtor.Circuit;
 import org.torproject.jtor.Connection;
 import org.torproject.jtor.ConnectionFailedException;
@@ -28,7 +29,6 @@ import org.torproject.jtor.ConnectionTimeoutException;
 import org.torproject.jtor.Router;
 import org.torproject.jtor.Tor;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.impl.CellImpl;
 import org.torproject.jtor.circuits.impl.TorInitializationTracker;
 import org.torproject.jtor.crypto.TorRandom;

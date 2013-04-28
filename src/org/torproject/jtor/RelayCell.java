@@ -1,8 +1,7 @@
-package org.torproject.jtor.circuits.cells;
+package org.torproject.jtor;
 
 import java.nio.ByteBuffer;
 
-import org.torproject.jtor.CircuitNode;
 
 
 public interface RelayCell extends Cell {

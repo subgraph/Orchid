@@ -1,6 +1,5 @@
 package org.torproject.jtor;
 
-import org.torproject.jtor.circuits.cells.RelayCell;
 
 /**
  * Represents the state of a single onion router hop in a connected or connecting {@link Circuit}
