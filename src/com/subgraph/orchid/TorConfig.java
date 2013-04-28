@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 public interface TorConfig {
 	
-	@ConfigVar(type=ConfigVarType.PATH, defaultValue="~/.jtor")
+	@ConfigVar(type=ConfigVarType.PATH, defaultValue="~/.orchid")
 	File getDataDirectory();
 	void setDataDirectory(File directory);
 	
