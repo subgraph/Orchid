@@ -1,7 +1,9 @@
 package com.subgraph.orchid;
 
+import com.subgraph.orchid.dashboard.DashboardRenderable;
 
-public interface Connection {
+
+public interface Connection extends DashboardRenderable {
 	/**
 	 * Return the {@link Router} associated with this connection.
 	 * 
@@ -15,17 +17,7 @@ public interface Connection {
 	 * @return <code>true</code> if this connection is connected or <code>false</code> otherwise.
 	 */
 	boolean isConnected();
-
-	/**
-	 * If the network connection is not currently connected, attempt to open it.  If already connected
-	 * return immediately.
-	 * 
-	 * @throws ConnectionFailedException If an error occured while attempting to establish the connection.
-	 * @throws ConnectionTimeoutException If connection failed due to timer expiry.
-	 * @throws ConnectionHandshakeException If connection failed during handshake stage.
-	 */
-	//void connect() throws ConnectionFailedException, ConnectionTimeoutException, ConnectionHandshakeException;
-
+	boolean isClosed();
 	/**
 	 * Send a protocol {@link Cell} on this connection.
 	 * 
