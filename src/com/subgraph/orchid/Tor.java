@@ -32,8 +32,8 @@ public class Tor {
 	public final static int BOOTSTRAP_STATUS_DONE = 100;
 	
 	
-	private final static String implementation = "JTor";
-	private final static String version = "0.0.0";
+	private final static String implementation = "Orchid";
+	private final static String version = "0.9.0";
 	
 	
 	public static String getImplementation() {
