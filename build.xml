@@ -1,4 +1,7 @@
-<project name="jtor" default="all">
+<project name="orchid" default="all">
+
+  <property name="orchid.version" value="0.9.0" />
+  <property name="orchid.jarfile" value="orchid-${orchid.version}.jar" />
 
   <path id="compile.classpath">
     <fileset dir="lib">
@@ -33,10 +36,10 @@
   </target>
 
   <target name="package-embed-bc">
-    <jar destfile="jtor.jar">
+    <jar destfile="${orchid.jarfile}">
       <manifest>
 	<attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
-	<attribute name="Rsrc-Main-Class" value="org.torproject.jtor.TorClient"/>
+	<attribute name="Rsrc-Main-Class" value="com.subgraph.orchid.TorClient"/>
 	<attribute name="Class-Path" value="." />
         <attribute name="Rsrc-Class-Path" value="./ bcprov-jdk15on-148.jar bcpkix-jdk15on-148.jar"/>
       </manifest>
@@ -49,9 +52,9 @@
   </target>
 
   <target name="package">
-    <jar destfile="jtor.jar">
+    <jar destfile="${orchid.jarfile}">
       <manifest>
-        <attribute name="Main-Class" value="org.torproject.jtor.TorClient"/>
+        <attribute name="Main-Class" value="com.subgraph.orchid.TorClient"/>
       </manifest>
       <fileset dir="${basedir}/bin" />
       <zipfileset dir="${basedir}/data" includes="GeoIP.dat" fullpath="data/GeoIP.dat" />
