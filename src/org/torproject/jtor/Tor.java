@@ -8,8 +8,7 @@ import org.torproject.jtor.config.TorConfigProxy;
 import org.torproject.jtor.connections.ConnectionCacheImpl;
 import org.torproject.jtor.directory.DirectoryImpl;
 import org.torproject.jtor.directory.downloader.DirectoryDownloader;
-import org.torproject.jtor.socks.SocksPortListener;
-import org.torproject.jtor.socks.impl.SocksPortListenerImpl;
+import org.torproject.jtor.socks.SocksPortListenerImpl;
 
 /**
  * The <code>Tor</code> class is a collection of static methods for instantiating

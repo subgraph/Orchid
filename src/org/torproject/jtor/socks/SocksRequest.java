@@ -1,4 +1,4 @@
-package org.torproject.jtor.socks.impl;
+package org.torproject.jtor.socks;
 
 import java.io.IOException;
 import java.net.Socket;

@@ -1,4 +1,4 @@
-package org.torproject.jtor.socks.impl;
+package org.torproject.jtor.socks;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -12,8 +12,8 @@ import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.CircuitManager;
+import org.torproject.jtor.SocksPortListener;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.socks.SocksPortListener;
 
 public class SocksPortListenerImpl implements SocksPortListener {
 	private final static Logger logger = Logger.getLogger(SocksPortListenerImpl.class.getName());

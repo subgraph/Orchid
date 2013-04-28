@@ -10,7 +10,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.torproject.jtor.circuits.TorInitializationTracker;
 import org.torproject.jtor.dashboard.Dashboard;
 import org.torproject.jtor.directory.downloader.DirectoryDownloader;
-import org.torproject.jtor.socks.SocksPortListener;
 
 /**
  * This class is the main entry-point for running a Tor proxy

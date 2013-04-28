@@ -1,4 +1,4 @@
-package org.torproject.jtor.socks;
+package org.torproject.jtor;
 
 public interface SocksPortListener {
 	void addListeningPort(int port);
