@@ -40,8 +40,8 @@ public class ConnectionCacheImpl implements ConnectionCache {
 		}
 
 		public ConnectionImpl call() throws Exception {
-			SSLSocket socket = factory.createSocket();
-			ConnectionImpl conn = new ConnectionImpl(socket, router, initializationTracker, isDirectoryConnection);
+			final SSLSocket socket = factory.createSocket();
+			final ConnectionImpl conn = new ConnectionImpl(socket, router, initializationTracker, isDirectoryConnection);
 			conn.connect();
 			return conn;
 		}
@@ -52,7 +52,7 @@ public class ConnectionCacheImpl implements ConnectionCache {
 			for(Future<ConnectionImpl> f: activeConnections.values()) {
 				if(f.isDone()) {
 					try {
-						ConnectionImpl c = f.get();
+						final ConnectionImpl c = f.get();
 						c.idleCloseCheck();
 					} catch (Exception e) { }
 				}
@@ -76,7 +76,7 @@ public class ConnectionCacheImpl implements ConnectionCache {
 		while(true) {
 			Future<ConnectionImpl> f = getFutureFor(router, isDirectoryConnection);
 			try {
-				ConnectionImpl c = f.get();
+				Connection c = f.get();
 				if(c.isClosed()) {
 					activeConnections.remove(router, f);
 				} else {
@@ -99,13 +99,33 @@ public class ConnectionCacheImpl implements ConnectionCache {
 		}
 	}
 	
-	
+	private Future<ConnectionImpl> getFutureFor(Router router, boolean isDirectoryConnection) {
+		Future<ConnectionImpl> f = activeConnections.get(router);
+		if(f != null) {
+			return f;
+		}
+		return createFutureForIfAbsent(router, isDirectoryConnection);
+	}
+
+	private Future<ConnectionImpl> createFutureForIfAbsent(Router router, boolean isDirectoryConnection) {
+		final Callable<ConnectionImpl> task = new ConnectionTask(router, isDirectoryConnection);
+		final FutureTask<ConnectionImpl> futureTask = new FutureTask<ConnectionImpl>(task);
+		
+		final Future<ConnectionImpl> f = activeConnections.putIfAbsent(router, futureTask);
+		if(f != null) {
+			return f;
+		}
+		
+		futureTask.run();
+		return futureTask;
+	}
+
 	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
 		if((flags & DASHBOARD_CONNECTIONS) == 0) {
 			return;
 		}
 		printDashboardBanner(writer, flags);
-		for(ConnectionImpl c: getActiveConnections()) {
+		for(Connection c: getActiveConnections()) {
 			if(!c.isClosed()) {
 				c.dashboardRender(writer, flags);
 			}
@@ -123,42 +143,21 @@ public class ConnectionCacheImpl implements ConnectionCache {
 		writer.println();
 	}
 
-	public List<ConnectionImpl> getActiveConnections() {
-		List<ConnectionImpl> cs = new ArrayList<ConnectionImpl>();
+	List<Connection> getActiveConnections() {
+		final List<Connection> cs = new ArrayList<Connection>();
 		for(Future<ConnectionImpl> future: activeConnections.values()) {
-			ConnectionImpl connection = getConnectionFromFuture(future);
-			if(connection != null) {
-				cs.add(connection);
-			}
+			addConnectionFromFuture(future, cs);
 		}
 		return cs;
 	}
 
-	private ConnectionImpl getConnectionFromFuture(Future<ConnectionImpl> future) {
-		if(!future.isDone() || future.isCancelled()) {
-			return null;
-		}
+	private void addConnectionFromFuture(Future<ConnectionImpl> future, List<Connection> connectionList) {
 		try {
-			return future.get();
+			if(future.isDone() && !future.isCancelled()) {
+				connectionList.add(future.get());
+			}
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
-			return null;
-		} catch (ExecutionException e) {
-			return null;
-		}
-	}
-
-	private Future<ConnectionImpl> getFutureFor(Router router, boolean isDirectoryConnection) {
-		Future<ConnectionImpl> f = activeConnections.get(router);
-		if(f != null) {
-			return f;
-		}
-		FutureTask<ConnectionImpl> ft = new FutureTask<ConnectionImpl>(new ConnectionTask(router, isDirectoryConnection));
-		f = activeConnections.putIfAbsent(router, ft);
-		if(f == null) {
-			ft.run();
-			return ft;
-		}
-		return f;
+		} catch (ExecutionException e) { }
 	}
 }
