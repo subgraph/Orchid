@@ -28,9 +28,11 @@ import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.circuits.guards.EntryGuards;
 import com.subgraph.orchid.circuits.path.CircuitPathChooser;
 import com.subgraph.orchid.crypto.TorRandom;
+import com.subgraph.orchid.dashboard.DashboardRenderable;
+import com.subgraph.orchid.dashboard.DashboardRenderer;
 import com.subgraph.orchid.data.IPv4Address;
 
-public class CircuitManagerImpl implements CircuitManager {
+public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	
 	private final static Logger logger = Logger.getLogger(CircuitManagerImpl.class.getName());
 	private final static boolean DEBUG_CIRCUIT_CREATION = true;
@@ -262,16 +264,16 @@ public class CircuitManagerImpl implements CircuitManager {
 		}
 	}
 
-	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
+	public void dashboardRender(DashboardRenderer renderer, PrintWriter writer, int flags) throws IOException {
 		if((flags & DASHBOARD_CIRCUITS) == 0) {
 			return;
 		}
-		connectionCache.dashboardRender(writer, flags);
-		circuitCreationTask.getCircuitPredictor().dashboardRender(writer, flags);
+		renderer.renderComponent(writer, connectionCache);
+		renderer.renderComponent(writer, circuitCreationTask.getCircuitPredictor());
 		writer.println("[Circuit Manager]");
 		writer.println();
 		for(Circuit c: getCircuitsByFilter(null)) {
-			c.dashboardRender(writer, flags);
+			renderer.renderComponent(writer, c);
 		}
 	}
 }

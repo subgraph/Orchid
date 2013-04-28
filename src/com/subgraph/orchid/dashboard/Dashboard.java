@@ -18,7 +18,7 @@ import com.subgraph.orchid.misc.GuardedBy;
  * A debugging utility which displays continuously updated information about the internal state
  * of various components to clients which connect to a network port listening on localhost.
  */
-public class Dashboard implements DashboardRenderable {
+public class Dashboard implements DashboardRenderable, DashboardRenderer {
 	private final static Logger logger = Logger.getLogger(Dashboard.class.getName());
 	
 	private final static String DASHBOARD_PORT_PROPERTY = "com.subgraph.orchid.dashboard.port";
@@ -157,19 +157,26 @@ public class Dashboard implements DashboardRenderable {
 	
 	void renderAll(PrintWriter writer) throws IOException {
 		for(DashboardRenderable dr: renderables) {
-			dr.dashboardRender(writer, flags);
+			dr.dashboardRender(this, writer, flags);
 		}
 	}
 
-	
 	private void closeQuietly(Closeable closeable) {
 		try {
 			closeable.close();
 		} catch (IOException e) { }
 	}
 
-	public void dashboardRender(PrintWriter writer, int flags) {
+	public void dashboardRender(DashboardRenderer renderer, PrintWriter writer, int flags) {
 		writer.println("[Dashboard]");
 		writer.println();
+	}
+
+	public void renderComponent(PrintWriter writer, Object component) throws IOException {
+		if(!(component instanceof DashboardRenderable)) {
+			return;
+		}
+		final DashboardRenderable renderable = (DashboardRenderable) component;
+		renderable.dashboardRender(this, writer, flags);
 	}
 }

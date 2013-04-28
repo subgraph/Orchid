@@ -32,13 +32,15 @@ import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.circuits.CellImpl;
 import com.subgraph.orchid.circuits.TorInitializationTracker;
 import com.subgraph.orchid.crypto.TorRandom;
+import com.subgraph.orchid.dashboard.DashboardRenderable;
+import com.subgraph.orchid.dashboard.DashboardRenderer;
 
 /**
  * This class represents a transport link between two onion routers or
  * between an onion proxy and an entry router.
  *
  */
-public class ConnectionImpl implements Connection {
+public class ConnectionImpl implements Connection, DashboardRenderable {
 	private final static Logger logger = Logger.getLogger(ConnectionImpl.class.getName());
 	private final static int CONNECTION_IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 	private final static int DEFAULT_CONNECT_TIMEOUT = 5000;
@@ -316,7 +318,7 @@ public class ConnectionImpl implements Connection {
 		return "!" + router.getNickname() + "!";
 	}
 
-	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
+	public void dashboardRender(DashboardRenderer renderer, PrintWriter writer, int flags) throws IOException {
 		final int circuitCount;
 		synchronized (circuitMap) {
 			circuitCount = circuitMap.size();

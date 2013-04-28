@@ -11,5 +11,5 @@ public interface DashboardRenderable {
 	static int DASHBOARD_CIRCUITS              = 1 << 3;
 	static int DASHBOARD_STREAMS               = 1 << 4;
 	
-	void dashboardRender(PrintWriter writer, int flags) throws IOException;
+	void dashboardRender(DashboardRenderer renderer, PrintWriter writer, int flags) throws IOException;
 }

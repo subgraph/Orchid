@@ -1,8 +1,7 @@
 package com.subgraph.orchid;
 
-import com.subgraph.orchid.dashboard.DashboardRenderable;
 
-public interface ConnectionCache extends DashboardRenderable {
+public interface ConnectionCache {
 	/**
 	 * Returns a completed connection to the specified router.  If an open connection 
 	 * to the requested router already exists it is returned, otherwise a new connection

@@ -20,6 +20,7 @@ import com.subgraph.orchid.RelayCell;
 import com.subgraph.orchid.Stream;
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.dashboard.DashboardRenderable;
+import com.subgraph.orchid.dashboard.DashboardRenderer;
 
 public class CircuitIO implements DashboardRenderable {
 	private static final Logger logger = Logger.getLogger(CircuitIO.class.getName());
@@ -302,12 +303,12 @@ public class CircuitIO implements DashboardRenderable {
 		}
 	}
 
-	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
+	public void dashboardRender(DashboardRenderer renderer, PrintWriter writer, int flags) throws IOException {
 		if((flags & DASHBOARD_STREAMS) == 0) {
 			return;
 		}
 		for(Stream s: getActiveStreams()) {
-			s.dashboardRender(writer, flags);
+			renderer.renderComponent(writer, s);
 		}
 	}
 }

@@ -25,8 +25,10 @@ import com.subgraph.orchid.ConnectionHandshakeException;
 import com.subgraph.orchid.ConnectionTimeoutException;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.circuits.TorInitializationTracker;
+import com.subgraph.orchid.dashboard.DashboardRenderable;
+import com.subgraph.orchid.dashboard.DashboardRenderer;
 
-public class ConnectionCacheImpl implements ConnectionCache {
+public class ConnectionCacheImpl implements ConnectionCache, DashboardRenderable {
 	private final static Logger logger = Logger.getLogger(ConnectionCacheImpl.class.getName());
 	
 	private class ConnectionTask implements Callable<ConnectionImpl> {
@@ -120,14 +122,14 @@ public class ConnectionCacheImpl implements ConnectionCache {
 		return futureTask;
 	}
 
-	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
+	public void dashboardRender(DashboardRenderer renderer, PrintWriter writer, int flags) throws IOException {
 		if((flags & DASHBOARD_CONNECTIONS) == 0) {
 			return;
 		}
 		printDashboardBanner(writer, flags);
 		for(Connection c: getActiveConnections()) {
 			if(!c.isClosed()) {
-				c.dashboardRender(writer, flags);
+				renderer.renderComponent(writer, c);
 			}
 		}
 		writer.println();

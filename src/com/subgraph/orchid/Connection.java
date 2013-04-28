@@ -1,11 +1,10 @@
 package com.subgraph.orchid;
 
-import com.subgraph.orchid.dashboard.DashboardRenderable;
 
 /**
  * A network connection to a Tor onion router.   
  */
-public interface Connection extends DashboardRenderable {
+public interface Connection {
 	/**
 	 * Return the {@link Router} associated with this connection.
 	 * 

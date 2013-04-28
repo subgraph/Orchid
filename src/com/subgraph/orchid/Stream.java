@@ -3,9 +3,7 @@ package com.subgraph.orchid;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import com.subgraph.orchid.dashboard.DashboardRenderable;
-
-public interface Stream extends DashboardRenderable {
+public interface Stream {
 	/**
 	 * Returns the {@link Circuit} this stream belongs to.
 	 * 

@@ -3,7 +3,6 @@ package com.subgraph.orchid;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-import com.subgraph.orchid.dashboard.DashboardRenderable;
 import com.subgraph.orchid.data.IPv4Address;
 import com.subgraph.orchid.data.exitpolicy.ExitTarget;
 
@@ -12,7 +11,7 @@ import com.subgraph.orchid.data.exitpolicy.ExitTarget;
  * section 5 of tor-spec.txt.
  *
  */
-public interface Circuit extends DashboardRenderable {
+public interface Circuit {
 	/**
 	 * Return <code>true</code> if the circuit is presently in the connected state or
 	 * <code>false</code> otherwise.

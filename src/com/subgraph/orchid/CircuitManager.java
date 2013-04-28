@@ -2,11 +2,10 @@ package com.subgraph.orchid;
 
 import java.util.concurrent.TimeoutException;
 
-import com.subgraph.orchid.dashboard.DashboardRenderable;
 import com.subgraph.orchid.data.IPv4Address;
 
 
-public interface CircuitManager extends DashboardRenderable {
+public interface CircuitManager {
 
 	static int DIRECTORY_PURPOSE_CONSENSUS = 1;
 	static int DIRECTORY_PURPOSE_CERTIFICATES = 2;

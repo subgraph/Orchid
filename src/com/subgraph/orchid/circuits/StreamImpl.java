@@ -13,8 +13,10 @@ import com.subgraph.orchid.RelayCell;
 import com.subgraph.orchid.Stream;
 import com.subgraph.orchid.StreamConnectFailedException;
 import com.subgraph.orchid.TorException;
+import com.subgraph.orchid.dashboard.DashboardRenderable;
+import com.subgraph.orchid.dashboard.DashboardRenderer;
 
-public class StreamImpl implements Stream {
+public class StreamImpl implements Stream, DashboardRenderable {
 	private final static Logger logger = Logger.getLogger(StreamImpl.class.getName());
 
 	private final static int STREAMWINDOW_START = 500;
@@ -194,7 +196,7 @@ public class StreamImpl implements Stream {
 		return "[Stream stream_id="+ streamId + " circuit="+ circuit +" target="+ streamTarget +"]";
 	}
 
-	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
+	public void dashboardRender(DashboardRenderer renderer, PrintWriter writer, int flags) throws IOException {
 		writer.print("     ");
 		writer.print("[Stream stream_id="+ streamId + " cid="+ circuit.getCircuitId());
 		if(relayConnectedReceived) {

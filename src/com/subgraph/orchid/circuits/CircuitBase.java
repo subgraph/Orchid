@@ -19,6 +19,8 @@ import com.subgraph.orchid.StreamConnectFailedException;
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.circuits.path.CircuitPathChooser;
 import com.subgraph.orchid.circuits.path.PathSelectionFailedException;
+import com.subgraph.orchid.dashboard.DashboardRenderable;
+import com.subgraph.orchid.dashboard.DashboardRenderer;
 import com.subgraph.orchid.data.IPv4Address;
 import com.subgraph.orchid.data.exitpolicy.ExitTarget;
 
@@ -26,7 +28,7 @@ import com.subgraph.orchid.data.exitpolicy.ExitTarget;
  * This class represents an established circuit through the Tor network.
  *
  */
-abstract class CircuitBase implements Circuit {
+abstract class CircuitBase implements Circuit, DashboardRenderable {
 	protected final static Logger logger = Logger.getLogger(CircuitBase.class.getName());
 	
 	static ExitCircuit create(CircuitManagerImpl circuitManager, Router exitRouter) {
@@ -266,10 +268,10 @@ abstract class CircuitBase implements Circuit {
 		}
 	}
 
-	public void dashboardRender(PrintWriter writer, int flags) throws IOException {
+	public void dashboardRender(DashboardRenderer renderer, PrintWriter writer, int flags) throws IOException {
 		if(io != null) {
 			writer.println(toString());
-			io.dashboardRender(writer, flags);
+			renderer.renderComponent(writer, io);
 		}
 	}
 }

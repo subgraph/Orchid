@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.subgraph.orchid.dashboard.DashboardRenderable;
+import com.subgraph.orchid.dashboard.DashboardRenderer;
 
 public class CircuitPredictor implements DashboardRenderable {
 
@@ -66,7 +67,7 @@ public class CircuitPredictor implements DashboardRenderable {
 		return targets;
 	}
 
-	public void dashboardRender(PrintWriter writer, int flags)
+	public void dashboardRender(DashboardRenderer renderer, PrintWriter writer, int flags)
 			throws IOException {
 		
 		if((flags & DASHBOARD_PREDICTED_PORTS) == 0) {
