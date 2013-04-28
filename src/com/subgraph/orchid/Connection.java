@@ -2,7 +2,9 @@ package com.subgraph.orchid;
 
 import com.subgraph.orchid.dashboard.DashboardRenderable;
 
-
+/**
+ * A network connection to a Tor onion router.   
+ */
 public interface Connection extends DashboardRenderable {
 	/**
 	 * Return the {@link Router} associated with this connection.
@@ -12,11 +14,10 @@ public interface Connection extends DashboardRenderable {
 	Router getRouter();
 
 	/**
-	 * Return <code>true</code> if this connection is currently connected.  Otherwise, <code>false</code>.
+	 * Return <code>true</code> if the socket for this connection has been closed.  Otherwise, <code>false</code>.
 	 * 
-	 * @return <code>true</code> if this connection is connected or <code>false</code> otherwise.
+	 * @return <code>true</code> if this connection is closed or <code>false</code> otherwise.
 	 */
-	boolean isConnected();
 	boolean isClosed();
 	/**
 	 * Send a protocol {@link Cell} on this connection.
@@ -27,7 +28,21 @@ public interface Connection extends DashboardRenderable {
 	 */
 	void sendCell(Cell cell) throws ConnectionIOException;
 	
+	/**
+	 * Remove a Circuit which has been bound to this Connection by a previous call to {@link #bindCircuit(Circuit) bindCircuit}.  
+	 * After removing a Circuit, any further received incoming cells for the Circuit will be discarded.
+	 * 
+	 * @param circuit The Circuit to remove.
+	 */
 	void removeCircuit(Circuit circuit);
 	
+	/**
+	 * Choose an available circuit id value and bind this Circuit to that id value, returning the id value.  
+	 * Once bound, any incoming relay cells will be delivered to the Circuit with {@link Circuit#deliverRelayCell(Cell)}
+	 * and other cells will be delivered with {@link Circuit#deliverControlCell(Cell)}.
+	 * 
+	 * @param circuit The Circuit to bind to this connection.
+	 * @return the circuit id value for this binding.
+	 */
 	int bindCircuit(Circuit circuit);
 }
