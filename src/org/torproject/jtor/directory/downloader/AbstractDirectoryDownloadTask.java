@@ -7,11 +7,11 @@ import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.Directory;
+import org.torproject.jtor.OpenFailedException;
+import org.torproject.jtor.Stream;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.OpenFailedException;
-import org.torproject.jtor.circuits.Stream;
 import org.torproject.jtor.data.HexDigest;
-import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.parsing.DocumentParserFactory;
 
 

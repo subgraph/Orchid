@@ -4,13 +4,13 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
 
+import org.torproject.jtor.Router;
+import org.torproject.jtor.RouterDescriptor;
+import org.torproject.jtor.RouterStatus;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.crypto.TorPublicKey;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.IPv4Address;
-import org.torproject.jtor.directory.Router;
-import org.torproject.jtor.directory.RouterDescriptor;
-import org.torproject.jtor.directory.RouterStatus;
 import org.torproject.jtor.geoip.CountryCodeService;
 
 public class RouterImpl implements Router {

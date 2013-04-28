@@ -11,14 +11,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.ConnectionCache;
+import org.torproject.jtor.Directory;
+import org.torproject.jtor.GuardEntry;
+import org.torproject.jtor.Router;
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.circuits.path.CircuitNodeChooser;
 import org.torproject.jtor.circuits.path.CircuitNodeChooser.WeightRule;
 import org.torproject.jtor.circuits.path.RouterFilter;
 import org.torproject.jtor.crypto.TorRandom;
-import org.torproject.jtor.directory.Directory;
-import org.torproject.jtor.directory.GuardEntry;
-import org.torproject.jtor.directory.Router;
 
 public class EntryGuards {
 	private final static Logger logger = Logger.getLogger(EntryGuards.class.getName());

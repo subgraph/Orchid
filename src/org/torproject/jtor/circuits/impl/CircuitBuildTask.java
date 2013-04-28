@@ -4,21 +4,21 @@ import java.math.BigInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.CircuitNode;
+import org.torproject.jtor.Connection;
 import org.torproject.jtor.ConnectionCache;
+import org.torproject.jtor.ConnectionFailedException;
+import org.torproject.jtor.ConnectionHandshakeException;
+import org.torproject.jtor.ConnectionTimeoutException;
+import org.torproject.jtor.Router;
 import org.torproject.jtor.Tor;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.CircuitNode;
-import org.torproject.jtor.circuits.Connection;
-import org.torproject.jtor.circuits.ConnectionFailedException;
-import org.torproject.jtor.circuits.ConnectionHandshakeException;
-import org.torproject.jtor.circuits.ConnectionTimeoutException;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.circuits.path.PathSelectionFailedException;
 import org.torproject.jtor.crypto.TorKeyAgreement;
 import org.torproject.jtor.crypto.TorMessageDigest;
 import org.torproject.jtor.data.HexDigest;
-import org.torproject.jtor.directory.Router;
 
 public class CircuitBuildTask implements Runnable {
 	private final static Logger logger = Logger.getLogger(CircuitBuildTask.class.getName());

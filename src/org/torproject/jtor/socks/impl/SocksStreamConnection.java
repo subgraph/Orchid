@@ -7,7 +7,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.logging.Logger;
 
-import org.torproject.jtor.circuits.Stream;
+import org.torproject.jtor.Stream;
 
 public class SocksStreamConnection {
 	private final static Logger logger = Logger.getLogger(SocksStreamConnection.class.getName());

@@ -1,4 +1,4 @@
-package org.torproject.jtor.directory;
+package org.torproject.jtor;
 
 public interface Document {
 	String getRawDocumentData();

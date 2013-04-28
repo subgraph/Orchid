@@ -7,11 +7,11 @@ import java.io.PrintWriter;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.Circuit;
+import org.torproject.jtor.CircuitNode;
+import org.torproject.jtor.Stream;
+import org.torproject.jtor.StreamConnectFailedException;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.Circuit;
-import org.torproject.jtor.circuits.CircuitNode;
-import org.torproject.jtor.circuits.Stream;
-import org.torproject.jtor.circuits.StreamConnectFailedException;
 import org.torproject.jtor.circuits.cells.RelayCell;
 
 public class StreamImpl implements Stream {

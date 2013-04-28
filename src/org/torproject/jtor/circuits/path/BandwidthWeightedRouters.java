@@ -3,8 +3,8 @@ package org.torproject.jtor.circuits.path;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.torproject.jtor.Router;
 import org.torproject.jtor.crypto.TorRandom;
-import org.torproject.jtor.directory.Router;
 
 public class BandwidthWeightedRouters {
 	private static class WeightedRouter {

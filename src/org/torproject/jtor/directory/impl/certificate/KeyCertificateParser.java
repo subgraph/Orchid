@@ -1,10 +1,10 @@
 package org.torproject.jtor.directory.impl.certificate;
 
+import org.torproject.jtor.KeyCertificate;
 import org.torproject.jtor.TorParsingException;
 import org.torproject.jtor.crypto.TorPublicKey;
 import org.torproject.jtor.crypto.TorSignature;
 import org.torproject.jtor.data.IPv4Address;
-import org.torproject.jtor.directory.KeyCertificate;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParsingHandler;

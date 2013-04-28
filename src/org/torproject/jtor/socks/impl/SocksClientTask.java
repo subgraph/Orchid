@@ -6,10 +6,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.CircuitManager;
+import org.torproject.jtor.OpenFailedException;
+import org.torproject.jtor.Stream;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.CircuitManager;
-import org.torproject.jtor.circuits.OpenFailedException;
-import org.torproject.jtor.circuits.Stream;
 
 public class SocksClientTask implements Runnable {
 	private final static Logger logger = Logger.getLogger(SocksClientTask.class.getName());

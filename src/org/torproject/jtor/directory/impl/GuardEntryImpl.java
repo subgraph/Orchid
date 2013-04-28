@@ -2,10 +2,10 @@ package org.torproject.jtor.directory.impl;
 
 import java.util.Date;
 
+import org.torproject.jtor.Directory;
+import org.torproject.jtor.GuardEntry;
+import org.torproject.jtor.Router;
 import org.torproject.jtor.data.HexDigest;
-import org.torproject.jtor.directory.Directory;
-import org.torproject.jtor.directory.GuardEntry;
-import org.torproject.jtor.directory.Router;
 
 public class GuardEntryImpl implements GuardEntry {
 	private final static String NL = System.getProperty("line.separator");

@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.torproject.jtor.Router;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.IPv4Address;
-import org.torproject.jtor.directory.Router;
 
 /**
  * Implements configuration options:

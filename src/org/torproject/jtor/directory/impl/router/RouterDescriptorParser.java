@@ -1,10 +1,10 @@
 package org.torproject.jtor.directory.impl.router;
 
+import org.torproject.jtor.RouterDescriptor;
 import org.torproject.jtor.TorParsingException;
 import org.torproject.jtor.crypto.TorSignature;
 import org.torproject.jtor.data.BandwidthHistory;
 import org.torproject.jtor.data.Timestamp;
-import org.torproject.jtor.directory.RouterDescriptor;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParsingHandler;

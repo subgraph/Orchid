@@ -4,13 +4,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.torproject.jtor.RouterDescriptor;
 import org.torproject.jtor.crypto.TorPublicKey;
 import org.torproject.jtor.data.BandwidthHistory;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.Timestamp;
 import org.torproject.jtor.data.exitpolicy.ExitPolicy;
-import org.torproject.jtor.directory.RouterDescriptor;
 
 public class RouterDescriptorImpl implements RouterDescriptor {
 	private String nickname;

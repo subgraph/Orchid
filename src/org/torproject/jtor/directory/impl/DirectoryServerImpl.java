@@ -1,8 +1,8 @@
 package org.torproject.jtor.directory.impl;
 
+import org.torproject.jtor.DirectoryServer;
+import org.torproject.jtor.RouterStatus;
 import org.torproject.jtor.data.HexDigest;
-import org.torproject.jtor.directory.DirectoryServer;
-import org.torproject.jtor.directory.RouterStatus;
 
 public class DirectoryServerImpl extends RouterImpl implements DirectoryServer {
 	private boolean isHiddenServiceAuthority = false;

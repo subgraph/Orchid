@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
+import org.torproject.jtor.OpenFailedException;
+import org.torproject.jtor.Stream;
+import org.torproject.jtor.StreamConnectFailedException;
 import org.torproject.jtor.TorConfig;
-import org.torproject.jtor.circuits.OpenFailedException;
-import org.torproject.jtor.circuits.Stream;
-import org.torproject.jtor.circuits.StreamConnectFailedException;
 import org.torproject.jtor.data.IPv4Address;
 
 public class PendingExitStreams {

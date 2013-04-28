@@ -5,10 +5,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import org.torproject.jtor.ConsensusDocument;
+import org.torproject.jtor.Directory;
+import org.torproject.jtor.Router;
 import org.torproject.jtor.data.HexDigest;
-import org.torproject.jtor.directory.ConsensusDocument;
-import org.torproject.jtor.directory.Directory;
-import org.torproject.jtor.directory.Router;
 
 public class DescriptorProcessor {
 	private final static int MAX_DL_PER_REQUEST = 96;

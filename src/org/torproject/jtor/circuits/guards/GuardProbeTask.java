@@ -4,9 +4,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.torproject.jtor.ConnectionCache;
-import org.torproject.jtor.circuits.ConnectionIOException;
-import org.torproject.jtor.directory.GuardEntry;
-import org.torproject.jtor.directory.Router;
+import org.torproject.jtor.ConnectionIOException;
+import org.torproject.jtor.GuardEntry;
+import org.torproject.jtor.Router;
 
 public class GuardProbeTask implements Runnable{
 	private final static Logger logger = Logger.getLogger(GuardProbeTask.class.getName());

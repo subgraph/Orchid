@@ -3,11 +3,11 @@ package org.torproject.jtor.directory.impl.consensus;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.torproject.jtor.RouterStatus;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.Timestamp;
 import org.torproject.jtor.data.exitpolicy.ExitPorts;
-import org.torproject.jtor.directory.RouterStatus;
 
 public class RouterStatusImpl implements RouterStatus {
 	

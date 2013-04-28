@@ -14,13 +14,13 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.security.cert.X509Certificate;
 
-import org.torproject.jtor.circuits.ConnectionHandshakeException;
-import org.torproject.jtor.circuits.ConnectionIOException;
+import org.torproject.jtor.ConnectionHandshakeException;
+import org.torproject.jtor.ConnectionIOException;
+import org.torproject.jtor.Router;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.impl.CellImpl;
 import org.torproject.jtor.crypto.TorPublicKey;
 import org.torproject.jtor.data.IPv4Address;
-import org.torproject.jtor.directory.Router;
 
 /**
  * This class performs a Version 2 handshake as described in section 2 of

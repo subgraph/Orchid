@@ -15,9 +15,9 @@ import java.util.regex.Pattern;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
+import org.torproject.jtor.Router;
+import org.torproject.jtor.Stream;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.Stream;
-import org.torproject.jtor.directory.Router;
 
 public class HttpConnection {
 	private final static Charset CHARSET = Charset.forName("ISO-8859-1");

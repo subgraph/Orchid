@@ -1,10 +1,10 @@
 package org.torproject.jtor.directory.impl.certificate;
 
+import org.torproject.jtor.KeyCertificate;
 import org.torproject.jtor.crypto.TorPublicKey;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.Timestamp;
-import org.torproject.jtor.directory.KeyCertificate;
 
 public class KeyCertificateImpl implements KeyCertificate {
 	

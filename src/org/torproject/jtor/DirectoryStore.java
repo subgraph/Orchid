@@ -1,4 +1,4 @@
-package org.torproject.jtor.directory;
+package org.torproject.jtor;
 
 import java.util.List;
 

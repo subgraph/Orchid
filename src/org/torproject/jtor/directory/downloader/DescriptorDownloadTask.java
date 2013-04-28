@@ -5,9 +5,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.torproject.jtor.circuits.CircuitManager;
+import org.torproject.jtor.CircuitManager;
+import org.torproject.jtor.RouterDescriptor;
 import org.torproject.jtor.data.HexDigest;
-import org.torproject.jtor.directory.RouterDescriptor;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
 

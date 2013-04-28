@@ -3,9 +3,9 @@ package org.torproject.jtor.directory.impl;
 import java.io.InputStream;
 import java.io.Reader;
 
-import org.torproject.jtor.directory.KeyCertificate;
-import org.torproject.jtor.directory.RouterDescriptor;
-import org.torproject.jtor.directory.ConsensusDocument;
+import org.torproject.jtor.ConsensusDocument;
+import org.torproject.jtor.KeyCertificate;
+import org.torproject.jtor.RouterDescriptor;
 import org.torproject.jtor.directory.impl.certificate.KeyCertificateParser;
 import org.torproject.jtor.directory.impl.consensus.ConsensusDocumentParser;
 import org.torproject.jtor.directory.impl.router.RouterDescriptorParser;

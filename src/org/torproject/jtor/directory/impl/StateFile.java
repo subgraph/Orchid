@@ -12,11 +12,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.Directory;
+import org.torproject.jtor.GuardEntry;
+import org.torproject.jtor.Router;
 import org.torproject.jtor.Tor;
 import org.torproject.jtor.crypto.TorRandom;
-import org.torproject.jtor.directory.Directory;
-import org.torproject.jtor.directory.GuardEntry;
-import org.torproject.jtor.directory.Router;
 
 public class StateFile {
 	private final static Logger logger = Logger.getLogger(StateFile.class.getName());

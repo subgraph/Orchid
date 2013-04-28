@@ -11,8 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
+import org.torproject.jtor.Router;
 import org.torproject.jtor.data.IPv4Address;
-import org.torproject.jtor.directory.Router;
 
 public class ConfigNodeFilterTest {
 

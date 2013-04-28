@@ -11,8 +11,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.CircuitManager;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.CircuitManager;
 import org.torproject.jtor.socks.SocksPortListener;
 
 public class SocksPortListenerImpl implements SocksPortListener {

@@ -18,13 +18,13 @@ import java.util.logging.Logger;
 
 import javax.net.ssl.SSLSocket;
 
+import org.torproject.jtor.Connection;
 import org.torproject.jtor.ConnectionCache;
-import org.torproject.jtor.circuits.Connection;
-import org.torproject.jtor.circuits.ConnectionFailedException;
-import org.torproject.jtor.circuits.ConnectionHandshakeException;
-import org.torproject.jtor.circuits.ConnectionTimeoutException;
+import org.torproject.jtor.ConnectionFailedException;
+import org.torproject.jtor.ConnectionHandshakeException;
+import org.torproject.jtor.ConnectionTimeoutException;
+import org.torproject.jtor.Router;
 import org.torproject.jtor.circuits.impl.TorInitializationTracker;
-import org.torproject.jtor.directory.Router;
 
 public class ConnectionCacheImpl implements ConnectionCache {
 	private final static Logger logger = Logger.getLogger(ConnectionCacheImpl.class.getName());

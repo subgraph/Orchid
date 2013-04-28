@@ -4,9 +4,9 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.torproject.jtor.DirectoryServer;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.IPv4Address;
-import org.torproject.jtor.directory.DirectoryServer;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 import org.torproject.jtor.directory.parsing.DocumentParsingHandler;
 

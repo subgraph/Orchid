@@ -8,13 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.torproject.jtor.ConsensusDocument;
+import org.torproject.jtor.KeyCertificate;
+import org.torproject.jtor.RouterStatus;
+import org.torproject.jtor.VoteAuthorityEntry;
 import org.torproject.jtor.crypto.TorPublicKey;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.Timestamp;
-import org.torproject.jtor.directory.KeyCertificate;
-import org.torproject.jtor.directory.RouterStatus;
-import org.torproject.jtor.directory.ConsensusDocument;
-import org.torproject.jtor.directory.VoteAuthorityEntry;
 
 public class ConsensusDocumentImpl implements ConsensusDocument {
 	

@@ -1,11 +1,6 @@
 package org.torproject.jtor;
 
-import org.torproject.jtor.circuits.Connection;
-import org.torproject.jtor.circuits.ConnectionFailedException;
-import org.torproject.jtor.circuits.ConnectionHandshakeException;
-import org.torproject.jtor.circuits.ConnectionTimeoutException;
 import org.torproject.jtor.dashboard.DashboardRenderable;
-import org.torproject.jtor.directory.Router;
 
 public interface ConnectionCache extends DashboardRenderable {
 	/**

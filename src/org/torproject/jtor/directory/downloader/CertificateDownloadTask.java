@@ -3,9 +3,9 @@ package org.torproject.jtor.directory.downloader;
 import java.io.Reader;
 import java.util.List;
 
-import org.torproject.jtor.circuits.CircuitManager;
+import org.torproject.jtor.CircuitManager;
+import org.torproject.jtor.KeyCertificate;
 import org.torproject.jtor.data.HexDigest;
-import org.torproject.jtor.directory.KeyCertificate;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
 

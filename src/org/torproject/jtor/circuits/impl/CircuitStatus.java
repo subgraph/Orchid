@@ -4,9 +4,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import org.torproject.jtor.Router;
 import org.torproject.jtor.TorException;
 import org.torproject.jtor.crypto.TorRandom;
-import org.torproject.jtor.directory.Router;
 
 public class CircuitStatus {
 

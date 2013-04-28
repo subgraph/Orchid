@@ -1,7 +1,7 @@
 package org.torproject.jtor.directory.impl.consensus;
 
+import org.torproject.jtor.ConsensusDocument;
 import org.torproject.jtor.TorParsingException;
-import org.torproject.jtor.directory.ConsensusDocument;
 import org.torproject.jtor.directory.parsing.DocumentFieldParser;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParsingHandler;

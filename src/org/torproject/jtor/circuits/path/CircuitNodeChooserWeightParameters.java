@@ -1,7 +1,7 @@
 package org.torproject.jtor.circuits.path;
 
-import org.torproject.jtor.directory.ConsensusDocument;
-import org.torproject.jtor.directory.Router;
+import org.torproject.jtor.ConsensusDocument;
+import org.torproject.jtor.Router;
 
 class CircuitNodeChooserWeightParameters {
 	private final static int VAR_WG = 0;

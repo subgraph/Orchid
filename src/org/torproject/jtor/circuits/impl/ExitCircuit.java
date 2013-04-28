@@ -5,13 +5,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
-import org.torproject.jtor.circuits.Stream;
-import org.torproject.jtor.circuits.StreamConnectFailedException;
+import org.torproject.jtor.Router;
+import org.torproject.jtor.Stream;
+import org.torproject.jtor.StreamConnectFailedException;
 import org.torproject.jtor.circuits.path.CircuitPathChooser;
 import org.torproject.jtor.circuits.path.PathSelectionFailedException;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;
-import org.torproject.jtor.directory.Router;
 
 public class ExitCircuit extends CircuitBase {
 	

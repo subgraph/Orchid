@@ -15,12 +15,12 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.ConsensusDocument;
+import org.torproject.jtor.Directory;
+import org.torproject.jtor.DirectoryStore;
+import org.torproject.jtor.KeyCertificate;
+import org.torproject.jtor.RouterDescriptor;
 import org.torproject.jtor.TorConfig;
-import org.torproject.jtor.directory.ConsensusDocument;
-import org.torproject.jtor.directory.Directory;
-import org.torproject.jtor.directory.DirectoryStore;
-import org.torproject.jtor.directory.KeyCertificate;
-import org.torproject.jtor.directory.RouterDescriptor;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParserFactory;
 import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;

@@ -1,4 +1,4 @@
-package org.torproject.jtor.directory;
+package org.torproject.jtor;
 
 import org.torproject.jtor.crypto.TorPublicKey;
 import org.torproject.jtor.data.HexDigest;

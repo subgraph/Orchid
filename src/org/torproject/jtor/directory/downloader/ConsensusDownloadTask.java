@@ -2,8 +2,8 @@ package org.torproject.jtor.directory.downloader;
 
 import java.io.Reader;
 
-import org.torproject.jtor.circuits.CircuitManager;
-import org.torproject.jtor.directory.ConsensusDocument;
+import org.torproject.jtor.CircuitManager;
+import org.torproject.jtor.ConsensusDocument;
 import org.torproject.jtor.directory.parsing.DocumentParser;
 import org.torproject.jtor.directory.parsing.DocumentParsingResultHandler;
 

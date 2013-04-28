@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.torproject.jtor.Router;
 import org.torproject.jtor.TorConfig;
-import org.torproject.jtor.directory.Router;
 
 public class TorConfigNodeFilter {
 	

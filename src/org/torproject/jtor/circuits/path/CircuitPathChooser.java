@@ -7,13 +7,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.torproject.jtor.Directory;
+import org.torproject.jtor.Router;
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.circuits.guards.EntryGuards;
 import org.torproject.jtor.circuits.path.CircuitNodeChooser.WeightRule;
 import org.torproject.jtor.data.IPv4Address;
 import org.torproject.jtor.data.exitpolicy.ExitTarget;
-import org.torproject.jtor.directory.Directory;
-import org.torproject.jtor.directory.Router;
 
 public class CircuitPathChooser {
 	

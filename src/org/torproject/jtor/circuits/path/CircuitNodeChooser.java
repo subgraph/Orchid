@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.torproject.jtor.ConsensusDocument;
+import org.torproject.jtor.Directory;
+import org.torproject.jtor.Router;
 import org.torproject.jtor.TorConfig;
 import org.torproject.jtor.crypto.TorRandom;
-import org.torproject.jtor.directory.ConsensusDocument;
-import org.torproject.jtor.directory.Directory;
-import org.torproject.jtor.directory.Router;
 
 public class CircuitNodeChooser {
 	private final static Logger logger = Logger.getLogger(CircuitNodeChooser.class.getName());

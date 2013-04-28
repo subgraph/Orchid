@@ -13,9 +13,9 @@ import java.net.SocketOptions;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.TimeoutException;
 
+import org.torproject.jtor.OpenFailedException;
+import org.torproject.jtor.Stream;
 import org.torproject.jtor.TorClient;
-import org.torproject.jtor.circuits.OpenFailedException;
-import org.torproject.jtor.circuits.Stream;
 
 public class JTorSocketImpl extends SocketImpl {
 	

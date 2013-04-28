@@ -2,8 +2,9 @@ package org.torproject.jtor.circuits.impl;
 
 import java.math.BigInteger;
 
+import org.torproject.jtor.CircuitNode;
+import org.torproject.jtor.Router;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
 import org.torproject.jtor.crypto.HybridEncryption;
@@ -11,7 +12,6 @@ import org.torproject.jtor.crypto.TorCreateFastKeyAgreement;
 import org.torproject.jtor.crypto.TorKeyAgreement;
 import org.torproject.jtor.crypto.TorMessageDigest;
 import org.torproject.jtor.data.HexDigest;
-import org.torproject.jtor.directory.Router;
 
 class CircuitNodeImpl implements CircuitNode {
 	static CircuitNodeImpl createForRouter(Router router) {

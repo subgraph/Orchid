@@ -3,9 +3,9 @@ package org.torproject.jtor.circuits.impl;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
-import org.torproject.jtor.circuits.Circuit;
-import org.torproject.jtor.circuits.Stream;
-import org.torproject.jtor.circuits.StreamConnectFailedException;
+import org.torproject.jtor.Circuit;
+import org.torproject.jtor.Stream;
+import org.torproject.jtor.StreamConnectFailedException;
 
 public class OpenExitStreamTask implements Runnable {
 	private final static Logger logger = Logger.getLogger(OpenExitStreamTask.class.getName());

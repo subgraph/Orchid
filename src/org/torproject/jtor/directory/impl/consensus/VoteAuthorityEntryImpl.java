@@ -1,8 +1,8 @@
 package org.torproject.jtor.directory.impl.consensus;
 
+import org.torproject.jtor.VoteAuthorityEntry;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.IPv4Address;
-import org.torproject.jtor.directory.VoteAuthorityEntry;
 
 public class VoteAuthorityEntryImpl implements VoteAuthorityEntry {
 	private String nickname;

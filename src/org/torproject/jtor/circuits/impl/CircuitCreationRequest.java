@@ -3,13 +3,13 @@ package org.torproject.jtor.circuits.impl;
 import java.util.Collections;
 import java.util.List;
 
-import org.torproject.jtor.circuits.Circuit;
-import org.torproject.jtor.circuits.CircuitBuildHandler;
-import org.torproject.jtor.circuits.CircuitNode;
-import org.torproject.jtor.circuits.Connection;
+import org.torproject.jtor.Circuit;
+import org.torproject.jtor.CircuitBuildHandler;
+import org.torproject.jtor.CircuitNode;
+import org.torproject.jtor.Connection;
+import org.torproject.jtor.Router;
 import org.torproject.jtor.circuits.path.CircuitPathChooser;
 import org.torproject.jtor.circuits.path.PathSelectionFailedException;
-import org.torproject.jtor.directory.Router;
 
 public class CircuitCreationRequest implements CircuitBuildHandler {
 	private final CircuitBase circuit;

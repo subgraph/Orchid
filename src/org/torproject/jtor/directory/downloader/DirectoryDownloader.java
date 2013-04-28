@@ -7,12 +7,12 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.torproject.jtor.circuits.CircuitManager;
+import org.torproject.jtor.CircuitManager;
+import org.torproject.jtor.ConsensusDocument;
+import org.torproject.jtor.Directory;
 import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.data.HexDigest;
 import org.torproject.jtor.data.Timestamp;
-import org.torproject.jtor.directory.ConsensusDocument;
-import org.torproject.jtor.directory.Directory;
 import org.torproject.jtor.directory.impl.DocumentParserFactoryImpl;
 import org.torproject.jtor.directory.parsing.DocumentParserFactory;
 

@@ -1,7 +1,6 @@
 package org.torproject.jtor;
 
 import org.torproject.jtor.circuits.cells.Cell;
-import org.torproject.jtor.directory.Router;
 
 public interface Connection {
 	/**

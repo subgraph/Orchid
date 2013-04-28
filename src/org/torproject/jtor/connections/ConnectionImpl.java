@@ -19,20 +19,20 @@ import java.util.logging.Logger;
 
 import javax.net.ssl.SSLSocket;
 
+import org.torproject.jtor.Circuit;
+import org.torproject.jtor.Connection;
+import org.torproject.jtor.ConnectionFailedException;
+import org.torproject.jtor.ConnectionHandshakeException;
+import org.torproject.jtor.ConnectionIOException;
+import org.torproject.jtor.ConnectionTimeoutException;
+import org.torproject.jtor.Router;
 import org.torproject.jtor.Tor;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.Circuit;
-import org.torproject.jtor.circuits.Connection;
-import org.torproject.jtor.circuits.ConnectionFailedException;
-import org.torproject.jtor.circuits.ConnectionHandshakeException;
-import org.torproject.jtor.circuits.ConnectionIOException;
-import org.torproject.jtor.circuits.ConnectionTimeoutException;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.impl.CellImpl;
 import org.torproject.jtor.circuits.impl.TorInitializationTracker;
 import org.torproject.jtor.crypto.TorRandom;
 import org.torproject.jtor.dashboard.DashboardRenderable;
-import org.torproject.jtor.directory.Router;
 
 /**
  * This class represents a transport link between two onion routers or

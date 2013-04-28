@@ -2,8 +2,8 @@ package org.torproject.jtor.circuits.impl;
 
 import java.nio.ByteBuffer;
 
+import org.torproject.jtor.CircuitNode;
 import org.torproject.jtor.TorException;
-import org.torproject.jtor.circuits.CircuitNode;
 import org.torproject.jtor.circuits.cells.Cell;
 import org.torproject.jtor.circuits.cells.RelayCell;
 
