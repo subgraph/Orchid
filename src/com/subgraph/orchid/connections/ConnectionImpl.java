@@ -101,11 +101,7 @@ public class ConnectionImpl implements Connection {
 			currentId = 1;
 	}
 
-	public boolean isConnected() {
-		return isConnected;
-	}
-
-	public void connect() throws ConnectionFailedException, ConnectionTimeoutException, ConnectionHandshakeException {
+	void connect() throws ConnectionFailedException, ConnectionTimeoutException, ConnectionHandshakeException {
 		synchronized (connectLock) {
 			if(isConnected) {
 				return;
