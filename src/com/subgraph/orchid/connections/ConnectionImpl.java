@@ -86,7 +86,7 @@ public class ConnectionImpl implements Connection {
 		return isClosed;
 	}
 
-	public int allocateCircuitId(Circuit circuit) {
+	public int bindCircuit(Circuit circuit) {
 		synchronized(circuitMap) {
 			while(circuitMap.containsKey(currentId)) 
 				incrementNextId();

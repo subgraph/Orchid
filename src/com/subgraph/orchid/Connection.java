@@ -28,6 +28,6 @@ public interface Connection extends DashboardRenderable {
 	void sendCell(Cell cell) throws ConnectionIOException;
 	
 	void removeCircuit(Circuit circuit);
-	int allocateCircuitId(Circuit circuit);
-
+	
+	int bindCircuit(Circuit circuit);
 }

@@ -55,7 +55,7 @@ abstract class CircuitBase implements Circuit {
 		if(io != null) {
 			throw new IllegalStateException("Circuit already bound to a connection");
 		}
-		int id = connection.allocateCircuitId(this);
+		final int id = connection.bindCircuit(this);
 		io = new CircuitIO(this, connection, id);
 	}
 
