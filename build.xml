@@ -16,7 +16,6 @@
     </and>
   </condition>
 
-  <target name="embed" depends="compile,compile-xmlrpc,package-embed-bc"/>
   <target name="all" depends="compile,compile-xmlrpc,package"/>
 			
   <target name="init">
@@ -33,22 +32,6 @@
   <target name="compile-xmlrpc" depends="init" if="xmlrpc.present">
     <echo message="compiling optional xmlrpc classes"/>
     <javac srcdir="opt/xmlrpc" destdir="bin" classpathref="compile.classpath" includeantruntime="false"/>
-  </target>
-
-  <target name="package-embed-bc">
-    <jar destfile="${orchid.jarfile}">
-      <manifest>
-	<attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
-	<attribute name="Rsrc-Main-Class" value="com.subgraph.orchid.TorClient"/>
-	<attribute name="Class-Path" value="." />
-        <attribute name="Rsrc-Class-Path" value="./ bcprov-jdk15on-148.jar bcpkix-jdk15on-148.jar"/>
-      </manifest>
-      <zipfileset src="${basedir}/lib/jar-in-jar-loader.zip"/>
-      <fileset dir="${basedir}/bin" />
-      <zipfileset dir="${basedir}/lib" includes="bcprov-jdk15on-148.jar"/>
-      <zipfileset dir="${basedir}/lib" includes="bcpkix-jdk15on-148.jar"/>
-      <zipfileset dir="${basedir}/data" includes="GeoIP.dat" fullpath="data/GeoIP.dat" />
-    </jar>
   </target>
 
   <target name="package">
