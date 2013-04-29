@@ -156,8 +156,13 @@ public class Dashboard implements DashboardRenderable, DashboardRenderer {
 	}
 	
 	void renderAll(PrintWriter writer) throws IOException {
+		final int fs;
+		synchronized (this) {
+			fs = flags;
+		}
+		
 		for(DashboardRenderable dr: renderables) {
-			dr.dashboardRender(this, writer, flags);
+			dr.dashboardRender(this, writer, fs);
 		}
 	}
 
