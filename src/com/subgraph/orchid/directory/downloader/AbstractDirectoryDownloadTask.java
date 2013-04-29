@@ -25,7 +25,6 @@ public abstract class AbstractDirectoryDownloadTask implements Runnable {
 	protected AbstractDirectoryDownloadTask(DirectoryDownloader downloader, int purposeCode) {
 		this.downloader = downloader;
 		this.purposeCode = purposeCode;
-		logger.setLevel(Level.INFO);
 	}
 
 	protected Directory getDirectory() {
