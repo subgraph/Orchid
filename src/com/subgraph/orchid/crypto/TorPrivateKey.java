@@ -1,24 +1,13 @@
 package com.subgraph.orchid.crypto;
 
-import java.io.IOException;
-import java.io.StringReader;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.bouncycastle.openssl.PEMKeyPair;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-
 import com.subgraph.orchid.TorException;
-import com.subgraph.orchid.TorParsingException;
-import com.subgraph.orchid.data.HexDigest;
 
 public class TorPrivateKey {
 
@@ -31,26 +20,9 @@ public class TorPrivateKey {
 
 	static KeyPairGenerator createGenerator() {
 		try {
-			return KeyPairGenerator.getInstance("RSA", "BC");
+			return KeyPairGenerator.getInstance("RSA");
 		} catch (NoSuchAlgorithmException e) {
 			throw new TorException(e);
-		} catch (NoSuchProviderException e) {
-			throw new TorException(e);
-		}
-	}
-
-	static public TorPrivateKey createFromPEMBuffer(String buffer) throws IOException {
-		final PEMParser parser = new PEMParser(new StringReader(buffer));
-		try {
-			JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
-			KeyPair kp = converter.getKeyPair((PEMKeyPair) parser.readObject());
-
-			if(kp.getPublic() instanceof RSAPublicKey && kp.getPrivate() instanceof RSAPrivateKey) 
-				return new TorPrivateKey((RSAPrivateKey)kp.getPrivate(), (RSAPublicKey)kp.getPublic());
-			else
-				throw new TorParsingException("Failed to extract PEM private key");
-		} finally {
-			parser.close();
 		}
 	}
 
@@ -72,29 +44,5 @@ public class TorPrivateKey {
 
 	public RSAPrivateKey getRSAPrivateKey() {
 		return privateKey;
-	}
-
-	private HexDigest keyFingerprint = null;
-
-	public HexDigest getFingerprint() {
-		if(keyFingerprint == null)
-			keyFingerprint = HexDigest.createDigestForData(toASN1Raw());
-		return keyFingerprint;
-	}
-
-	private byte[] toASN1Raw() {
-		byte[] encoded = privateKey.getEncoded();
-		ASN1InputStream asn1input = new ASN1InputStream(encoded);
-		try {
-			PrivateKeyInfo info = PrivateKeyInfo.getInstance(asn1input.readObject());
-			return info.getEncoded();
-		} catch (IOException e) {
-			throw new TorException(e);
-		} finally {
-			try {
-				asn1input.close();
-			} catch (IOException e) {
-			}
-		}
 	}
 }

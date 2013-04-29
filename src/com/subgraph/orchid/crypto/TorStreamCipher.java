@@ -55,7 +55,7 @@ public class TorStreamCipher {
 	
 	private static Cipher createCipher(SecretKeySpec keySpec) {
 		try {
-			final Cipher cipher = Cipher.getInstance("AES/ECB/NoPadding", "BC");
+			final Cipher cipher = Cipher.getInstance("AES/ECB/NoPadding");
 			cipher.init(Cipher.ENCRYPT_MODE, keySpec);
 			return cipher;
 		} catch (GeneralSecurityException e) {
@@ -65,7 +65,7 @@ public class TorStreamCipher {
 	
 	private static SecretKey generateRandomKey() {
 		try {
-			KeyGenerator generator = KeyGenerator.getInstance("AES", "BC");
+			KeyGenerator generator = KeyGenerator.getInstance("AES");
 			generator.init(128);
 			return generator.generateKey();
 		} catch (GeneralSecurityException e) {

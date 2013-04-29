@@ -3,7 +3,6 @@ package com.subgraph.orchid.crypto;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.data.HexDigest;
@@ -25,10 +24,8 @@ public class TorMessageDigest {
 
 	private MessageDigest createDigestInstance() {
 		try {
-			return MessageDigest.getInstance(TOR_DIGEST_ALGORITHM, "BC");
+			return MessageDigest.getInstance(TOR_DIGEST_ALGORITHM);
 		} catch (NoSuchAlgorithmException e) {
-			throw new TorException(e);
-		} catch (NoSuchProviderException e) {
 			throw new TorException(e);
 		}
 	}

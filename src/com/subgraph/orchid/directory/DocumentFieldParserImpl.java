@@ -6,11 +6,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
-
-import org.bouncycastle.util.encoders.Base64;
 
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.TorParsingException;
@@ -24,6 +23,7 @@ import com.subgraph.orchid.directory.parsing.DocumentFieldParser;
 import com.subgraph.orchid.directory.parsing.DocumentObject;
 import com.subgraph.orchid.directory.parsing.DocumentParsingHandler;
 import com.subgraph.orchid.directory.parsing.NameIntegerParameter;
+import com.subgraph.orchid.encoders.Base64;
 
 public class DocumentFieldParserImpl implements DocumentFieldParser {
 	private final static Logger logger = Logger.getLogger(DocumentFieldParserImpl.class.getName());
@@ -190,7 +190,11 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 
 	public TorPublicKey parsePublicKey() {
 		final DocumentObject documentObject = parseObject();
-		return TorPublicKey.createFromPEMBuffer(documentObject.getContent());
+		try {
+			return TorPublicKey.createFromPEMBuffer(documentObject.getContent());
+		} catch (GeneralSecurityException e) {
+			throw new TorParsingException("Failed to parse PEM encoded key: "+ e, e);
+		}
 	}
 
 	public TorSignature parseSignature() {

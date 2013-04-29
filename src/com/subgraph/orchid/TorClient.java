@@ -1,12 +1,9 @@
 package com.subgraph.orchid;
 
-import java.security.Security;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
-
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import com.subgraph.orchid.circuits.TorInitializationTracker;
 import com.subgraph.orchid.dashboard.Dashboard;
@@ -31,7 +28,6 @@ public class TorClient {
 	private final CountDownLatch readyLatch;
 	
 	public TorClient() {
-		Security.addProvider(new BouncyCastleProvider());
 		config = Tor.createConfig();
 		directory = Tor.createDirectory(config);
 		initializationTracker = Tor.createInitalizationTracker();

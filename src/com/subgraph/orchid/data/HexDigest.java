@@ -3,10 +3,9 @@ package com.subgraph.orchid.data;
 import java.util.Arrays;
 import java.util.List;
 
-import org.bouncycastle.util.encoders.Hex;
-
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.crypto.TorMessageDigest;
+import com.subgraph.orchid.encoders.Hex;
 
 /**
  * This class represents both digests and fingerprints that appear in directory

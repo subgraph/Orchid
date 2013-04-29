@@ -2,7 +2,6 @@ package com.subgraph.orchid.crypto;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -40,10 +39,8 @@ public class HybridEncryption {
 	 */
 	public HybridEncryption() {
 		try {
-			cipher = Cipher.getInstance("RSA/None/OAEPWithSHA1AndMGF1Padding", "BC");
+			cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding");
 		} catch (NoSuchAlgorithmException e) {
-			throw new TorException(e);
-		} catch (NoSuchProviderException e) {
 			throw new TorException(e);
 		} catch (NoSuchPaddingException e) {
 			throw new TorException(e);
@@ -103,6 +100,7 @@ public class HybridEncryption {
 	 * @param privateKey The private key to use to decrypt the data.
 	 * @return A new byte array containing the decrypted data.
 	 */
+	
 	public byte[] decrypt(byte[] data, TorPrivateKey privateKey) {
 		if(data.length < PK_ENC_LEN)
 			throw new TorException("Message is too short");
@@ -147,5 +145,6 @@ public class HybridEncryption {
 			throw new TorException(e);
 		}
 	}
+	
 	
 }

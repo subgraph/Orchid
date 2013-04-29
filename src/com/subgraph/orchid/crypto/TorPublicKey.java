@@ -1,11 +1,8 @@
 package com.subgraph.orchid.crypto;
 
-import java.io.IOException;
-import java.io.StringReader;
+import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.PublicKey;
 import java.security.interfaces.RSAPublicKey;
 
 import javax.crypto.BadPaddingException;
@@ -13,43 +10,19 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-
 import com.subgraph.orchid.TorException;
-import com.subgraph.orchid.TorParsingException;
 import com.subgraph.orchid.data.HexDigest;
 
 /**
  * This class wraps the RSA public keys used in the Tor protocol.
  */
 public class TorPublicKey {
-	static public TorPublicKey createFromPEMBuffer(String buffer) {
-		final PEMParser parser = new PEMParser(new StringReader(buffer));
-		
-		return new TorPublicKey(readPEMPublicKey(parser));
+	static public TorPublicKey createFromPEMBuffer(String buffer) throws GeneralSecurityException {
+		final RSAKeyEncoder encoder = new RSAKeyEncoder();
+		RSAPublicKey pkey = encoder.parsePEMPublicKey(buffer);
+		return new TorPublicKey(pkey);
 	}
-
-	static private RSAPublicKey readPEMPublicKey(PEMParser parser) {
-		try {
-			final SubjectPublicKeyInfo info = SubjectPublicKeyInfo.getInstance(parser.readObject());
-			return extractPublicKey(info);
-		} catch (IOException e) {
-			throw new TorException(e);
-		}
-	}
-
-	static private RSAPublicKey extractPublicKey(SubjectPublicKeyInfo info) throws IOException {
-		final JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
-		final PublicKey publicKey = converter.getPublicKey(info);
-		if(publicKey instanceof RSAPublicKey) {
-			return (RSAPublicKey) publicKey;
-		}
-		throw new TorParsingException("Failed to extract PEM public key.  Key was not expected type.");
-	}
-
+	
 	private final RSAPublicKey key;
 	private HexDigest keyFingerprint = null;
 
@@ -57,25 +30,11 @@ public class TorPublicKey {
 		this.key = key;
 	}
 
-	private byte[] toASN1Raw() {
-		byte[] encoded = key.getEncoded();
-		ASN1InputStream asn1input = new ASN1InputStream(encoded);
-		try {
-			SubjectPublicKeyInfo info = SubjectPublicKeyInfo.getInstance(asn1input.readObject());
-			return info.parsePublicKey().getEncoded();
-		} catch (IOException e) {
-			throw new TorException(e);
-		} finally {
-			try {
-				asn1input.close();
-			} catch (IOException e) {
-			}
-		}
-	}
-
 	public HexDigest getFingerprint() {
-		if(keyFingerprint == null)
-			keyFingerprint = HexDigest.createDigestForData(toASN1Raw());
+		if(keyFingerprint == null) {
+			final RSAKeyEncoder encoder = new RSAKeyEncoder();
+			keyFingerprint = HexDigest.createDigestForData(encoder.getRawEncoded(key));
+		}
 		return keyFingerprint;
 	}
 
@@ -111,12 +70,10 @@ public class TorPublicKey {
 
 	private Cipher createCipherInstance() {
 		try {
-			final Cipher cipher = Cipher.getInstance("RSA/None/PKCS1Padding", "BC");
+			final Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 			cipher.init(Cipher.DECRYPT_MODE, key);
 			return cipher;
 		} catch (NoSuchAlgorithmException e) {
-			throw new TorException(e);
-		} catch (NoSuchProviderException e) {
 			throw new TorException(e);
 		} catch (NoSuchPaddingException e) {
 			throw new TorException(e);

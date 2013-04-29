@@ -3,13 +3,12 @@ package com.subgraph.orchid.crypto;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-
-import org.bouncycastle.util.Arrays;
-import org.bouncycastle.util.encoders.Base64;
-import org.bouncycastle.util.encoders.Hex;
+import java.util.Arrays;
 
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.TorParsingException;
+import com.subgraph.orchid.encoders.Base64;
+import com.subgraph.orchid.encoders.Hex;
 
 public class TorSignature {
 	private final static String SIGNATURE_BEGIN = "-----BEGIN SIGNATURE-----";

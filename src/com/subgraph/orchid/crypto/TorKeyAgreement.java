@@ -128,7 +128,7 @@ public class TorKeyAgreement {
 	 */
 	public byte[] getSharedSecret(BigInteger otherPublic) {
 		try {
-			KeyFactory factory = KeyFactory.getInstance("DH", "BC");
+			KeyFactory factory = KeyFactory.getInstance("DH");
 			DHPublicKeySpec pub = new DHPublicKeySpec(otherPublic, P1024, G);
 			PublicKey key = factory.generatePublic(pub);
 			dh.doPhase(key, true);
@@ -139,7 +139,7 @@ public class TorKeyAgreement {
 	}
 	private final KeyAgreement createDH() {
 		try {
-			KeyAgreement dh = KeyAgreement.getInstance("DH", "BC");
+			KeyAgreement dh = KeyAgreement.getInstance("DH");
 			dh.init(keyPair.getPrivate());
 			return dh;
 		} catch (GeneralSecurityException e) {
@@ -149,7 +149,7 @@ public class TorKeyAgreement {
 	
 	private final KeyPair generateKeyPair() {
 		try {
-			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH", "BC");
+			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DH");
 			keyGen.initialize(DH_PARAMETER_SPEC);
 			return keyGen.generateKeyPair();	
 		} catch (GeneralSecurityException e) {
