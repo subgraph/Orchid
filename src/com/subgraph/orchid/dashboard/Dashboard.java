@@ -172,7 +172,7 @@ public class Dashboard implements DashboardRenderable, DashboardRenderer {
 		writer.println();
 	}
 
-	public void renderComponent(PrintWriter writer, Object component) throws IOException {
+	public void renderComponent(PrintWriter writer, int flags, Object component) throws IOException {
 		if(!(component instanceof DashboardRenderable)) {
 			return;
 		}

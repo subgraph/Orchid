@@ -308,7 +308,7 @@ public class CircuitIO implements DashboardRenderable {
 			return;
 		}
 		for(Stream s: getActiveStreams()) {
-			renderer.renderComponent(writer, s);
+			renderer.renderComponent(writer, flags, s);
 		}
 	}
 }

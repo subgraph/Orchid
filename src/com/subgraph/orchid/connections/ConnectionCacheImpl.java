@@ -129,7 +129,7 @@ public class ConnectionCacheImpl implements ConnectionCache, DashboardRenderable
 		printDashboardBanner(writer, flags);
 		for(Connection c: getActiveConnections()) {
 			if(!c.isClosed()) {
-				renderer.renderComponent(writer, c);
+				renderer.renderComponent(writer, flags, c);
 			}
 		}
 		writer.println();

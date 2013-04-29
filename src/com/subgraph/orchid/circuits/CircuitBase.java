@@ -271,7 +271,7 @@ abstract class CircuitBase implements Circuit, DashboardRenderable {
 	public void dashboardRender(DashboardRenderer renderer, PrintWriter writer, int flags) throws IOException {
 		if(io != null) {
 			writer.println(toString());
-			renderer.renderComponent(writer, io);
+			renderer.renderComponent(writer, flags, io);
 		}
 	}
 }

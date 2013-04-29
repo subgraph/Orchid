@@ -268,12 +268,12 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		if((flags & DASHBOARD_CIRCUITS) == 0) {
 			return;
 		}
-		renderer.renderComponent(writer, connectionCache);
-		renderer.renderComponent(writer, circuitCreationTask.getCircuitPredictor());
+		renderer.renderComponent(writer, flags, connectionCache);
+		renderer.renderComponent(writer, flags, circuitCreationTask.getCircuitPredictor());
 		writer.println("[Circuit Manager]");
 		writer.println();
 		for(Circuit c: getCircuitsByFilter(null)) {
-			renderer.renderComponent(writer, c);
+			renderer.renderComponent(writer, flags, c);
 		}
 	}
 }
