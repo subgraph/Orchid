@@ -58,14 +58,15 @@ public class DashboardConnection implements Runnable {
 			case 'p':
 				toggleFlag(DashboardRenderable.DASHBOARD_PREDICTED_PORTS);
 				break;
-				
+			default:
+				break;
 			}
 		}
-	}	
-	
-	// Rotate between 3 states 
-	//    0 (no flags), 
-	//    basicFlag, 
+	}
+
+	// Rotate between 3 states
+	//    0 (no flags),
+	//    basicFlag,
 	//    basicFlag|verboseFlag
 	private void toggleFlagWithVerbose(int basicFlag, int verboseFlag) {
 		if(dashboard.isEnabled(verboseFlag)) {
