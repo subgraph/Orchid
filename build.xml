@@ -18,12 +18,16 @@
 
   <target name="all" depends="compile,compile-xmlrpc,package"/>
 			
+  <target name="clean">
+    <delete dir="${basedir}/bin" />
+  </target>
+
   <target name="init">
     <mkdir dir="${basedir}/bin" />
   </target>
 
   <target name="compile" depends="init">
-      <javac destdir="${basedir}/bin" includeantruntime="false">
+      <javac source="1.5" target="1.5" destdir="${basedir}/bin" includeantruntime="false">
         <src path="${basedir}/src" />
 	<classpath refid="compile.classpath"/>
       </javac>
@@ -31,7 +35,7 @@
 
   <target name="compile-xmlrpc" depends="init" if="xmlrpc.present">
     <echo message="compiling optional xmlrpc classes"/>
-    <javac srcdir="opt/xmlrpc" destdir="bin" classpathref="compile.classpath" includeantruntime="false"/>
+    <javac source="1.5" target="1.5" srcdir="opt/xmlrpc" destdir="bin" classpathref="compile.classpath" includeantruntime="false"/>
   </target>
 
   <target name="package">
