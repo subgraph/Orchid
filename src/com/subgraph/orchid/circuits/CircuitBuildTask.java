@@ -27,6 +27,8 @@ public class CircuitBuildTask implements Runnable {
 	private final TorInitializationTracker initializationTracker;
 	private final CircuitBase circuit;
 
+	private Connection connection = null;
+	
 	CircuitBuildTask(CircuitCreationRequest request, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.creationRequest = request;
 		this.connectionCache = connectionCache;
@@ -51,7 +53,7 @@ public class CircuitBuildTask implements Runnable {
 		} catch (ConnectionFailedException e) {
 			connectionFailed("Connection failed to "+ firstRouter + " : " + e.getMessage());
 		} catch (ConnectionHandshakeException e) {
-			connectionFailed("Handshake error connectint to "+ firstRouter + " : " + e.getMessage());
+			connectionFailed("Handshake error connecting to "+ firstRouter + " : " + e.getMessage());
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			circuitBuildFailed("Circuit building thread interrupted");
@@ -85,10 +87,13 @@ public class CircuitBuildTask implements Runnable {
 	private void circuitBuildFailed(String message) {
 		creationRequest.circuitBuildFailed(message);
 		circuit.notifyCircuitBuildFailed();
+		if(connection != null) {
+			connection.removeCircuit(circuit);
+		}
 	}
 	
 	private void openEntryNodeConnection(Router firstRouter) throws ConnectionTimeoutException, ConnectionFailedException, ConnectionHandshakeException, InterruptedException {
-		final Connection connection = connectionCache.getConnectionTo(firstRouter, creationRequest.isDirectoryCircuit());
+		connection = connectionCache.getConnectionTo(firstRouter, creationRequest.isDirectoryCircuit());
 		circuit.bindToConnection(connection);
 		creationRequest.connectionCompleted(connection);
 	}
@@ -189,7 +194,9 @@ public class CircuitBuildTask implements Runnable {
 		if(command == RelayCell.RELAY_TRUNCATED) {
 			final int code = cell.getByte() & 0xFF;
 			final String msg = CellImpl.errorToDescription(code);
-			throw new TorException("Circuit build failed: "+ msg);
+			final String source = nodeToName(cell.getCircuitNode());
+			final String extendTarget = nodeToName(newNode);
+			throw new TorException("Error from ("+ source + ") while extending to ("+ extendTarget +"): "+ msg);
 		} else if (command != RelayCell.RELAY_EXTENDED) {
 			throw new TorException("Unexpected response to RELAY_EXTEND.  Command = "+ command);
 		}
@@ -201,5 +208,13 @@ public class CircuitBuildTask implements Runnable {
 		HexDigest packetDigest = HexDigest.createFromDigestBytes(keyHash);
 		BigInteger peerPublic = new BigInteger(1, dhPublic);
 		newNode.setSharedSecret(peerPublic, packetDigest);
+	}
+	
+	private String nodeToName(CircuitNode node) {
+		if(node == null || node.getRouter() == null) {
+			return "(null)";
+		}
+		final Router router = node.getRouter();
+		return router.getNickname();
 	}
 }
