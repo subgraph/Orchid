@@ -33,7 +33,7 @@ public class TorPublicKey {
 	public HexDigest getFingerprint() {
 		if(keyFingerprint == null) {
 			final RSAKeyEncoder encoder = new RSAKeyEncoder();
-			keyFingerprint = HexDigest.createDigestForData(encoder.getRawEncoded(key));
+			keyFingerprint = HexDigest.createDigestForData(encoder.getPKCS1Encoded(key));
 		}
 		return keyFingerprint;
 	}

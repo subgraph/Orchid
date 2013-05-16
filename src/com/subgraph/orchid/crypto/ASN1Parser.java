@@ -5,6 +5,10 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A very minimal ASN.1 BER parser which only supports the ASN.1 object types needed
+ * for parsing encoded RSA public keys.
+ */
 public class ASN1Parser {
 	
 	private final static int ASN1_TAG_SEQUENCE = 16;
@@ -35,6 +39,7 @@ public class ASN1Parser {
 		}
 	}
 
+	
 	static class ASN1BitString implements ASN1Object {
 		final byte[] bytes;
 		
@@ -47,6 +52,7 @@ public class ASN1Parser {
 		}
 	}
 
+	/* For object types we don't handle, just stuff the bytes into here */
 	static class ASN1Blob extends ASN1BitString {
 		ASN1Blob(byte[] bytes) {
 			super(bytes);
@@ -55,28 +61,39 @@ public class ASN1Parser {
 
 	ASN1Object parseASN1(ByteBuffer data) {
 		final int typeOctet = data.get() & 0xFF;
-		//final int classBits = (typeOctet >> 6) & 0x03;
-		//final boolean isConstructed = ((typeOctet >> 5) & 0x01) == 1;
 		final int tag = typeOctet & 0x1F;
-		final int length = parseASN1Length(data);
-		
-		final ByteBuffer newBuffer = data.slice();
-		newBuffer.limit(length);
-		data.position(data.position() + length);
+		final ByteBuffer objectBuffer = getObjectBuffer(data);
 		
 		switch(tag) {
 		case ASN1_TAG_SEQUENCE:
-			return parseASN1Sequence(newBuffer);
+			return parseASN1Sequence(objectBuffer);
 		case ASN1_TAG_INTEGER:
-			return parseASN1Integer(newBuffer);
+			return parseASN1Integer(objectBuffer);
 		case ASN1_TAG_BITSTRING:
-			return parseASN1BitString(newBuffer);
+			return parseASN1BitString(objectBuffer);
 		default:
-			return createBlob(newBuffer);
+			return createBlob(objectBuffer);
 		}
 		
 	}
-	private int parseASN1Length(ByteBuffer data) {
+	
+	/*
+	 * Read 'length' from data buffer, create a new buffer as a slice() which
+	 * contains 'length' bytes of data following length field and return this
+	 * buffer. Increment position pointer of data buffer to skip over these bytes.
+	 */
+	ByteBuffer getObjectBuffer(ByteBuffer data) {
+		final int length = parseASN1Length(data);
+		if(length > data.remaining()) {
+			throw new IllegalArgumentException();
+		}
+		final ByteBuffer objectBuffer = data.slice();
+		objectBuffer.limit(length);
+		data.position(data.position() + length);
+		return objectBuffer;
+	}
+	
+	int parseASN1Length(ByteBuffer data) {
 		final int firstOctet = data.get() & 0xFF;
 		if(firstOctet < 0x80) {
 			return firstOctet;
@@ -84,7 +101,7 @@ public class ASN1Parser {
 		return parseASN1LengthLong(firstOctet & 0x7F, data);
 	}
 	
-	private int parseASN1LengthLong(int lengthOctets, ByteBuffer data) {
+	int parseASN1LengthLong(int lengthOctets, ByteBuffer data) {
 		if(lengthOctets == 0 || lengthOctets > 3) {
 			// indefinite form or too long
 			throw new IllegalArgumentException();
@@ -97,7 +114,7 @@ public class ASN1Parser {
 		return length;
 	}
 	
-	private ASN1Sequence parseASN1Sequence(ByteBuffer data) {
+	ASN1Sequence parseASN1Sequence(ByteBuffer data) {
 		final List<ASN1Object> obs = new ArrayList<ASN1Object>();
 		while(data.hasRemaining()) {
 			obs.add(parseASN1(data));
@@ -105,25 +122,25 @@ public class ASN1Parser {
 		return new ASN1Sequence(obs);
 	}
 	
-	private ASN1Integer parseASN1Integer(ByteBuffer data) {
-		byte[] bs = new byte[data.remaining()];
-		data.get(bs);
-		return new ASN1Integer(new BigInteger(bs));
+	ASN1Integer parseASN1Integer(ByteBuffer data) {
+		return new ASN1Integer(new BigInteger(getRemainingBytes(data)));
 	}
 	
-	private ASN1BitString parseASN1BitString(ByteBuffer data) {
+	ASN1BitString parseASN1BitString(ByteBuffer data) {
 		final int unusedBits = data.get() & 0xFF;
 		if(unusedBits != 0) {
 			throw new IllegalArgumentException();
 		}
-		final byte[] bs = new byte[data.remaining()];
-		data.get(bs);
-		return new ASN1BitString(bs);
+		return new ASN1BitString(getRemainingBytes(data));
 	}
 
-	private ASN1Blob createBlob(ByteBuffer data) {
+	ASN1Blob createBlob(ByteBuffer data) {
+		return new ASN1Blob(getRemainingBytes(data));
+	}
+	
+	private byte[] getRemainingBytes(ByteBuffer data) {
 		final byte[] bs = new byte[data.remaining()];
 		data.get(bs);
-		return new ASN1Blob(bs);
+		return bs;
 	}
 }

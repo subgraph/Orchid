@@ -21,6 +21,15 @@ public class RSAKeyEncoder {
 	
 	private final ASN1Parser asn1Parser = new ASN1Parser();
 	
+	/**
+	 * Parse a PKCS1 PEM encoded RSA public key into the modulus/exponent components
+	 * and construct a new RSAPublicKey
+	 *  
+	 * @param pem The PEM encoded string to parse.
+	 * @return a new RSAPublicKey
+	 * 
+	 * @throws GeneralSecurityException If an error occurs while parsing the pem argument or creating the RSA key.
+	 */
 	public RSAPublicKey parsePEMPublicKey(String pem) throws GeneralSecurityException {
 		try {
 			byte[] bs = decodeAsciiArmoredPEM(pem);
@@ -41,13 +50,42 @@ public class RSAKeyEncoder {
 		return (RSAPublicKey) fac.generatePublic(spec);
 	}
 
-	public byte[] getRawEncoded(RSAPublicKey publicKey) {
-		final byte[] bs = publicKey.getEncoded();
-		final ASN1Object ob = asn1Parser.parseASN1(ByteBuffer.wrap(bs));
+	/**
+	 * Return the PKCS1 encoded representation of the specified RSAPublicKey.  Since 
+	 * the primary encoding format for RSA public keys is X.509 SubjectPublicKeyInfo,
+	 * this needs to be converted to PKCS1 by extracting the needed field.
+	 * 
+	 * @param publicKey The RSA public key to encode.
+	 * @return The PKCS1 encoded representation of the publicKey argument
+	 */
+	public byte[] getPKCS1Encoded(RSAPublicKey publicKey) {
+		return extractPKCS1KeyFromSubjectPublicKeyInfo(publicKey.getEncoded());
+	}
+
+	/*
+	 * SubjectPublicKeyInfo encoding looks like this:
+	 * 
+	 * SEQUENCE {
+	 *     SEQUENCE {
+	 *         OBJECT IDENTIFIER rsaEncryption (1 2 840 113549 1 1 1)
+	 *         NULL
+	 *     }
+	 *     BIT STRING (encapsulating) {  <-- contains PKCS1 encoded key
+	 *         SEQUENCE {
+	 *             INTEGER (modulus)
+	 *             INTEGER (exponent)
+	 *         }
+	 *     }
+	 * }
+	 * 
+	 * See: http://www.jensign.com/JavaScience/dotnet/JKeyNet/index.html
+	 */
+	private byte[] extractPKCS1KeyFromSubjectPublicKeyInfo(byte[] input) {
+		final ASN1Object ob = asn1Parser.parseASN1(ByteBuffer.wrap(input));
 		final List<ASN1Object> seq = asn1ObjectToSequence(ob, 2);
 		return asn1ObjectToBitString(seq.get(1));
 	}
-
+	
 	private BigInteger asn1ObjectToBigInt(ASN1Object ob) {
 		if(!(ob instanceof ASN1Integer)) {
 			throw new IllegalArgumentException();
