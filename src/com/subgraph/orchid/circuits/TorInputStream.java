@@ -133,11 +133,11 @@ public class TorInputStream extends InputStream {
 				return;
 			}
 			isClosed = true;
-			stream.close();
 			
 			incomingCells.add(CLOSE_SENTINEL);
 			lock.notifyAll();
 		}
+		stream.close();
 	}
 
 	void addEndCell(RelayCell cell) {
