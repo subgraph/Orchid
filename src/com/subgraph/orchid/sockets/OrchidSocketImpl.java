@@ -35,6 +35,8 @@ public class OrchidSocketImpl extends SocketImpl {
 	public Object getOption(int optID) throws SocketException {
 		if(optID == SocketOptions.SO_LINGER) {
 			return 0;
+		} else if(optID == SocketOptions.TCP_NODELAY) {
+			return Boolean.TRUE;
 		}
 		throw new UnsupportedOperationException();
 	}
