@@ -150,7 +150,7 @@ public class StreamImpl implements Stream, DashboardRenderable {
 					throw new StreamConnectFailedException(relayEndReason);
 				}
 
-				if(elapsed > timeout) {
+				if(elapsed >= timeout) {
 					throw new TimeoutException();
 				}
 
