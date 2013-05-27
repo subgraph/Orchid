@@ -3,6 +3,7 @@ package com.subgraph.orchid.crypto;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.interfaces.RSAPublicKey;
 
 import javax.crypto.BadPaddingException;
@@ -70,7 +71,7 @@ public class TorPublicKey {
 
 	private Cipher createCipherInstance() {
 		try {
-			final Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+			final Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding", "SunJCE");
 			cipher.init(Cipher.DECRYPT_MODE, key);
 			return cipher;
 		} catch (NoSuchAlgorithmException e) {
@@ -78,6 +79,8 @@ public class TorPublicKey {
 		} catch (NoSuchPaddingException e) {
 			throw new TorException(e);
 		} catch (InvalidKeyException e) {
+			throw new TorException(e);
+		} catch (NoSuchProviderException e) {
 			throw new TorException(e);
 		}
 	}
