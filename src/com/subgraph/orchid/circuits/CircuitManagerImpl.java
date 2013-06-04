@@ -10,7 +10,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Logger;
 
 import com.subgraph.orchid.Circuit;
 import com.subgraph.orchid.CircuitBuildHandler;
@@ -33,9 +32,6 @@ import com.subgraph.orchid.dashboard.DashboardRenderer;
 import com.subgraph.orchid.data.IPv4Address;
 
 public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
-	
-	private final static Logger logger = Logger.getLogger(CircuitManagerImpl.class.getName());
-	private final static boolean DEBUG_CIRCUIT_CREATION = true;
 	private final static int OPEN_DIRECTORY_STREAM_RETRY_COUNT = 5;
 	private final static int OPEN_DIRECTORY_STREAM_TIMEOUT = 10 * 1000;
 	
@@ -72,19 +68,6 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 
 	public void startBuildingCircuits() {
 		scheduledExecutor.scheduleAtFixedRate(circuitCreationTask, 0, 1000, TimeUnit.MILLISECONDS);
-
-		if(DEBUG_CIRCUIT_CREATION) {
-			Runnable debugTask = createCircuitCreationDebugTask();
-			scheduledExecutor.scheduleAtFixedRate(debugTask, 0, 30000, TimeUnit.MILLISECONDS);
-		}
-	}
-
-	private Runnable createCircuitCreationDebugTask() {
-		return new Runnable() { public void run() {
-			logger.fine("CLEAN: "+ getCleanCircuitCount() 
-					+ " PENDING: "+ getPendingCircuitCount()
-					+ " ACTIVE: "+ getActiveCircuitCount());
-		}};
 	}
 
 	public ExitCircuit createNewExitCircuit(Router exitRouter) {
