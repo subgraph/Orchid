@@ -28,7 +28,7 @@ import com.subgraph.orchid.data.exitpolicy.ExitTarget;
  * This class represents an established circuit through the Tor network.
  *
  */
-abstract class CircuitBase implements Circuit, DashboardRenderable {
+public abstract class CircuitBase implements Circuit, DashboardRenderable {
 	protected final static Logger logger = Logger.getLogger(CircuitBase.class.getName());
 	
 	static ExitCircuit create(CircuitManagerImpl circuitManager, Router exitRouter) {
@@ -51,8 +51,8 @@ abstract class CircuitBase implements Circuit, DashboardRenderable {
 		status = new CircuitStatus();
 	}
 
-	abstract List<Router> choosePath(CircuitPathChooser pathChooser) throws InterruptedException, PathSelectionFailedException;
-	
+	protected abstract List<Router> choosePath(CircuitPathChooser pathChooser) throws InterruptedException, PathSelectionFailedException;
+
 	void bindToConnection(Connection connection) {
 		if(io != null) {
 			throw new IllegalStateException("Circuit already bound to a connection");

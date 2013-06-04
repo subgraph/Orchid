@@ -72,7 +72,7 @@ public class ExitCircuit extends CircuitBase {
 	}
 
 	@Override
-	List<Router> choosePath(CircuitPathChooser pathChooser) throws InterruptedException, PathSelectionFailedException {
+	protected List<Router> choosePath(CircuitPathChooser pathChooser) throws InterruptedException, PathSelectionFailedException {
 		return pathChooser.choosePathWithExit(exitRouter);
 	}
 }

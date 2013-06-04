@@ -30,7 +30,7 @@ public class DirectoryCircuit extends CircuitBase {
 	}
 
 	@Override
-	List<Router> choosePath(CircuitPathChooser pathChooser) {
+	protected List<Router> choosePath(CircuitPathChooser pathChooser) {
 		return pathChooser.chooseDirectoryPath();
 	}
 }
