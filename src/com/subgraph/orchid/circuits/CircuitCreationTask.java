@@ -1,12 +1,12 @@
 package com.subgraph.orchid.circuits;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,7 +40,7 @@ public class CircuitCreationTask implements Runnable {
 	
 	private final CircuitPredictor predictor;
 	
-	private Date lastNewCircuit;
+	private final AtomicLong lastNewCircuit;
 
 	CircuitCreationTask(TorConfig config, Directory directory, ConnectionCache connectionCache, CircuitPathChooser pathChooser, CircuitManagerImpl circuitManager, TorInitializationTracker initializationTracker) {
 		this.config = config;
@@ -52,6 +52,7 @@ public class CircuitCreationTask implements Runnable {
 		this.executor = Executors.newCachedThreadPool();
 		this.buildHandler = createCircuitBuildHandler();
 		this.predictor = new CircuitPredictor();
+		this.lastNewCircuit = new AtomicLong();
 	}
 
 	CircuitPredictor getCircuitPredictor() {
@@ -122,9 +123,9 @@ public class CircuitCreationTask implements Runnable {
 			return;
 		}
 
-		if(lastNewCircuit != null) {
-			final Date now = new Date();
-			if((now.getTime() - lastNewCircuit.getTime()) < config.getNewCircuitPeriod()) {
+		if(lastNewCircuit.get() != 0) {
+			final long now = System.currentTimeMillis();
+			if((now - lastNewCircuit.get()) < config.getNewCircuitPeriod()) {
 				return;
 			}
 		}
@@ -144,7 +145,6 @@ public class CircuitCreationTask implements Runnable {
 		}
 		
 		buildCircuitToHandleExitTargets(exitTargets);
-		lastNewCircuit = new Date();
 	}
 
 	private int countCircuitsSupportingTarget(final ExitTarget target, final boolean needClean) {
@@ -162,7 +162,7 @@ public class CircuitCreationTask implements Runnable {
 		if(exitTargets.isEmpty()) {
 			return;
 		}
-		if(!directory.haveMinimumRouterInfo())
+		if(!directory.haveMinimumRouterInfo()) 
 			return;
 		if(circuitManager.getPendingCircuitCount() >= MAX_PENDING_CIRCUITS)
 			return;
@@ -193,6 +193,7 @@ public class CircuitCreationTask implements Runnable {
 			public void circuitBuildCompleted(Circuit circuit) {
 				logger.fine("Circuit completed to: "+ circuit);
 				circuitOpenedHandler(circuit);
+				lastNewCircuit.set(System.currentTimeMillis());
 			}
 
 			public void circuitBuildFailed(String reason) {
