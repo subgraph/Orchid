@@ -36,7 +36,6 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	
 	private final static Logger logger = Logger.getLogger(CircuitManagerImpl.class.getName());
 	private final static boolean DEBUG_CIRCUIT_CREATION = true;
-	private final static boolean USE_ENTRY_GUARDS = true;
 	private final static int OPEN_DIRECTORY_STREAM_RETRY_COUNT = 5;
 	private final static int OPEN_DIRECTORY_STREAM_TIMEOUT = 10 * 1000;
 	
@@ -56,7 +55,7 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	public CircuitManagerImpl(TorConfig config, Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.connectionCache = connectionCache;
 		this.pathChooser = CircuitPathChooser.create(config, directory);
-		if(USE_ENTRY_GUARDS) {
+		if(config.getUseEntryGuards()) {
 			this.pathChooser.enableEntryGuards(new EntryGuards(config, connectionCache, directory));
 		}
 		this.pendingExitStreams = new PendingExitStreams(config);
