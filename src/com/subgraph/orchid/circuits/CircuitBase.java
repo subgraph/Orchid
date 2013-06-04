@@ -92,7 +92,7 @@ abstract class CircuitBase implements Circuit, DashboardRenderable {
 	}
 	
 	boolean isClean() {
-		return status.isConnected() && !status.isDirty();
+		return !status.isDirty();
 	}
 	
 	int getSecondsDirty() {
