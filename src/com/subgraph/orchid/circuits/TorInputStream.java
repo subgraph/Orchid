@@ -8,6 +8,7 @@ import java.util.Queue;
 
 import com.subgraph.orchid.RelayCell;
 import com.subgraph.orchid.Stream;
+import com.subgraph.orchid.circuits.cells.RelayCellImpl;
 import com.subgraph.orchid.misc.GuardedBy;
 import com.subgraph.orchid.misc.ThreadSafe;
 

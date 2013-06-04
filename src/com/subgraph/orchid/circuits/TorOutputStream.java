@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import com.subgraph.orchid.RelayCell;
+import com.subgraph.orchid.circuits.cells.RelayCellImpl;
 
 public class TorOutputStream extends OutputStream {
 

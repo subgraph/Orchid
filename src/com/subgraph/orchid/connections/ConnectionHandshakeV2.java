@@ -18,7 +18,7 @@ import com.subgraph.orchid.Cell;
 import com.subgraph.orchid.ConnectionHandshakeException;
 import com.subgraph.orchid.ConnectionIOException;
 import com.subgraph.orchid.Router;
-import com.subgraph.orchid.circuits.CellImpl;
+import com.subgraph.orchid.circuits.cells.CellImpl;
 import com.subgraph.orchid.crypto.TorPublicKey;
 import com.subgraph.orchid.data.IPv4Address;
 

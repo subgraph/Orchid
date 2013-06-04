@@ -13,6 +13,7 @@ import com.subgraph.orchid.RelayCell;
 import com.subgraph.orchid.Stream;
 import com.subgraph.orchid.StreamConnectFailedException;
 import com.subgraph.orchid.TorException;
+import com.subgraph.orchid.circuits.cells.RelayCellImpl;
 import com.subgraph.orchid.dashboard.DashboardRenderable;
 import com.subgraph.orchid.dashboard.DashboardRenderer;
 
