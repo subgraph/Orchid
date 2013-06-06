@@ -3,7 +3,6 @@ package com.subgraph.orchid.circuits;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -20,27 +19,27 @@ public class CircuitPredictor implements DashboardRenderable {
 
 	private final static long TIMEOUT_MS = 60 * 60 * 1000; // One hour
 	
-	private final Map<Integer, Date> portsSeen;
+	private final Map<Integer, Long> portsSeen;
 	
 	public CircuitPredictor() {
-		portsSeen = new HashMap<Integer,Date>();
-		portsSeen.put(80, new Date());
+		portsSeen = new HashMap<Integer,Long>();
+		addExitPortRequest(80);
 	}
 	
 	void addExitPortRequest(int port) {
 		synchronized (portsSeen) {
-			portsSeen.put(port, new Date());	
+			portsSeen.put(port, System.currentTimeMillis());
 		}
 	}
 	
 	
-	private boolean isEntryExpired(Entry<Integer, Date> e, Date now) {
-		return (now.getTime() - e.getValue().getTime()) > TIMEOUT_MS;
+	private boolean isEntryExpired(Entry<Integer, Long> e, long now) {
+		return (now - e.getValue()) > TIMEOUT_MS;
 	}
 	
 	private void removeExpiredPorts() {
-		final Date now = new Date();
-		final Iterator<Entry<Integer, Date>> it = portsSeen.entrySet().iterator();
+		final long now = System.currentTimeMillis();
+		final Iterator<Entry<Integer, Long>> it = portsSeen.entrySet().iterator();
 		while(it.hasNext()) {
 			if(isEntryExpired(it.next(), now)) {
 				it.remove();
@@ -53,10 +52,6 @@ public class CircuitPredictor implements DashboardRenderable {
 			removeExpiredPorts();
 			return new HashSet<Integer>(portsSeen.keySet());
 		}
-	}
-	
-	Date getLastSeen(int port) {
-		return portsSeen.get(port);
 	}
 
 	List<PredictedPortTarget> getPredictedPortTargets() {
@@ -76,10 +71,10 @@ public class CircuitPredictor implements DashboardRenderable {
 		writer.println("[Predicted Ports] ");
 		for(int port : portsSeen.keySet()) {
 			writer.write(" "+ port);
-			Date lastSeen = portsSeen.get(port);
+			Long lastSeen = portsSeen.get(port);
 			if(lastSeen != null) {
-				Date now = new Date();
-				long ms = now.getTime() - lastSeen.getTime();
+				long now = System.currentTimeMillis();
+				long ms = now - lastSeen;
 				writer.write(" (last seen "+ TimeUnit.MINUTES.convert(ms, TimeUnit.MILLISECONDS) +" minutes ago)");
 			}
 			writer.println();
