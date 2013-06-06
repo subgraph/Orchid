@@ -86,16 +86,18 @@ public class CircuitCreationTask implements Runnable {
 
 	private boolean attemptHandleStreamRequest(Circuit c, StreamExitRequest request) {
 		if(c.canHandleExitTo(request)) {
-			if(request.reserveRequest())
-				executor.execute(newExitStreamTask(c, request));
+			if(request.reserveRequest()) {
+				launchExitStreamTask(c, request);
+			}
 			// else request is reserved meaning another circuit is already trying to handle it
 			return true;
 		}
 		return false;
 	}
 
-	private OpenExitStreamTask newExitStreamTask(Circuit circuit, StreamExitRequest exitRequest) {
-		return new OpenExitStreamTask(circuit, exitRequest);
+	private void launchExitStreamTask(Circuit circuit, StreamExitRequest exitRequest) {
+		final OpenExitStreamTask task = new OpenExitStreamTask(circuit, exitRequest);
+		executor.execute(task);
 	}
 
 	private void expireOldCircuits() {
@@ -130,6 +132,10 @@ public class CircuitCreationTask implements Runnable {
 			}
 		}
 		
+		buildCircuitIfNeeded();
+	}
+
+	private void buildCircuitIfNeeded() {
 		final List<StreamExitRequest> pendingExitStreams = circuitManager.getPendingExitStreams();
 		final List<PredictedPortTarget> predictedPorts = predictor.getPredictedPortTargets();
 		final List<ExitTarget> exitTargets = new ArrayList<ExitTarget>();
@@ -198,6 +204,7 @@ public class CircuitCreationTask implements Runnable {
 
 			public void circuitBuildFailed(String reason) {
 				logger.fine("Circuit build failed: "+ reason);
+				buildCircuitIfNeeded();
 			}
 
 			public void connectionCompleted(Connection connection) {
@@ -206,6 +213,7 @@ public class CircuitCreationTask implements Runnable {
 
 			public void connectionFailed(String reason) {
 				logger.fine("Circuit connection failed: "+ reason);
+				buildCircuitIfNeeded();
 			}
 
 			public void nodeAdded(CircuitNode node) {
@@ -217,9 +225,9 @@ public class CircuitCreationTask implements Runnable {
 	private void circuitOpenedHandler(Circuit circuit) {
 		final List<StreamExitRequest> pendingExitStreams = circuitManager.getPendingExitStreams();
 		for(StreamExitRequest req: pendingExitStreams) {
-			if(circuit.canHandleExitTo(req) && req.reserveRequest())
-				executor.execute(newExitStreamTask(circuit, req));
+			if(circuit.canHandleExitTo(req) && req.reserveRequest()) {
+				launchExitStreamTask(circuit, req);
+			}
 		}
 	}
-
 }
