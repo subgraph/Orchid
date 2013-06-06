@@ -8,11 +8,14 @@
 
   <property name="orchid.version" value="0.9.0" />
 
-  <condition property="orchid.jarfile" value="orchid-${orchid.version}.${orchid.gittag}.jar">
+  <condition property="orchid.basename" value="orchid-${orchid.version}.${orchid.gittag}">
     <isset property="orchid.gittag"/>
   </condition>
 
-  <property name="orchid.jarfile" value="orchid-${orchid.version}.jar" />
+  <property name="orchid.basename" value="orchid-${orchid.version}" />
+
+  <property name="orchid.jarfile" value="${orchid.basename}.jar" />
+  <property name="orchid.sourcefile" value="${orchid.basename}-src.zip" />
 
   <path id="compile.classpath">
     <fileset dir="lib">
@@ -27,7 +30,7 @@
     </and>
   </condition>
 
-  <target name="all" depends="compile,compile-xmlrpc,package"/>
+  <target name="all" depends="compile,compile-xmlrpc,package,source"/>
 			
   <target name="clean">
     <delete dir="${basedir}/bin" />
@@ -57,5 +60,11 @@
       <fileset dir="${basedir}/bin" />
       <zipfileset dir="${basedir}/data" includes="GeoIP.dat" fullpath="data/GeoIP.dat" />
     </jar>
+  </target>
+
+  <target name="source">
+    <zip destfile="${orchid.sourcefile}">
+      <zipfileset dir="src" prefix="${orchid.basename}/src" />
+    </zip>
   </target>
 </project>
