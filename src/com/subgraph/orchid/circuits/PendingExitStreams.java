@@ -73,8 +73,5 @@ public class PendingExitStreams {
 			}
 		}
 		return result;
-		
 	}
-
-	
 }
