@@ -41,12 +41,13 @@ public class CircuitBuildTask implements Runnable {
 	public void run() {
 		Router firstRouter = null;
 		try {
+			circuit.notifyCircuitBuildStart();
 			creationRequest.choosePath();
+			circuit.notifyCircuitPathChosen(creationRequest.getPath());
 			if(logger.isLoggable(Level.FINE)) {
 				logger.fine("Opening a new circuit to "+ pathToString(creationRequest));
 			}
 			firstRouter = creationRequest.getPathElement(0);
-			circuit.notifyCircuitBuildStart(creationRequest);
 			openEntryNodeConnection(firstRouter);
 			buildCircuit(firstRouter);
 			circuit.notifyCircuitBuildCompleted();
