@@ -1,7 +1,6 @@
 package com.subgraph.orchid.circuits;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import com.subgraph.orchid.Router;
@@ -21,8 +20,8 @@ public class CircuitStatus {
 		public String toString() { return name; }
 	}
 
-	private Date timestampCreated;
-	private Date timestampDirty;
+	private long timestampCreated;
+	private long timestampDirty;
 	private int currentStreamId;
 	private Object streamIdLock = new Object();
 	private CircuitState state = CircuitState.UNCONNECTED;
@@ -38,13 +37,13 @@ public class CircuitStatus {
 	}
 
 	synchronized void updateCreatedTimestamp() {
-		timestampCreated = new Date();
-		timestampDirty = null;
+		timestampCreated = System.currentTimeMillis();
+		timestampDirty = 0;
 	}
 
 	synchronized void updateDirtyTimestamp() {
-		if(timestampDirty == null) {
-			timestampDirty = new Date();
+		if(timestampDirty == 0) {
+			timestampDirty = System.currentTimeMillis();
 		}
 	}
 
@@ -56,15 +55,16 @@ public class CircuitStatus {
 		return millisecondsElapsedSince(timestampDirty);
 	}
 
-	private static long millisecondsElapsedSince(Date then) {
-		if(then == null)
+	private static long millisecondsElapsedSince(long then) {
+		if(then == 0) {
 			return 0;
-		final Date now = new Date();
-		return now.getTime() - then.getTime();
+		}
+		final long now = System.currentTimeMillis();
+		return now - then;
 	}
 
 	synchronized boolean isDirty() {
-		return timestampDirty != null;
+		return timestampDirty != 0;
 	}
 
 	void setStateBuilding(List<Router> circuitPath) {
