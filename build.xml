@@ -1,6 +1,17 @@
 <project name="orchid" default="all">
 
+  <exec executable="git" outputproperty="orchid.gittag" logError="true" failifexecutionfails="false">
+    <arg value="rev-parse"/>
+    <arg value="--short"/>
+    <arg value="HEAD"/>
+  </exec>
+
   <property name="orchid.version" value="0.9.0" />
+
+  <condition property="orchid.jarfile" value="orchid-${orchid.version}.${orchid.gittag}.jar">
+    <isset property="orchid.gittag"/>
+  </condition>
+
   <property name="orchid.jarfile" value="orchid-${orchid.version}.jar" />
 
   <path id="compile.classpath">
