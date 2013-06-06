@@ -156,6 +156,9 @@ public class CircuitCreationTask implements Runnable {
 	private int countCircuitsSupportingTarget(final ExitTarget target, final boolean needClean) {
 		final CircuitFilter filter = new CircuitFilter() {
 			public boolean filter(CircuitBase circuit) {
+				if(circuit.isDirectoryCircuit()) {
+					return false;
+				}
 				final boolean pendingOrConnected = circuit.isPending() || circuit.isConnected();
 				final boolean isCleanIfNeeded = !(needClean && !circuit.isClean());
 				return pendingOrConnected && isCleanIfNeeded && circuit.canHandleExitTo(target);
