@@ -150,11 +150,13 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 
 	public Stream openExitStreamTo(String hostname, int port)
 			throws InterruptedException, TimeoutException, OpenFailedException {
+		circuitCreationTask.predictPort(port);
 		return pendingExitStreams.openExitStream(hostname, port);
 	}
 
 	public Stream openExitStreamTo(IPv4Address address, int port)
 			throws InterruptedException, TimeoutException, OpenFailedException {
+		circuitCreationTask.predictPort(port);
 		return pendingExitStreams.openExitStream(address, port);
 	}
 
