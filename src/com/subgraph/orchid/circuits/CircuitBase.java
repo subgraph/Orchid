@@ -99,13 +99,17 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 		return (int) (status.getMillisecondsDirty() / 1000);
 	}
 
-	void notifyCircuitBuildStart(CircuitCreationRequest request) {
+	void notifyCircuitBuildStart() {
 		if(!status.isUnconnected()) {
 			throw new IllegalStateException("Can only connect UNCONNECTED circuits");
 		}
 		status.updateCreatedTimestamp();
-		status.setStateBuilding(request.getPath());
+		status.setStateBuilding();
 		circuitManager.addActiveCircuit(this);
+	}
+	
+	void notifyCircuitPathChosen(List<Router> circuitPath) {
+		status.setCircuitPath(circuitPath);
 	}
 	
 	void notifyCircuitBuildFailed() {
