@@ -24,7 +24,7 @@ public class CircuitStatus {
 	private long timestampDirty;
 	private int currentStreamId;
 	private Object streamIdLock = new Object();
-	private CircuitState state = CircuitState.UNCONNECTED;
+	private volatile CircuitState state = CircuitState.UNCONNECTED;
 	private List<Router> circuitPath = Collections.emptyList();
 
 	CircuitStatus() {
@@ -42,7 +42,7 @@ public class CircuitStatus {
 	}
 
 	synchronized void updateDirtyTimestamp() {
-		if(timestampDirty == 0) {
+		if(timestampDirty == 0 && state != CircuitState.BUILDING) {
 			timestampDirty = System.currentTimeMillis();
 		}
 	}
@@ -67,8 +67,11 @@ public class CircuitStatus {
 		return timestampDirty != 0;
 	}
 
-	void setStateBuilding(List<Router> circuitPath) {
+	void setStateBuilding() {
 		state = CircuitState.BUILDING;
+	}
+
+	void setCircuitPath(List<Router> circuitPath) {
 		this.circuitPath = Collections.unmodifiableList(circuitPath);
 	}
 
