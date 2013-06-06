@@ -1,2 +1,4 @@
 bin/
 orchid-*.jar
+orchid-*.zip
+lib/xmlrpc-*
