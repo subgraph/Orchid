@@ -30,6 +30,9 @@ import com.subgraph.orchid.events.EventManager;
 public class DirectoryImpl implements Directory {
 	private final static Logger logger = Logger.getLogger(DirectoryImpl.class.getName());
 
+	private final Object loadLock = new Object();
+	private boolean isLoaded = false;
+	
 	private final DirectoryStoreImpl store;
 	private final StateFile stateFile;
 	private final Map<HexDigest, KeyCertificate> certificates;
@@ -85,10 +88,26 @@ public class DirectoryImpl implements Directory {
 
 	public void loadFromStore() {
 		logger.info("Loading cached network information from disk");
-		store.loadCertificates(this);
-		store.loadConsensus(this);
-		store.loadRouterDescriptors(this);
-		store.loadStateFile(stateFile);
+		synchronized(loadLock) {
+			store.loadCertificates(this);
+			store.loadConsensus(this);
+			store.loadRouterDescriptors(this);
+			store.loadStateFile(stateFile);
+			isLoaded = true;
+			loadLock.notifyAll();
+		}
+	}
+
+	private void waitUntilLoaded() {
+		synchronized (loadLock) {
+			while(!isLoaded) {
+				try {
+					loadLock.wait();
+				} catch (InterruptedException e) {
+					logger.warning("Thread interrupted while waiting for directory to load from disk");
+				}
+			}
+		}
 	}
 
 	public Collection<DirectoryServer> getDirectoryAuthorities() {
@@ -117,6 +136,7 @@ public class DirectoryImpl implements Directory {
 	}
 
 	public KeyCertificate findCertificate(HexDigest authorityFingerprint) {
+		waitUntilLoaded();
 		return certificates.get(authorityFingerprint);
 	}
 
@@ -142,14 +162,15 @@ public class DirectoryImpl implements Directory {
 		final List<RouterDescriptor> descriptors = new ArrayList<RouterDescriptor>();
 		for(Router router: routersByIdentity.values()) {
 			final RouterDescriptor descriptor = router.getCurrentDescriptor();
-			if(descriptor != null)
+			if(descriptor != null) {
 				descriptors.add(descriptor);
+			}
 		}
 		store.saveRouterDescriptors(descriptors);
 		descriptorsDirty = false;
 	}
 
-	public void addConsensusDocument(ConsensusDocument consensus) {
+	public synchronized void addConsensusDocument(ConsensusDocument consensus) {
 		if(consensus.equals(currentConsensus))
 			return;
 
@@ -188,6 +209,8 @@ public class DirectoryImpl implements Directory {
 		logger.fine("Loaded "+ routersByIdentity.size() +" routers from consensus document");
 		currentConsensus = consensus;
 		store.saveConsensus(consensus);
+		
+		storeDescriptors();
 		consensusChangedManager.fireEvent(new Event() {});
 	}
 
@@ -195,6 +218,7 @@ public class DirectoryImpl implements Directory {
 		final RouterImpl router = knownRouters.get(status.getIdentity());
 		if(router == null)
 			return RouterImpl.createFromRouterStatus(status);
+		descriptorsDirty = true;
 		router.updateStatus(status);
 		return router;
 	}
@@ -240,6 +264,7 @@ public class DirectoryImpl implements Directory {
 	synchronized void addDescriptor(RouterDescriptor descriptor) {
 		final HexDigest identity = descriptor.getIdentityKey().getFingerprint();
 		if(!routersByIdentity.containsKey(identity)) {
+			System.out.println(descriptor.getAddress());
 			logger.warning("Could not find router for descriptor: "+ descriptor.getIdentityKey().getFingerprint());
 			return;
 		}
@@ -259,6 +284,7 @@ public class DirectoryImpl implements Directory {
 	}
 
 	synchronized public List<Router> getRoutersWithDownloadableDescriptors() {
+		waitUntilLoaded();
 		final List<Router> routers = new ArrayList<Router>();
 		for(RouterImpl router: routersByIdentity.values()) {
 			if(router.isDescriptorDownloadable())
@@ -277,7 +303,8 @@ public class DirectoryImpl implements Directory {
 	}
 
 	synchronized public void markDescriptorInvalid(RouterDescriptor descriptor) {
-		removeRouterByIdentity(descriptor.getIdentityKey().getFingerprint());	
+		waitUntilLoaded();
+		removeRouterByIdentity(descriptor.getIdentityKey().getFingerprint());
 	}
 
 	private void removeRouterByIdentity(HexDigest identity) {
@@ -315,16 +342,19 @@ public class DirectoryImpl implements Directory {
 				return null;
 			}
 		}
+		waitUntilLoaded();
 		return routersByNickname.get(name);
 	}
 
 	public Router getRouterByIdentity(HexDigest identity) {
+		waitUntilLoaded();
 		synchronized (routersByIdentity) {
 			return routersByIdentity.get(identity);
 		}
 	}
 
 	public List<Router> getRouterListByNames(List<String> names) {
+		waitUntilLoaded();
 		final List<Router> routers = new ArrayList<Router>();
 		for(String n: names) {
 			final Router r = getRouterByName(n);
@@ -335,29 +365,30 @@ public class DirectoryImpl implements Directory {
 		return routers;
 	}
 
-	Logger getLogger() {
-		return logger;
-	}
-
 	public List<Router> getAllRouters() {
+		waitUntilLoaded();
 		synchronized(routersByIdentity) {
 			return new ArrayList<Router>(routersByIdentity.values());
 		}
 	}
 
 	public GuardEntry createGuardEntryFor(Router router) {
+		waitUntilLoaded();
 		return stateFile.createGuardEntryFor(router);
 	}
 
 	public List<GuardEntry> getGuardEntries() {
+		waitUntilLoaded();
 		return stateFile.getGuardEntries();
 	}
 
 	public void removeGuardEntry(GuardEntry entry) {
+		waitUntilLoaded();
 		stateFile.removeGuardEntry(entry);
 	}
 
 	public void addGuardEntry(GuardEntry entry) {
+		waitUntilLoaded();
 		stateFile.addGuardEntry(entry);
 	}
 }
