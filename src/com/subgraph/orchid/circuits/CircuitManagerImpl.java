@@ -150,10 +150,19 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 
 	public Stream openExitStreamTo(String hostname, int port)
 			throws InterruptedException, TimeoutException, OpenFailedException {
+		validateHostname(hostname);
 		circuitCreationTask.predictPort(port);
 		return pendingExitStreams.openExitStream(hostname, port);
 	}
 
+	private void validateHostname(String hostname) throws OpenFailedException {
+		if(hostname.toLowerCase().endsWith(".onion")) {
+			throw new OpenFailedException("Hidden services not supported");
+		} else if(hostname.toLowerCase().endsWith(".exit")) {
+			throw new OpenFailedException(".exit addresses are not supported");
+		}
+	}
+	
 	public Stream openExitStreamTo(IPv4Address address, int port)
 			throws InterruptedException, TimeoutException, OpenFailedException {
 		circuitCreationTask.predictPort(port);
