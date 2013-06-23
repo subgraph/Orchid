@@ -60,7 +60,7 @@ public class SocksClientTask implements Runnable {
 			request.readRequest();
 			if(!request.isConnectRequest()) {
 				logger.warning("Non connect command");
-				request.sendError();
+				request.sendError(true);
 				return;
 			}
 			
@@ -72,10 +72,10 @@ public class SocksClientTask implements Runnable {
 			} catch (InterruptedException e) {
 				logger.info("SOCKS CONNECT to "+ request.getTarget() + " was thread interrupted");
 				Thread.currentThread().interrupt();
-				request.sendError();
+				request.sendError(false);
 			} catch (TimeoutException e) {
 				logger.info("SOCKS CONNECT to "+ request.getTarget() + " timed out");
-				request.sendError();
+				request.sendError(false);
 			} catch (OpenFailedException e) {
 				logger.info("SOCKS CONNECT to "+ request.getTarget() + " failed at exit node");
 				request.sendConnectionRefused();

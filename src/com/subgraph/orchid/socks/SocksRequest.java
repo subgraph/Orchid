@@ -20,7 +20,7 @@ public abstract class SocksRequest {
 	
 	abstract public void readRequest() throws SocksRequestException;
 	abstract public boolean isConnectRequest();
-	abstract void sendError() throws SocksRequestException;
+	abstract void sendError(boolean isUnsupportedCommand) throws SocksRequestException;
 	abstract void sendSuccess() throws SocksRequestException;
 	abstract void sendConnectionRefused() throws SocksRequestException;
 	

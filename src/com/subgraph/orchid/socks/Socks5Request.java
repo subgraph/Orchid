@@ -14,6 +14,7 @@ public class Socks5Request extends SocksRequest {
 	final static int SOCKS5_STATUS_SUCCESS = 0;
 	final static int SOCKS5_STATUS_FAILURE = 1;
 	final static int SOCKS5_STATUS_CONNECTION_REFUSED = 5;
+	final static int SOCKS5_STATUS_COMMAND_NOT_SUPPORTED = 7;
 	
 	private int command;
 	private int addressType;
@@ -64,8 +65,12 @@ public class Socks5Request extends SocksRequest {
 		sendResponse(SOCKS5_STATUS_CONNECTION_REFUSED);
 	}
 
-	public void sendError() throws SocksRequestException  {
-		sendResponse(SOCKS5_STATUS_FAILURE);
+	public void sendError(boolean isUnsupportedCommand) throws SocksRequestException  {
+		if(isUnsupportedCommand) {
+			sendResponse(SOCKS5_STATUS_COMMAND_NOT_SUPPORTED);
+		} else {
+			sendResponse(SOCKS5_STATUS_FAILURE);
+		}
 	}
 	
 	public void sendSuccess() throws SocksRequestException {

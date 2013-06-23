@@ -17,10 +17,10 @@ public class Socks4Request extends SocksRequest {
 	}
 
 	public void sendConnectionRefused() throws SocksRequestException {
-		sendError();
+		sendError(false);
 	}
 
-	public void sendError() throws SocksRequestException  {
+	public void sendError(boolean isUnsupportedCommand) throws SocksRequestException  {
 		sendResponse(SOCKS_STATUS_FAILURE);
 	}
 
