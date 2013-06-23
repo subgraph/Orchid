@@ -40,7 +40,9 @@ public class Socks5Request extends SocksRequest {
 	}
 	
 	public void readRequest() throws SocksRequestException {
-		processAuthentication();
+		if(!processAuthentication()) {
+			throw new SocksRequestException("Failed to negotiate authentication");
+		}
 		if(readByte() != SOCKS5_VERSION)
 			throw new SocksRequestException();
 
