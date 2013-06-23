@@ -1,9 +1,13 @@
 package com.subgraph.orchid;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.crypto.Cipher;
 
 import com.subgraph.orchid.circuits.TorInitializationTracker;
 import com.subgraph.orchid.dashboard.Dashboard;
@@ -54,6 +58,7 @@ public class TorClient {
 		if(isStarted) {
 			return;
 		}
+		verifyUnlimitedStrengthPolicyInstalled();
 		directoryDownloader.start();
 		circuitManager.startBuildingCircuits();
 		if(dashboard.isEnabledByProperty()) {
@@ -156,5 +161,18 @@ public class TorClient {
 				System.out.println("Tor is ready to go!");
 			}
 		};
+	}
+	
+	private void verifyUnlimitedStrengthPolicyInstalled() {
+		try {
+			if(Cipher.getMaxAllowedKeyLength("AES") < 256) {
+				final String message = "Unlimited Strength Jurisdiction Policy Files are required but not installed.";
+				logger.severe(message);
+				throw new TorException(message);
+			}
+		} catch (NoSuchAlgorithmException e) {
+			logger.log(Level.SEVERE, "No AES provider found");
+			throw new TorException(e);
+		}
 	}
 }
