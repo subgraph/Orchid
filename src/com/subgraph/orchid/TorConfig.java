@@ -81,7 +81,6 @@ public interface TorConfig {
 	boolean getStrictNodes();
 	void setStrictNodes(boolean value);
 	
-	
 	@ConfigVar(type=ConfigVarType.BOOLEAN, defaultValue="false")
 	boolean getFascistFirewall();
 	void setFascistFirewall(boolean value);
@@ -90,6 +89,14 @@ public interface TorConfig {
 	List<Integer> getFirewallPorts();
 	void setFirewallPorts(List<Integer> ports);
 	
+	@ConfigVar(type=ConfigVarType.BOOLEAN, defaultValue="false")
+	boolean getSafeSocks();
+	void setSafeSocks(boolean value);
+	
+	@ConfigVar(type=ConfigVarType.BOOLEAN, defaultValue="true")
+	boolean getWarnUnsafeSocks();
+	void setWarnUnsafeSocks(boolean value);
+
 	enum ConfigVarType { INTEGER, STRING, BOOLEAN, INTERVAL, PORTLIST, STRINGLIST, PATH };
 	
 	@Retention(RetentionPolicy.RUNTIME)
