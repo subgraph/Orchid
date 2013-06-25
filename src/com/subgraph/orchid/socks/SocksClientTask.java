@@ -81,7 +81,7 @@ public class SocksClientTask implements Runnable {
 				logger.info("SOCKS CONNECT to "+ request.getTarget() + " timed out");
 				request.sendError(false);
 			} catch (OpenFailedException e) {
-				logger.info("SOCKS CONNECT to "+ request.getTarget() + " failed at exit node");
+				logger.info("SOCKS CONNECT to "+ request.getTarget() + " failed: "+ e.getMessage());
 				request.sendConnectionRefused();
 			}
 		} catch (SocksRequestException e) {

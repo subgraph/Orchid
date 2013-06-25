@@ -121,7 +121,7 @@ public class StreamExitRequest implements ExitTarget {
 			case NOT_COMPLETED:
 				throw new IllegalStateException("Request not completed");
 			case EXIT_FAILURE:
-				throw new OpenFailedException();
+				throw new OpenFailedException("Failure at exit node");
 			case TIMEOUT:
 				throw new TimeoutException();
 			case STREAM_OPEN_FAILURE:
