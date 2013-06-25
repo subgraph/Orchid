@@ -34,6 +34,15 @@ public class IPv4Address {
 		}	
 	}
 	
+	public static boolean isValidIPv4AddressString(String addressString) {
+		try {
+			createFromString(addressString);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
 	private final int addressData;
 	
 	public IPv4Address(int addressData) {
