@@ -97,6 +97,10 @@ public interface TorConfig {
 	boolean getWarnUnsafeSocks();
 	void setWarnUnsafeSocks(boolean value);
 
+	@ConfigVar(type=ConfigVarType.BOOLEAN, defaultValue="true")
+	boolean getClientRejectInternalAddress();
+	void setClientRejectInternalAddress(boolean value);
+
 	enum ConfigVarType { INTEGER, STRING, BOOLEAN, INTERVAL, PORTLIST, STRINGLIST, PATH };
 	
 	@Retention(RetentionPolicy.RUNTIME)
