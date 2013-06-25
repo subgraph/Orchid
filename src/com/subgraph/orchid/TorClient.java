@@ -39,7 +39,7 @@ public class TorClient {
 		connectionCache = Tor.createConnectionCache(initializationTracker);
 		circuitManager = Tor.createCircuitManager(config, directory, connectionCache, initializationTracker);
 		directoryDownloader = Tor.createDirectoryDownloader(directory, circuitManager);
-		socksListener = Tor.createSocksPortListener(circuitManager);
+		socksListener = Tor.createSocksPortListener(config, circuitManager);
 		
 		readyLatch = new CountDownLatch(1);
 		

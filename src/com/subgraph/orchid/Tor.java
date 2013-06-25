@@ -101,8 +101,8 @@ public class Tor {
 	 * @return A new <code>SocksPortListener</code> instance.
 	 * @see SocksPortListener
 	 */
-	static public SocksPortListener createSocksPortListener(CircuitManager circuitManager) {
-		return new SocksPortListenerImpl(circuitManager);
+	static public SocksPortListener createSocksPortListener(TorConfig config, CircuitManager circuitManager) {
+		return new SocksPortListenerImpl(config, circuitManager);
 	}
 
 	/**
