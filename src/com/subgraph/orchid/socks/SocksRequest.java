@@ -2,11 +2,15 @@ package com.subgraph.orchid.socks;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.logging.Logger;
 
+import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.data.IPv4Address;
 
 public abstract class SocksRequest {
+	private final static Logger logger = Logger.getLogger(SocksRequest.class.getName());
 	
+	private final TorConfig config;
 	private final Socket socket;
 	
 	private byte[] addressData;
@@ -14,7 +18,10 @@ public abstract class SocksRequest {
 	private String hostname;
 	private int port;
 	
-	protected SocksRequest(Socket socket) {
+	private long lastWarningTimestamp = 0;
+	
+	protected SocksRequest(TorConfig config, Socket socket) {
+		this.config = config;
 		this.socket = socket;
 	}
 	
@@ -55,6 +62,8 @@ public abstract class SocksRequest {
 	}
 	
 	protected void setIPv4AddressData(byte[] data) throws SocksRequestException {
+		logUnsafeSOCKS();
+
 		if(data.length != 4)
 			throw new SocksRequestException();
 		addressData = data;
@@ -67,6 +76,27 @@ public abstract class SocksRequest {
 		address = new IPv4Address(addressValue);
 	}
 	
+	private boolean testRateLimit() {
+		final long now = System.currentTimeMillis();
+		final long diff = now - lastWarningTimestamp;
+		lastWarningTimestamp = now;
+		return diff > 5000;
+	}
+	
+	private void logUnsafeSOCKS() throws SocksRequestException {
+		if((config.getWarnUnsafeSocks() || config.getSafeSocks()) && testRateLimit()) {
+			logger.warning("Your application is giving Orchid only "+
+							"an IP address.  Applications that do DNS"+
+							"resolves themselves may leak information. "+
+							"Consider using Socks4a (e.g. via privoxy or socat) "+ 
+							"instead.  For more information please see "+
+							"https://wiki.torproject.org/TheOnionRouter/TorFAQ#SOCKSAndDNS");
+		}
+		if(config.getSafeSocks()) {
+			throw new SocksRequestException("Rejecting unsafe SOCKS request");
+		}		
+	}
+
 	protected void setHostname(String name) {
 		hostname = name;
 	}
