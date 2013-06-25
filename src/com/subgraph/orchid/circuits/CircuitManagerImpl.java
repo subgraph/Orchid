@@ -2,6 +2,7 @@ package com.subgraph.orchid.circuits;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -39,6 +40,7 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		boolean filter(CircuitBase circuit);
 	}
 
+	private final TorConfig config;
 	private final ConnectionCache connectionCache;
 	private final Set<CircuitBase> activeCircuits;
 	private final TorRandom random;
@@ -49,6 +51,7 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	private final CircuitPathChooser pathChooser;
 
 	public CircuitManagerImpl(TorConfig config, Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
+		this.config = config;
 		this.connectionCache = connectionCache;
 		this.pathChooser = CircuitPathChooser.create(config, directory);
 		if(config.getUseEntryGuards()) {
@@ -156,6 +159,7 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	}
 
 	private void validateHostname(String hostname) throws OpenFailedException {
+		maybeRejectInternalAddress(hostname);
 		if(hostname.toLowerCase().endsWith(".onion")) {
 			throw new OpenFailedException("Hidden services not supported");
 		} else if(hostname.toLowerCase().endsWith(".exit")) {
@@ -163,8 +167,21 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		}
 	}
 	
+	private void maybeRejectInternalAddress(String hostname) throws OpenFailedException {
+		if(IPv4Address.isValidIPv4AddressString(hostname)) {
+			maybeRejectInternalAddress(IPv4Address.createFromString(hostname));
+		}
+	}
+	
+	private void maybeRejectInternalAddress(IPv4Address address) throws OpenFailedException {
+		final InetAddress inetAddress = address.toInetAddress();
+		if(inetAddress.isSiteLocalAddress() && config.getClientRejectInternalAddress()) {
+			throw new OpenFailedException("Rejecting stream target with internal address: "+ address);
+		}
+	}
 	public Stream openExitStreamTo(IPv4Address address, int port)
 			throws InterruptedException, TimeoutException, OpenFailedException {
+		maybeRejectInternalAddress(address);
 		circuitCreationTask.predictPort(port);
 		return pendingExitStreams.openExitStream(address, port);
 	}
@@ -200,7 +217,7 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 				circuit.markForClose();
 			}
 		}
-		throw new OpenFailedException();
+		throw new OpenFailedException("Retry count exceeded opening directory stream");
 	}
 
 	private CircuitBase openDirectoryCircuit() throws OpenFailedException {
