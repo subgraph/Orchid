@@ -5,7 +5,8 @@ import java.net.Socket;
 import com.subgraph.orchid.TorConfig;
 
 public class Socks4Request extends SocksRequest {
-	private final static int SOCKS_COMMAND_CONNECT = 1;
+	final static int SOCKS_COMMAND_CONNECT = 1;
+	final static int SOCKS_COMMAND_RESOLV = 0xF0;
 	private final static int SOCKS_STATUS_SUCCESS = 0x5a;
 	private final static int SOCKS_STATUS_FAILURE = 0x5b;
 	private int command;
@@ -16,6 +17,10 @@ public class Socks4Request extends SocksRequest {
 
 	public boolean isConnectRequest() {
 		return command == SOCKS_COMMAND_CONNECT;
+	}
+
+	public int getCommandCode() {
+		return command;
 	}
 
 	public void sendConnectionRefused() throws SocksRequestException {
