@@ -2,6 +2,7 @@ package com.subgraph.orchid.socks;
 
 import java.net.Socket;
 
+import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.TorException;
 
 public class Socks5Request extends SocksRequest {
@@ -21,8 +22,8 @@ public class Socks5Request extends SocksRequest {
 	private byte[] addressBytes = new byte[0];
 	private byte[] portBytes = new byte[0];
 	
-	Socks5Request(Socket socket) {
-		super(socket);
+	Socks5Request(TorConfig config, Socket socket) {
+		super(config, socket);
 	}
 	
 	public boolean isConnectRequest() {

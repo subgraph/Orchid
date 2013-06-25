@@ -9,14 +9,18 @@ import java.util.logging.Logger;
 import com.subgraph.orchid.CircuitManager;
 import com.subgraph.orchid.OpenFailedException;
 import com.subgraph.orchid.Stream;
+import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.TorException;
 
 public class SocksClientTask implements Runnable {
 	private final static Logger logger = Logger.getLogger(SocksClientTask.class.getName());
+	
+	private final TorConfig config;
 	private final Socket socket;
 	private final CircuitManager circuitManager;
 
-	SocksClientTask(Socket socket, CircuitManager circuitManager) {
+	SocksClientTask(TorConfig config, Socket socket, CircuitManager circuitManager) {
+		this.config = config;
 		this.socket = socket;
 		this.circuitManager = circuitManager;
 	}
@@ -44,10 +48,10 @@ public class SocksClientTask implements Runnable {
 			sendHttpPage();
 			break;
 		case 4:
-			processRequest(new Socks4Request(socket));
+			processRequest(new Socks4Request(config, socket));
 			break;
 		case 5:
-			processRequest(new Socks5Request(socket));
+			processRequest(new Socks5Request(config, socket));
 			break;
 		default:
 			// fall through, do nothing

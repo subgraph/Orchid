@@ -13,16 +13,19 @@ import java.util.logging.Logger;
 
 import com.subgraph.orchid.CircuitManager;
 import com.subgraph.orchid.SocksPortListener;
+import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.TorException;
 
 public class SocksPortListenerImpl implements SocksPortListener {
 	private final static Logger logger = Logger.getLogger(SocksPortListenerImpl.class.getName());
 	private final Set<Integer> listeningPorts = new HashSet<Integer>();
 	private final Map<Integer, Thread> acceptThreads = new HashMap<Integer, Thread>();
+	private final TorConfig config;
 	private final CircuitManager circuitManager;
 	private final Executor executor;
 	
-	public SocksPortListenerImpl(CircuitManager circuitManager) {
+	public SocksPortListenerImpl(TorConfig config, CircuitManager circuitManager) {
+		this.config = config;
 		this.circuitManager = circuitManager;
 		executor = Executors.newCachedThreadPool();
 	}
@@ -75,6 +78,6 @@ public class SocksPortListenerImpl implements SocksPortListener {
 	}
 	
 	private Runnable newClientSocket(final Socket s) {
-		return new SocksClientTask(s, circuitManager);
+		return new SocksClientTask(config, s, circuitManager);
 	}
 }
