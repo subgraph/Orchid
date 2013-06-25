@@ -26,6 +26,7 @@ public abstract class SocksRequest {
 	}
 	
 	abstract public void readRequest() throws SocksRequestException;
+	abstract public int getCommandCode();
 	abstract public boolean isConnectRequest();
 	abstract void sendError(boolean isUnsupportedCommand) throws SocksRequestException;
 	abstract void sendSuccess() throws SocksRequestException;
@@ -86,7 +87,7 @@ public abstract class SocksRequest {
 	private void logUnsafeSOCKS() throws SocksRequestException {
 		if((config.getWarnUnsafeSocks() || config.getSafeSocks()) && testRateLimit()) {
 			logger.warning("Your application is giving Orchid only "+
-							"an IP address.  Applications that do DNS"+
+							"an IP address.  Applications that do DNS "+
 							"resolves themselves may leak information. "+
 							"Consider using Socks4a (e.g. via privoxy or socat) "+ 
 							"instead.  For more information please see "+
