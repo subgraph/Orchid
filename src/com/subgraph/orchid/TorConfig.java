@@ -100,6 +100,14 @@ public interface TorConfig {
 	@ConfigVar(type=ConfigVarType.BOOLEAN, defaultValue="true")
 	boolean getClientRejectInternalAddress();
 	void setClientRejectInternalAddress(boolean value);
+	
+	@ConfigVar(type=ConfigVarType.BOOLEAN, defaultValue="true")
+	boolean getHandshakeV3Enabled();
+	void setHandshakeV3Enabled(boolean value);
+	
+	@ConfigVar(type=ConfigVarType.BOOLEAN, defaultValue="true")
+	boolean getHandshakeV2Enabled();
+	void setHandshakeV2Enabled(boolean value);
 
 	enum ConfigVarType { INTEGER, STRING, BOOLEAN, INTERVAL, PORTLIST, STRINGLIST, PATH };
 	
