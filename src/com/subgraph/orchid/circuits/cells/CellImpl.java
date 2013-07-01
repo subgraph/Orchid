@@ -22,8 +22,9 @@ public class CellImpl implements Cell {
 		final int circuitId = header.getShort() & 0xFFFF;
 		final int command = header.get() & 0xFF;
 		
-		if(command == VERSIONS)
+		if(command == VERSIONS || command > 127) {
 			return readVarCell(circuitId, command, input);
+		}
 
 		final CellImpl cell = new CellImpl(circuitId, command);
 		readAll(input, cell.getCellBytes(), CELL_HEADER_LEN, CELL_PAYLOAD_LEN);
