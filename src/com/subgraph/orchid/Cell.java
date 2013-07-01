@@ -31,6 +31,12 @@ public interface Cell {
 
 	/** Command constant for a RELAY_EARLY type cell. */
 	final static int RELAY_EARLY = 9;
+	
+	final static int VPADDING = 128;
+	final static int CERTS = 129;
+	final static int AUTH_CHALLENGE = 130;
+	final static int AUTHENTICATE = 131;
+	final static int AUTHORIZE = 132;
 
 	final static int ERROR_NONE = 0;
 	final static int ERROR_PROTOCOL = 1;
