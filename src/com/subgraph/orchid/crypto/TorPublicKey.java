@@ -71,20 +71,27 @@ public class TorPublicKey {
 
 	private Cipher createCipherInstance() {
 		try {
-			final Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding", "SunJCE");
+			Cipher cipher = getCipherInstance();
 			cipher.init(Cipher.DECRYPT_MODE, key);
 			return cipher;
+		} catch (InvalidKeyException e) {
+			throw new TorException(e);
+		} 
+	}
+
+	private Cipher getCipherInstance() {
+		try {
+			try {
+				return Cipher.getInstance("RSA/ECB/PKCS1Padding", "SunJCE");
+			} catch (NoSuchProviderException e) {
+				return Cipher.getInstance("RSA/ECB/PKCS1Padding");
+			}
 		} catch (NoSuchAlgorithmException e) {
 			throw new TorException(e);
 		} catch (NoSuchPaddingException e) {
 			throw new TorException(e);
-		} catch (InvalidKeyException e) {
-			throw new TorException(e);
-		} catch (NoSuchProviderException e) {
-			throw new TorException(e);
 		}
 	}
-
 	public RSAPublicKey getRSAPublicKey() {
 		return key;
 	}
