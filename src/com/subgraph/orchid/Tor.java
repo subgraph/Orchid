@@ -1,6 +1,7 @@
 package com.subgraph.orchid;
 
 import java.lang.reflect.Proxy;
+import java.util.logging.Logger;
 
 import com.subgraph.orchid.circuits.CircuitManagerImpl;
 import com.subgraph.orchid.circuits.TorInitializationTracker;
@@ -15,6 +16,7 @@ import com.subgraph.orchid.socks.SocksPortListenerImpl;
  * various subsystem modules.
  */
 public class Tor {
+	private final static Logger logger = Logger.getLogger(Tor.class.getName());
 	
 	public final static int BOOTSTRAP_STATUS_STARTING = 0;
 	public final static int BOOTSTRAP_STATUS_CONN_DIR = 5;
@@ -57,7 +59,13 @@ public class Tor {
 	 * @see TorConfig
 	 */
 	static public TorConfig createConfig() {
-		return (TorConfig) Proxy.newProxyInstance(TorConfigProxy.class.getClassLoader(), new Class[] { TorConfig.class }, new TorConfigProxy());
+		final TorConfig config = (TorConfig) Proxy.newProxyInstance(TorConfigProxy.class.getClassLoader(), new Class[] { TorConfig.class }, new TorConfigProxy());
+		final String runtime = System.getProperty("java.runtime.name");
+		if(runtime != null && runtime.equals("Android Runtime")) {
+			logger.warning("Android Runtime detected, disabling V2 Link protocol");
+			config.setHandshakeV2Enabled(false);
+		}
+		return config;
 	}
 
 	static public TorInitializationTracker createInitalizationTracker() {
@@ -78,8 +86,8 @@ public class Tor {
 		return new DirectoryImpl(config);
 	}
 
-	static public ConnectionCache createConnectionCache(TorInitializationTracker tracker) {
-		return new ConnectionCacheImpl(tracker);
+	static public ConnectionCache createConnectionCache(TorConfig config, TorInitializationTracker tracker) {
+		return new ConnectionCacheImpl(config, tracker);
 	}
 	/**
 	 * Create and return a new <code>CircuitManager</code> instance.
