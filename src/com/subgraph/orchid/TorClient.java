@@ -36,7 +36,7 @@ public class TorClient {
 		directory = Tor.createDirectory(config);
 		initializationTracker = Tor.createInitalizationTracker();
 		initializationTracker.addListener(createReadyFlagInitializationListener());
-		connectionCache = Tor.createConnectionCache(initializationTracker);
+		connectionCache = Tor.createConnectionCache(config, initializationTracker);
 		circuitManager = Tor.createCircuitManager(config, directory, connectionCache, initializationTracker);
 		directoryDownloader = Tor.createDirectoryDownloader(directory, circuitManager);
 		socksListener = Tor.createSocksPortListener(config, circuitManager);
@@ -149,7 +149,7 @@ public class TorClient {
 		client.start();
 		client.enableSocksListener();
 	}
-	
+
 	private static TorInitializationListener createInitalizationListner() {
 		return new TorInitializationListener() {
 			
