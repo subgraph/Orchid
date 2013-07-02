@@ -1,6 +1,5 @@
 package com.subgraph.orchid.dashboard;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
@@ -166,9 +165,9 @@ public class Dashboard implements DashboardRenderable, DashboardRenderer {
 		}
 	}
 
-	private void closeQuietly(Closeable closeable) {
+	private void closeQuietly(ServerSocket s) {
 		try {
-			closeable.close();
+			s.close();
 		} catch (IOException e) { }
 	}
 
