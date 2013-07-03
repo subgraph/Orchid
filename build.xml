@@ -23,6 +23,16 @@
     </fileset>
   </path>
 
+  <path id="test.classpath">
+    <fileset dir="lib/testing">
+      <include name="*.jar"/>
+    </fileset>
+  </path>
+
+  <path id="bin">
+    <pathelement location="${basedir}/bin"/>
+  </path>
+
   <condition property="xmlrpc.present">
     <and>
       <available classname="org.apache.xmlrpc.client.XmlRpcTransportFactory" classpathref="compile.classpath"/>
@@ -43,7 +53,7 @@
   <target name="compile" depends="init">
       <javac source="1.5" target="1.5" destdir="${basedir}/bin" includeantruntime="false">
         <src path="${basedir}/src" />
-	<classpath refid="compile.classpath"/>
+	    <classpath refid="compile.classpath"/>
       </javac>
   </target>
 
@@ -66,5 +76,35 @@
     <zip destfile="${orchid.sourcefile}">
       <zipfileset dir="src" prefix="${orchid.basename}/src" />
     </zip>
+  </target>
+
+  <target name="compile-test" depends="compile">
+    <javac source="1.5" target="1.5" destdir="${basedir}/bin" includeantruntime="false">
+      <src path="${basedir}/test"/>
+      <classpath>
+        <path refid="compile.classpath"/>
+        <path refid="test.classpath"/>
+      </classpath>
+   </javac>
+  </target>
+
+  <target name="test" depends="compile-test">
+    <junit printsummary="on" fork="yes" forkmode="once">
+      <assertions>
+        <enable/>
+      </assertions>
+      <classpath>
+        <path refid="compile.classpath"/>
+        <path refid="test.classpath"/>
+        <path refid="bin"/>
+      </classpath>
+      <test name="com.subgraph.orchid.TorConfigTest"/>
+      <test name="com.subgraph.orchid.circuits.TorInputStreamTest"/>
+      <test name="com.subgraph.orchid.circuits.path.ConfigNodeFilterTest"/>
+      <test name="com.subgraph.orchid.circuits.path.ConfigNodeFilterTest"/>
+      <test name="com.subgraph.orchid.crypto.ASN1ParserTest"/>
+      <test name="com.subgraph.orchid.crypto.RSAKeyEncoderTest"/>
+      <test name="com.subgraph.orchid.geoip.CountryCodeServiceTest"/>
+    </junit>
   </target>
 </project>
