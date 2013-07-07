@@ -31,7 +31,7 @@ public class CircuitBuildTask implements Runnable {
 
 	private Connection connection = null;
 	
-	CircuitBuildTask(CircuitCreationRequest request, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
+	public CircuitBuildTask(CircuitCreationRequest request, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.creationRequest = request;
 		this.connectionCache = connectionCache;
 		this.initializationTracker = initializationTracker;

@@ -87,6 +87,10 @@ public class HexDigest {
 		return builder.toString();
 	}
 
+	public String toBase32() {
+		return Base32.base32Encode(digestBytes);
+	}
+
 	public boolean equals(Object o) {
 		if(!(o instanceof HexDigest))
 			return false;

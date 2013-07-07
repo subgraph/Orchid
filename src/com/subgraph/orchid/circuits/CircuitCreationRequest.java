@@ -18,7 +18,7 @@ public class CircuitCreationRequest implements CircuitBuildHandler {
 	
 	private List<Router> path;
 	
-	CircuitCreationRequest(CircuitPathChooser pathChooser, CircuitBase circuit, CircuitBuildHandler buildHandler) {
+	public CircuitCreationRequest(CircuitPathChooser pathChooser, CircuitBase circuit, CircuitBuildHandler buildHandler) {
 		this.pathChooser = pathChooser;
 		this.circuit = circuit;
 		this.buildHandler = buildHandler;

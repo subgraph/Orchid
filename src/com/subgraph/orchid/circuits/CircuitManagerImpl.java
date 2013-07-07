@@ -26,6 +26,7 @@ import com.subgraph.orchid.StreamConnectFailedException;
 import com.subgraph.orchid.Tor;
 import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.circuits.guards.EntryGuards;
+import com.subgraph.orchid.circuits.hs.HiddenServiceManager;
 import com.subgraph.orchid.circuits.path.CircuitPathChooser;
 import com.subgraph.orchid.crypto.TorRandom;
 import com.subgraph.orchid.dashboard.DashboardRenderable;
@@ -49,6 +50,7 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	private final CircuitCreationTask circuitCreationTask;
 	private final TorInitializationTracker initializationTracker;
 	private final CircuitPathChooser pathChooser;
+	private final HiddenServiceManager hiddenServiceManager;
 
 	public CircuitManagerImpl(TorConfig config, Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.config = config;
@@ -63,6 +65,7 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		this.random = new TorRandom();
 		
 		this.initializationTracker = initializationTracker;
+		this.hiddenServiceManager = new HiddenServiceManager(directory, connectionCache, this, pathChooser);
 	}
 
 	public void notifyInitializationEvent(int eventCode) {
@@ -153,6 +156,9 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 
 	public Stream openExitStreamTo(String hostname, int port)
 			throws InterruptedException, TimeoutException, OpenFailedException {
+		if(hostname.endsWith(".onion")) {
+			return hiddenServiceManager.getStreamTo(hostname, port);
+		}
 		validateHostname(hostname);
 		circuitCreationTask.predictPort(port);
 		return pendingExitStreams.openExitStream(hostname, port);

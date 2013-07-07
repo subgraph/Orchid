@@ -218,7 +218,7 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 	}
 
 
-	void removeStream(StreamImpl stream) {
+	public void removeStream(StreamImpl stream) {
 		io.removeStream(stream);
 	}
 
