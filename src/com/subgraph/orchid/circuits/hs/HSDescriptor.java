@@ -1,5 +1,8 @@
 package com.subgraph.orchid.circuits.hs;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.subgraph.orchid.crypto.TorPublicKey;
 import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.data.Timestamp;
@@ -10,6 +13,11 @@ public class HSDescriptor {
 	private HexDigest secretIdPart;
 	private TorPublicKey permanentKey;
 	private int[] protocolVersions;
+	private List<IntroductionPoint> introductionPoints;
+	
+	public HSDescriptor() {
+		introductionPoints = new ArrayList<IntroductionPoint>();
+	}
 	
 	void setPublicationTime(Timestamp ts) {
 		this.publicationTime = ts;
@@ -30,7 +38,11 @@ public class HSDescriptor {
 	void setProtocolVersions(int[] protocolVersions) {
 		this.protocolVersions = protocolVersions;
 	}
-	
+
+	void addIntroductionPoint(IntroductionPoint ip) {
+		introductionPoints.add(ip);
+	}
+
 	HexDigest getDescriptorId() {
 		return descriptorId;
 	}
@@ -54,4 +66,6 @@ public class HSDescriptor {
 	int[] getProtocolVersions() {
 		return protocolVersions;
 	}
+	
+
 }
