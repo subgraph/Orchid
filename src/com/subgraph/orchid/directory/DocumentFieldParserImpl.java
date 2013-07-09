@@ -127,6 +127,16 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 		}
 	}
 
+	public int[] parseIntegerList() {
+		final String item = getItem();
+		final String[] ns = item.split(",");
+		final int[] result = new int[ns.length];
+		for(int i = 0; i < result.length; i++) {
+			result[i] = parseInteger(ns[i]);
+		}
+		return result;
+	}
+
 	public int parsePort() {
 		return parsePort(getItem());
 	}
@@ -144,6 +154,10 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 
 	public HexDigest parseHexDigest() {
 		return HexDigest.createFromString(parseString());
+	}
+	
+	public HexDigest parseBase32Digest() {
+		return HexDigest.createFromBase32String(parseString());
 	}
 
 	public HexDigest parseFingerprint() {
@@ -236,8 +250,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 	public DocumentObject parseObject() {
 		final String line = readLine();
 		final String keyword = parseObjectHeader(line);
-		final DocumentObject object = new DocumentObject(keyword);
-		object.addContent(line);
+		final DocumentObject object = new DocumentObject(keyword, line);
 		parseObjectBody(object, keyword);
 		return object;
 	}
@@ -257,7 +270,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 				throw new TorParsingException("EOF reached before end of '"+ keyword +"' object.");
 			}
 			if(line.equals(endTag)) {
-				object.addContent(line);
+				object.addFooterLine(line);
 				return;
 			}
 			parseObjectContent(object, line);

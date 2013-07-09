@@ -91,6 +91,15 @@ public interface DocumentFieldParser {
 	int parseInteger(String item);
 	
 	/**
+	 * Extract the next argument and interpret it as a comma separated list of integers.
+	 * 
+	 * @return An array of integers.
+	 * @throws TorParsingException If no arguments are remaining or if the current argument cannot
+	 *         be parsed as a list of integers.
+	 */
+	int[] parseIntegerList();
+	
+	/**
 	 * Extract the next argument and interpret it as a network port value.  A valid port
 	 * value is an integer between 0 and 65535 inclusive.
 	 * 
@@ -140,6 +149,15 @@ public interface DocumentFieldParser {
 	 */
 	HexDigest parseHexDigest();
 	
+	/**
+	 * Extract the next argument and interpret it as a base 32 encoded digest string.
+	 * 
+	 * @return The parsed <code>HexDigest</code> value.
+	 * @throws TorParsingException If no arguments are remaining or if the current argument cannot 
+	 *         be parsed as a base 32 encoded digest string.
+	 */
+	HexDigest parseBase32Digest();
+
 	/**
 	 * Extract all remaining arguments and interpret the concatenated string as a
 	 * hex encoded fingerprint string.
