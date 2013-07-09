@@ -1,7 +1,7 @@
 package com.subgraph.orchid.circuits.hs;
 
 public enum HSDescriptorKeyword {
-
+	RENDEZVOUS_SERVICE_DESCRIPTOR("rendezvous-service-descriptor", 1),
 	VERSION("version", 1),
 	PERMANENT_KEY("permanent-key", 0),
 	SECRET_ID_PART("secret-id-part", 1),
