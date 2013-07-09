@@ -32,6 +32,10 @@ public class HexDigest {
 		return createFromString(builder.toString());
 	}
 
+	public static HexDigest createFromBase32String(String b32) {
+		return new HexDigest(Base32.base32Decode(b32));
+	}
+
 	public static HexDigest createFromString(String fingerprint) {
 		final String[] parts = fingerprint.split(" ");
 		if(parts.length > 1)
