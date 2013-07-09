@@ -18,7 +18,9 @@ import com.subgraph.orchid.circuits.CircuitBuildTask;
 import com.subgraph.orchid.circuits.CircuitCreationRequest;
 import com.subgraph.orchid.circuits.CircuitManagerImpl;
 import com.subgraph.orchid.circuits.path.CircuitPathChooser;
+import com.subgraph.orchid.directory.DocumentFieldParserImpl;
 import com.subgraph.orchid.directory.downloader.HttpConnection;
+import com.subgraph.orchid.directory.parsing.DocumentParsingResultHandler;
 
 public class HSDescriptorDownloader {
 	private final static Logger logger = Logger.getLogger(HSDescriptorDirectory.class.getName());
@@ -92,21 +94,34 @@ public class HSDescriptorDownloader {
 	}
 	
 	private void readDocument(Reader reader) {
-		BufferedReader br = new BufferedReader(reader);
-		while(true) {
-			String line = null;
-			try {
-				line = br.readLine();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				return;
-			}
-			if(line == null) {
-				return;
-			}
-			System.out.println(">> "+ line);
+		DocumentFieldParserImpl fieldParser = new DocumentFieldParserImpl(reader);
+		HSDescriptorParser parser = new HSDescriptorParser(fieldParser);
+		DescriptorParseResult result = new DescriptorParseResult();
+		parser.parse(result);
+		System.out.println("done...");
+
+		
+	}
+	
+	private static class DescriptorParseResult implements DocumentParsingResultHandler<HSDescriptor> {
+		HSDescriptor descriptor;
+		HSDescriptor getDescriptor() {
+			return descriptor;
 		}
+		public void documentParsed(HSDescriptor document) {
+			this.descriptor = document;
+		}
+
+		public void documentInvalid(HSDescriptor document, String message) {
+			System.out.println("Invalid document: "+ message);
+			// TODO Auto-generated method stub
+			
+		}
+
+		public void parsingError(String message) {
+			System.out.println("Parsing error: "+ message);
+		}
+		
 	}
 	private static class HSCircuitResult implements CircuitBuildHandler {
 		private boolean isFailed;
