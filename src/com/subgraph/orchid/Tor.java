@@ -49,6 +49,16 @@ public class Tor {
 	public static String getVersion() {
 		return version;
 	}
+
+	/**
+	 * Determine if running on Android by inspecting java.runtime.name property.
+	 * 
+	 * @return True if running on Android.
+	 */
+	public static boolean isAndroidRuntime() {
+		final String runtime = System.getProperty("java.runtime.name");
+		return runtime != null && runtime.equals("Android Runtime");
+	}
 	
 	/**
 	 * Create and return a new <code>TorConfig</code> instance.
@@ -60,8 +70,7 @@ public class Tor {
 	 */
 	static public TorConfig createConfig() {
 		final TorConfig config = (TorConfig) Proxy.newProxyInstance(TorConfigProxy.class.getClassLoader(), new Class[] { TorConfig.class }, new TorConfigProxy());
-		final String runtime = System.getProperty("java.runtime.name");
-		if(runtime != null && runtime.equals("Android Runtime")) {
+		if(isAndroidRuntime()) {
 			logger.warning("Android Runtime detected, disabling V2 Link protocol");
 			config.setHandshakeV2Enabled(false);
 		}
