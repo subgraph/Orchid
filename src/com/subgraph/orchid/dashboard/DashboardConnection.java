@@ -1,6 +1,5 @@
 package com.subgraph.orchid.dashboard;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -41,9 +40,9 @@ public class DashboardConnection implements Runnable {
 		}
 	}
 
-	private void closeQuietly(Closeable c) {
+	private void closeQuietly(Socket s) {
 		try {
-			c.close();
+			s.close();
 		} catch (IOException e) { }
 	}
 
