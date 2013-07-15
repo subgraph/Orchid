@@ -42,6 +42,7 @@ public class DirectoryImpl implements Directory {
 	private final Set<HexDigest> requiredCertificates;
 	private List<DirectoryServer> directoryAuthorities;
 	private boolean haveMinimumRouterInfo;
+	private boolean needRecalculateMinimumRouterInfo;
 	private final EventManager consensusChangedManager;
 	private final TorRandom random;
 	private ConsensusDocument currentConsensus;
@@ -67,6 +68,9 @@ public class DirectoryImpl implements Directory {
 	}
 
 	public synchronized boolean haveMinimumRouterInfo() {
+		if(needRecalculateMinimumRouterInfo) {
+			checkMinimumRouterInfo();
+		}
 		return haveMinimumRouterInfo;
 	}
 
@@ -98,7 +102,7 @@ public class DirectoryImpl implements Directory {
 		}
 	}
 
-	private void waitUntilLoaded() {
+	public void waitUntilLoaded() {
 		synchronized (loadLock) {
 			while(!isLoaded) {
 				try {
@@ -280,7 +284,7 @@ public class DirectoryImpl implements Directory {
 		descriptorsDirty = true;
 		router.updateDescriptor(descriptor);
 		classifyRouter(router);
-		checkMinimumRouterInfo();
+		needRecalculateMinimumRouterInfo = true;
 	}
 
 	synchronized public List<Router> getRoutersWithDownloadableDescriptors() {
