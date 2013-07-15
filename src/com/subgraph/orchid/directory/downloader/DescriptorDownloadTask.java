@@ -31,7 +31,7 @@ public class DescriptorDownloadTask extends AbstractDirectoryDownloadTask{
 		final Set<HexDigest> requested = new HashSet<HexDigest>();
 		requested.addAll(fingerprints);
 		
-		final DocumentParser<RouterDescriptor> parser = getParserFactory().createRouterDescriptorParser(response);
+		final DocumentParser<RouterDescriptor> parser = getParserFactory().createRouterDescriptorParser(response, true);
 		final boolean success = parser.parse(new DocumentParsingResultHandler<RouterDescriptor>() {
 			
 			public void parsingError(String message) {

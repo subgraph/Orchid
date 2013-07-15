@@ -8,8 +8,8 @@ import com.subgraph.orchid.KeyCertificate;
 import com.subgraph.orchid.RouterDescriptor;
 
 public interface DocumentParserFactory {
-	DocumentParser<RouterDescriptor> createRouterDescriptorParser(InputStream input);
-	DocumentParser<RouterDescriptor> createRouterDescriptorParser(Reader reader);
+	DocumentParser<RouterDescriptor> createRouterDescriptorParser(InputStream input, boolean verifySignatures);
+	DocumentParser<RouterDescriptor> createRouterDescriptorParser(Reader reader, boolean verifySignature);
 
 	DocumentParser<KeyCertificate> createKeyCertificateParser(InputStream input);
 	DocumentParser<KeyCertificate> createKeyCertificateParser(Reader reader);

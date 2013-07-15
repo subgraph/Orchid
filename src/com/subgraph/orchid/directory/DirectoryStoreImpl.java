@@ -140,7 +140,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			return;
 		}
 		try {
-			final DocumentParser<RouterDescriptor> parser = parserFactory.createRouterDescriptorParser(reader);
+			final DocumentParser<RouterDescriptor> parser = parserFactory.createRouterDescriptorParser(reader, false);
 			parser.parse(new DocumentParsingResultHandler<RouterDescriptor>() {
 
 				public void documentInvalid(RouterDescriptor document,	String message) {

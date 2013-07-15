@@ -23,12 +23,12 @@ public class DocumentParserFactoryImpl implements DocumentParserFactory {
 		return new KeyCertificateParser(createDocumentFieldParser(reader));
 	}
 
-	public DocumentParser<RouterDescriptor> createRouterDescriptorParser(InputStream input) {
-		return new RouterDescriptorParser(createDocumentFieldParser(input));
+	public DocumentParser<RouterDescriptor> createRouterDescriptorParser(InputStream input, boolean verifySignatures) {
+		return new RouterDescriptorParser(createDocumentFieldParser(input), verifySignatures);
 	}
 
-	public DocumentParser<RouterDescriptor> createRouterDescriptorParser(Reader reader) {
-		return new RouterDescriptorParser(createDocumentFieldParser(reader));
+	public DocumentParser<RouterDescriptor> createRouterDescriptorParser(Reader reader, boolean verifySignatures) {
+		return new RouterDescriptorParser(createDocumentFieldParser(reader), verifySignatures);
 	}
 
 	public DocumentParser<ConsensusDocument> createConsensusDocumentParser(InputStream input) {

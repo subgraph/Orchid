@@ -12,12 +12,16 @@ import com.subgraph.orchid.directory.parsing.DocumentParsingResultHandler;
 
 public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> {
 	private final DocumentFieldParser fieldParser;
+	private final boolean verifySignatures;
+	
 	private RouterDescriptorImpl currentDescriptor;
 	private DocumentParsingResultHandler<RouterDescriptor> resultHandler;
-	public RouterDescriptorParser(DocumentFieldParser fieldParser) {
+	
+	public RouterDescriptorParser(DocumentFieldParser fieldParser, boolean verifySignatures) {
 		this.fieldParser = fieldParser;
 		this.fieldParser.setHandler(createParsingHandler());
 		this.fieldParser.setRecognizeOpt();
+		this.verifySignatures = verifySignatures;
 	}
 	
 	private DocumentParsingHandler createParsingHandler() {
@@ -160,7 +164,7 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 	}
 	
 	private boolean verifyCurrentDescriptor(TorSignature signature) {
-		if(!fieldParser.verifySignedEntity(currentDescriptor.getIdentityKey(), signature)) {
+		if(verifySignatures && !fieldParser.verifySignedEntity(currentDescriptor.getIdentityKey(), signature)) {
 			resultHandler.documentInvalid(currentDescriptor, "Signature failed.");
 			fieldParser.logWarn("Signature failed for router: " + currentDescriptor.getNickname());
 			return false;
@@ -200,6 +204,7 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 		currentDescriptor.setDescriptorHash(fieldParser.getSignatureMessageDigest().getHexDigest());
 		final TorSignature signature = fieldParser.parseSignature();
 		currentDescriptor.setRawDocumentData(fieldParser.getRawDocument());
+		
 		if(verifyCurrentDescriptor(signature))
 			resultHandler.documentParsed(currentDescriptor);
 		startNewDescriptor();
