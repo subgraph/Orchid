@@ -16,6 +16,7 @@ import com.subgraph.orchid.events.EventHandler;
 public interface Directory {
 	boolean haveMinimumRouterInfo();
 	void loadFromStore();
+	void waitUntilLoaded();
 	void storeCertificates();
 	void storeConsensus();
 	void storeDescriptors();
