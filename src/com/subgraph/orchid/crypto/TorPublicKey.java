@@ -18,23 +18,42 @@ import com.subgraph.orchid.data.HexDigest;
  * This class wraps the RSA public keys used in the Tor protocol.
  */
 public class TorPublicKey {
-	static public TorPublicKey createFromPEMBuffer(String buffer) throws GeneralSecurityException {
-		final RSAKeyEncoder encoder = new RSAKeyEncoder();
-		RSAPublicKey pkey = encoder.parsePEMPublicKey(buffer);
-		return new TorPublicKey(pkey);
+	static public TorPublicKey createFromPEMBuffer(String buffer) {
+		return new TorPublicKey(buffer);
 	}
-	
-	private final RSAPublicKey key;
+
+	private final String pemBuffer;
+	private RSAPublicKey key;
 	private HexDigest keyFingerprint = null;
 
+	private TorPublicKey(String pemBuffer) {
+		this.pemBuffer = pemBuffer;
+		this.key = null;
+	}
+
 	public TorPublicKey(RSAPublicKey key) {
+		this.pemBuffer = null;
 		this.key = key;
 	}
 
-	public HexDigest getFingerprint() {
+	private synchronized RSAPublicKey getKey() {
+		if(key != null) {
+			return key;
+		} else if(pemBuffer != null) {
+			final RSAKeyEncoder encoder = new RSAKeyEncoder();
+			try {
+				key = encoder.parsePEMPublicKey(pemBuffer);
+			} catch (GeneralSecurityException e) {
+				throw new IllegalArgumentException("Failed to parse PEM encoded key: "+ e);
+			}
+		}
+		return key;
+	}
+
+	public synchronized HexDigest getFingerprint() {
 		if(keyFingerprint == null) {
 			final RSAKeyEncoder encoder = new RSAKeyEncoder();
-			keyFingerprint = HexDigest.createDigestForData(encoder.getPKCS1Encoded(key));
+			keyFingerprint = HexDigest.createDigestForData(encoder.getPKCS1Encoded(getKey()));
 		}
 		return keyFingerprint;
 	}
@@ -72,7 +91,7 @@ public class TorPublicKey {
 	private Cipher createCipherInstance() {
 		try {
 			Cipher cipher = getCipherInstance();
-			cipher.init(Cipher.DECRYPT_MODE, key);
+			cipher.init(Cipher.DECRYPT_MODE, getKey());
 			return cipher;
 		} catch (InvalidKeyException e) {
 			throw new TorException(e);
@@ -92,8 +111,9 @@ public class TorPublicKey {
 			throw new TorException(e);
 		}
 	}
+	
 	public RSAPublicKey getRSAPublicKey() {
-		return key;
+		return getKey();
 	}
 
 	public String toString() {
