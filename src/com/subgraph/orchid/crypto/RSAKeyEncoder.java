@@ -120,10 +120,12 @@ public class RSAKeyEncoder {
 	}
 	
 	private String removeDelimiters(String pem) {
-		if(pem.contains(HEADER) && pem.contains(FOOTER)) {
-			return pem.replace(HEADER, "").replace(FOOTER, "");
+		final int headerIdx = pem.indexOf(HEADER);
+		final int footerIdx = pem.indexOf(FOOTER);
+		if(headerIdx == -1 || footerIdx == -1 || footerIdx <= headerIdx) {
+			throw new IllegalArgumentException("PEM object not formatted with expected header and footer");
 		}
-		throw new IllegalArgumentException("...");
+		return pem.substring(headerIdx + HEADER.length(), footerIdx);
 	}
 
 }
