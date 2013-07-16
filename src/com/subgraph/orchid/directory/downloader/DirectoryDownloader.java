@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 import com.subgraph.orchid.CircuitManager;
 import com.subgraph.orchid.ConsensusDocument;
@@ -17,7 +18,8 @@ import com.subgraph.orchid.directory.DocumentParserFactoryImpl;
 import com.subgraph.orchid.directory.parsing.DocumentParserFactory;
 
 public class DirectoryDownloader implements Runnable {
-
+	private final static Logger logger = Logger.getLogger(DirectoryDownloader.class.getName());
+	
 	private final Thread thread;
 	private final Directory directory;
 	private final CircuitManager circuitManager;
@@ -45,12 +47,13 @@ public class DirectoryDownloader implements Runnable {
 	}
 
 	public void start() {
-		setCurrentConsensus(directory.getCurrentConsensusDocument());
 		thread.start();
 	}
 
 	public void run() {
 		directory.loadFromStore();
+		directory.waitUntilLoaded();
+		setCurrentConsensus(directory.getCurrentConsensusDocument());
 		while (true) {
 			checkCertificates();
 			checkConsensus();
@@ -142,6 +145,11 @@ public class DirectoryDownloader implements Runnable {
 
 	private boolean needConsensusDownload() {
 		if (currentConsensus == null || !currentConsensus.isLive()) {
+			if(currentConsensus == null) {
+				logger.info("Downloading consensus because we have no consensus document");
+			} else {
+				logger.info("Downloading consensus because the document we have is not live");
+			}
 			return true;
 		}
 		return consensusDownloadTime.before(new Date());
