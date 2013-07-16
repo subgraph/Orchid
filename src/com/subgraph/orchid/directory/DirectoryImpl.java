@@ -76,6 +76,7 @@ public class DirectoryImpl implements Directory {
 
 	private synchronized void checkMinimumRouterInfo() {
 		if(currentConsensus == null) {
+			needRecalculateMinimumRouterInfo = true;
 			haveMinimumRouterInfo = false;
 			return;
 		}
@@ -87,15 +88,20 @@ public class DirectoryImpl implements Directory {
 			if(!r.isDescriptorDownloadable())
 				descriptorCount++;
 		}
+		needRecalculateMinimumRouterInfo = false;
 		haveMinimumRouterInfo = (descriptorCount * 4 > routerCount);
 	}
 
 	public void loadFromStore() {
 		logger.info("Loading cached network information from disk");
 		synchronized(loadLock) {
+			logger.info("Loading certificates");
 			store.loadCertificates(this);
+			logger.info("Loading consensus");
 			store.loadConsensus(this);
+			logger.info("Loading descriptors");
 			store.loadRouterDescriptors(this);
+			logger.info("loading state file");
 			store.loadStateFile(stateFile);
 			isLoaded = true;
 			loadLock.notifyAll();
