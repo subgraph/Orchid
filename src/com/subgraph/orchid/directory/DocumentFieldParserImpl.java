@@ -6,9 +6,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-import java.security.GeneralSecurityException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.logging.Logger;
 
 import com.subgraph.orchid.TorException;
@@ -32,6 +34,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 	private final static String TAG_DELIMITER = "-----";
 	private final static String DEFAULT_DELIMITER = " ";
 	private final BufferedReader reader;
+	private final SimpleDateFormat dateFormat;
 	private String delimiter = DEFAULT_DELIMITER;
 	private String currentKeyword;
 	private List<String> currentItems;
@@ -52,6 +55,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 			throw new TorException(e);
 		}
 		rawDocumentBuffer = new StringBuilder();
+		dateFormat = createDateFormat();
 	}
 
 	public DocumentFieldParserImpl(Reader reader) {
@@ -61,6 +65,14 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 			this.reader = new BufferedReader(reader);
 		}
 		rawDocumentBuffer = new StringBuilder();
+		dateFormat = createDateFormat();
+	}
+
+	private static SimpleDateFormat createDateFormat() {
+		final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		format.setTimeZone(TimeZone.getTimeZone("GMT"));
+		format.setLenient(false);
+		return format;
 	}
 
 	public String parseNickname() {
@@ -138,8 +150,14 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 		return port;
 	}
 
+
 	public Timestamp parseTimestamp() {
-		return Timestamp.createFromDateAndTimeString(getItem() +" "+ getItem());
+		String timeAndDate = getItem() + " " + getItem();
+		try {
+			return new Timestamp(dateFormat.parse(timeAndDate));
+		} catch (ParseException e) {
+			throw new TorParsingException("Could not parse timestamp value: "+ timeAndDate);
+		}
 	}
 
 	public HexDigest parseHexDigest() {
@@ -190,11 +208,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 
 	public TorPublicKey parsePublicKey() {
 		final DocumentObject documentObject = parseObject();
-		try {
-			return TorPublicKey.createFromPEMBuffer(documentObject.getContent());
-		} catch (GeneralSecurityException e) {
-			throw new TorParsingException("Failed to parse PEM encoded key: "+ e, e);
-		}
+		return TorPublicKey.createFromPEMBuffer(documentObject.getContent());
 	}
 
 	public TorSignature parseSignature() {
