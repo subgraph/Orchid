@@ -22,7 +22,7 @@ public class Timestamp {
 		}
 	}
 	
-	private Timestamp(Date date) {
+	public Timestamp(Date date) {
 		this.date = date;
 	}
 	
