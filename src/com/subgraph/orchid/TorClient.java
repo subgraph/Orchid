@@ -173,6 +173,8 @@ public class TorClient {
 		} catch (NoSuchAlgorithmException e) {
 			logger.log(Level.SEVERE, "No AES provider found");
 			throw new TorException(e);
+		}  catch (NoSuchMethodError e) {
+			logger.info("Skipped check for Unlimited Strength Jurisdiction Policy Files");
 		}
 	}
 }
