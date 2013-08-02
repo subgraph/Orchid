@@ -1,5 +1,6 @@
 package com.subgraph.orchid.sockets;
 
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,9 +24,10 @@ public class OrchidSocketImpl extends SocketImpl {
 	private final Object streamLock = new Object();	
 
 	private Stream stream;
-
+	
 	OrchidSocketImpl(TorClient torClient) {
 		this.torClient = torClient;
+		this.fd = new FileDescriptor();
 	}
 
 	public void setOption(int optID, Object value) throws SocketException {
@@ -37,8 +39,11 @@ public class OrchidSocketImpl extends SocketImpl {
 			return 0;
 		} else if(optID == SocketOptions.TCP_NODELAY) {
 			return Boolean.TRUE;
+		} else if(optID == SocketOptions.SO_TIMEOUT) {
+			return 0;
+		} else {
+			return 0;
 		}
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -142,8 +147,10 @@ public class OrchidSocketImpl extends SocketImpl {
 	@Override
 	protected void close() throws IOException {
 		synchronized (streamLock) {
-			stream.close();
-			stream = null;
+			if(stream != null) {
+				stream.close();
+				stream = null;
+			}
 		}
 	}
 
