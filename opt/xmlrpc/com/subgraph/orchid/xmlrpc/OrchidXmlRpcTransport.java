@@ -10,12 +10,14 @@ import java.net.ConnectException;
 import java.net.Socket;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.logging.Logger;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
@@ -35,8 +37,13 @@ import org.apache.xmlrpc.util.HttpUtil;
 import org.apache.xmlrpc.util.LimitedInputStream;
 import org.xml.sax.SAXException;
 
-public class OrchidXmlRpcTransport extends XmlRpcHttpTransport {
+import com.subgraph.orchid.Tor;
+import com.subgraph.orchid.sockets.AndroidSSLSocketFactory;
 
+public class OrchidXmlRpcTransport extends XmlRpcHttpTransport {
+	
+	private final static Logger logger = Logger.getLogger(OrchidXmlRpcTransport.class.getName());
+	
 	private final SocketFactory socketFactory;
 	private final SSLContext sslContext;
 
@@ -56,6 +63,9 @@ public class OrchidXmlRpcTransport extends XmlRpcHttpTransport {
 	}
 
 	private SSLSocketFactory createSSLSocketFactory() {
+		if(Tor.isAndroidRuntime()) {
+			return createAndroidSSLSocketFactory();
+		}
 		if(sslContext == null) {
 			return (SSLSocketFactory) SSLSocketFactory.getDefault();
 		} else {
@@ -63,6 +73,19 @@ public class OrchidXmlRpcTransport extends XmlRpcHttpTransport {
 		}
 	}
 
+	private SSLSocketFactory createAndroidSSLSocketFactory() {
+		if(sslContext == null) {
+			try {
+				return new AndroidSSLSocketFactory();
+			} catch (NoSuchAlgorithmException e) {
+				logger.severe("Failed to create default ssl context");
+				System.exit(1);
+				return null;
+			}
+		} else {
+			return new AndroidSSLSocketFactory(sslContext);
+		}
+	}
 
 	protected Socket newSocket(boolean pSSL, String pHostName, int pPort) throws UnknownHostException, IOException {
 		final Socket s = socketFactory.createSocket(pHostName, pPort);
