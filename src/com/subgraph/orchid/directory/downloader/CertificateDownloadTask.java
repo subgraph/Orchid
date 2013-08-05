@@ -1,30 +1,41 @@
 package com.subgraph.orchid.directory.downloader;
 
 import java.io.Reader;
-import java.util.List;
+import java.util.Set;
 
 import com.subgraph.orchid.CircuitManager;
+import com.subgraph.orchid.ConsensusDocument.RequiredCertificate;
 import com.subgraph.orchid.KeyCertificate;
-import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.directory.parsing.DocumentParser;
 import com.subgraph.orchid.directory.parsing.DocumentParsingResultHandler;
 
 public class CertificateDownloadTask extends AbstractDirectoryDownloadTask{
 
-	private final List<HexDigest> fingerprints;
+	private final Set<RequiredCertificate> requiredCertificates;
 	
-	
-	CertificateDownloadTask(List<HexDigest> fingerprints, DirectoryDownloader downloader) {
+	CertificateDownloadTask(Set<RequiredCertificate> requiredCertificates, DirectoryDownloader downloader) {
 		super(downloader, CircuitManager.DIRECTORY_PURPOSE_CERTIFICATES);
-		this.fingerprints = fingerprints;
+		this.requiredCertificates = requiredCertificates;
 	}
     
 	@Override
 	protected String getRequestPath() {
-		final String fps = fingerprintsToRequestString(fingerprints);
-		return "/tor/keys/fp/"+ fps;
+		return "/tor/keys/fp-sk/"+ getRequiredCertificatesRequestString();
 	}
 	
+	private String getRequiredCertificatesRequestString() {
+		final StringBuilder sb = new StringBuilder();
+		for(RequiredCertificate rc: requiredCertificates) {
+			if(sb.length() > 0) {
+				sb.append("+");
+			}
+			sb.append(rc.getAuthorityIdentity().toString());
+			sb.append("-");
+			sb.append(rc.getSigningKey().toString());
+		}
+		return sb.toString();
+	}
+
 	@Override
 	protected void processResponse(Reader response, final HttpConnection http) {
 		final DocumentParser<KeyCertificate> parser = getParserFactory().createKeyCertificateParser(response);

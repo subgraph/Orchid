@@ -1,6 +1,5 @@
 package com.subgraph.orchid.directory.downloader;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -97,9 +96,7 @@ public class DirectoryDownloader implements Runnable {
 			return;
 		}
 
-		List<HexDigest> fps = new ArrayList<HexDigest>(
-				directory.getRequiredCertificates());
-		CertificateDownloadTask task = new CertificateDownloadTask(fps, this);
+		CertificateDownloadTask task = new CertificateDownloadTask(directory.getRequiredCertificates(), this);
 		isDownloadingCertificates = true;
 		executor.execute(task);
 	}

@@ -1,10 +1,19 @@
 package com.subgraph.orchid.directory;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import com.subgraph.orchid.DirectoryServer;
+import com.subgraph.orchid.KeyCertificate;
 import com.subgraph.orchid.RouterStatus;
 import com.subgraph.orchid.data.HexDigest;
 
 public class DirectoryServerImpl extends RouterImpl implements DirectoryServer {
+	
+	private List<KeyCertificate> certificates = new CopyOnWriteArrayList<KeyCertificate>();
+
 	private boolean isHiddenServiceAuthority = false;
 	private boolean isBridgeAuthority = false;
 	private boolean isExtraInfoCache = false;
@@ -57,6 +66,71 @@ public class DirectoryServerImpl extends RouterImpl implements DirectoryServer {
 	
 	public HexDigest getV3Identity() {
 		return v3Ident;
+	}
+
+	public KeyCertificate getCertificateByFingerprint(HexDigest fingerprint) {
+		for(KeyCertificate kc: getCertificates()) {
+			if(kc.getAuthoritySigningKey().getFingerprint().equals(fingerprint)) {
+				return kc;
+			}
+		}
+		return null;
+	}
+	
+	public List<KeyCertificate> getCertificates() {
+		purgeExpiredCertificates();
+		purgeOldCertificates();
+		return new ArrayList<KeyCertificate>(certificates);
+	}
+
+	private void purgeExpiredCertificates() {
+		Iterator<KeyCertificate> it = certificates.iterator();
+		while(it.hasNext()) {
+			KeyCertificate elem = it.next();
+			if(elem.isExpired()) {
+				it.remove();
+			}
+		}
+	}
+	
+	private void purgeOldCertificates() {
+		if(certificates.size() < 2) {
+			return;
+		}
+		final KeyCertificate newest = getNewestCertificate();
+		final Iterator<KeyCertificate> it = certificates.iterator();
+		while(it.hasNext()) {
+			KeyCertificate elem = it.next();
+			if(elem != newest && isMoreThan48HoursOlder(newest, elem)) {
+				it.remove();
+			}
+		}
+	}
+	
+	private KeyCertificate getNewestCertificate() {
+		KeyCertificate newest = null;
+		for(KeyCertificate kc : certificates) {
+			if(newest == null || getPublishedMilliseconds(newest) > getPublishedMilliseconds(kc)) {
+				newest = kc;
+			}
+		}
+		return newest;
+	}
+	
+	private boolean isMoreThan48HoursOlder(KeyCertificate newer, KeyCertificate older) {
+		final long milliseconds = 48 * 60 * 60 * 1000;
+		return (getPublishedMilliseconds(newer) - getPublishedMilliseconds(older)) > milliseconds;
+	}
+	
+	private long getPublishedMilliseconds(KeyCertificate certificate) {
+		return certificate.getKeyPublishedTime().getDate().getTime();
+	}
+	
+	public void addCertificate(KeyCertificate certificate) {
+		if(!certificate.getAuthorityFingerprint().equals(v3Ident)) {
+			throw new IllegalArgumentException("This certificate does not appear to belong to this directory authority");
+		}
+		certificates.add(certificate);
 	}
 	
 	public String toString() {

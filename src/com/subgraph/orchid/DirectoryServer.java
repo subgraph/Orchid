@@ -1,5 +1,7 @@
 package com.subgraph.orchid;
 
+import java.util.List;
+
 import com.subgraph.orchid.data.HexDigest;
 
 /**
@@ -13,5 +15,8 @@ public interface DirectoryServer extends Router {
 	boolean isHiddenServiceAuthority();
 	boolean isBridgeAuthority();
 	boolean isExtraInfoCache();
-
+	
+	KeyCertificate getCertificateByFingerprint(HexDigest fingerprint);
+	List<KeyCertificate> getCertificates();
+	void addCertificate(KeyCertificate certificate);
 }

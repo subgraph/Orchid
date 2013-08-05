@@ -1,14 +1,20 @@
 package com.subgraph.orchid;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.data.Timestamp;
-import com.subgraph.orchid.directory.consensus.DirectorySignature;
 
 public interface ConsensusDocument extends Document {
+	enum SignatureStatus { STATUS_VERIFIED, STATUS_FAILED, STATUS_NEED_CERTS };
+	
+	interface RequiredCertificate {
+		int getDownloadFailureCount();
+		void incrementDownloadFailureCount();
+		HexDigest getAuthorityIdentity();
+		HexDigest getSigningKey();
+	}
 	
 	Timestamp getValidAfterTime();
 	Timestamp getFreshUntilTime();
@@ -20,9 +26,10 @@ public interface ConsensusDocument extends Document {
 	Set<String> getServerVersions();
 	boolean isLive();
 	List<RouterStatus> getRouterStatusEntries();
-	List<DirectorySignature> getDocumentSignatures();
-	boolean canVerifySignatures(Map<HexDigest, KeyCertificate> certificates);
-	boolean verifySignatures(Map<HexDigest, KeyCertificate> certificates);
+	
+	SignatureStatus verifySignatures();
+	Set<RequiredCertificate> getRequiredCertificates();
+	
 	HexDigest getSigningHash();
 	
 	int getCircWindowParameter();

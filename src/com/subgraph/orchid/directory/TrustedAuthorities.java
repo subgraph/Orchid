@@ -29,10 +29,28 @@ public class TrustedAuthorities {
 	    "authority gabelmoo orport=443 no-v2 v3ident=ED03BB616EB2F60BEC80151114BB25CEF515B226 212.112.245.170:80 F204 4413 DAC2 E02E 3D6B CF47 35A1 9BCA 1DE9 7281",
 	};
 
-	private List<DirectoryServer> directoryServers = new ArrayList<DirectoryServer>();
+	private final List<DirectoryServer> directoryServers = new ArrayList<DirectoryServer>();
+	private final int v3ServerCount;
 	
-    TrustedAuthorities() {
+	private final static TrustedAuthorities _instance = new TrustedAuthorities();
+	
+	public static TrustedAuthorities getInstance() {
+		return _instance;
+	}
+	
+    private TrustedAuthorities() {
     	initialize();
+    	v3ServerCount = countV3Servers();
+    }
+    
+    private int countV3Servers() {
+    	int n = 0;
+    	for(DirectoryServer ds: directoryServers) {
+    		if(ds.getV3Identity() != null) {
+    			n += 1;
+    		}
+    	}
+    	return n;
     }
     
 	void initialize() {
@@ -100,18 +118,20 @@ public class TrustedAuthorities {
 		}
 	}
 	
+	public int getV3AuthorityServerCount() {
+		return v3ServerCount;
+	}
+
 	public List<DirectoryServer> getAuthorityServers() {
 		return directoryServers;
 	}
-	/*
-	public DirectoryServer getRandomAuthorityServer() {
-		int idx = random.nextInt(directoryServers.size());
-		return directoryServers.get(idx);
+
+	public DirectoryServer getAuthorityServerByIdentity(HexDigest identity) {
+		for(DirectoryServer ds: directoryServers) {
+			if(identity.equals(ds.getV3Identity())) {
+				return ds;
+			}
+		}
+		return null;
 	}
-	
-	public Collection<DirectoryServer> getAuthorityServers() {
-		return Collections.unmodifiableCollection(directoryServers);
-	}
-	*/
-	
 }
