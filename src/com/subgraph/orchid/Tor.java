@@ -35,7 +35,7 @@ public class Tor {
 	
 	
 	private final static String implementation = "Orchid";
-	private final static String version = "0.9.0";
+	private final static String version = "0.9.1";
 	
 	
 	public static String getImplementation() {
