@@ -28,6 +28,7 @@ public interface Directory {
 	void addRouterDescriptor(RouterDescriptor router);
 	void addConsensusDocument(ConsensusDocument consensus);
 	ConsensusDocument getCurrentConsensusDocument();
+	boolean hasPendingConsensus();
 	void registerConsensusChangedHandler(EventHandler handler);
 	void unregisterConsensusChangedHandler(EventHandler handler);
 	Router getRouterByName(String name);

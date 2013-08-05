@@ -141,6 +141,9 @@ public class DirectoryDownloader implements Runnable {
 	}
 
 	private boolean needConsensusDownload() {
+		if(directory.hasPendingConsensus()) {
+			return false;
+		}
 		if (currentConsensus == null || !currentConsensus.isLive()) {
 			if(currentConsensus == null) {
 				logger.info("Downloading consensus because we have no consensus document");

@@ -356,6 +356,12 @@ public class DirectoryImpl implements Directory {
 		return currentConsensus;
 	}
 
+	public boolean hasPendingConsensus() {
+		synchronized (TrustedAuthorities.getInstance()) {
+			return consensusWaitingForCertificates != null;	
+		}
+	}
+
 	public void registerConsensusChangedHandler(EventHandler handler) {
 		consensusChangedManager.addListener(handler);
 	}
