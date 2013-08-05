@@ -54,6 +54,7 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	private Map<String, Integer> bandwidthWeights;
 	private Map<String, Integer> parameters;
 	private int signatureCount;
+	private boolean isFirstCallToVerifySignatures = true;
 	private String rawDocumentData;
 	
 	void setConsensusMethod(int method) { consensusMethod = method; }
@@ -169,7 +170,9 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 		return signingHash;
 	}
 	
-	public SignatureStatus verifySignatures() {
+	public synchronized SignatureStatus verifySignatures() {
+		boolean firstCall = isFirstCallToVerifySignatures;
+		isFirstCallToVerifySignatures = false;
 		requiredCertificates.clear();
 		int verifiedCount = 0;
 		int certsNeededCount = 0;
@@ -192,6 +195,9 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 		if(verifiedCount >= required) {
 			return SignatureStatus.STATUS_VERIFIED;
 		} else if(verifiedCount + certsNeededCount >= required) {
+			if(firstCall) {
+				logger.info("Certificates need to be retrieved to verify consensus");
+			}
 			return SignatureStatus.STATUS_NEED_CERTS;
 		} else {
 			return SignatureStatus.STATUS_FAILED;
@@ -234,7 +240,7 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	private SignatureStatus verifySignatureForTrustedAuthority(DirectoryServer trustedAuthority, DirectorySignature signature) {
 		final KeyCertificate certificate = trustedAuthority.getCertificateByFingerprint(signature.getSigningKeyDigest());
 		if(certificate == null) {
-			logger.info("Missing certificate for signing key: "+ signature.getSigningKeyDigest());
+			logger.fine("Missing certificate for signing key: "+ signature.getSigningKeyDigest());
 			addRequiredCertificateForSignature(signature);
 			return SignatureStatus.STATUS_NEED_CERTS;
 		}
