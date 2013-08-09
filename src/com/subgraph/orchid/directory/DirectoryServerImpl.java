@@ -3,7 +3,6 @@ package com.subgraph.orchid.directory;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.subgraph.orchid.DirectoryServer;
 import com.subgraph.orchid.KeyCertificate;
@@ -12,7 +11,7 @@ import com.subgraph.orchid.data.HexDigest;
 
 public class DirectoryServerImpl extends RouterImpl implements DirectoryServer {
 	
-	private List<KeyCertificate> certificates = new CopyOnWriteArrayList<KeyCertificate>();
+	private List<KeyCertificate> certificates = new ArrayList<KeyCertificate>();
 
 	private boolean isHiddenServiceAuthority = false;
 	private boolean isBridgeAuthority = false;
@@ -78,9 +77,11 @@ public class DirectoryServerImpl extends RouterImpl implements DirectoryServer {
 	}
 	
 	public List<KeyCertificate> getCertificates() {
-		purgeExpiredCertificates();
-		purgeOldCertificates();
-		return new ArrayList<KeyCertificate>(certificates);
+		synchronized(certificates) {
+			purgeExpiredCertificates();
+			purgeOldCertificates();
+			return new ArrayList<KeyCertificate>(certificates);
+		}
 	}
 
 	private void purgeExpiredCertificates() {
@@ -130,7 +131,9 @@ public class DirectoryServerImpl extends RouterImpl implements DirectoryServer {
 		if(!certificate.getAuthorityFingerprint().equals(v3Ident)) {
 			throw new IllegalArgumentException("This certificate does not appear to belong to this directory authority");
 		}
-		certificates.add(certificate);
+		synchronized(certificates) {
+			certificates.add(certificate);
+		}
 	}
 	
 	public String toString() {
