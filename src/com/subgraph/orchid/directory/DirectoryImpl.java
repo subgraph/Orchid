@@ -87,17 +87,38 @@ public class DirectoryImpl implements Directory {
 	public void loadFromStore() {
 		logger.info("Loading cached network information from disk");
 		synchronized(loadLock) {
+			if(isLoaded) {
+				return;
+			}
+	
+			last = System.currentTimeMillis();
 			logger.info("Loading certificates");
 			store.loadCertificates(this);
+			logElapsed();
+			
 			logger.info("Loading consensus");
 			store.loadConsensus(this);
+			logElapsed();
+			
 			logger.info("Loading descriptors");
 			store.loadRouterDescriptors(this);
+			logElapsed();
+			
 			logger.info("loading state file");
 			store.loadStateFile(stateFile);
+			logElapsed();
+			
 			isLoaded = true;
 			loadLock.notifyAll();
 		}
+	}
+
+	private long last = 0;
+	private void logElapsed() {
+		final long now = System.currentTimeMillis();
+		final long elapsed =  now - last;
+		last = now;
+		logger.fine("Loaded in "+ elapsed + " ms.");
 	}
 
 	public void waitUntilLoaded() {
