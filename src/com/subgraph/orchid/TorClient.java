@@ -58,6 +58,7 @@ public class TorClient {
 		if(isStarted) {
 			return;
 		}
+		logger.info("Starting Orchid (version: "+ Tor.getFullVersion() +")");
 		verifyUnlimitedStrengthPolicyInstalled();
 		directoryDownloader.start();
 		circuitManager.startBuildingCircuits();
@@ -143,7 +144,6 @@ public class TorClient {
 	}
 
 	public static void main(String[] args) {
-		logger.info("Starting...");
 		final TorClient client = new TorClient();
 		client.addInitializationListener(createInitalizationListner());
 		client.start();
