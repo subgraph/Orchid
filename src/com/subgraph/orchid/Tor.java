@@ -37,10 +37,23 @@ public class Tor {
 	private final static String implementation = "Orchid";
 	private final static String version = "0.9.1";
 	
+	public static String getBuildRevision() {
+		return Revision.getBuildRevision();
+	}
 	
 	public static String getImplementation() {
 		return implementation;
 	}
+	
+	public static String getFullVersion() {
+		final String revision = getBuildRevision();
+		if(revision == null || revision.isEmpty()) {
+			return getVersion();
+		} else {
+			return getVersion() + "." + revision;
+		}
+	}
+
 	/**
 	 * Return a string describing the version of this software.
 	 * 
