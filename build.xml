@@ -40,10 +40,14 @@
     </and>
   </condition>
 
-  <target name="all" depends="compile,compile-xmlrpc,package,source"/>
+  <target name="all" depends="write-revision,compile,compile-xmlrpc,package,source"/>
 			
   <target name="clean">
     <delete dir="${basedir}/bin" />
+  </target>
+
+  <target name="write-revision">
+    <echo message="${orchid.gittag}${line.separator}" file="build-revision" />
   </target>
 
   <target name="init">
@@ -69,6 +73,7 @@
       </manifest>
       <fileset dir="${basedir}/bin" />
       <zipfileset dir="${basedir}/data" includes="GeoIP.dat" fullpath="data/GeoIP.dat" />
+      <zipfileset dir="${basedir}" includes="build-revision" />
     </jar>
   </target>
 
