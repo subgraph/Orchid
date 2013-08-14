@@ -51,6 +51,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			for(KeyCertificate cert: certificates) { 
 				writer.write(cert.getRawDocumentData());
 			}
+			quietClose(writer);
 			installTempFile("certificates", tempFile);
 		} catch(IOException e) {
 			logger.warning("IO Error writing certificates file: "+ e);
@@ -92,6 +93,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 		}
 		try {
 			writer.write(consensus.getRawDocumentData());
+			quietClose(writer);
 			installTempFile("consensus", tempFile);
 		} catch(IOException e) {
 			logger.warning("IO error writing consensus file: "+ e);
@@ -135,6 +137,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			for(RouterDescriptor router: descriptors) {
 				writer.write(router.getRawDocumentData());
 			}
+			quietClose(writer);
 			installTempFile("routers", tempFile);
 		} catch(IOException e) {
 			logger.warning("IO error writing to routers file");
@@ -192,6 +195,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 		}
 		try {
 			stateFile.writeFile(writer);
+			quietClose(writer);
 			installTempFile("state", tempFile);
 		} catch (IOException e) {
 			logger.warning("IO error writing to state file: "+ e);
