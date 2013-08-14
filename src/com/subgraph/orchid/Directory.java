@@ -26,7 +26,7 @@ public interface Directory {
 	void addCertificate(KeyCertificate certificate);
 	Set<RequiredCertificate> getRequiredCertificates();
 	void addRouterDescriptor(RouterDescriptor router);
-	void addConsensusDocument(ConsensusDocument consensus);
+	void addConsensusDocument(ConsensusDocument consensus, boolean fromCache);
 	ConsensusDocument getCurrentConsensusDocument();
 	boolean hasPendingConsensus();
 	void registerConsensusChangedHandler(EventHandler handler);

@@ -166,7 +166,7 @@ public class DirectoryImpl implements Directory {
 					return;
 					
 				case STATUS_VERIFIED:
-					addConsensusDocument(consensusWaitingForCertificates);
+					addConsensusDocument(consensusWaitingForCertificates, false);
 					consensusWaitingForCertificates = null;
 					return;
 
@@ -223,7 +223,7 @@ public class DirectoryImpl implements Directory {
 		descriptorsDirty = false;
 	}
 
-	public synchronized void addConsensusDocument(ConsensusDocument consensus) {
+	public synchronized void addConsensusDocument(ConsensusDocument consensus, boolean fromCache) {
 		if(consensus.equals(currentConsensus))
 			return;
 
@@ -262,7 +262,10 @@ public class DirectoryImpl implements Directory {
 		}
 		logger.fine("Loaded "+ routersByIdentity.size() +" routers from consensus document");
 		currentConsensus = consensus;
-		store.saveConsensus(consensus);
+		
+		if(!fromCache) {
+			store.saveConsensus(consensus);
+		}
 		
 		storeDescriptors();
 		consensusChangedManager.fireEvent(new Event() {});
