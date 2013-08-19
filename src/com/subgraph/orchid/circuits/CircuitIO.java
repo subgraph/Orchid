@@ -131,6 +131,8 @@ public class CircuitIO implements DashboardRenderable {
 		case RelayCell.RELAY_EXTENDED:
 		case RelayCell.RELAY_RESOLVED:
 		case RelayCell.RELAY_TRUNCATED:
+		case RelayCell.RELAY_COMMAND_RENDEZVOUS_ESTABLISHED:
+		case RelayCell.RELAY_COMMAND_INTRODUCE_ACK:
 			relayCellResponseQueue.add(relayCell);
 			break;	
 		case RelayCell.RELAY_DATA:
