@@ -1,6 +1,7 @@
 package com.subgraph.orchid.circuits.hs;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.subgraph.orchid.crypto.TorMessageDigest;
@@ -13,6 +14,7 @@ public class HiddenService {
 	private final byte[] cookie;
 
 	private HSDescriptor descriptor;
+	private RendezvousCircuit circuit;
 	
 	private static byte[] decodeOnion(String onionAddress) {
 		final int idx = onionAddress.indexOf(".onion");
@@ -42,6 +44,14 @@ public class HiddenService {
 
 	void setDescriptor(HSDescriptor descriptor) {
 		this.descriptor = descriptor;
+	}
+
+	RendezvousCircuit getCircuit() {
+		return circuit;
+	}
+	
+	void setCircuit(RendezvousCircuit circuit) {
+		this.circuit = circuit;
 	}
 
 	List<HexDigest> getAllCurrentDescriptorIds() {
@@ -86,5 +96,27 @@ public class HiddenService {
 			value >>= 8;
 		}
 		return result;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(permanentId);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		HiddenService other = (HiddenService) obj;
+		if (!Arrays.equals(permanentId, other.permanentId))
+			return false;
+		return true;
 	}
 }
