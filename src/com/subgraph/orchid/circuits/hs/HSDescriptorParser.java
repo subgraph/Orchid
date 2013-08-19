@@ -1,6 +1,7 @@
 package com.subgraph.orchid.circuits.hs;
 
 import java.io.StringReader;
+import java.util.logging.Logger;
 
 import com.subgraph.orchid.TorParsingException;
 import com.subgraph.orchid.crypto.TorSignature;
@@ -13,7 +14,8 @@ import com.subgraph.orchid.directory.parsing.DocumentParsingResultHandler;
 import com.subgraph.orchid.encoders.Base64;
 
 public class HSDescriptorParser implements DocumentParser<HSDescriptor>{
-
+	private static final Logger logger = Logger.getLogger(HSDescriptor.class.getName());
+	
 	private final DocumentFieldParser fieldParser;
 	private final HSDescriptor descriptor;
 	
@@ -105,19 +107,17 @@ public class HSDescriptorParser implements DocumentParser<HSDescriptor>{
 		parser.parse(new DocumentParsingResultHandler<IntroductionPoint>() {
 
 			public void documentParsed(IntroductionPoint document) {
+				logger.warning("adding intro point "+ document.getIdentity());
 				descriptor.addIntroductionPoint(document);
 			}
 
 			public void documentInvalid(IntroductionPoint document, String message) {
-				// TODO Auto-generated method stub
-				
+				logger.warning("Invalid introduction point received");
 			}
 
 			public void parsingError(String message) {
-				// TODO Auto-generated method stub
-				
+				logger.warning("Error parsing introduction points: "+ message);
 			} 
-			
 		});
 	}
 

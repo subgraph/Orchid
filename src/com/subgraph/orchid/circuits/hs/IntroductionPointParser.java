@@ -21,7 +21,6 @@ public class IntroductionPointParser implements DocumentParser<IntroductionPoint
 	
 	public boolean parse(DocumentParsingResultHandler<IntroductionPoint> resultHandler) {
 		this.resultHandler = resultHandler;
-		resetIntroductionPoint(null);
 		try {
 			fieldParser.processDocument();
 			return true;
@@ -37,12 +36,27 @@ public class IntroductionPointParser implements DocumentParser<IntroductionPoint
 				processKeywordLine();
 			}
 			
-			public void endOfDocument() {}
+			public void endOfDocument() {
+				validateAndReportIntroductionPoint(currentIntroductionPoint);
+			}
 		};
 	}
 
 	private void resetIntroductionPoint(HexDigest identity) {
+		validateAndReportIntroductionPoint(currentIntroductionPoint);
 		currentIntroductionPoint = new IntroductionPoint(identity);
+	}
+	
+	private void validateAndReportIntroductionPoint(IntroductionPoint introductionPoint) {
+		if(introductionPoint == null) {
+			return;
+		}
+		
+		if(introductionPoint.isValidDocument()) {
+			resultHandler.documentParsed(introductionPoint);
+		} else {
+			resultHandler.documentInvalid(introductionPoint, "Invalid introduction point");
+		}
 	}
 	
 	
@@ -63,19 +77,27 @@ public class IntroductionPointParser implements DocumentParser<IntroductionPoint
 			break;
 			
 		case IP_ADDRESS:
-			currentIntroductionPoint.setAddress(fieldParser.parseAddress());
+			if(currentIntroductionPoint != null) {
+				currentIntroductionPoint.setAddress(fieldParser.parseAddress());
+			}
 			break;
 			
 		case ONION_KEY:
-			currentIntroductionPoint.setOnionKey(fieldParser.parsePublicKey());
+			if(currentIntroductionPoint != null) {
+				currentIntroductionPoint.setOnionKey(fieldParser.parsePublicKey());
+			}
 			break;
 			
 		case ONION_PORT:
-			currentIntroductionPoint.setOnionPort(fieldParser.parsePort());
+			if(currentIntroductionPoint != null) {
+				currentIntroductionPoint.setOnionPort(fieldParser.parsePort());
+			}
 			break;
 			
 		case SERVICE_KEY:
-			currentIntroductionPoint.setServiceKey(fieldParser.parsePublicKey());
+			if(currentIntroductionPoint != null) {
+				currentIntroductionPoint.setServiceKey(fieldParser.parsePublicKey());
+			}
 			break;
 			
 		case SERVICE_AUTHENTICATION:
@@ -85,5 +107,4 @@ public class IntroductionPointParser implements DocumentParser<IntroductionPoint
 			break;
 		}
 	}
-
 }
