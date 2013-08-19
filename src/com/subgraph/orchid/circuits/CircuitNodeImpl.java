@@ -13,7 +13,7 @@ import com.subgraph.orchid.crypto.TorKeyAgreement;
 import com.subgraph.orchid.crypto.TorMessageDigest;
 import com.subgraph.orchid.data.HexDigest;
 
-class CircuitNodeImpl implements CircuitNode {
+public class CircuitNodeImpl implements CircuitNode {
 	static CircuitNodeImpl createForRouter(Router router) {
 		return new CircuitNodeImpl(router);
 	}
@@ -35,7 +35,7 @@ class CircuitNodeImpl implements CircuitNode {
 		this(router, null);
 	}
 
-	CircuitNodeImpl(Router router, CircuitNodeImpl previous) {
+	protected CircuitNodeImpl(Router router, CircuitNodeImpl previous) {
 		previousNode = previous;
 		this.router = router;
 		this.dhContext = new TorKeyAgreement();
@@ -56,7 +56,7 @@ class CircuitNodeImpl implements CircuitNode {
 		}
 	}
 	
-	void setSharedSecret(BigInteger peerPublic, HexDigest packetDigest) {
+	public void setSharedSecret(BigInteger peerPublic, HexDigest packetDigest) {
 		if(!TorKeyAgreement.isValidPublicValue(peerPublic))
 			throw new TorException("Illegal DH public value");
 
@@ -86,6 +86,10 @@ class CircuitNodeImpl implements CircuitNode {
 		return cryptoState.getForwardDigestBytes();
 	}
 
+	protected TorKeyAgreement getKeyAgreement() {
+		return dhContext;
+	}
+	
 	byte[] createOnionSkin() {
 		final byte[] yBytes = dhContext.getPublicKeyBytes();
 		final HybridEncryption hybrid = new HybridEncryption();

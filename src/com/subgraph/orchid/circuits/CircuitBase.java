@@ -140,7 +140,7 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 		io.sendRelayCellTo(cell, getFinalCircuitNode());
 	}
 
-	void appendNode(CircuitNodeImpl node) {
+	protected void appendNode(CircuitNodeImpl node) {
 		nodeList.add(node);
 	}
 
@@ -201,6 +201,10 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 
 	protected StreamImpl createNewStream() {
 		return io.createNewStream();
+	}
+
+	protected Router getFinalRouter() {
+		return getFinalCircuitNode().getRouter();
 	}
 
 	boolean isFinalNodeDirectory() {

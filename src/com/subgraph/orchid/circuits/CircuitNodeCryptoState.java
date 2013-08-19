@@ -6,8 +6,8 @@ import com.subgraph.orchid.crypto.TorMessageDigest;
 import com.subgraph.orchid.crypto.TorStreamCipher;
 import com.subgraph.orchid.data.HexDigest;
 
-class CircuitNodeCryptoState {
-	static CircuitNodeCryptoState createFromKeyMaterial(byte[] keyMaterial) {
+public class CircuitNodeCryptoState {
+	public static CircuitNodeCryptoState createFromKeyMaterial(byte[] keyMaterial) {
 		return new CircuitNodeCryptoState(keyMaterial);
 	}
 	
