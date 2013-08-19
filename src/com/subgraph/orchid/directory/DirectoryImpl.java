@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
 import com.subgraph.orchid.ConsensusDocument;
+import com.subgraph.orchid.ConsensusDocument.RequiredCertificate;
 import com.subgraph.orchid.Directory;
 import com.subgraph.orchid.DirectoryServer;
 import com.subgraph.orchid.GuardEntry;
@@ -22,7 +24,6 @@ import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.crypto.TorRandom;
 import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.data.RandomSet;
-import com.subgraph.orchid.directory.consensus.DirectorySignature;
 import com.subgraph.orchid.events.Event;
 import com.subgraph.orchid.events.EventHandler;
 import com.subgraph.orchid.events.EventManager;
@@ -35,13 +36,12 @@ public class DirectoryImpl implements Directory {
 	
 	private final DirectoryStoreImpl store;
 	private final StateFile stateFile;
-	private final Map<HexDigest, KeyCertificate> certificates;
 	private final Map<HexDigest, RouterImpl> routersByIdentity;
 	private final Map<String, RouterImpl> routersByNickname;
 	private final RandomSet<RouterImpl> directoryCaches;
-	private final Set<HexDigest> requiredCertificates;
-	private List<DirectoryServer> directoryAuthorities;
+	private final Set<ConsensusDocument.RequiredCertificate> requiredCertificates;
 	private boolean haveMinimumRouterInfo;
+	private boolean needRecalculateMinimumRouterInfo;
 	private final EventManager consensusChangedManager;
 	private final TorRandom random;
 	private ConsensusDocument currentConsensus;
@@ -51,27 +51,24 @@ public class DirectoryImpl implements Directory {
 	public DirectoryImpl(TorConfig config) {
 		store = new DirectoryStoreImpl(config);
 		stateFile = new StateFile(store, this);
-		certificates = new HashMap<HexDigest, KeyCertificate>();
 		routersByIdentity = new HashMap<HexDigest, RouterImpl>();
 		routersByNickname = new HashMap<String, RouterImpl>();
 		directoryCaches = new RandomSet<RouterImpl>();
-		requiredCertificates = new HashSet<HexDigest>();
+		requiredCertificates = new HashSet<ConsensusDocument.RequiredCertificate>();
 		consensusChangedManager = new EventManager();
 		random = new TorRandom();
-		loadAuthorityServers();
-	}
-
-	private void loadAuthorityServers() {
-		final TrustedAuthorities trusted = new TrustedAuthorities();
-		directoryAuthorities = trusted.getAuthorityServers();
 	}
 
 	public synchronized boolean haveMinimumRouterInfo() {
+		if(needRecalculateMinimumRouterInfo) {
+			checkMinimumRouterInfo();
+		}
 		return haveMinimumRouterInfo;
 	}
 
 	private synchronized void checkMinimumRouterInfo() {
-		if(currentConsensus == null) {
+		if(currentConsensus == null || !currentConsensus.isLive()) {
+			needRecalculateMinimumRouterInfo = true;
 			haveMinimumRouterInfo = false;
 			return;
 		}
@@ -83,22 +80,48 @@ public class DirectoryImpl implements Directory {
 			if(!r.isDescriptorDownloadable())
 				descriptorCount++;
 		}
+		needRecalculateMinimumRouterInfo = false;
 		haveMinimumRouterInfo = (descriptorCount * 4 > routerCount);
 	}
 
 	public void loadFromStore() {
 		logger.info("Loading cached network information from disk");
 		synchronized(loadLock) {
+			if(isLoaded) {
+				return;
+			}
+	
+			last = System.currentTimeMillis();
+			logger.info("Loading certificates");
 			store.loadCertificates(this);
+			logElapsed();
+			
+			logger.info("Loading consensus");
 			store.loadConsensus(this);
+			logElapsed();
+			
+			logger.info("Loading descriptors");
 			store.loadRouterDescriptors(this);
+			logElapsed();
+			
+			logger.info("loading state file");
 			store.loadStateFile(stateFile);
+			logElapsed();
+			
 			isLoaded = true;
 			loadLock.notifyAll();
 		}
 	}
 
-	private void waitUntilLoaded() {
+	private long last = 0;
+	private void logElapsed() {
+		final long now = System.currentTimeMillis();
+		final long elapsed =  now - last;
+		last = now;
+		logger.fine("Loaded in "+ elapsed + " ms.");
+	}
+
+	public void waitUntilLoaded() {
 		synchronized (loadLock) {
 			while(!isLoaded) {
 				try {
@@ -111,40 +134,70 @@ public class DirectoryImpl implements Directory {
 	}
 
 	public Collection<DirectoryServer> getDirectoryAuthorities() {
-		return directoryAuthorities;
+		return TrustedAuthorities.getInstance().getAuthorityServers();
 	}
 
 	public DirectoryServer getRandomDirectoryAuthority() {
-		final int idx = random.nextInt(directoryAuthorities.size());
-		return directoryAuthorities.get(idx);
+		final List<DirectoryServer> servers = TrustedAuthorities.getInstance().getAuthorityServers();
+		final int idx = random.nextInt(servers.size());
+		return servers.get(idx);
 	}
 
-	public Set<HexDigest> getRequiredCertificates() {
-		return new HashSet<HexDigest>(requiredCertificates);
+	public Set<ConsensusDocument.RequiredCertificate> getRequiredCertificates() {
+		
+		return new HashSet<ConsensusDocument.RequiredCertificate>(requiredCertificates);
 	}
 	
 	public void addCertificate(KeyCertificate certificate) {
-		final HexDigest fingerprint = certificate.getAuthorityFingerprint();
-		synchronized(certificates) {
-			requiredCertificates.remove(fingerprint);
-			certificates.put(fingerprint, certificate);
-			if(consensusWaitingForCertificates != null && consensusWaitingForCertificates.canVerifySignatures(certificates)) {
-				addConsensusDocument(consensusWaitingForCertificates);
-				consensusWaitingForCertificates = null;
-			}	
+		synchronized(TrustedAuthorities.getInstance()) {
+			final boolean wasRequired = removeRequiredCertificate(certificate);
+			final DirectoryServer as = TrustedAuthorities.getInstance().getAuthorityServerByIdentity(certificate.getAuthorityFingerprint());
+			if(as == null) {
+				logger.warning("Certificate read for unknown directory authority with identity: "+ certificate.getAuthorityFingerprint());
+				return;
+			}
+			as.addCertificate(certificate);
+			
+			if(consensusWaitingForCertificates != null && wasRequired) {
+				
+				switch(consensusWaitingForCertificates.verifySignatures()) {
+				case STATUS_FAILED:
+					consensusWaitingForCertificates = null;
+					return;
+					
+				case STATUS_VERIFIED:
+					addConsensusDocument(consensusWaitingForCertificates, false);
+					consensusWaitingForCertificates = null;
+					return;
+
+				case STATUS_NEED_CERTS:
+					requiredCertificates.addAll(consensusWaitingForCertificates.getRequiredCertificates());
+					return;
+				}
+			}
 		}
 	}
-
-	public KeyCertificate findCertificate(HexDigest authorityFingerprint) {
-		waitUntilLoaded();
-		return certificates.get(authorityFingerprint);
+	
+	private boolean removeRequiredCertificate(KeyCertificate certificate) {
+		final Iterator<RequiredCertificate> it = requiredCertificates.iterator();
+		while(it.hasNext()) {
+			RequiredCertificate r = it.next();
+			if(r.getSigningKey().equals(certificate.getAuthoritySigningKey().getFingerprint())) {
+				it.remove();
+				return true;
+			}
+		}
+		return false;
 	}
-
+	
 	public void storeCertificates() {
-		final List<KeyCertificate> certs = new ArrayList<KeyCertificate>(); 
-		for(KeyCertificate c: certificates.values()) 
-			certs.add(c);
-		store.saveCertificates(certs);
+		synchronized(TrustedAuthorities.getInstance()) {
+			final List<KeyCertificate> certs = new ArrayList<KeyCertificate>();
+			for(DirectoryServer ds: TrustedAuthorities.getInstance().getAuthorityServers()) {
+				certs.addAll(ds.getCertificates());
+			}
+			store.saveCertificates(certs);
+		}
 	}
 
 	public void addRouterDescriptor(RouterDescriptor router) {
@@ -170,7 +223,7 @@ public class DirectoryImpl implements Directory {
 		descriptorsDirty = false;
 	}
 
-	public synchronized void addConsensusDocument(ConsensusDocument consensus) {
+	public synchronized void addConsensusDocument(ConsensusDocument consensus, boolean fromCache) {
 		if(consensus.equals(currentConsensus))
 			return;
 
@@ -179,21 +232,22 @@ public class DirectoryImpl implements Directory {
 			return;
 		}
 
-		synchronized(certificates) {
-			if(!consensus.canVerifySignatures(certificates)) {
-				logger.warning("Need more certificates to verify consensus document.");
+		synchronized(TrustedAuthorities.getInstance()) {
+			switch(consensus.verifySignatures()) {
+			case STATUS_FAILED:
+				logger.warning("Unable to verify signatures on consensus document, discarding...");
+				return;
+				
+			case STATUS_NEED_CERTS:
 				consensusWaitingForCertificates = consensus;
-				for(DirectorySignature s: consensus.getDocumentSignatures()) {
-					if(!certificates.containsKey(s.getIdentityDigest())) 
-						requiredCertificates.add(s.getIdentityDigest());
-				}
+				requiredCertificates.addAll(consensus.getRequiredCertificates());
 				return;
+
+			case STATUS_VERIFIED:
+				break;
 			}
-			
-			if(!consensus.verifySignatures(certificates)) {
-				logger.warning("Signature verification on Consensus document failed.");
-				return;
-			}
+			requiredCertificates.addAll(consensus.getRequiredCertificates());
+		
 		}
 		final Map<HexDigest, RouterImpl> oldRouterByIdentity = new HashMap<HexDigest, RouterImpl>(routersByIdentity);
 
@@ -208,7 +262,10 @@ public class DirectoryImpl implements Directory {
 		}
 		logger.fine("Loaded "+ routersByIdentity.size() +" routers from consensus document");
 		currentConsensus = consensus;
-		store.saveConsensus(consensus);
+		
+		if(!fromCache) {
+			store.saveConsensus(consensus);
+		}
 		
 		storeDescriptors();
 		consensusChangedManager.fireEvent(new Event() {});
@@ -264,8 +321,9 @@ public class DirectoryImpl implements Directory {
 	synchronized void addDescriptor(RouterDescriptor descriptor) {
 		final HexDigest identity = descriptor.getIdentityKey().getFingerprint();
 		if(!routersByIdentity.containsKey(identity)) {
-			System.out.println(descriptor.getAddress());
-			logger.warning("Could not find router for descriptor: "+ descriptor.getIdentityKey().getFingerprint());
+			if(currentConsensus != null && currentConsensus.isLive()) {
+				logger.warning("Could not find router for descriptor: "+ descriptor.getIdentityKey().getFingerprint());
+			}
 			return;
 		}
 		final RouterImpl router = routersByIdentity.get(identity);
@@ -280,7 +338,7 @@ public class DirectoryImpl implements Directory {
 		descriptorsDirty = true;
 		router.updateDescriptor(descriptor);
 		classifyRouter(router);
-		checkMinimumRouterInfo();
+		needRecalculateMinimumRouterInfo = true;
 	}
 
 	synchronized public List<Router> getRoutersWithDownloadableDescriptors() {
@@ -320,6 +378,12 @@ public class DirectoryImpl implements Directory {
 
 	public ConsensusDocument getCurrentConsensusDocument() {
 		return currentConsensus;
+	}
+
+	public boolean hasPendingConsensus() {
+		synchronized (TrustedAuthorities.getInstance()) {
+			return consensusWaitingForCertificates != null;	
+		}
 	}
 
 	public void registerConsensusChangedHandler(EventHandler handler) {

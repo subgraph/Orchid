@@ -31,7 +31,7 @@ public class ConsensusDownloadTask extends AbstractDirectoryDownloadTask {
 			
 			public void documentParsed(ConsensusDocument document) {
 				newConsensusDocument = document;
-				getDirectory().addConsensusDocument(document);
+				getDirectory().addConsensusDocument(document, false);
 			}
 			
 			public void documentInvalid(ConsensusDocument document, String message) {

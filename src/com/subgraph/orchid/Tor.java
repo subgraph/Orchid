@@ -1,6 +1,7 @@
 package com.subgraph.orchid;
 
 import java.lang.reflect.Proxy;
+import java.util.logging.Logger;
 
 import com.subgraph.orchid.circuits.CircuitManagerImpl;
 import com.subgraph.orchid.circuits.TorInitializationTracker;
@@ -15,6 +16,7 @@ import com.subgraph.orchid.socks.SocksPortListenerImpl;
  * various subsystem modules.
  */
 public class Tor {
+	private final static Logger logger = Logger.getLogger(Tor.class.getName());
 	
 	public final static int BOOTSTRAP_STATUS_STARTING = 0;
 	public final static int BOOTSTRAP_STATUS_CONN_DIR = 5;
@@ -33,12 +35,25 @@ public class Tor {
 	
 	
 	private final static String implementation = "Orchid";
-	private final static String version = "0.9.0";
+	private final static String version = "0.9.1";
 	
+	public static String getBuildRevision() {
+		return Revision.getBuildRevision();
+	}
 	
 	public static String getImplementation() {
 		return implementation;
 	}
+	
+	public static String getFullVersion() {
+		final String revision = getBuildRevision();
+		if(revision == null || revision.isEmpty()) {
+			return getVersion();
+		} else {
+			return getVersion() + "." + revision;
+		}
+	}
+
 	/**
 	 * Return a string describing the version of this software.
 	 * 
@@ -46,6 +61,16 @@ public class Tor {
 	 */
 	public static String getVersion() {
 		return version;
+	}
+
+	/**
+	 * Determine if running on Android by inspecting java.runtime.name property.
+	 * 
+	 * @return True if running on Android.
+	 */
+	public static boolean isAndroidRuntime() {
+		final String runtime = System.getProperty("java.runtime.name");
+		return runtime != null && runtime.equals("Android Runtime");
 	}
 	
 	/**
@@ -57,7 +82,12 @@ public class Tor {
 	 * @see TorConfig
 	 */
 	static public TorConfig createConfig() {
-		return (TorConfig) Proxy.newProxyInstance(TorConfigProxy.class.getClassLoader(), new Class[] { TorConfig.class }, new TorConfigProxy());
+		final TorConfig config = (TorConfig) Proxy.newProxyInstance(TorConfigProxy.class.getClassLoader(), new Class[] { TorConfig.class }, new TorConfigProxy());
+		if(isAndroidRuntime()) {
+			logger.warning("Android Runtime detected, disabling V2 Link protocol");
+			config.setHandshakeV2Enabled(false);
+		}
+		return config;
 	}
 
 	static public TorInitializationTracker createInitalizationTracker() {
@@ -78,8 +108,8 @@ public class Tor {
 		return new DirectoryImpl(config);
 	}
 
-	static public ConnectionCache createConnectionCache(TorInitializationTracker tracker) {
-		return new ConnectionCacheImpl(tracker);
+	static public ConnectionCache createConnectionCache(TorConfig config, TorInitializationTracker tracker) {
+		return new ConnectionCacheImpl(config, tracker);
 	}
 	/**
 	 * Create and return a new <code>CircuitManager</code> instance.

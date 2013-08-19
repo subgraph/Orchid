@@ -9,6 +9,8 @@ public class Socks5Request extends SocksRequest {
 	final static int SOCKS5_VERSION = 5;
 	final static int SOCKS5_AUTH_NONE = 0;
 	final static int SOCKS5_COMMAND_CONNECT = 1;
+	final static int SOCKS5_COMMAND_RESOLV = 0xF0;
+	final static int SOCKS5_COMMAND_RESOLV_PTR = 0xF1;
 	final static int SOCKS5_ADDRESS_IPV4 = 1;
 	final static int SOCKS5_ADDRESS_HOSTNAME = 3;
 	final static int SOCKS5_ADDRESS_IPV6 = 4;
@@ -30,6 +32,10 @@ public class Socks5Request extends SocksRequest {
 		return command == SOCKS5_COMMAND_CONNECT;
 	}
 	
+	public int getCommandCode() {
+		return command;
+	}
+
 	private String addressBytesToHostname() {
 		if(addressType != SOCKS5_ADDRESS_HOSTNAME)
 			throw new TorException("SOCKS 4 request is not a hostname request");

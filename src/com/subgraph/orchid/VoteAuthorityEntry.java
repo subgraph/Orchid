@@ -1,7 +1,10 @@
 package com.subgraph.orchid;
 
+import java.util.List;
+
 import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.data.IPv4Address;
+import com.subgraph.orchid.directory.consensus.DirectorySignature;
 
 public interface VoteAuthorityEntry {
 	String getNickname();
@@ -12,5 +15,5 @@ public interface VoteAuthorityEntry {
 	int getRouterPort();
 	String getContact();
 	HexDigest getVoteDigest();
-
+	List<DirectorySignature> getSignatures();
 }

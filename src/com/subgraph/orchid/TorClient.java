@@ -36,7 +36,7 @@ public class TorClient {
 		directory = Tor.createDirectory(config);
 		initializationTracker = Tor.createInitalizationTracker();
 		initializationTracker.addListener(createReadyFlagInitializationListener());
-		connectionCache = Tor.createConnectionCache(initializationTracker);
+		connectionCache = Tor.createConnectionCache(config, initializationTracker);
 		circuitManager = Tor.createCircuitManager(config, directory, connectionCache, initializationTracker);
 		directoryDownloader = Tor.createDirectoryDownloader(directory, circuitManager);
 		socksListener = Tor.createSocksPortListener(config, circuitManager);
@@ -58,6 +58,7 @@ public class TorClient {
 		if(isStarted) {
 			return;
 		}
+		logger.info("Starting Orchid (version: "+ Tor.getFullVersion() +")");
 		verifyUnlimitedStrengthPolicyInstalled();
 		directoryDownloader.start();
 		circuitManager.startBuildingCircuits();
@@ -143,13 +144,12 @@ public class TorClient {
 	}
 
 	public static void main(String[] args) {
-		logger.info("Starting...");
 		final TorClient client = new TorClient();
 		client.addInitializationListener(createInitalizationListner());
 		client.start();
 		client.enableSocksListener();
 	}
-	
+
 	private static TorInitializationListener createInitalizationListner() {
 		return new TorInitializationListener() {
 			
@@ -173,6 +173,8 @@ public class TorClient {
 		} catch (NoSuchAlgorithmException e) {
 			logger.log(Level.SEVERE, "No AES provider found");
 			throw new TorException(e);
+		}  catch (NoSuchMethodError e) {
+			logger.info("Skipped check for Unlimited Strength Jurisdiction Policy Files");
 		}
 	}
 }

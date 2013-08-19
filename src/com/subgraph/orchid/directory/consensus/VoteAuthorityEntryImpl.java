@@ -1,5 +1,8 @@
 package com.subgraph.orchid.directory.consensus;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.subgraph.orchid.VoteAuthorityEntry;
 import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.data.IPv4Address;
@@ -15,6 +18,8 @@ public class VoteAuthorityEntryImpl implements VoteAuthorityEntry {
 	private String contact;
 	private HexDigest voteDigest;
 	
+	private final List<DirectorySignature> signatures = new ArrayList<DirectorySignature>();
+
 	void setNickname(String nickname) { this.nickname = nickname; }
 	void setIdentity(HexDigest identity) { this.identity = identity; }
 	void setHostname(String hostname) { this.hostname = hostname; }
@@ -54,5 +59,9 @@ public class VoteAuthorityEntryImpl implements VoteAuthorityEntry {
 	
 	public HexDigest getVoteDigest() {
 		return voteDigest;
+	}
+	
+	public List<DirectorySignature> getSignatures() {
+		return signatures;
 	}
 }

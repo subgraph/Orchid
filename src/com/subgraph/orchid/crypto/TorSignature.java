@@ -16,12 +16,12 @@ public class TorSignature {
 	private final static String SIGNATURE_END = "-----END SIGNATURE-----";
 	private final static String ID_SIGNATURE_END = "-----END ID SIGNATURE-----";
 
-	static public TorSignature createFromPEMBuffer(String buffer) {		
+	static public TorSignature createFromPEMBuffer(String buffer) {
 		BufferedReader reader = new BufferedReader(new StringReader(buffer));
 		final String header = nextLine(reader);
 		if(!(SIGNATURE_BEGIN.equals(header) || ID_SIGNATURE_BEGIN.equals(header)))
 			throw new TorParsingException("Did not find expected signature BEGIN header");
-		return new TorSignature(Base64.decode(parseBase64Data(reader)));	
+		return new TorSignature(Base64.decode(parseBase64Data(reader)), DigestAlgorithm.DIGEST_SHA1);	
 	}
 	static private String parseBase64Data(BufferedReader reader) {
 		final StringBuilder base64Data = new StringBuilder();
@@ -42,11 +42,17 @@ public class TorSignature {
 			throw new TorException(e);
 		}
 	}
-	
+
+	public enum DigestAlgorithm { DIGEST_SHA1, DIGEST_SHA256 };
+
 	private final byte[] signatureBytes;
-	private TorSignature(byte[] signatureBytes) {
+	private final DigestAlgorithm digestAlgorithm;
+	
+	private TorSignature(byte[] signatureBytes, DigestAlgorithm digestAlgorithm) {
 		this.signatureBytes = signatureBytes;
+		this.digestAlgorithm = digestAlgorithm;
 	}
+
 	
 	public byte[] getSignatureBytes() {
 		return Arrays.copyOf(signatureBytes, signatureBytes.length);
@@ -55,6 +61,11 @@ public class TorSignature {
 	public boolean verify(TorPublicKey publicKey, TorMessageDigest digest) {
 		return publicKey.verifySignature(this, digest);
 	}
+	
+	public DigestAlgorithm getDigestAlgorithm() {
+		return digestAlgorithm;
+	}
+
 	public String toString() {
 		return "TorSignature: (" + signatureBytes.length + " bytes) " + new String(Hex.encode(signatureBytes));
 	}

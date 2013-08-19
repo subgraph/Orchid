@@ -1,7 +1,6 @@
 package com.subgraph.orchid.directory;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.Set;
 
 import com.subgraph.orchid.Router;
@@ -22,6 +21,8 @@ public class RouterImpl implements Router {
 	protected RouterStatus status;
 	private RouterDescriptor descriptor;
 	
+	private boolean descriptorMatchesConsensus;
+	
 	private volatile String cachedCountryCode;
 	
 	protected RouterImpl(RouterStatus status) {
@@ -34,19 +35,27 @@ public class RouterImpl implements Router {
 			throw new TorException("Identity hash does not match status update");
 		this.status = status;
 		this.cachedCountryCode = null;
+		this.descriptorMatchesConsensus = doesDescriptorMatchStatus();
 	}
 
 	void updateDescriptor(RouterDescriptor descriptor) {
 		this.descriptor = descriptor;
+		this.descriptorMatchesConsensus = doesDescriptorMatchStatus();
 	}
 
-	public boolean isDescriptorDownloadable() {
-		
-		if(descriptor != null && descriptor.getDescriptorDigest().equals(status.getDescriptorDigest()))
+	private boolean doesDescriptorMatchStatus() {
+		if(descriptor == null || status == null) {
 			return false;
-		
-		final Date now = new Date();
-		final long diff = now.getTime() - status.getPublicationTime().getDate().getTime();
+		}
+		return descriptor.getDescriptorDigest().equals(status.getDescriptorDigest());
+	}
+	
+	public boolean isDescriptorDownloadable() {
+		if(descriptorMatchesConsensus) {
+			return false;
+		}
+		final long now = System.currentTimeMillis();
+		final long diff = now - status.getPublicationTime().getDate().getTime();
 		return diff > (1000 * 60 * 10);	
 	}
 	

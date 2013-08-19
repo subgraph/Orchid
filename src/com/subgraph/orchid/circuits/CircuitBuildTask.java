@@ -31,6 +31,10 @@ public class CircuitBuildTask implements Runnable {
 
 	private Connection connection = null;
 	
+	public CircuitBuildTask(CircuitCreationRequest request, ConnectionCache connectionCache) {
+		this(request, connectionCache, null);
+	}
+
 	public CircuitBuildTask(CircuitCreationRequest request, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.creationRequest = request;
 		this.connectionCache = connectionCache;
@@ -199,6 +203,9 @@ public class CircuitBuildTask implements Runnable {
 			final String msg = CellImpl.errorToDescription(code);
 			final String source = nodeToName(cell.getCircuitNode());
 			final String extendTarget = nodeToName(newNode);
+			if(code == Cell.ERROR_PROTOCOL) {
+				logProtocolViolation(source, extendTarget, newNode.getRouter());
+			}
 			throw new TorException("Error from ("+ source + ") while extending to ("+ extendTarget +"): "+ msg);
 		} else if (command != RelayCell.RELAY_EXTENDED) {
 			throw new TorException("Unexpected response to RELAY_EXTEND.  Command = "+ command);
@@ -213,6 +220,11 @@ public class CircuitBuildTask implements Runnable {
 		newNode.setSharedSecret(peerPublic, packetDigest);
 	}
 	
+	private void logProtocolViolation(String sourceName, String targetName, Router targetRouter) {
+		final String version = (targetRouter == null) ? "(none)" : targetRouter.getVersion();
+		logger.warning("Protocol error extending circuit from ("+ sourceName +") to ("+ targetName +") [version: "+ version +"]");
+	}
+
 	private String nodeToName(CircuitNode node) {
 		if(node == null || node.getRouter() == null) {
 			return "(null)";

@@ -24,6 +24,7 @@ import com.subgraph.orchid.ConnectionFailedException;
 import com.subgraph.orchid.ConnectionHandshakeException;
 import com.subgraph.orchid.ConnectionTimeoutException;
 import com.subgraph.orchid.Router;
+import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.circuits.TorInitializationTracker;
 import com.subgraph.orchid.dashboard.DashboardRenderable;
 import com.subgraph.orchid.dashboard.DashboardRenderer;
@@ -43,7 +44,7 @@ public class ConnectionCacheImpl implements ConnectionCache, DashboardRenderable
 
 		public ConnectionImpl call() throws Exception {
 			final SSLSocket socket = factory.createSocket();
-			final ConnectionImpl conn = new ConnectionImpl(socket, router, initializationTracker, isDirectoryConnection);
+			final ConnectionImpl conn = new ConnectionImpl(config, socket, router, initializationTracker, isDirectoryConnection);
 			conn.connect();
 			return conn;
 		}
@@ -66,9 +67,11 @@ public class ConnectionCacheImpl implements ConnectionCache, DashboardRenderable
 	private final ConnectionSocketFactory factory = new ConnectionSocketFactory();
 	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 
-	private TorInitializationTracker initializationTracker;
+	private final TorConfig config;
+	private final TorInitializationTracker initializationTracker;
 	
-	public ConnectionCacheImpl(TorInitializationTracker tracker) {
+	public ConnectionCacheImpl(TorConfig config, TorInitializationTracker tracker) {
+		this.config = config;
 		this.initializationTracker = tracker;
 		scheduledExecutor.scheduleAtFixedRate(new CloseIdleConnectionCheckTask(), 5000, 5000, TimeUnit.MILLISECONDS);
 	}

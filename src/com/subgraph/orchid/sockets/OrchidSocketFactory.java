@@ -5,14 +5,15 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 
 import javax.net.SocketFactory;
 
+import com.subgraph.orchid.Tor;
 import com.subgraph.orchid.TorClient;
 
 public class OrchidSocketFactory extends SocketFactory {
-
 	private final TorClient torClient;
 	private final boolean exceptionOnLocalBind;
 	
@@ -55,11 +56,19 @@ public class OrchidSocketFactory extends SocketFactory {
 	}
 
 	private Socket createOrchidSocket(String host, int port) throws IOException {
-		final OrchidSocketImpl impl = new OrchidSocketImpl(torClient);
-		// call protected constructor
-		final Socket s = new Socket(impl) {};
+		final Socket s = createSocketInstance();
 		final SocketAddress endpoint = InetSocketAddress.createUnresolved(host, port);
 		s.connect(endpoint);
 		return s;
+	}
+	
+	private Socket createSocketInstance() throws SocketException {
+		final OrchidSocketImpl impl = new OrchidSocketImpl(torClient);
+		if(Tor.isAndroidRuntime()) {
+			return new AndroidSocket(impl);
+		} else {
+			// call protected constructor
+			return new Socket(impl) {};
+		}
 	}
 }

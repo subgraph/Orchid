@@ -21,6 +21,7 @@ import com.subgraph.orchid.DirectoryStore;
 import com.subgraph.orchid.KeyCertificate;
 import com.subgraph.orchid.RouterDescriptor;
 import com.subgraph.orchid.TorConfig;
+import com.subgraph.orchid.crypto.TorRandom;
 import com.subgraph.orchid.directory.parsing.DocumentParser;
 import com.subgraph.orchid.directory.parsing.DocumentParserFactory;
 import com.subgraph.orchid.directory.parsing.DocumentParsingResultHandler;
@@ -30,16 +31,19 @@ public class DirectoryStoreImpl implements DirectoryStore {
 
 	private final TorConfig config;
 	private final DocumentParserFactory parserFactory;
+	private final TorRandom random;
 
 	private boolean directoryCreationFailed;
 	
 	DirectoryStoreImpl(TorConfig config) {
 		this.config = config;
 		this.parserFactory = new DocumentParserFactoryImpl();
+		this.random = new TorRandom();
 	}
 
 	public void saveCertificates(List<KeyCertificate> certificates) {
-		final Writer writer = openWriterFor("certificates");
+		final File tempFile = createTempFile("certificates");
+		final Writer writer = openWriterFor(tempFile);
 		if(writer == null) {
 			return;
 		}
@@ -47,6 +51,8 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			for(KeyCertificate cert: certificates) { 
 				writer.write(cert.getRawDocumentData());
 			}
+			quietClose(writer);
+			installTempFile("certificates", tempFile);
 		} catch(IOException e) {
 			logger.warning("IO Error writing certificates file: "+ e);
 		} finally {
@@ -80,12 +86,15 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	}
 	
 	public void saveConsensus(ConsensusDocument consensus) {
-		final Writer writer = openWriterFor("consensus");
+		final File tempFile = createTempFile("consensus");
+		final Writer writer = openWriterFor(tempFile);
 		if(writer == null) {
 			return;
 		}
 		try {
 			writer.write(consensus.getRawDocumentData());
+			quietClose(writer);
+			installTempFile("consensus", tempFile);
 		} catch(IOException e) {
 			logger.warning("IO error writing consensus file: "+ e);
 		} finally {
@@ -106,7 +115,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 				}
 			
 				public void documentParsed(ConsensusDocument document) {
-					directory.addConsensusDocument(document);
+					directory.addConsensusDocument(document, true);
 				}
 
 				public void parsingError(String message) {
@@ -119,7 +128,8 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	}
 	
 	public void saveRouterDescriptors(List<RouterDescriptor> descriptors) {
-		final Writer writer = openWriterFor("routers");
+		final File tempFile = createTempFile("routers");
+		final Writer writer = openWriterFor(tempFile);
 		if(writer == null) {
 			return;
 		}
@@ -127,6 +137,8 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			for(RouterDescriptor router: descriptors) {
 				writer.write(router.getRawDocumentData());
 			}
+			quietClose(writer);
+			installTempFile("routers", tempFile);
 		} catch(IOException e) {
 			logger.warning("IO error writing to routers file");
 		} finally {
@@ -140,7 +152,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			return;
 		}
 		try {
-			final DocumentParser<RouterDescriptor> parser = parserFactory.createRouterDescriptorParser(reader);
+			final DocumentParser<RouterDescriptor> parser = parserFactory.createRouterDescriptorParser(reader, false);
 			parser.parse(new DocumentParsingResultHandler<RouterDescriptor>() {
 
 				public void documentInvalid(RouterDescriptor document,	String message) {
@@ -176,12 +188,15 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	}
 	
 	void saveStateFile(StateFile stateFile) {
-		final Writer writer = openWriterFor("state"); 
+		final File tempFile = createTempFile("state");
+		final Writer writer = openWriterFor(tempFile); 
 		if(writer == null) {
 			return;
 		}
 		try {
 			stateFile.writeFile(writer);
+			quietClose(writer);
+			installTempFile("state", tempFile);
 		} catch (IOException e) {
 			logger.warning("IO error writing to state file: "+ e);
 		} finally {
@@ -191,9 +206,24 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	}
 	
 	
-	private Writer openWriterFor(String fileName) {
+	private File createTempFile(String baseName) {
+		final long n = random.nextLong();
+		final File f = new File(config.getDataDirectory(), baseName + Long.toString(n));
+		f.deleteOnExit();
+		return f;
+	}
+
+	private void installTempFile(String baseName, File tempFile) {
+		final File target = new File(config.getDataDirectory(), baseName);
+		target.delete();
+		if(!tempFile.renameTo(target)) {
+			logger.warning("Failed to rename temp file "+ tempFile + " to "+ target);
+		}
+		tempFile.delete();
+	}
+
+	private Writer openWriterFor(File file) {
 		createDirectoryIfAbsent(config.getDataDirectory());
-		final File file = new File(config.getDataDirectory(), fileName);
 		try {
 			FileOutputStream fos = new FileOutputStream(file);
 			return new OutputStreamWriter(fos, getFileCharset());

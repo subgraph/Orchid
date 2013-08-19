@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import com.subgraph.orchid.ConsensusDocument.RequiredCertificate;
 import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.events.EventHandler;
 
@@ -16,19 +17,20 @@ import com.subgraph.orchid.events.EventHandler;
 public interface Directory {
 	boolean haveMinimumRouterInfo();
 	void loadFromStore();
+	void waitUntilLoaded();
 	void storeCertificates();
 	void storeConsensus();
 	void storeDescriptors();
 	Collection<DirectoryServer> getDirectoryAuthorities();
 	DirectoryServer getRandomDirectoryAuthority();
 	void addCertificate(KeyCertificate certificate);
-	Set<HexDigest> getRequiredCertificates();
+	Set<RequiredCertificate> getRequiredCertificates();
 	void addRouterDescriptor(RouterDescriptor router);
-	void addConsensusDocument(ConsensusDocument consensus);
+	void addConsensusDocument(ConsensusDocument consensus, boolean fromCache);
 	ConsensusDocument getCurrentConsensusDocument();
+	boolean hasPendingConsensus();
 	void registerConsensusChangedHandler(EventHandler handler);
 	void unregisterConsensusChangedHandler(EventHandler handler);
-	KeyCertificate findCertificate(HexDigest authorityFingerprint);
 	Router getRouterByName(String name);
 	Router getRouterByIdentity(HexDigest identity);
 	List<Router> getRouterListByNames(List<String> names);

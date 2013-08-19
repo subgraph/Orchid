@@ -63,7 +63,7 @@ public class SocksClientTask implements Runnable {
 		try {
 			request.readRequest();
 			if(!request.isConnectRequest()) {
-				logger.warning("Non connect command");
+				logger.warning("Non connect command ("+ request.getCommandCode() + ")");
 				request.sendError(true);
 				return;
 			}
@@ -85,7 +85,11 @@ public class SocksClientTask implements Runnable {
 				request.sendConnectionRefused();
 			}
 		} catch (SocksRequestException e) {
-			logger.log(Level.WARNING, "Failure reading SOCKS request", e);
+			logger.log(Level.WARNING, "Failure reading SOCKS request: "+ e.getMessage());
+			try {
+				request.sendError(false);
+				socket.close();
+			} catch (Exception ignore) { }
 		} 
 	}
 		

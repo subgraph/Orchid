@@ -24,6 +24,7 @@ public class TorPublicKey {
 
 	private final String pemBuffer;
 	private RSAPublicKey key;
+
 	private byte[] rawKeyBytes = null;
 	private HexDigest keyFingerprint = null;
 

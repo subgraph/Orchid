@@ -4,6 +4,7 @@ import com.subgraph.orchid.crypto.TorSignature;
 import com.subgraph.orchid.data.HexDigest;
 
 public class DirectorySignature {
+	
 	private final HexDigest identityDigest;
 	private final HexDigest signingKeyDigest;
 	private final TorSignature signature;
@@ -25,5 +26,4 @@ public class DirectorySignature {
 	public TorSignature getSignature() {
 		return signature;
 	}
-
 }

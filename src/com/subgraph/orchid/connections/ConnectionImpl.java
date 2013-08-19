@@ -28,6 +28,7 @@ import com.subgraph.orchid.ConnectionIOException;
 import com.subgraph.orchid.ConnectionTimeoutException;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.Tor;
+import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.circuits.TorInitializationTracker;
 import com.subgraph.orchid.circuits.cells.CellImpl;
@@ -46,6 +47,7 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 	private final static int DEFAULT_CONNECT_TIMEOUT = 5000;
 	private final static Cell connectionClosedSentinel = CellImpl.createCell(0, 0);
 
+	private final TorConfig config;
 	private final SSLSocket socket;
 	private InputStream input;
 	private OutputStream output;
@@ -63,7 +65,8 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 	private final AtomicLong lastActivity = new AtomicLong();
 	
 
-	public ConnectionImpl(SSLSocket socket, Router router, TorInitializationTracker tracker, boolean isDirectoryConnection) {
+	public ConnectionImpl(TorConfig config, SSLSocket socket, Router router, TorInitializationTracker tracker, boolean isDirectoryConnection) {
+		this.config = config;
 		this.socket = socket;
 		this.router = router;
 		this.circuitMap = new HashMap<Integer, Circuit>();
@@ -128,7 +131,7 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 
 	private void doConnect() throws IOException, InterruptedException, ConnectionIOException {
 		connectSocket();
-		final ConnectionHandshakeV2 handshake = new ConnectionHandshakeV2(this, socket);		
+		final ConnectionHandshake handshake = ConnectionHandshake.createHandshake(config, this, socket);
 		input = socket.getInputStream();
 		output = socket.getOutputStream();
 		readCellsThread.start();
@@ -253,6 +256,8 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 		switch(command) {
 		case Cell.NETINFO:
 		case Cell.VERSIONS:
+		case Cell.CERTS:
+		case Cell.AUTH_CHALLENGE:
 			connectionControlCells.add(cell);
 			break;
 
