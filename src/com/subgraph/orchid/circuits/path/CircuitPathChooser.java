@@ -3,6 +3,7 @@ package com.subgraph.orchid.circuits.path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,10 +45,19 @@ public class CircuitPathChooser {
 		return Arrays.asList(dir);
 	}
 	
+	public List<Router> chooseInternalPath() throws InterruptedException, PathSelectionFailedException {
+		final Set<Router> excluded = Collections.emptySet();
+		final Router finalRouter = chooseMiddleNode(excluded);
+		return choosePathWithFinal(finalRouter);
+	}
 
 	public List<Router> choosePathWithExit(Router exitRouter) throws InterruptedException, PathSelectionFailedException {
+		return choosePathWithFinal(exitRouter);
+	}
+
+	public List<Router> choosePathWithFinal(Router finalRouter) throws InterruptedException, PathSelectionFailedException {
 		final Set<Router> excluded = new HashSet<Router>();
-		excludeChosenRouterAndRelated(exitRouter, excluded);
+		excludeChosenRouterAndRelated(finalRouter, excluded);
 
 		final Router middleRouter = chooseMiddleNode(excluded);
 		if(middleRouter == null) {
@@ -59,7 +69,7 @@ public class CircuitPathChooser {
 		if(entryRouter == null) {
 			throw new PathSelectionFailedException("Failed to select suitable entry node");
 		}
-		return Arrays.asList(entryRouter, middleRouter, exitRouter);
+		return Arrays.asList(entryRouter, middleRouter, finalRouter);
 	}
 
 	public Router chooseEntryNode(final Set<Router> excludedRouters) throws InterruptedException {
