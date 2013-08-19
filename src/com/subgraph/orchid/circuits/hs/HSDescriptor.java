@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.subgraph.orchid.crypto.TorPublicKey;
+import com.subgraph.orchid.crypto.TorRandom;
 import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.data.Timestamp;
 
@@ -67,5 +68,29 @@ public class HSDescriptor {
 		return protocolVersions;
 	}
 	
-
+	List<IntroductionPoint> getIntroductionPoints() {
+		return new ArrayList<IntroductionPoint>(introductionPoints);
+	}
+	
+	List<IntroductionPoint> getShuffledIntroductionPoints() {
+		return shuffle(getIntroductionPoints());
+	}
+	
+	private List<IntroductionPoint> shuffle(List<IntroductionPoint> list) {
+		final TorRandom r = new TorRandom();
+		final int sz = list.size();
+		for(int i = 0; i < sz; i++) {
+			swap(list, i, r.nextInt(sz));
+		}
+		return list;
+	}
+	
+	private void swap(List<IntroductionPoint> list, int a, int b) {
+		if(a == b) {
+			return;
+		}
+		final IntroductionPoint tmp = list.get(a);
+		list.set(a, list.get(b));
+		list.set(b, tmp);
+	}
 }
