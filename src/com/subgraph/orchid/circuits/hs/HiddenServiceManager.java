@@ -16,12 +16,15 @@ public class HiddenServiceManager {
 	private final static Logger logger = Logger.getLogger(HiddenServiceManager.class.getName());
 	
 	private final Map<String, HiddenService> hiddenServices;
+	
+	private final Directory directory;
 	private final HSDirectories hsDirectories;
 	private final ConnectionCache connectionCache;
 	private final CircuitManagerImpl circuitManager;
 	private final CircuitPathChooser pathChooser;
 	
 	public HiddenServiceManager(Directory directory, ConnectionCache connectionCache, CircuitManagerImpl circuitManager, CircuitPathChooser pathChooser) {
+		this.directory = directory;
 		this.hiddenServices = new HashMap<String, HiddenService>();
 		this.hsDirectories = new HSDirectories(directory);
 		this.connectionCache = connectionCache;
@@ -31,20 +34,49 @@ public class HiddenServiceManager {
 	
 	public Stream getStreamTo(String onion, int port) {
 		logger.warning("Stream requested for: "+ onion + ":"+ port);
-		getDescriptorFor(onion);
+		Circuit circuit = getCircuitTo(onion);
+		
 		return null;
 	}
 	
 	Circuit getCircuitTo(String onion) {
+		final HiddenService hs = getHiddenServiceForOnion(onion);
+		
+		if(hs.getCircuit() == null) {
+			final RendezvousCircuit c = openCircuitTo(hs);
+			if(c == null) {
+				
+				// XXX
+				return null;
+			}
+			hs.setCircuit(c);
+		}
+		return hs.getCircuit();
+	}
+	
+	private RendezvousCircuit openCircuitTo(HiddenService hs) {
+		HSDescriptor descriptor = getDescriptorFor(hs);
+		RendezvousCircuitBuilder builder = new RendezvousCircuitBuilder(directory, connectionCache, circuitManager, pathChooser, hs.getDescriptor());
+		try {
+			return builder.call();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
 		return null;
 	}
 
-	HSDescriptor getDescriptorFor(String onion) {
-		final HiddenService hs = getHiddenServiceForOnion(onion);
+	
+	HSDescriptor getDescriptorFor(HiddenService hs) {
 		if(hs.hasCurrentDescriptor()) {
 			return hs.getDescriptor();
 		}
 		final HSDescriptor descriptor = downloadDescriptorFor(hs);
+		if(descriptor == null) {
+			// XXX
+		}
 		hs.setDescriptor(descriptor);
 		return descriptor;
 	}
