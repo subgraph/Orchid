@@ -1,6 +1,5 @@
 package com.subgraph.orchid.circuits.hs;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.List;
@@ -57,7 +56,7 @@ public class HSDescriptorDownloader {
 		final HSCircuitResult result = new HSCircuitResult();
 		
 		CircuitCreationRequest request = new CircuitCreationRequest(pathChooser, circuit, result);
-		CircuitBuildTask task = new CircuitBuildTask(request, connectionCache, null);
+		CircuitBuildTask task = new CircuitBuildTask(request, connectionCache);
 		task.run();
 		if(!result.isSuccessful()) {
 			return null;
@@ -68,7 +67,7 @@ public class HSDescriptorDownloader {
 			http.sendGetRequest("/tor/rendezvous2/"+ directory.getDescriptorId().toBase32());
 			http.readResponse();
 			if(http.getStatusCode() == 200) {
-				readDocument(http.getBodyReader());
+				return readDocument(http.getBodyReader());
 			} else {
 				
 			}
@@ -93,18 +92,17 @@ public class HSDescriptorDownloader {
 		
 	}
 	
-	private void readDocument(Reader reader) {
+	private HSDescriptor readDocument(Reader reader) {
 		DocumentFieldParserImpl fieldParser = new DocumentFieldParserImpl(reader);
 		HSDescriptorParser parser = new HSDescriptorParser(fieldParser);
 		DescriptorParseResult result = new DescriptorParseResult();
 		parser.parse(result);
-		System.out.println("done...");
-
-		
+		return result.getDescriptor();
 	}
 	
 	private static class DescriptorParseResult implements DocumentParsingResultHandler<HSDescriptor> {
 		HSDescriptor descriptor;
+		
 		HSDescriptor getDescriptor() {
 			return descriptor;
 		}
