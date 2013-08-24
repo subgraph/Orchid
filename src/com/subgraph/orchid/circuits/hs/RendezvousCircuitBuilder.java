@@ -4,132 +4,94 @@ import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
 import com.subgraph.orchid.Circuit;
-import com.subgraph.orchid.CircuitBuildHandler;
-import com.subgraph.orchid.CircuitNode;
-import com.subgraph.orchid.Connection;
-import com.subgraph.orchid.ConnectionCache;
 import com.subgraph.orchid.Directory;
 import com.subgraph.orchid.Router;
-import com.subgraph.orchid.circuits.CircuitBase;
-import com.subgraph.orchid.circuits.CircuitBuildTask;
-import com.subgraph.orchid.circuits.CircuitCreationRequest;
+import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.circuits.CircuitManagerImpl;
-import com.subgraph.orchid.circuits.path.CircuitPathChooser;
 
-public class RendezvousCircuitBuilder implements Callable<RendezvousCircuit>{
+public class RendezvousCircuitBuilder implements Callable<Circuit>{
 	private final Logger logger = Logger.getLogger(RendezvousCircuitBuilder.class.getName());
 	
-	private final static int MAX_CIRCUIT_OPEN_ATTEMPTS = 5;
-	
 	private final Directory directory;
-	private final ConnectionCache connectionCache;
+	
 	private final CircuitManagerImpl circuitManager;
-	private final CircuitPathChooser pathChooser;
+	private final HiddenService hiddenService;
 	private final HSDescriptor serviceDescriptor;
 	
-	public RendezvousCircuitBuilder(Directory directory, ConnectionCache connectionCache, CircuitManagerImpl circuitManager, CircuitPathChooser pathChooser, HSDescriptor descriptor) {
+	public RendezvousCircuitBuilder(Directory directory, CircuitManagerImpl circuitManager, HiddenService hiddenService, HSDescriptor descriptor) {
 		this.directory = directory;
-		this.connectionCache = connectionCache;
 		this.circuitManager = circuitManager;
-		this.pathChooser = pathChooser;
+		this.hiddenService = hiddenService;
 		this.serviceDescriptor = descriptor;
 	}
 	
-	public RendezvousCircuit call() throws Exception {
-		logger.info("Opening rendezvous circuit");
-		final RendezvousCircuit circuit = openRendezvous();
-		logger.info("Establishing rendezvous");
-		if(!circuit.establishRendezvous()) {
-			circuit.markForClose();
+	public Circuit call() throws Exception {
+		
+		logger.fine("Opening rendezvous circuit for "+ logServiceName());
+		
+		final Circuit rendezvous = circuitManager.getCleanInternalCircuit();
+		logger.fine("Establishing rendezvous for "+ logServiceName());
+		RendezvousProcessor rp = new RendezvousProcessor(rendezvous);
+		if(!rp.establishRendezvous()) {
+			rendezvous.markForClose();
 			return null;
 		}
-		logger.info("Opening introduction circuit");
-		final IntroductionCircuit introductionCircuit = openIntroduction();
-		if(introductionCircuit == null) {
+		logger.fine("Opening introduction circuit for "+ logServiceName());
+		final IntroductionProcessor introductionProcessor = openIntroduction();
+		if(introductionProcessor == null) {
 			logger.info("Failed to open connection to any introduction point");
-			circuit.markForClose();
+			rendezvous.markForClose();
 			return null;
 		}
-		logger.info("Sending introduce cell");
-		final boolean icResult = introductionCircuit.sendIntroduce(serviceDescriptor.getPermanentKey(), circuit.getPublicKeyBytes(), circuit.getCookie(), circuit.getRendezvousRouter());
-		introductionCircuit.markForClose();
+		logger.fine("Sending introduce cell for "+ logServiceName());
+		
+		final boolean icResult = introductionProcessor.sendIntroduce(introductionProcessor.getServiceKey(), rp.getPublicKeyBytes(), rp.getCookie(), rp.getRendezvousRouter());
+		introductionProcessor.markCircuitForClose();
 		if(!icResult) {
-			circuit.markForClose();
+			rendezvous.markForClose();
 			return null;
 		}
-		logger.info("Processing RV2");
-		if(!circuit.processRendezvous2()) {
-			circuit.markForClose();
+		logger.fine("Processing RV2 for "+ logServiceName());
+		if(!rp.processRendezvous2()) {
+			rendezvous.markForClose();
 			return null;
 		}
 
-		logger.info("finished");
+		logger.fine("Rendezvous circuit opened for "+ logServiceName());
 		
-		return circuit;
+		return rendezvous;
 	}
 	
-	private IntroductionCircuit openIntroduction() {
+	private String logServiceName() {
+		return hiddenService.getOnionAddressForLogging();
+	}
+	
+	private IntroductionProcessor openIntroduction() {
 		for(IntroductionPoint ip: serviceDescriptor.getShuffledIntroductionPoints()) {
-			final IntroductionCircuit circuit = attemptOpenIntroductionCircuit(ip);
+			final Circuit circuit = attemptOpenIntroductionCircuit(ip);
 			if(circuit != null) {
-				return circuit;
+				return new IntroductionProcessor(circuit, ip);
 			}
 		}
 		return null;
 	}
 	
-	private IntroductionCircuit attemptOpenIntroductionCircuit(IntroductionPoint ip) {
+	private Circuit attemptOpenIntroductionCircuit(IntroductionPoint ip) {
 		final Router r = directory.getRouterByIdentity(ip.getIdentity());
 		if(r == null) {
 			return null;
 		}
-		for(int i = 0; i < MAX_CIRCUIT_OPEN_ATTEMPTS; i++) {
-			final IntroductionCircuit circuit = new IntroductionCircuit(circuitManager, r, ip);
-			if(attemptOpenCircuit(circuit)) {
-				return circuit;
-			}
-		}
-		return null;
-	}
-
-	private RendezvousCircuit openRendezvous() {
-		for(int i = 0; i < MAX_CIRCUIT_OPEN_ATTEMPTS; i++) {
-			final RendezvousCircuit circuit = new RendezvousCircuit(circuitManager);
-			if(attemptOpenCircuit(circuit)) {
-				return circuit;
-			}
-		}
-		return null;
-	}
-
-	private boolean attemptOpenCircuit(CircuitBase circuit) {
-		final CircuitBuildResult result = new CircuitBuildResult();
-		final CircuitCreationRequest request = new CircuitCreationRequest(pathChooser, circuit, result);
-		final CircuitBuildTask task = new CircuitBuildTask(request, connectionCache);
-		task.run();
-		return result.isSuccessful();
-	}
-
-	private static class CircuitBuildResult implements CircuitBuildHandler {
-		private boolean isFailed;
 		
-		public void connectionCompleted(Connection connection) {}
-		public void nodeAdded(CircuitNode node) {
-			System.out.println("node added: "+ node);
+		try {
+			final Circuit circuit = circuitManager.getCleanInternalCircuit();
+			circuit.cannibalizeTo(r);
+			return circuit;
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			return null;
+		} catch (TorException e) {
+			logger.fine("cannibalizeTo() failed : "+ e.getMessage());
+			return null;
 		}
-		public void circuitBuildCompleted(Circuit circuit) {}
-		
-		public void connectionFailed(String reason) {
-			isFailed = true;
-		}
-
-		public void circuitBuildFailed(String reason) {
-			isFailed = true;
-		}
-		
-		boolean isSuccessful() {
-			return !isFailed;
-		}
-		
 	}
 }

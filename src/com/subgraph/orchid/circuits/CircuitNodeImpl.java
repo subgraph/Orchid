@@ -14,8 +14,9 @@ import com.subgraph.orchid.crypto.TorMessageDigest;
 import com.subgraph.orchid.data.HexDigest;
 
 public class CircuitNodeImpl implements CircuitNode {
-	static CircuitNodeImpl createForRouter(Router router) {
-		return new CircuitNodeImpl(router);
+	
+	public static CircuitNodeImpl createAnonymous(CircuitNode previous) {
+		return new CircuitNodeImpl(previous);
 	}
 
 	private final static int CIRCWINDOW_START = 1000;
@@ -23,7 +24,7 @@ public class CircuitNodeImpl implements CircuitNode {
 	private final TorKeyAgreement dhContext;
 	private final Router router;
 	private CircuitNodeCryptoState cryptoState;
-	private final CircuitNodeImpl previousNode;
+	private final CircuitNode previousNode;
 
 	private final Object windowLock;
 	private int packageWindow;
@@ -31,11 +32,11 @@ public class CircuitNodeImpl implements CircuitNode {
 	
 	private TorCreateFastKeyAgreement createFastContext;
 
-	private CircuitNodeImpl(Router router) {
-		this(router, null);
+	private CircuitNodeImpl(CircuitNode previous) {
+		this(null, previous);
 	}
 
-	protected CircuitNodeImpl(Router router, CircuitNodeImpl previous) {
+	CircuitNodeImpl(Router router, CircuitNode previous) {
 		previousNode = previous;
 		this.router = router;
 		this.dhContext = new TorKeyAgreement();
@@ -66,7 +67,7 @@ public class CircuitNodeImpl implements CircuitNode {
 			throw new TorException("Digest verification failed!");
 	}
 
-	public CircuitNodeImpl getPreviousNode() {
+	public CircuitNode getPreviousNode() {
 		return previousNode;
 	}
 
@@ -74,7 +75,7 @@ public class CircuitNodeImpl implements CircuitNode {
 		cryptoState.encryptForwardCell(cell);
 	}
 
-	boolean decryptBackwardCell(Cell cell) {
+	public boolean decryptBackwardCell(Cell cell) {
 		return cryptoState.decryptBackwardCell(cell);
 	}
 
@@ -88,6 +89,10 @@ public class CircuitNodeImpl implements CircuitNode {
 
 	protected TorKeyAgreement getKeyAgreement() {
 		return dhContext;
+	}
+	
+	public byte[] getPublicKeyBytes() {
+		return dhContext.getPublicKeyBytes();
 	}
 	
 	byte[] createOnionSkin() {
@@ -120,7 +125,11 @@ public class CircuitNodeImpl implements CircuitNode {
 	}
 
 	public String toString() {
-		return "|"+ router.getNickname() + "|";
+		if(router != null) {
+			return "|"+ router.getNickname() + "|";
+		} else {
+			return "|()|";
+		}
 	}
 
 	public void decrementDeliverWindow() {

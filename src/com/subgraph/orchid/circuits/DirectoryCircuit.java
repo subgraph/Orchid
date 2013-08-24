@@ -7,11 +7,18 @@ import com.subgraph.orchid.Router;
 import com.subgraph.orchid.Stream;
 import com.subgraph.orchid.StreamConnectFailedException;
 import com.subgraph.orchid.circuits.path.CircuitPathChooser;
+import com.subgraph.orchid.circuits.path.PathSelectionFailedException;
 
 public class DirectoryCircuit extends CircuitBase {
 
-	protected DirectoryCircuit(CircuitManagerImpl circuitManager) {
+	private final Router target;
+	
+	protected DirectoryCircuit(CircuitManagerImpl circuitManager, Router target) {
 		super(circuitManager);
+		this.target = target;
+	}
+	protected DirectoryCircuit(CircuitManagerImpl circuitManager) {
+		this(circuitManager, null);
 	}
 	
 	boolean isDirectoryCircuit() {
@@ -30,7 +37,15 @@ public class DirectoryCircuit extends CircuitBase {
 	}
 
 	@Override
-	protected List<Router> choosePath(CircuitPathChooser pathChooser) {
-		return pathChooser.chooseDirectoryPath();
+	protected List<Router> choosePath(CircuitPathChooser pathChooser) throws InterruptedException, PathSelectionFailedException {
+		if(target != null) {
+			return pathChooser.choosePathWithFinal(target);
+		} else {
+			return pathChooser.chooseDirectoryPath();
+		}
+	}
+
+	public CircuitType getCircuitType() {
+		return CircuitType.CIRCUIT_DIRECTORY;
 	}
 }

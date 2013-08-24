@@ -38,15 +38,19 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 	static DirectoryCircuit createDirectoryCircuit(CircuitManagerImpl circuitManager) {
 		return new DirectoryCircuit(circuitManager);
 	}
+	
+	static DirectoryCircuit createDirectoryCircuit(CircuitManagerImpl circuitManager, Router target) {
+		return new DirectoryCircuit(circuitManager, target);
+	}
 
 	private final CircuitManagerImpl circuitManager;
-	private final List<CircuitNodeImpl> nodeList;
+	private final List<CircuitNode> nodeList;
 	private final CircuitStatus status;
 
 	private CircuitIO io;
 
 	protected CircuitBase(CircuitManagerImpl circuitManager) {
-		nodeList = new ArrayList<CircuitNodeImpl>();
+		nodeList = new ArrayList<CircuitNode>();
 		this.circuitManager = circuitManager;
 		status = new CircuitStatus();
 	}
@@ -73,10 +77,6 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 		} else {
 			return io.isMarkedForClose();
 		}
-	}
-
-	boolean isDirectoryCircuit() {
-		return false;
 	}
 	
 	CircuitStatus getStatus() {
@@ -108,10 +108,6 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 		circuitManager.addActiveCircuit(this);
 	}
 	
-	void notifyCircuitPathChosen(List<Router> circuitPath) {
-		status.setCircuitPath(circuitPath);
-	}
-	
 	void notifyCircuitBuildFailed() {
 		status.setStateFailed();
 		circuitManager.removeActiveCircuit(this);
@@ -129,7 +125,11 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 	}
 
 	public int getCircuitId() {
-		return io.getCircuitId();
+		if(io == null) {
+			return 0;
+		} else {
+			return io.getCircuitId();
+		}
 	}
 
 	public void sendRelayCell(RelayCell cell) {
@@ -140,11 +140,11 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 		io.sendRelayCellTo(cell, getFinalCircuitNode());
 	}
 
-	protected void appendNode(CircuitNodeImpl node) {
+	public void appendNode(CircuitNode node) {
 		nodeList.add(node);
 	}
 
-	List<CircuitNodeImpl> getNodeList() {
+	List<CircuitNode> getNodeList() {
 		return nodeList;
 	}
 
@@ -152,7 +152,7 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 		return nodeList.size();
 	}
 
-	public CircuitNodeImpl getFinalCircuitNode() {
+	public CircuitNode getFinalCircuitNode() {
 		if(nodeList.isEmpty())
 			throw new TorException("getFinalCircuitNode() called on empty circuit");
 		return nodeList.get( getCircuitLength() - 1);
@@ -199,16 +199,12 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 		throw new UnsupportedOperationException();
 	}
 
+	public void cannibalizeTo(Router target) {
+		throw new UnsupportedOperationException();
+	}
+
 	protected StreamImpl createNewStream() {
 		return io.createNewStream();
-	}
-
-	protected Router getFinalRouter() {
-		return getFinalCircuitNode().getRouter();
-	}
-
-	boolean isFinalNodeDirectory() {
-		return getFinalCircuitNode().getRouter().getDirectoryPort() != 0;
 	}
 
 	void setStateDestroyed() {
@@ -251,12 +247,11 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 	}
 	
 	public String toString() {
-		int id = (io == null) ? 0 : io.getCircuitId();
-		return "  Circuit id="+ id +" state=" + status.getStateAsString() +" "+ pathToString();
+		return "  Circuit ("+ getCircuitType() + ") id="+ getCircuitId() +" state=" + status.getStateAsString() +" "+ pathToString();
 	}
 
 	
-	private  String pathToString() {
+	protected String pathToString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("[");
 		for(CircuitNode node: nodeList) {

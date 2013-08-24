@@ -1,40 +1,39 @@
 package com.subgraph.orchid.circuits.hs;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.logging.Logger;
 
 import com.subgraph.orchid.Cell;
+import com.subgraph.orchid.Circuit;
+import com.subgraph.orchid.CircuitNode;
 import com.subgraph.orchid.RelayCell;
 import com.subgraph.orchid.Router;
-import com.subgraph.orchid.circuits.CircuitBase;
-import com.subgraph.orchid.circuits.CircuitManagerImpl;
-import com.subgraph.orchid.circuits.path.CircuitPathChooser;
-import com.subgraph.orchid.circuits.path.PathSelectionFailedException;
+import com.subgraph.orchid.circuits.CircuitNodeImpl;
 import com.subgraph.orchid.crypto.TorKeyAgreement;
 import com.subgraph.orchid.crypto.TorMessageDigest;
 import com.subgraph.orchid.crypto.TorRandom;
 import com.subgraph.orchid.data.HexDigest;
 
-public class RendezvousCircuit extends CircuitBase {
-	private final static Logger logger = Logger.getLogger(RendezvousCircuit.class.getName());
+public class RendezvousProcessor {
+	private final static Logger logger = Logger.getLogger(RendezvousProcessor.class.getName());
 	
 	private final static int RENDEZVOUS_COOKIE_LEN = 20;
 	private final static TorRandom random = new TorRandom();
 	
-	private HiddenServiceCircuitNode node;
+	private CircuitNode node;
+	private final Circuit circuit;
 	private final byte[] cookie;
 	
-	protected RendezvousCircuit(CircuitManagerImpl circuitManager) {
-		super(circuitManager);
+	protected RendezvousProcessor(Circuit circuit) {
+		this.circuit = circuit;
 		this.cookie = random.getBytes(RENDEZVOUS_COOKIE_LEN);
 	}
 	
 	boolean establishRendezvous() {
-		final RelayCell cell = createRelayCell(RelayCell.RELAY_COMMAND_ESTABLISH_RENDEZVOUS, 0, getFinalCircuitNode());
+		final RelayCell cell = circuit.createRelayCell(RelayCell.RELAY_COMMAND_ESTABLISH_RENDEZVOUS, 0, circuit.getFinalCircuitNode());
 		cell.putByteArray(cookie);
-		sendRelayCell(cell);
-		final RelayCell response = receiveRelayCell();
+		circuit.sendRelayCell(cell);
+		final RelayCell response = circuit.receiveRelayCell();
 		if(response == null) {
 			logger.info("Timeout waiting for Rendezvous establish response");
 			return false;
@@ -42,7 +41,7 @@ public class RendezvousCircuit extends CircuitBase {
 			logger.info("Response received from Rendezvous establish was not expected acknowledgement, Relay Command: "+ response.getRelayCommand());
 			return false;
 		} else {
-			node = new HiddenServiceCircuitNode(getFinalCircuitNode());
+			node = CircuitNodeImpl.createAnonymous(circuit.getFinalCircuitNode());
 			return true;
 		}
 	}
@@ -51,7 +50,7 @@ public class RendezvousCircuit extends CircuitBase {
 		if(node == null) {
 			throw new IllegalStateException("Can only be called after successful rendezvous establishment");
 		}
-		final RelayCell cell = receiveRelayCell();
+		final RelayCell cell = circuit.receiveRelayCell();
 		if(cell == null) {
 			logger.info("Timeout waiting for RENDEZVOUS2");
 			return false;
@@ -65,7 +64,7 @@ public class RendezvousCircuit extends CircuitBase {
 			return false;
 		}
 		node.setSharedSecret(peerPublic, handshakeDigest);
-		appendNode(node);
+		circuit.appendNode(node);
 		return true;
 	}
 	
@@ -90,7 +89,7 @@ public class RendezvousCircuit extends CircuitBase {
 	HexDigest readHandshakeDigest(Cell cell) {
 		final byte[] digestBytes = new byte[TorMessageDigest.TOR_DIGEST_SIZE];
 		cell.getByteArray(digestBytes);
-		return HexDigest.createDigestForData(digestBytes);
+		return HexDigest.createFromDigestBytes(digestBytes);
 	}
 	
 	
@@ -99,13 +98,6 @@ public class RendezvousCircuit extends CircuitBase {
 	}
 
 	Router getRendezvousRouter() {
-		return getFinalRouter();
+		return circuit.getFinalCircuitNode().getRouter();
 	}
-
-	@Override
-	protected List<Router> choosePath(CircuitPathChooser pathChooser)
-			throws InterruptedException, PathSelectionFailedException {
-		return pathChooser.chooseInternalPath();
-	}
-
 }

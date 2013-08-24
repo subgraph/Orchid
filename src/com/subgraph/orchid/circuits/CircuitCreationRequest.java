@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.subgraph.orchid.Circuit;
+import com.subgraph.orchid.Circuit.CircuitType;
 import com.subgraph.orchid.CircuitBuildHandler;
 import com.subgraph.orchid.CircuitNode;
 import com.subgraph.orchid.Connection;
@@ -50,7 +51,7 @@ public class CircuitCreationRequest implements CircuitBuildHandler {
 	}
 	
 	boolean isDirectoryCircuit() {
-		return circuit.isDirectoryCircuit();
+		return circuit.getCircuitType() == CircuitType.CIRCUIT_DIRECTORY;
 	}
 
 	public void connectionCompleted(Connection connection) {

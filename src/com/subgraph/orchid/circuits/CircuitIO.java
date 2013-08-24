@@ -70,7 +70,7 @@ public class CircuitIO implements DashboardRenderable {
 	}
 
 	private RelayCell decryptRelayCell(Cell cell) {
-		for(CircuitNodeImpl node: circuit.getNodeList()) {
+		for(CircuitNode node: circuit.getNodeList()) {
 			if(node.decryptBackwardCell(cell)) {
 				return RelayCellImpl.createFromCell(node, cell);
 			}
@@ -133,6 +133,7 @@ public class CircuitIO implements DashboardRenderable {
 		case RelayCell.RELAY_TRUNCATED:
 		case RelayCell.RELAY_COMMAND_RENDEZVOUS_ESTABLISHED:
 		case RelayCell.RELAY_COMMAND_INTRODUCE_ACK:
+		case RelayCell.RELAY_COMMAND_RENDEZVOUS2:
 			relayCellResponseQueue.add(relayCell);
 			break;	
 		case RelayCell.RELAY_DATA:

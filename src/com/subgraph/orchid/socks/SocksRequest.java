@@ -49,6 +49,9 @@ public abstract class SocksRequest {
 	}
 	
 	public String getTarget() {
+		if(config.getSafeLogging()) {
+			return "[scrubbed]:"+ port;
+		}
 		if(hostname != null) {
 			return hostname + ":" + port;
 		} else {

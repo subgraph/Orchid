@@ -9,6 +9,8 @@ import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.data.Timestamp;
 
 public class HSDescriptor {
+	private final static long MS_24_HOURS = (24 * 60 * 60 * 1000);
+	private final HiddenService hiddenService;
 	private HexDigest descriptorId;
 	private Timestamp publicationTime;
 	private HexDigest secretIdPart;
@@ -16,10 +18,15 @@ public class HSDescriptor {
 	private int[] protocolVersions;
 	private List<IntroductionPoint> introductionPoints;
 	
-	public HSDescriptor() {
+	public HSDescriptor(HiddenService hiddenService) {
+		this.hiddenService = hiddenService;
 		introductionPoints = new ArrayList<IntroductionPoint>();
 	}
-	
+
+	HiddenService getHiddenService() {
+		return hiddenService;
+	}
+
 	void setPublicationTime(Timestamp ts) {
 		this.publicationTime = ts;
 	}
@@ -68,6 +75,12 @@ public class HSDescriptor {
 		return protocolVersions;
 	}
 	
+	boolean isExpired() {
+		final long now = System.currentTimeMillis();
+		final long then = publicationTime.getTime();
+		return (now - then) > MS_24_HOURS;
+	}
+
 	List<IntroductionPoint> getIntroductionPoints() {
 		return new ArrayList<IntroductionPoint>(introductionPoints);
 	}

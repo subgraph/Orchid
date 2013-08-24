@@ -21,10 +21,10 @@ public class HSDescriptorParser implements DocumentParser<HSDescriptor>{
 	
 	private DocumentParsingResultHandler<HSDescriptor> resultHandler;
 	
-	public HSDescriptorParser(DocumentFieldParser fieldParser) {
+	public HSDescriptorParser(HiddenService hiddenService, DocumentFieldParser fieldParser) {
 		this.fieldParser = fieldParser;
 		this.fieldParser.setHandler(createParsingHandler());
-		this.descriptor = new HSDescriptor();
+		this.descriptor = new HSDescriptor(hiddenService);
 	}
 	
 	private DocumentParsingHandler createParsingHandler() {
@@ -101,22 +101,21 @@ public class HSDescriptorParser implements DocumentParser<HSDescriptor>{
 	private void processIntroductionPoints() {
 		final DocumentObject ob = fieldParser.parseObject();
 		final String decoded = new String(Base64.decode(ob.getContent(false)));
-		System.out.println(decoded);
 		final StringReader reader = new StringReader(decoded);
 		final IntroductionPointParser parser = new IntroductionPointParser(new DocumentFieldParserImpl(reader));
 		parser.parse(new DocumentParsingResultHandler<IntroductionPoint>() {
 
 			public void documentParsed(IntroductionPoint document) {
-				logger.warning("adding intro point "+ document.getIdentity());
+				logger.fine("adding intro point "+ document.getIdentity());
 				descriptor.addIntroductionPoint(document);
 			}
 
 			public void documentInvalid(IntroductionPoint document, String message) {
-				logger.warning("Invalid introduction point received");
+				logger.info("Invalid introduction point received");
 			}
 
 			public void parsingError(String message) {
-				logger.warning("Error parsing introduction points: "+ message);
+				logger.info("Error parsing introduction points: "+ message);
 			} 
 		});
 	}
@@ -129,7 +128,6 @@ public class HSDescriptorParser implements DocumentParser<HSDescriptor>{
 			fieldParser.logWarn("Signature failed for descriptor: "+ descriptor.getDescriptorId().toBase32());
 			return;
 		}
-		System.out.println("SIGNATURE OK");
 		resultHandler.documentParsed(descriptor);
 	}
 }

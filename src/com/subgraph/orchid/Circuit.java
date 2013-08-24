@@ -12,6 +12,8 @@ import com.subgraph.orchid.data.exitpolicy.ExitTarget;
  *
  */
 public interface Circuit {
+	enum CircuitType { CIRCUIT_EXIT, CIRCUIT_DIRECTORY, CIRCUIT_INTERNAL }
+	
 	/**
 	 * Return <code>true</code> if the circuit is presently in the connected state or
 	 * <code>false</code> otherwise.
@@ -103,6 +105,7 @@ public interface Circuit {
 	 */
 	CircuitNode getFinalCircuitNode();
 
+	
 	/**
 	 * Return true if the final node of this circuit is believed to be able to connect to
 	 * the specified <code>ExitTarget</code>.  Returns false if the target destination is
@@ -131,4 +134,10 @@ public interface Circuit {
 	List<Stream> getActiveStreams();
 
 	void markForClose();
+	
+	void cannibalizeTo(Router target);
+	
+	CircuitType getCircuitType();
+	
+	void appendNode(CircuitNode node);
 }

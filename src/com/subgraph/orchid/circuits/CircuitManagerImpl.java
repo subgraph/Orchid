@@ -5,7 +5,9 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -13,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.subgraph.orchid.Circuit;
+import com.subgraph.orchid.Circuit.CircuitType;
 import com.subgraph.orchid.CircuitBuildHandler;
 import com.subgraph.orchid.CircuitManager;
 import com.subgraph.orchid.CircuitNode;
@@ -44,6 +47,9 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	private final TorConfig config;
 	private final ConnectionCache connectionCache;
 	private final Set<CircuitBase> activeCircuits;
+	private final Queue<Circuit> cleanInternalCircuits;
+	private int requestedInternalCircuitCount = 0;
+	private int pendingInternalCircuitCount = 0;
 	private final TorRandom random;
 	private final PendingExitStreams pendingExitStreams;
 	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -62,10 +68,11 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		this.pendingExitStreams = new PendingExitStreams(config);
 		this.circuitCreationTask = new CircuitCreationTask(config, directory, connectionCache, pathChooser, this, initializationTracker);
 		this.activeCircuits = new HashSet<CircuitBase>();
+		this.cleanInternalCircuits = new LinkedList<Circuit>();
 		this.random = new TorRandom();
 		
 		this.initializationTracker = initializationTracker;
-		this.hiddenServiceManager = new HiddenServiceManager(directory, connectionCache, this, pathChooser);
+		this.hiddenServiceManager = new HiddenServiceManager(config, directory, this);
 	}
 
 	public void notifyInitializationEvent(int eventCode) {
@@ -83,6 +90,7 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	void addActiveCircuit(CircuitBase circuit) {
 		synchronized (activeCircuits) {
 			activeCircuits.add(circuit);
+			activeCircuits.notifyAll();
 		}
 	}
 	
@@ -90,22 +98,6 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		synchronized (activeCircuits) {
 			activeCircuits.remove(circuit);
 		}
-	}
-
-	Set<Circuit> getCleanCircuits() {
-		final Set<Circuit> result = new HashSet<Circuit>();
-		synchronized(activeCircuits) {
-			for(CircuitBase c: activeCircuits) {
-				if(c.isClean() && !c.isDirectoryCircuit()) {
-					result.add(c);
-				}
-			}
-		}
-		return result;
-	}
-	
-	synchronized int getCleanCircuitCount() {
-		return getCleanCircuits().size();
 	}
 
 	synchronized int getActiveCircuitCount() {
@@ -136,11 +128,11 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		return result;
 	}
 
-	List<Circuit> getRandomlyOrderedListOfActiveCircuits() {
+	List<Circuit> getRandomlyOrderedListOfExitCircuits() {
 		final Set<Circuit> notDirectory = getCircuitsByFilter(new CircuitFilter() {
 			
 			public boolean filter(CircuitBase circuit) {
-				return !circuit.isDirectoryCircuit() && !circuit.isMarkedForClose() && circuit.isConnected();
+				return circuit.getCircuitType() == CircuitType.CIRCUIT_EXIT && !circuit.isMarkedForClose() && circuit.isConnected();
 			}
 		});
 		final ArrayList<Circuit> ac = new ArrayList<Circuit>(notDirectory);
@@ -225,6 +217,19 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		}
 		throw new OpenFailedException("Retry count exceeded opening directory stream");
 	}
+	
+	public Stream openDirectoryStreamTo(Router target) throws InterruptedException, TimeoutException, OpenFailedException {
+		final CircuitBase circuit = CircuitBase.createDirectoryCircuit(this, target);
+		if(!tryOpenDirectoryCircuit(circuit)) {
+			throw new OpenFailedException("Failed to open circuit to "+ target);
+		}
+		try {
+			return circuit.openDirectoryStream(OPEN_DIRECTORY_STREAM_TIMEOUT);
+		} catch (StreamConnectFailedException e) {
+			circuit.markForClose();
+			throw new OpenFailedException("Failed opening directory stream to "+ target);
+		}
+	}
 
 	private CircuitBase openDirectoryCircuit() throws OpenFailedException {
 		int failCount = 0;
@@ -292,4 +297,52 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 			renderer.renderComponent(writer, flags, c);
 		}
 	}
+
+	public Circuit getCleanInternalCircuit() throws InterruptedException {
+		synchronized(cleanInternalCircuits) {
+			try {
+				requestedInternalCircuitCount += 1;
+				while(cleanInternalCircuits.isEmpty()) {
+					cleanInternalCircuits.wait();
+				}
+				return cleanInternalCircuits.remove();
+			} finally {
+				requestedInternalCircuitCount -= 1;
+			}
+		}
+	}
+
+	int getNeededCleanCircuitCount(boolean isPredicted) {
+		synchronized (cleanInternalCircuits) {
+			final int predictedCount = (isPredicted) ? 2 : 0;
+			final int needed = Math.max(requestedInternalCircuitCount, predictedCount) - (pendingInternalCircuitCount + cleanInternalCircuits.size());
+			if(needed < 0) {
+				return 0;
+			} else {
+				return needed;
+			}
+		}
+	}
+	
+	void incrementPendingInternalCircuitCount() {
+		synchronized (cleanInternalCircuits) {
+			pendingInternalCircuitCount += 1;
+		}
+	}
+	
+	void decrementPendingInternalCircuitCount() {
+		synchronized (cleanInternalCircuits) {
+			pendingInternalCircuitCount -= 1;
+		}
+	}
+
+	void addCleanInternalCircuit(Circuit circuit) {
+		synchronized(cleanInternalCircuits) {
+			pendingInternalCircuitCount -= 1;
+			cleanInternalCircuits.add(circuit);
+			cleanInternalCircuits.notifyAll();
+		}
+	}
+
+	
 }

@@ -1,5 +1,9 @@
 package com.subgraph.orchid;
 
+import java.math.BigInteger;
+
+import com.subgraph.orchid.data.HexDigest;
+
 
 /**
  * Represents the state of a single onion router hop in a connected or connecting {@link Circuit}
@@ -84,4 +88,10 @@ public interface CircuitNode {
 	 * cell would be appropriate.
 	 */
 	boolean considerSendingSendme();
+	
+	boolean decryptBackwardCell(Cell cell);
+	byte[] getPublicKeyBytes();
+	void setSharedSecret(BigInteger peerPublic, HexDigest packetDigest);
+
+
 }

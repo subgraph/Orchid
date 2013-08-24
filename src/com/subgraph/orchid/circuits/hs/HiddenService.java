@@ -4,19 +4,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.subgraph.orchid.Circuit;
+import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.crypto.TorMessageDigest;
 import com.subgraph.orchid.data.Base32;
 import com.subgraph.orchid.data.HexDigest;
 
 public class HiddenService {
 	
+	private final TorConfig config;
 	private final byte[] permanentId;
 	private final byte[] cookie;
 
 	private HSDescriptor descriptor;
-	private RendezvousCircuit circuit;
+	private Circuit circuit;
 	
-	private static byte[] decodeOnion(String onionAddress) {
+	static byte[] decodeOnion(String onionAddress) {
 		final int idx = onionAddress.indexOf(".onion");
 		if(idx == -1) {
 			return Base32.base32Decode(onionAddress);
@@ -25,17 +28,30 @@ public class HiddenService {
 		}
 	}
 	
-	HiddenService(String onionAddress) {
-		this(decodeOnion(onionAddress), null);
+	HiddenService(TorConfig config, byte[] permanentId) {
+		this(config, permanentId, null);
 	}
 	
-	HiddenService(byte[] permanentId, byte[] cookie) {
+	HiddenService(TorConfig config, byte[] permanentId, byte[] cookie) {
+		this.config = config;
 		this.permanentId = permanentId;
 		this.cookie = cookie;
 	}
 
+	String getOnionAddressForLogging() {
+		if(config.getSafeLogging()) {
+			return "[scrubbed]";
+		} else {
+			return getOnionAddress();
+		}
+	}
+
+	String getOnionAddress() {
+		return Base32.base32Encode(permanentId) + ".onion";
+	}
+
 	boolean hasCurrentDescriptor() {
-		return false;
+		return (descriptor != null && !descriptor.isExpired());
 	}
 	
 	HSDescriptor getDescriptor() {
@@ -46,11 +62,11 @@ public class HiddenService {
 		this.descriptor = descriptor;
 	}
 
-	RendezvousCircuit getCircuit() {
+	Circuit getCircuit() {
 		return circuit;
 	}
 	
-	void setCircuit(RendezvousCircuit circuit) {
+	void setCircuit(Circuit circuit) {
 		this.circuit = circuit;
 	}
 

@@ -75,4 +75,8 @@ public class ExitCircuit extends CircuitBase {
 	protected List<Router> choosePath(CircuitPathChooser pathChooser) throws InterruptedException, PathSelectionFailedException {
 		return pathChooser.choosePathWithExit(exitRouter);
 	}
+
+	public CircuitType getCircuitType() {
+		return CircuitType.CIRCUIT_EXIT;
+	}
 }

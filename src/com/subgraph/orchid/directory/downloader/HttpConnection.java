@@ -47,6 +47,9 @@ public class HttpConnection {
 	private static String getHostnameFromStream(Stream stream) {
 		final StringBuilder sb = new StringBuilder();
 		final Router r = stream.getCircuit().getFinalCircuitNode().getRouter();
+		if(r == null) {
+			return null;
+		}
 		sb.append(r.getAddress().toString());
 		if(r.getOnionPort() != 80) {
 			sb.append(":");
@@ -60,7 +63,9 @@ public class HttpConnection {
 		sb.append("GET ");
 		sb.append(request);
 		sb.append(" HTTP/1.0\r\n");
-		sb.append("Host: "+ hostname +"\r\n");
+		if(hostname != null) {
+			sb.append("Host: "+ hostname +"\r\n");
+		}
 		sb.append("\r\n");
 		
 		final String requestLine = sb.toString();
@@ -69,7 +74,11 @@ public class HttpConnection {
 	}
 	
 	public String getHost() {
-		return hostname;
+		if(hostname == null) {
+			return hostname;
+		} else {
+			return "(none)";
+		}
 	}
 
 	public void readResponse() throws IOException {

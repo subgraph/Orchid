@@ -11,6 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.subgraph.orchid.Circuit;
+import com.subgraph.orchid.Circuit.CircuitType;
 import com.subgraph.orchid.CircuitBuildHandler;
 import com.subgraph.orchid.CircuitNode;
 import com.subgraph.orchid.Connection;
@@ -35,6 +36,7 @@ public class CircuitCreationTask implements Runnable {
 	private final CircuitPathChooser pathChooser;
 	private final Executor executor;
 	private final CircuitBuildHandler buildHandler;
+	private final CircuitBuildHandler internalBuildHandler;
 	// To avoid obnoxiously printing a warning every second
 	private int notEnoughDirectoryInformationWarningCounter = 0;
 	
@@ -51,6 +53,7 @@ public class CircuitCreationTask implements Runnable {
 		this.pathChooser = pathChooser;
 		this.executor = Executors.newCachedThreadPool();
 		this.buildHandler = createCircuitBuildHandler();
+		this.internalBuildHandler = createInternalCircuitBuildHandler();
 		this.predictor = new CircuitPredictor();
 		this.lastNewCircuit = new AtomicLong();
 	}
@@ -75,7 +78,7 @@ public class CircuitCreationTask implements Runnable {
 		if(pendingExitStreams.isEmpty())
 			return;
 
-		for(Circuit c: circuitManager.getRandomlyOrderedListOfActiveCircuits()) {
+		for(Circuit c: circuitManager.getRandomlyOrderedListOfExitCircuits()) {
 			final Iterator<StreamExitRequest> it = pendingExitStreams.iterator();
 			while(it.hasNext()) {
 				if(attemptHandleStreamRequest(c, it.next()))
@@ -125,14 +128,16 @@ public class CircuitCreationTask implements Runnable {
 			return;
 		}
 
+
 		if(lastNewCircuit.get() != 0) {
 			final long now = System.currentTimeMillis();
 			if((now - lastNewCircuit.get()) < config.getNewCircuitPeriod()) {
-				return;
+				// return;
 			}
 		}
 		
 		buildCircuitIfNeeded();
+		maybeBuildInternalCircuit();
 	}
 
 	private void buildCircuitIfNeeded() {
@@ -149,14 +154,30 @@ public class CircuitCreationTask implements Runnable {
 				exitTargets.add(ppt);
 			}
 		}
-		
 		buildCircuitToHandleExitTargets(exitTargets);
 	}
 
+	private void maybeBuildInternalCircuit() {
+		final int needed = circuitManager.getNeededCleanCircuitCount(predictor.isInternalPredicted());
+		
+		if(needed > 0) {
+			launchBuildTaskForInternalCircuit();
+		}
+	}
+	
+	private void launchBuildTaskForInternalCircuit() {
+		logger.fine("Launching new internal circuit");
+		final InternalCircuit circuit = new InternalCircuit(circuitManager);
+		final CircuitCreationRequest request = new CircuitCreationRequest(pathChooser, circuit, internalBuildHandler);
+		final CircuitBuildTask task = new CircuitBuildTask(request, connectionCache);
+		executor.execute(task);
+		circuitManager.incrementPendingInternalCircuitCount();
+	}
+	
 	private int countCircuitsSupportingTarget(final ExitTarget target, final boolean needClean) {
 		final CircuitFilter filter = new CircuitFilter() {
 			public boolean filter(CircuitBase circuit) {
-				if(circuit.isDirectoryCircuit()) {
+				if(circuit.getCircuitType() != CircuitType.CIRCUIT_EXIT) {
 					return false;
 				}
 				final boolean pendingOrConnected = circuit.isPending() || circuit.isConnected();
@@ -232,5 +253,34 @@ public class CircuitCreationTask implements Runnable {
 				launchExitStreamTask(circuit, req);
 			}
 		}
+	}
+	
+	private CircuitBuildHandler createInternalCircuitBuildHandler() {
+		return new CircuitBuildHandler() {
+			
+			public void nodeAdded(CircuitNode node) {
+				logger.finer("Node added to internal circuit: "+ node);
+			}
+			
+			public void connectionFailed(String reason) {
+				logger.fine("Circuit connection failed: "+ reason);
+				circuitManager.decrementPendingInternalCircuitCount();
+			}
+			
+			public void connectionCompleted(Connection connection) {
+				logger.finer("Circuit connection completed to "+ connection);
+			}
+			
+			public void circuitBuildFailed(String reason) {
+				logger.fine("Circuit build failed: "+ reason);
+				circuitManager.decrementPendingInternalCircuitCount();
+			}
+			
+			public void circuitBuildCompleted(Circuit circuit) {
+				logger.fine("Internal circuit build completed: "+ circuit);
+				lastNewCircuit.set(System.currentTimeMillis());
+				circuitManager.addCleanInternalCircuit(circuit);
+			}
+		};
 	}
 }

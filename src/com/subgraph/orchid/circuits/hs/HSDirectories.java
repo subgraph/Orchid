@@ -23,7 +23,6 @@ public class HSDirectories {
 		this.hsDirectories = new ArrayList<Router>();
 		this.random = new TorRandom();
 	}
-
 	
 	List<HSDescriptorDirectory> getDirectoriesForHiddenService(HiddenService hs) {
 		final List<HSDescriptorDirectory> dirs = new ArrayList<HSDescriptorDirectory>(2 * DIR_CLUSTER_SZ);

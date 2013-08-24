@@ -17,19 +17,25 @@ import com.subgraph.orchid.dashboard.DashboardRenderer;
 
 public class CircuitPredictor implements DashboardRenderable {
 
+	private final static Integer INTERNAL_CIRCUIT_PORT_VALUE = 0;
 	private final static long TIMEOUT_MS = 60 * 60 * 1000; // One hour
 	
 	private final Map<Integer, Long> portsSeen;
-	
+		
 	public CircuitPredictor() {
 		portsSeen = new HashMap<Integer,Long>();
 		addExitPortRequest(80);
+		addInternalRequest();
 	}
 	
 	void addExitPortRequest(int port) {
 		synchronized (portsSeen) {
 			portsSeen.put(port, System.currentTimeMillis());
 		}
+	}
+	
+	void addInternalRequest() {
+		addExitPortRequest(INTERNAL_CIRCUIT_PORT_VALUE);
 	}
 	
 	
@@ -47,10 +53,19 @@ public class CircuitPredictor implements DashboardRenderable {
 		}
 	}
 	
+	boolean isInternalPredicted() {
+		synchronized (portsSeen) {
+			removeExpiredPorts();
+			return  portsSeen.containsKey(INTERNAL_CIRCUIT_PORT_VALUE);
+		}
+	}
+
 	Set<Integer> getPredictedPorts() {
 		synchronized (portsSeen) {
 			removeExpiredPorts();
-			return new HashSet<Integer>(portsSeen.keySet());
+			final Set<Integer> result = new HashSet<Integer>(portsSeen.keySet());
+			result.remove(INTERNAL_CIRCUIT_PORT_VALUE);
+			return result;
 		}
 	}
 

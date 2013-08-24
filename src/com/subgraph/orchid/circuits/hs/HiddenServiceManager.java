@@ -3,96 +3,119 @@ package com.subgraph.orchid.circuits.hs;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
 import com.subgraph.orchid.Circuit;
-import com.subgraph.orchid.ConnectionCache;
 import com.subgraph.orchid.Directory;
+import com.subgraph.orchid.OpenFailedException;
 import com.subgraph.orchid.Stream;
+import com.subgraph.orchid.StreamConnectFailedException;
+import com.subgraph.orchid.TorConfig;
+import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.circuits.CircuitManagerImpl;
-import com.subgraph.orchid.circuits.path.CircuitPathChooser;
 
 public class HiddenServiceManager {
+	private final static int RENDEZVOUS_RETRY_COUNT = 5;
+	private final static int HS_STREAM_TIMEOUT = 20000;
+	
 	private final static Logger logger = Logger.getLogger(HiddenServiceManager.class.getName());
 	
 	private final Map<String, HiddenService> hiddenServices;
-	
+	private final TorConfig config;
 	private final Directory directory;
 	private final HSDirectories hsDirectories;
-	private final ConnectionCache connectionCache;
 	private final CircuitManagerImpl circuitManager;
-	private final CircuitPathChooser pathChooser;
 	
-	public HiddenServiceManager(Directory directory, ConnectionCache connectionCache, CircuitManagerImpl circuitManager, CircuitPathChooser pathChooser) {
+	public HiddenServiceManager(TorConfig config, Directory directory, CircuitManagerImpl circuitManager) {
+		this.config = config;
 		this.directory = directory;
 		this.hiddenServices = new HashMap<String, HiddenService>();
 		this.hsDirectories = new HSDirectories(directory);
-		this.connectionCache = connectionCache;
 		this.circuitManager = circuitManager;
-		this.pathChooser = pathChooser;
 	}
 	
-	public Stream getStreamTo(String onion, int port) {
-		logger.warning("Stream requested for: "+ onion + ":"+ port);
-		Circuit circuit = getCircuitTo(onion);
-		
-		return null;
-	}
-	
-	Circuit getCircuitTo(String onion) {
+	public Stream getStreamTo(String onion, int port) throws OpenFailedException, InterruptedException, TimeoutException {
 		final HiddenService hs = getHiddenServiceForOnion(onion);
+		final Circuit circuit = getCircuitTo(hs);
 		
+		try {
+			return circuit.openExitStream("", port, HS_STREAM_TIMEOUT);
+		} catch (StreamConnectFailedException e) {
+			throw new OpenFailedException("Failed to open stream to hidden service "+ hs.getOnionAddressForLogging() + " reason "+ e.getReason());
+		}
+	}
+	
+	private synchronized Circuit getCircuitTo(HiddenService hs) throws OpenFailedException {
 		if(hs.getCircuit() == null) {
-			final RendezvousCircuit c = openCircuitTo(hs);
+			final Circuit c = openCircuitTo(hs);
 			if(c == null) {
-				
-				// XXX
-				return null;
+				throw new OpenFailedException("Failed to open circuit to "+ hs.getOnionAddressForLogging());
 			}
 			hs.setCircuit(c);
 		}
 		return hs.getCircuit();
 	}
 	
-	private RendezvousCircuit openCircuitTo(HiddenService hs) {
+	private Circuit openCircuitTo(HiddenService hs) throws OpenFailedException {
 		HSDescriptor descriptor = getDescriptorFor(hs);
-		RendezvousCircuitBuilder builder = new RendezvousCircuitBuilder(directory, connectionCache, circuitManager, pathChooser, hs.getDescriptor());
-		try {
-			return builder.call();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		
+		for(int i = 0; i < RENDEZVOUS_RETRY_COUNT; i++) {
+			final Circuit c = openRendezvousCircuit(hs, descriptor);
+			if(c != null) {
+				return c;
+			}
 		}
-		
-		
-		return null;
+		throw new OpenFailedException("Failed to open circuit to "+ hs.getOnionAddressForLogging());
 	}
-
 	
-	HSDescriptor getDescriptorFor(HiddenService hs) {
+	HSDescriptor getDescriptorFor(HiddenService hs) throws OpenFailedException {
 		if(hs.hasCurrentDescriptor()) {
 			return hs.getDescriptor();
 		}
 		final HSDescriptor descriptor = downloadDescriptorFor(hs);
 		if(descriptor == null) {
-			// XXX
+			final String msg = "Failed to download HS descriptor for "+ hs.getOnionAddressForLogging(); 
+			logger.info(msg);
+			throw new OpenFailedException(msg);
 		}
 		hs.setDescriptor(descriptor);
 		return descriptor;
 	}
 	
 	private HSDescriptor downloadDescriptorFor(HiddenService hs) {
-		logger.warning("Downloading descriptor for "+ hs);
+		logger.fine("Downloading HS descriptor for "+ hs.getOnionAddressForLogging());
 		final List<HSDescriptorDirectory> dirs = hsDirectories.getDirectoriesForHiddenService(hs);
-		final HSDescriptorDownloader downloader = new HSDescriptorDownloader(connectionCache, circuitManager, pathChooser, hs, dirs);
+		final HSDescriptorDownloader downloader = new HSDescriptorDownloader(hs, circuitManager, dirs);
 		return downloader.downloadDescriptor();
 	}
 
-	HiddenService getHiddenServiceForOnion(String onion) {
+	HiddenService getHiddenServiceForOnion(String onion) throws OpenFailedException {
 		final String key = onion.endsWith(".onion") ? onion.substring(0, onion.length() - 6) : onion;
-		if(!hiddenServices.containsKey(key)) {
-			hiddenServices.put(key, new HiddenService(key));
+		synchronized(hiddenServices) {
+			if(!hiddenServices.containsKey(key)) {
+				hiddenServices.put(key, createHiddenServiceFor(key));
+			}
+			return hiddenServices.get(key);
 		}
-		return hiddenServices.get(key);
 	}	
+	
+	private HiddenService createHiddenServiceFor(String key) throws OpenFailedException {
+		try {
+			byte[] decoded = HiddenService.decodeOnion(key);
+			return new HiddenService(config, decoded);
+		} catch (TorException e) {
+			final String target = config.getSafeLogging() ? "[scrubbed]" : (key + ".onion");
+			throw new OpenFailedException("Failed to decode onion address "+ target + " : "+ e.getMessage());
+		}
+	}
+
+	private Circuit openRendezvousCircuit(HiddenService hs, HSDescriptor descriptor) {
+		final RendezvousCircuitBuilder builder = new RendezvousCircuitBuilder(directory, circuitManager, hs, descriptor);
+		try {
+			return builder.call();
+		} catch (Exception e) {
+			return null;
+		}
+	}
 }

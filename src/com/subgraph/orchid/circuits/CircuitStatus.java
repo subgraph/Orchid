@@ -1,10 +1,5 @@
 package com.subgraph.orchid.circuits;
 
-import java.util.Collections;
-import java.util.List;
-
-import com.subgraph.orchid.Router;
-import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.crypto.TorRandom;
 
 public class CircuitStatus {
@@ -25,7 +20,6 @@ public class CircuitStatus {
 	private int currentStreamId;
 	private Object streamIdLock = new Object();
 	private volatile CircuitState state = CircuitState.UNCONNECTED;
-	private List<Router> circuitPath = Collections.emptyList();
 
 	CircuitStatus() {
 		initializeCurrentStreamId();
@@ -69,22 +63,6 @@ public class CircuitStatus {
 
 	void setStateBuilding() {
 		state = CircuitState.BUILDING;
-	}
-
-	void setCircuitPath(List<Router> circuitPath) {
-		this.circuitPath = Collections.unmodifiableList(circuitPath);
-	}
-
-	Router getFinalRouter() {
-		if(state == CircuitState.UNCONNECTED)
-			throw new TorException("Cannot retrieve last router from UNCONNECTED circuit");
-		if(circuitPath.size() == 0) 
-			throw new TorException("No routers on circuit (?!)");
-		return circuitPath.get(circuitPath.size() - 1);
-	}
-
-	List<Router> getCircuitPath() {
-		return circuitPath;
 	}
 
 	void setStateFailed() {
