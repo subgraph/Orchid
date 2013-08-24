@@ -26,6 +26,10 @@ public class Timestamp {
 		this.date = date;
 	}
 	
+	public long getTime() {
+		return date.getTime();
+	}
+
 	public Date getDate() {
 		return new Date(date.getTime());
 	}
