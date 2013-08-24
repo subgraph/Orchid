@@ -94,6 +94,10 @@ public interface TorConfig {
 	void setSafeSocks(boolean value);
 	
 	@ConfigVar(type=ConfigVarType.BOOLEAN, defaultValue="true")
+	boolean getSafeLogging();
+	void setSafeLogging(boolean value);
+
+	@ConfigVar(type=ConfigVarType.BOOLEAN, defaultValue="true")
 	boolean getWarnUnsafeSocks();
 	void setWarnUnsafeSocks(boolean value);
 
