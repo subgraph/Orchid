@@ -1,6 +1,10 @@
 package com.subgraph.orchid;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.concurrent.TimeUnit;
@@ -8,8 +12,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.subgraph.orchid.Tor;
-import com.subgraph.orchid.TorConfig;
+import com.subgraph.orchid.circuits.hs.HSDescriptorCookie;
+import com.subgraph.orchid.encoders.Hex;
 
 public class TorConfigTest {
 
@@ -57,5 +61,23 @@ public class TorConfigTest {
 		assertEquals(0, config.getCircuitStreamTimeout());
 		config.setCircuitStreamTimeout(30, TimeUnit.SECONDS);
 		assertEquals(30 * 1000, config.getCircuitStreamTimeout());
+	}
+	
+	@Test
+	public void testHidServAuth() {
+		final String address = "3t43tfluce4qcxbo";
+		final String onion = address + ".onion";
+		
+		final String hex = "022b99d1d272285c80f7214bd6c07c27";
+		final String descriptor = "AiuZ0dJyKFyA9yFL1sB8Jw";
+		
+		assertNull(config.getHidServAuth(onion));
+		
+		config.addHidServAuth(onion, descriptor);
+		
+		HSDescriptorCookie cookie = config.getHidServAuth(onion);
+		assertNotNull(cookie);
+		assertEquals(hex, new String(Hex.encode(cookie.getValue())));
+		assertSame(cookie, config.getHidServAuth(address));
 	}
 }

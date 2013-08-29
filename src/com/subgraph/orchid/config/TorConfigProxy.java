@@ -20,14 +20,19 @@ public class TorConfigProxy implements InvocationHandler {
 		this.parser = new TorConfigParser();
 	}
 	
-	public Object invoke(Object proxy, Method method, Object[] args)
-			throws Throwable {
-		
+	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		if(method.getName().startsWith("set")) {
 			invokeSetMethod(method, args);
 			return null;
 		} else if(method.getName().startsWith("get")) {
-			return invokeGetMethod(method);
+			if(args == null) {
+				return invokeGetMethod(method);
+			} else {
+				return invokeGetMethodWithArgs(method, args);
+			}
+		} else if(method.getName().startsWith("add")) { 
+			invokeAddMethod(method, args);
+			return null;
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -53,6 +58,16 @@ public class TorConfigProxy implements InvocationHandler {
 		configValues.put(varName, interval);
 	}
 
+	
+	private Object invokeGetMethodWithArgs(Method method, Object[] args) {
+		final String varName = getVariableNameForMethod(method);
+		if(getVariableType(varName) == ConfigVarType.HS_AUTH) {
+			return invokeHSAuthGet(varName, args);
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+	
 	private Object invokeGetMethod(Method method) {
 		final String varName = getVariableNameForMethod(method);
 		final Object value = getVariableValue(varName);
@@ -65,6 +80,38 @@ public class TorConfigProxy implements InvocationHandler {
 		}
 	}
 	
+	private Object invokeHSAuthGet(String varName, Object[] args) {
+		if(!(args[0] instanceof String)) {
+			throw new IllegalArgumentException();
+		}
+		final TorConfigHSAuth hsAuth = getHSAuth(varName);		
+		return hsAuth.get((String) args[0]);
+	}
+
+	private void invokeAddMethod(Method method, Object[] args) {
+		final String name = getVariableNameForMethod(method);
+		final ConfigVarType type = getVariableType(name);
+		if(type != ConfigVarType.HS_AUTH) {
+			throw new UnsupportedOperationException("addX configuration methods only supported for HS_AUTH type");
+		}
+		
+		if(!(args.length == 2 && 
+				(args[0] instanceof String) && 
+				(args[1] instanceof String))) {
+			throw new IllegalArgumentException();
+		}
+		
+		final TorConfigHSAuth hsAuth = getHSAuth(name);
+		hsAuth.add((String)args[0], (String)args[1]);
+	}
+	
+	private TorConfigHSAuth getHSAuth(String keyName) {
+		if(!configValues.containsKey(keyName)) {
+			configValues.put(keyName, new TorConfigHSAuth());
+		}
+		return (TorConfigHSAuth) configValues.get(keyName);
+	}
+
 	private Object getVariableValue(String varName) {
 		if(configValues.containsKey(varName)) {
 			return configValues.get(varName);
@@ -102,7 +149,7 @@ public class TorConfigProxy implements InvocationHandler {
 	
 	private String getVariableNameForMethod(Method method) {
 		final String methodName = method.getName();
-		if(methodName.startsWith("get") || methodName.startsWith("set")) {
+		if(methodName.startsWith("get") || methodName.startsWith("set") || methodName.startsWith("add")) {
 			return methodName.substring(3);
 		}
 		throw new IllegalArgumentException();

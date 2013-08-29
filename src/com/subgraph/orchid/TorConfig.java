@@ -8,6 +8,8 @@ import java.lang.annotation.Target;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.subgraph.orchid.circuits.hs.HSDescriptorCookie;
+
 
 public interface TorConfig {
 	
@@ -112,8 +114,12 @@ public interface TorConfig {
 	@ConfigVar(type=ConfigVarType.BOOLEAN, defaultValue="true")
 	boolean getHandshakeV2Enabled();
 	void setHandshakeV2Enabled(boolean value);
+	
+	@ConfigVar(type=ConfigVarType.HS_AUTH)
+	HSDescriptorCookie getHidServAuth(String key);
+	void addHidServAuth(String key, String value);
 
-	enum ConfigVarType { INTEGER, STRING, BOOLEAN, INTERVAL, PORTLIST, STRINGLIST, PATH };
+	enum ConfigVarType { INTEGER, STRING, HS_AUTH, BOOLEAN, INTERVAL, PORTLIST, STRINGLIST, PATH };
 	
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.METHOD)

@@ -24,8 +24,10 @@ public class TorConfigParser {
 			return value;
 		case STRINGLIST:
 			return parseCSV(value);
+		case HS_AUTH:
+		default:
+			throw new IllegalArgumentException();
 		}
-		throw new IllegalArgumentException();
 	}
 
 	private File parseFileValue(String value) {
