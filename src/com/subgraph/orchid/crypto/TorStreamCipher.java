@@ -20,6 +20,11 @@ public class TorStreamCipher {
 	public static TorStreamCipher createFromKeyBytes(byte[] keyBytes) {
 		return new TorStreamCipher(keyBytes);
 	}
+	
+	public static TorStreamCipher createFromKeyBytesWithIV(byte[] keyBytes, byte[] iv) {
+		return new TorStreamCipher(keyBytes, iv);
+	}
+
 	private static final int BLOCK_SIZE = 16;
 	private final Cipher cipher;
 	private final byte[] counter;
@@ -30,10 +35,25 @@ public class TorStreamCipher {
 	
 	
 	private TorStreamCipher(byte[] keyBytes) {
+		this(keyBytes, null);
+	}
+	
+	private TorStreamCipher(byte[] keyBytes, byte[] iv) {
 		key = keyBytesToSecretKey(keyBytes);
 		cipher = createCipher(key);
 		counter = new byte[BLOCK_SIZE];
-		counterOut = new byte[BLOCK_SIZE];	
+		counterOut = new byte[BLOCK_SIZE];
+		
+		if(iv != null) {
+			applyIV(iv);
+		}
+	}
+	
+	private void applyIV(byte[] iv) {
+		if(iv.length != BLOCK_SIZE) {
+			throw new IllegalArgumentException();
+		}
+		System.arraycopy(iv, 0, counter, 0, BLOCK_SIZE);
 	}
 	
 	public void encrypt(byte[] data) {

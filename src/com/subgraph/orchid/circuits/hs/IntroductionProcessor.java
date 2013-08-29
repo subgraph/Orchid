@@ -14,10 +14,12 @@ public class IntroductionProcessor {
 	private final static Logger logger = Logger.getLogger(IntroductionProcessor.class.getName());
 	private final static int INTRODUCTION_PROTOCOL_VERSION = 3;
 	
+	private final HiddenService hiddenService;
 	private final Circuit introductionCircuit;
 	private final IntroductionPoint introductionPoint;
 	
-	protected IntroductionProcessor(Circuit introductionCircuit, IntroductionPoint introductionPoint) {
+	protected IntroductionProcessor(HiddenService hiddenService, Circuit introductionCircuit, IntroductionPoint introductionPoint) {
+		this.hiddenService = hiddenService;
 		this.introductionCircuit = introductionCircuit;
 		this.introductionPoint = introductionPoint;
 	}
@@ -67,7 +69,8 @@ public class IntroductionProcessor {
 		final byte[] rpOnionKey = rr.getOnionKey().getRawBytes();
 		
 		buffer.put((byte) INTRODUCTION_PROTOCOL_VERSION);  // VER    Version byte: set to 3.        [1 octet]
-		buffer.put((byte) 0);                              // AUTHT  The auth type that is used     [1 octet]
+		addAuthentication(buffer);
+		//buffer.put((byte) 0);                              // AUTHT  The auth type that is used     [1 octet]
 		buffer.putInt(timestamp);                          // TS     A timestamp                   [4 octets]
 		buffer.put(rpAddress);                             // IP     Rendezvous point's address    [4 octets]
 		buffer.putShort(rpPort);                           // PORT   Rendezvous point's OR port    [2 octets]
@@ -80,6 +83,17 @@ public class IntroductionProcessor {
 		return buffer;
 	}
 	
+	private void addAuthentication(ByteBuffer buffer) {
+		HSDescriptorCookie cookie = hiddenService.getAuthenticationCookie();
+		if(cookie == null) {
+			buffer.put((byte) 0);
+		} else {
+			buffer.put(cookie.getAuthTypeByte());
+			buffer.putShort((short) cookie.getValue().length);
+			buffer.put(cookie.getValue());
+		}
+	}
+
 	private byte[] encryptIntroductionBuffer(ByteBuffer buffer, TorPublicKey key) {
 		final int len = buffer.position();
 		final byte[] payload = new byte[len];

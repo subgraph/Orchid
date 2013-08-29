@@ -78,7 +78,7 @@ public class HSDescriptorDownloader {
 	
 	private HSDescriptor readDocument(HSDescriptorDirectory dd, Reader reader) {
 		DocumentFieldParserImpl fieldParser = new DocumentFieldParserImpl(reader);
-		HSDescriptorParser parser = new HSDescriptorParser(hiddenService, fieldParser);
+		HSDescriptorParser parser = new HSDescriptorParser(hiddenService, fieldParser, hiddenService.getAuthenticationCookie());
 		DescriptorParseResult result = new DescriptorParseResult(dd);
 		parser.parse(result);
 		return result.getDescriptor();
@@ -104,7 +104,7 @@ public class HSDescriptorDownloader {
 		}
 
 		public void parsingError(String message) {
-			logger.info("Failed to parse HS descriptor document received from "+ dd.getDirectory() + " for descriptor "+ dd.getDescriptorId());
+			logger.info("Failed to parse HS descriptor document received from "+ dd.getDirectory() + " for descriptor "+ dd.getDescriptorId() + " : " + message);
 		}
 	}
 }

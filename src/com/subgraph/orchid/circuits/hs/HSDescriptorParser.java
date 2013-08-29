@@ -1,5 +1,6 @@
 package com.subgraph.orchid.circuits.hs;
 
+import java.io.Reader;
 import java.io.StringReader;
 import java.util.logging.Logger;
 
@@ -18,13 +19,19 @@ public class HSDescriptorParser implements DocumentParser<HSDescriptor>{
 	
 	private final DocumentFieldParser fieldParser;
 	private final HSDescriptor descriptor;
+	private final HSAuthentication authentication;
 	
 	private DocumentParsingResultHandler<HSDescriptor> resultHandler;
 	
 	public HSDescriptorParser(HiddenService hiddenService, DocumentFieldParser fieldParser) {
+		this(hiddenService, fieldParser, null);
+	}
+
+	public HSDescriptorParser(HiddenService hiddenService, DocumentFieldParser fieldParser, HSDescriptorCookie cookie) {
 		this.fieldParser = fieldParser;
 		this.fieldParser.setHandler(createParsingHandler());
 		this.descriptor = new HSDescriptor(hiddenService);
+		this.authentication = new HSAuthentication(cookie);
 	}
 	
 	private DocumentParsingHandler createParsingHandler() {
@@ -100,8 +107,7 @@ public class HSDescriptorParser implements DocumentParser<HSDescriptor>{
 	
 	private void processIntroductionPoints() {
 		final DocumentObject ob = fieldParser.parseObject();
-		final String decoded = new String(Base64.decode(ob.getContent(false)));
-		final StringReader reader = new StringReader(decoded);
+		final Reader reader = createIntroductionPointReader(ob);
 		final IntroductionPointParser parser = new IntroductionPointParser(new DocumentFieldParserImpl(reader));
 		parser.parse(new DocumentParsingResultHandler<IntroductionPoint>() {
 
@@ -118,6 +124,21 @@ public class HSDescriptorParser implements DocumentParser<HSDescriptor>{
 				logger.info("Error parsing introduction points: "+ message);
 			} 
 		});
+	}
+
+	private Reader createIntroductionPointReader(DocumentObject ob) {
+		final byte[] content = Base64.decode(ob.getContent(false));
+		final String decoded;
+		if(content[0] == 'i') {
+			decoded = new String(content);
+		} else {
+			try {
+				decoded = authentication.decryptIntroductionPoints(content);
+			} catch (HSAuthenticationException e) {
+				throw new TorParsingException("Failed to decrypt introduction points: "+ e.getMessage());
+			}
+		}
+		return new StringReader(decoded);
 	}
 
 	private void processSignature() {
