@@ -3,28 +3,19 @@ package com.subgraph.orchid.circuits;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
+import com.subgraph.orchid.DirectoryCircuit;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.Stream;
 import com.subgraph.orchid.StreamConnectFailedException;
 import com.subgraph.orchid.circuits.path.CircuitPathChooser;
 import com.subgraph.orchid.circuits.path.PathSelectionFailedException;
 
-public class DirectoryCircuit extends CircuitBase {
-
-	private final Router target;
+public class DirectoryCircuitImpl extends CircuitImpl implements DirectoryCircuit {
 	
-	protected DirectoryCircuit(CircuitManagerImpl circuitManager, Router target) {
+	protected DirectoryCircuitImpl(CircuitManagerImpl circuitManager) {
 		super(circuitManager);
-		this.target = target;
-	}
-	protected DirectoryCircuit(CircuitManagerImpl circuitManager) {
-		this(circuitManager, null);
 	}
 	
-	boolean isDirectoryCircuit() {
-		return true;
-	}
-
 	public Stream openDirectoryStream(long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException {
 		final StreamImpl stream = createNewStream();
 		try {
@@ -38,14 +29,11 @@ public class DirectoryCircuit extends CircuitBase {
 
 	@Override
 	protected List<Router> choosePath(CircuitPathChooser pathChooser) throws InterruptedException, PathSelectionFailedException {
-		if(target != null) {
-			return pathChooser.choosePathWithFinal(target);
-		} else {
-			return pathChooser.chooseDirectoryPath();
-		}
+		return pathChooser.chooseDirectoryPath();
 	}
 
-	public CircuitType getCircuitType() {
-		return CircuitType.CIRCUIT_DIRECTORY;
+	@Override
+	protected String getCircuitTypeLabel() {
+		return "Directory";
 	}
 }

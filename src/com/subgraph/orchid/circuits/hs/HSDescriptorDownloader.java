@@ -6,8 +6,12 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
+import com.subgraph.orchid.DirectoryCircuit;
+import com.subgraph.orchid.InternalCircuit;
 import com.subgraph.orchid.OpenFailedException;
+import com.subgraph.orchid.Router;
 import com.subgraph.orchid.Stream;
+import com.subgraph.orchid.StreamConnectFailedException;
 import com.subgraph.orchid.circuits.CircuitManagerImpl;
 import com.subgraph.orchid.directory.DocumentFieldParserImpl;
 import com.subgraph.orchid.directory.downloader.HttpConnection;
@@ -43,7 +47,8 @@ public class HSDescriptorDownloader {
 		
 		Stream stream = null;
 		try {
-			stream = circuitManager.openDirectoryStreamTo(dd.getDirectory());
+			//stream = circuitManager.openDirectoryStreamTo(dd.getDirectory());
+			stream = openHSDirectoryStream(dd.getDirectory());
 			HttpConnection http = new HttpConnection(stream);
 			http.sendGetRequest("/tor/rendezvous2/"+ dd.getDescriptorId().toBase32());
 			http.readResponse();
@@ -76,6 +81,19 @@ public class HSDescriptorDownloader {
 		
 	}
 	
+	private Stream openHSDirectoryStream(Router directory) throws TimeoutException, InterruptedException, OpenFailedException {
+
+		final InternalCircuit circuit = circuitManager.getCleanInternalCircuit();
+		final DirectoryCircuit dc = circuit.cannibalizeToDirectory(directory);
+		
+		try {
+			return dc.openDirectoryStream(10000);
+		} catch (StreamConnectFailedException e) {
+			circuit.markForClose();
+			throw new OpenFailedException("Failed to open directory stream");
+		}
+	}
+
 	private HSDescriptor readDocument(HSDescriptorDirectory dd, Reader reader) {
 		DocumentFieldParserImpl fieldParser = new DocumentFieldParserImpl(reader);
 		HSDescriptorParser parser = new HSDescriptorParser(hiddenService, fieldParser, hiddenService.getAuthenticationCookie());

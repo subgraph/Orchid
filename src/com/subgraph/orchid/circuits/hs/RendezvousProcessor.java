@@ -4,8 +4,9 @@ import java.math.BigInteger;
 import java.util.logging.Logger;
 
 import com.subgraph.orchid.Cell;
-import com.subgraph.orchid.Circuit;
 import com.subgraph.orchid.CircuitNode;
+import com.subgraph.orchid.HiddenServiceCircuit;
+import com.subgraph.orchid.InternalCircuit;
 import com.subgraph.orchid.RelayCell;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.circuits.CircuitNodeImpl;
@@ -21,10 +22,10 @@ public class RendezvousProcessor {
 	private final static TorRandom random = new TorRandom();
 	
 	private CircuitNode node;
-	private final Circuit circuit;
+	private final InternalCircuit circuit;
 	private final byte[] cookie;
 	
-	protected RendezvousProcessor(Circuit circuit) {
+	protected RendezvousProcessor(InternalCircuit circuit) {
 		this.circuit = circuit;
 		this.cookie = random.getBytes(RENDEZVOUS_COOKIE_LEN);
 	}
@@ -46,26 +47,25 @@ public class RendezvousProcessor {
 		}
 	}
 	
-	boolean processRendezvous2() {
+	HiddenServiceCircuit processRendezvous2() {
 		if(node == null) {
 			throw new IllegalStateException("Can only be called after successful rendezvous establishment");
 		}
 		final RelayCell cell = circuit.receiveRelayCell();
 		if(cell == null) {
 			logger.info("Timeout waiting for RENDEZVOUS2");
-			return false;
+			return null;
 		} else if (cell.getRelayCommand() != RelayCell.RELAY_COMMAND_RENDEZVOUS2) {
 			logger.info("Unexpected Relay cell type received while waiting for RENDEZVOUS2: "+ cell.getRelayCommand());
-			return false;
+			return null;
 		}
 		final BigInteger peerPublic = readPeerPublic(cell);
 		final HexDigest handshakeDigest = readHandshakeDigest(cell);
 		if(peerPublic == null || handshakeDigest == null) {
-			return false;
+			return null;
 		}
 		node.setSharedSecret(peerPublic, handshakeDigest);
-		circuit.appendNode(node);
-		return true;
+		return circuit.connectHiddenService(node);
 	}
 	
 	private BigInteger readPeerPublic(Cell cell) {

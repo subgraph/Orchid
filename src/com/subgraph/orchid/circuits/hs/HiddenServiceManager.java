@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
-import com.subgraph.orchid.Circuit;
 import com.subgraph.orchid.Directory;
+import com.subgraph.orchid.HiddenServiceCircuit;
 import com.subgraph.orchid.OpenFailedException;
 import com.subgraph.orchid.Stream;
 import com.subgraph.orchid.StreamConnectFailedException;
@@ -37,18 +37,18 @@ public class HiddenServiceManager {
 	
 	public Stream getStreamTo(String onion, int port) throws OpenFailedException, InterruptedException, TimeoutException {
 		final HiddenService hs = getHiddenServiceForOnion(onion);
-		final Circuit circuit = getCircuitTo(hs);
+		final HiddenServiceCircuit circuit = getCircuitTo(hs);
 		
 		try {
-			return circuit.openExitStream("", port, HS_STREAM_TIMEOUT);
+			return circuit.openStream(port, HS_STREAM_TIMEOUT);
 		} catch (StreamConnectFailedException e) {
 			throw new OpenFailedException("Failed to open stream to hidden service "+ hs.getOnionAddressForLogging() + " reason "+ e.getReason());
 		}
 	}
 	
-	private synchronized Circuit getCircuitTo(HiddenService hs) throws OpenFailedException {
+	private synchronized HiddenServiceCircuit getCircuitTo(HiddenService hs) throws OpenFailedException {
 		if(hs.getCircuit() == null) {
-			final Circuit c = openCircuitTo(hs);
+			final HiddenServiceCircuit c = openCircuitTo(hs);
 			if(c == null) {
 				throw new OpenFailedException("Failed to open circuit to "+ hs.getOnionAddressForLogging());
 			}
@@ -57,11 +57,11 @@ public class HiddenServiceManager {
 		return hs.getCircuit();
 	}
 	
-	private Circuit openCircuitTo(HiddenService hs) throws OpenFailedException {
+	private HiddenServiceCircuit openCircuitTo(HiddenService hs) throws OpenFailedException {
 		HSDescriptor descriptor = getDescriptorFor(hs);
 		
 		for(int i = 0; i < RENDEZVOUS_RETRY_COUNT; i++) {
-			final Circuit c = openRendezvousCircuit(hs, descriptor);
+			final HiddenServiceCircuit c = openRendezvousCircuit(hs, descriptor);
 			if(c != null) {
 				return c;
 			}
@@ -110,7 +110,7 @@ public class HiddenServiceManager {
 		}
 	}
 
-	private Circuit openRendezvousCircuit(HiddenService hs, HSDescriptor descriptor) {
+	private HiddenServiceCircuit openRendezvousCircuit(HiddenService hs, HSDescriptor descriptor) {
 		final RendezvousCircuitBuilder builder = new RendezvousCircuitBuilder(directory, circuitManager, hs, descriptor);
 		try {
 			return builder.call();

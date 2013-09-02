@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
+import com.subgraph.orchid.ExitCircuit;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.Stream;
 import com.subgraph.orchid.StreamConnectFailedException;
@@ -13,19 +14,15 @@ import com.subgraph.orchid.circuits.path.PathSelectionFailedException;
 import com.subgraph.orchid.data.IPv4Address;
 import com.subgraph.orchid.data.exitpolicy.ExitTarget;
 
-public class ExitCircuit extends CircuitBase {
+public class ExitCircuitImpl extends CircuitImpl implements ExitCircuit {
 	
 	private final Router exitRouter;
 	private final Set<ExitTarget> failedExitRequests;
 
-	ExitCircuit(CircuitManagerImpl circuitManager, Router exitRouter) {
+	ExitCircuitImpl(CircuitManagerImpl circuitManager, Router exitRouter) {
 		super(circuitManager);
 		this.exitRouter = exitRouter;
 		this.failedExitRequests = new HashSet<ExitTarget>();
-	}
-	
-	Router getExitRouter() {
-		return exitRouter;
 	}
 	
 	public Stream openExitStream(IPv4Address address, int port, long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException {
@@ -71,12 +68,14 @@ public class ExitCircuit extends CircuitBase {
 		return exitRouter.exitPolicyAccepts(port);
 	}
 
+	
 	@Override
 	protected List<Router> choosePath(CircuitPathChooser pathChooser) throws InterruptedException, PathSelectionFailedException {
 		return pathChooser.choosePathWithExit(exitRouter);
 	}
-
-	public CircuitType getCircuitType() {
-		return CircuitType.CIRCUIT_EXIT;
+	
+	@Override
+	protected String getCircuitTypeLabel() {
+		return "Exit";
 	}
 }

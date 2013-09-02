@@ -12,6 +12,8 @@ import com.subgraph.orchid.Cell;
 import com.subgraph.orchid.Circuit;
 import com.subgraph.orchid.CircuitNode;
 import com.subgraph.orchid.Connection;
+import com.subgraph.orchid.DirectoryCircuit;
+import com.subgraph.orchid.ExitCircuit;
 import com.subgraph.orchid.RelayCell;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.Stream;
@@ -21,27 +23,22 @@ import com.subgraph.orchid.circuits.path.CircuitPathChooser;
 import com.subgraph.orchid.circuits.path.PathSelectionFailedException;
 import com.subgraph.orchid.dashboard.DashboardRenderable;
 import com.subgraph.orchid.dashboard.DashboardRenderer;
-import com.subgraph.orchid.data.IPv4Address;
-import com.subgraph.orchid.data.exitpolicy.ExitTarget;
 
 /**
  * This class represents an established circuit through the Tor network.
  *
  */
-public abstract class CircuitBase implements Circuit, DashboardRenderable {
-	protected final static Logger logger = Logger.getLogger(CircuitBase.class.getName());
+public abstract class CircuitImpl implements Circuit, DashboardRenderable {
+	protected final static Logger logger = Logger.getLogger(CircuitImpl.class.getName());
 	
-	static ExitCircuit create(CircuitManagerImpl circuitManager, Router exitRouter) {
-		return new ExitCircuit(circuitManager, exitRouter);
+	static ExitCircuit createExitCircuit(CircuitManagerImpl circuitManager, Router exitRouter) {
+		return new ExitCircuitImpl(circuitManager, exitRouter);
 	}
 	
 	static DirectoryCircuit createDirectoryCircuit(CircuitManagerImpl circuitManager) {
-		return new DirectoryCircuit(circuitManager);
+		return new DirectoryCircuitImpl(circuitManager);
 	}
 	
-	static DirectoryCircuit createDirectoryCircuit(CircuitManagerImpl circuitManager, Router target) {
-		return new DirectoryCircuit(circuitManager, target);
-	}
 
 	private final CircuitManagerImpl circuitManager;
 	private final List<CircuitNode> nodeList;
@@ -49,7 +46,8 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 
 	private CircuitIO io;
 
-	protected CircuitBase(CircuitManagerImpl circuitManager) {
+
+	protected CircuitImpl(CircuitManagerImpl circuitManager) {
 		nodeList = new ArrayList<CircuitNode>();
 		this.circuitManager = circuitManager;
 		status = new CircuitStatus();
@@ -71,7 +69,7 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 		}
 	}
 
-	boolean isMarkedForClose() {
+	public boolean isMarkedForClose() {
 		if(io == null) {
 			return false;
 		} else {
@@ -87,15 +85,15 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 		return status.isConnected();
 	}
 
-	boolean isPending() {
+	public boolean isPending() {
 		return status.isBuilding();
 	}
 	
-	boolean isClean() {
+	public boolean isClean() {
 		return !status.isDirty();
 	}
 	
-	int getSecondsDirty() {
+	public int getSecondsDirty() {
 		return (int) (status.getMillisecondsDirty() / 1000);
 	}
 
@@ -187,22 +185,6 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 		io.deliverRelayCell(cell);
 	}
 
-	public Stream openDirectoryStream(long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException {
-		throw new UnsupportedOperationException();
-	}
-
-	public Stream openExitStream(IPv4Address address, int port, long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException {
-		throw new UnsupportedOperationException();
-	}
-
-	public Stream openExitStream(String target, int port, long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException {
-		throw new UnsupportedOperationException();
-	}
-
-	public void cannibalizeTo(Router target) {
-		throw new UnsupportedOperationException();
-	}
-
 	protected StreamImpl createNewStream() {
 		return io.createNewStream();
 	}
@@ -222,18 +204,6 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 		io.removeStream(stream);
 	}
 
-	public void recordFailedExitTarget(ExitTarget target) {
-		throw new UnsupportedOperationException();
-	}
-
-	public boolean canHandleExitTo(ExitTarget target) {
-		return false;
-	}
-	
-	public boolean canHandleExitToPort(int port) {
-		return false;
-	}
-
 	protected Stream processStreamOpenException(Exception e) throws InterruptedException, TimeoutException, StreamConnectFailedException {
 		if(e instanceof InterruptedException) {
 			throw (InterruptedException) e;
@@ -246,8 +216,10 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 		}
 	}
 	
+	protected abstract String getCircuitTypeLabel();
+	
 	public String toString() {
-		return "  Circuit ("+ getCircuitType() + ") id="+ getCircuitId() +" state=" + status.getStateAsString() +" "+ pathToString();
+		return "  Circuit ("+ getCircuitTypeLabel() + ") id="+ getCircuitId() +" state=" + status.getStateAsString() +" "+ pathToString();
 	}
 
 	
@@ -276,5 +248,5 @@ public abstract class CircuitBase implements Circuit, DashboardRenderable {
 			writer.println(toString());
 			renderer.renderComponent(writer, flags, io);
 		}
-	}
+	}	
 }

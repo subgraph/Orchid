@@ -5,11 +5,13 @@ import java.util.logging.Logger;
 
 import com.subgraph.orchid.Circuit;
 import com.subgraph.orchid.Directory;
+import com.subgraph.orchid.HiddenServiceCircuit;
+import com.subgraph.orchid.InternalCircuit;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.circuits.CircuitManagerImpl;
 
-public class RendezvousCircuitBuilder implements Callable<Circuit>{
+public class RendezvousCircuitBuilder implements Callable<HiddenServiceCircuit>{
 	private final Logger logger = Logger.getLogger(RendezvousCircuitBuilder.class.getName());
 	
 	private final Directory directory;
@@ -25,11 +27,11 @@ public class RendezvousCircuitBuilder implements Callable<Circuit>{
 		this.serviceDescriptor = descriptor;
 	}
 	
-	public Circuit call() throws Exception {
+	public HiddenServiceCircuit call() throws Exception {
 		
 		logger.fine("Opening rendezvous circuit for "+ logServiceName());
 		
-		final Circuit rendezvous = circuitManager.getCleanInternalCircuit();
+		final InternalCircuit rendezvous = circuitManager.getCleanInternalCircuit();
 		logger.fine("Establishing rendezvous for "+ logServiceName());
 		RendezvousProcessor rp = new RendezvousProcessor(rendezvous);
 		if(!rp.establishRendezvous()) {
@@ -52,14 +54,14 @@ public class RendezvousCircuitBuilder implements Callable<Circuit>{
 			return null;
 		}
 		logger.fine("Processing RV2 for "+ logServiceName());
-		if(!rp.processRendezvous2()) {
+		HiddenServiceCircuit hsc = rp.processRendezvous2();
+		if(hsc == null) {
 			rendezvous.markForClose();
-			return null;
 		}
 
 		logger.fine("Rendezvous circuit opened for "+ logServiceName());
 		
-		return rendezvous;
+		return hsc;
 	}
 	
 	private String logServiceName() {
@@ -83,9 +85,8 @@ public class RendezvousCircuitBuilder implements Callable<Circuit>{
 		}
 		
 		try {
-			final Circuit circuit = circuitManager.getCleanInternalCircuit();
-			circuit.cannibalizeTo(r);
-			return circuit;
+			final InternalCircuit circuit = circuitManager.getCleanInternalCircuit();
+			return circuit.cannibalizeToIntroductionPoint(r);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			return null;

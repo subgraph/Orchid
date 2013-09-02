@@ -38,8 +38,8 @@ public interface CircuitManager {
 	
 	
 	Stream openDirectoryStream(int purpose) throws InterruptedException, TimeoutException, OpenFailedException;
+	
 	Stream openDirectoryStream() throws InterruptedException, TimeoutException, OpenFailedException;
-	Stream openDirectoryStreamTo(Router target) throws InterruptedException, TimeoutException, OpenFailedException;
 	
 	Circuit getCleanInternalCircuit() throws InterruptedException;
 }

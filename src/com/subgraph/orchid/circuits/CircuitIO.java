@@ -29,7 +29,7 @@ public class CircuitIO implements DashboardRenderable {
 	private final static long CIRCUIT_BUILD_TIMEOUT_MS = 30 * 1000;
 	private final static long CIRCUIT_RELAY_RESPONSE_TIMEOUT = 20 * 1000;
 
-	private final CircuitBase circuit;
+	private final CircuitImpl circuit;
 	private final Connection connection;
 	private final int circuitId;
 	
@@ -41,7 +41,7 @@ public class CircuitIO implements DashboardRenderable {
 	private boolean isMarkedForClose;
 	private boolean isClosed;
 	
-	CircuitIO(CircuitBase circuit, Connection connection, int circuitId) {
+	CircuitIO(CircuitImpl circuit, Connection connection, int circuitId) {
 		this.circuit = circuit;
 		this.connection = connection;
 		this.circuitId = circuitId;

@@ -3,16 +3,16 @@ package com.subgraph.orchid.circuits;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
-import com.subgraph.orchid.Circuit;
+import com.subgraph.orchid.ExitCircuit;
 import com.subgraph.orchid.Stream;
 import com.subgraph.orchid.StreamConnectFailedException;
 
 public class OpenExitStreamTask implements Runnable {
 	private final static Logger logger = Logger.getLogger(OpenExitStreamTask.class.getName());
-	private final Circuit circuit;
+	private final ExitCircuit circuit;
 	private final StreamExitRequest exitRequest;
 
-	OpenExitStreamTask(Circuit circuit, StreamExitRequest exitRequest) {
+	OpenExitStreamTask(ExitCircuit circuit, StreamExitRequest exitRequest) {
 		this.circuit = circuit;
 		this.exitRequest = exitRequest;
 	}

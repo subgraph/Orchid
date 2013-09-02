@@ -11,12 +11,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.subgraph.orchid.Circuit;
-import com.subgraph.orchid.Circuit.CircuitType;
 import com.subgraph.orchid.CircuitBuildHandler;
 import com.subgraph.orchid.CircuitNode;
 import com.subgraph.orchid.Connection;
 import com.subgraph.orchid.ConnectionCache;
 import com.subgraph.orchid.Directory;
+import com.subgraph.orchid.ExitCircuit;
+import com.subgraph.orchid.InternalCircuit;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.circuits.CircuitManagerImpl.CircuitFilter;
@@ -78,7 +79,7 @@ public class CircuitCreationTask implements Runnable {
 		if(pendingExitStreams.isEmpty())
 			return;
 
-		for(Circuit c: circuitManager.getRandomlyOrderedListOfExitCircuits()) {
+		for(ExitCircuit c: circuitManager.getRandomlyOrderedListOfExitCircuits()) {
 			final Iterator<StreamExitRequest> it = pendingExitStreams.iterator();
 			while(it.hasNext()) {
 				if(attemptHandleStreamRequest(c, it.next()))
@@ -87,7 +88,7 @@ public class CircuitCreationTask implements Runnable {
 		}
 	}
 
-	private boolean attemptHandleStreamRequest(Circuit c, StreamExitRequest request) {
+	private boolean attemptHandleStreamRequest(ExitCircuit c, StreamExitRequest request) {
 		if(c.canHandleExitTo(request)) {
 			if(request.reserveRequest()) {
 				launchExitStreamTask(c, request);
@@ -98,7 +99,7 @@ public class CircuitCreationTask implements Runnable {
 		return false;
 	}
 
-	private void launchExitStreamTask(Circuit circuit, StreamExitRequest exitRequest) {
+	private void launchExitStreamTask(ExitCircuit circuit, StreamExitRequest exitRequest) {
 		final OpenExitStreamTask task = new OpenExitStreamTask(circuit, exitRequest);
 		executor.execute(task);
 	}
@@ -106,13 +107,13 @@ public class CircuitCreationTask implements Runnable {
 	private void expireOldCircuits() {
 		final Set<Circuit> circuits = circuitManager.getCircuitsByFilter(new CircuitFilter() {
 
-			public boolean filter(CircuitBase circuit) {
+			public boolean filter(Circuit circuit) {
 				return !circuit.isMarkedForClose() && circuit.getSecondsDirty() > MAX_CIRCUIT_DIRTINESS;
 			}
 		});
 		for(Circuit c: circuits) {
 			logger.fine("Closing idle dirty circuit: "+ c);
-			((CircuitBase)c).markForClose();
+			((CircuitImpl)c).markForClose();
 		}
 	}
 	private void checkExpiredPendingCircuits() {
@@ -167,8 +168,8 @@ public class CircuitCreationTask implements Runnable {
 	
 	private void launchBuildTaskForInternalCircuit() {
 		logger.fine("Launching new internal circuit");
-		final InternalCircuit circuit = new InternalCircuit(circuitManager);
-		final CircuitCreationRequest request = new CircuitCreationRequest(pathChooser, circuit, internalBuildHandler);
+		final InternalCircuitImpl circuit = new InternalCircuitImpl(circuitManager);
+		final CircuitCreationRequest request = new CircuitCreationRequest(pathChooser, circuit, internalBuildHandler, false);
 		final CircuitBuildTask task = new CircuitBuildTask(request, connectionCache);
 		executor.execute(task);
 		circuitManager.incrementPendingInternalCircuitCount();
@@ -176,13 +177,14 @@ public class CircuitCreationTask implements Runnable {
 	
 	private int countCircuitsSupportingTarget(final ExitTarget target, final boolean needClean) {
 		final CircuitFilter filter = new CircuitFilter() {
-			public boolean filter(CircuitBase circuit) {
-				if(circuit.getCircuitType() != CircuitType.CIRCUIT_EXIT) {
+			public boolean filter(Circuit circuit) {
+				if(!(circuit instanceof ExitCircuit)) {
 					return false;
 				}
+				final ExitCircuit ec = (ExitCircuit) circuit;
 				final boolean pendingOrConnected = circuit.isPending() || circuit.isConnected();
 				final boolean isCleanIfNeeded = !(needClean && !circuit.isClean());
-				return pendingOrConnected && isCleanIfNeeded && circuit.canHandleExitTo(target);
+				return pendingOrConnected && isCleanIfNeeded && ec.canHandleExitTo(target);
 			}
 		};
 		return circuitManager.getCircuitsByFilter(filter).size();
@@ -211,8 +213,8 @@ public class CircuitCreationTask implements Runnable {
 			return;
 		}
 		
-		final CircuitBase circuit = circuitManager.createNewExitCircuit(exitRouter);
-		final CircuitCreationRequest request = new CircuitCreationRequest(pathChooser, circuit, buildHandler);
+		final Circuit circuit = circuitManager.createNewExitCircuit(exitRouter);
+		final CircuitCreationRequest request = new CircuitCreationRequest(pathChooser, circuit, buildHandler, false);
 		final CircuitBuildTask task = new  CircuitBuildTask(request, connectionCache, initializationTracker);
 		executor.execute(task);
 	}
@@ -247,10 +249,14 @@ public class CircuitCreationTask implements Runnable {
 	}
 
 	private void circuitOpenedHandler(Circuit circuit) {
+		if(!(circuit instanceof ExitCircuit)) {
+			return;
+		}
+		final ExitCircuit ec = (ExitCircuit) circuit;
 		final List<StreamExitRequest> pendingExitStreams = circuitManager.getPendingExitStreams();
 		for(StreamExitRequest req: pendingExitStreams) {
-			if(circuit.canHandleExitTo(req) && req.reserveRequest()) {
-				launchExitStreamTask(circuit, req);
+			if(ec.canHandleExitTo(req) && req.reserveRequest()) {
+				launchExitStreamTask(ec, req);
 			}
 		}
 	}
@@ -279,7 +285,7 @@ public class CircuitCreationTask implements Runnable {
 			public void circuitBuildCompleted(Circuit circuit) {
 				logger.fine("Internal circuit build completed: "+ circuit);
 				lastNewCircuit.set(System.currentTimeMillis());
-				circuitManager.addCleanInternalCircuit(circuit);
+				circuitManager.addCleanInternalCircuit((InternalCircuit) circuit);
 			}
 		};
 	}

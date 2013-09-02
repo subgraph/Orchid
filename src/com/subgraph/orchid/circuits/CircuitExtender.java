@@ -17,9 +17,9 @@ import com.subgraph.orchid.data.HexDigest;
 public class CircuitExtender {
 	private final static Logger logger = Logger.getLogger(CircuitExtender.class.getName());
 	
-	private final CircuitBase circuit;
+	private final CircuitImpl circuit;
 	
-	CircuitExtender(CircuitBase circuit) {
+	CircuitExtender(CircuitImpl circuit) {
 		this.circuit = circuit;
 	}
 	

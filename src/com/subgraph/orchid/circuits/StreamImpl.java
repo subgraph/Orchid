@@ -24,7 +24,7 @@ public class StreamImpl implements Stream, DashboardRenderable {
 	private final static int STREAMWINDOW_INCREMENT = 50;
 	private final static int STREAMWINDOW_MAX_UNFLUSHED = 10;
 	
-	private final CircuitBase circuit;
+	private final CircuitImpl circuit;
 	private final int streamId;
 	private final CircuitNode targetNode;
 	private final TorInputStream inputStream;
@@ -40,7 +40,7 @@ public class StreamImpl implements Stream, DashboardRenderable {
 
 	private String streamTarget = "";
 	
-	StreamImpl(CircuitBase circuit, CircuitNode targetNode, int streamId) {
+	StreamImpl(CircuitImpl circuit, CircuitNode targetNode, int streamId) {
 		this.circuit = circuit;
 		this.targetNode = targetNode;
 		this.streamId = streamId;

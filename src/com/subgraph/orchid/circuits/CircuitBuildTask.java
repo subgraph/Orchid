@@ -19,7 +19,7 @@ public class CircuitBuildTask implements Runnable {
 	private final CircuitCreationRequest creationRequest;
 	private final ConnectionCache connectionCache;
 	private final TorInitializationTracker initializationTracker;
-	private final CircuitBase circuit;
+	private final CircuitImpl circuit;
 	private final CircuitExtender extender;
 
 	private Connection connection = null;

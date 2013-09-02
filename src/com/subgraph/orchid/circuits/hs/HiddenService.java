@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.subgraph.orchid.Circuit;
+import com.subgraph.orchid.HiddenServiceCircuit;
 import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.circuits.hs.HSDescriptorCookie.CookieType;
 import com.subgraph.orchid.crypto.TorMessageDigest;
@@ -17,7 +17,7 @@ public class HiddenService {
 	private final byte[] permanentId;
 
 	private HSDescriptor descriptor;
-	private Circuit circuit;
+	private HiddenServiceCircuit circuit;
 	
 	static byte[] decodeOnion(String onionAddress) {
 		final int idx = onionAddress.indexOf(".onion");
@@ -58,11 +58,11 @@ public class HiddenService {
 		this.descriptor = descriptor;
 	}
 
-	Circuit getCircuit() {
+	HiddenServiceCircuit getCircuit() {
 		return circuit;
 	}
 	
-	void setCircuit(Circuit circuit) {
+	void setCircuit(HiddenServiceCircuit circuit) {
 		this.circuit = circuit;
 	}
 	
