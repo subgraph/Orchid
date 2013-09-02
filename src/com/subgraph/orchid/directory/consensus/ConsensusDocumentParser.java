@@ -2,9 +2,11 @@ package com.subgraph.orchid.directory.consensus;
 
 import com.subgraph.orchid.ConsensusDocument;
 import com.subgraph.orchid.TorParsingException;
+import com.subgraph.orchid.directory.parsing.BasicDocumentParsingResult;
 import com.subgraph.orchid.directory.parsing.DocumentFieldParser;
 import com.subgraph.orchid.directory.parsing.DocumentParser;
 import com.subgraph.orchid.directory.parsing.DocumentParsingHandler;
+import com.subgraph.orchid.directory.parsing.DocumentParsingResult;
 import com.subgraph.orchid.directory.parsing.DocumentParsingResultHandler;
 
 public class ConsensusDocumentParser implements DocumentParser<ConsensusDocument> {
@@ -55,6 +57,12 @@ public class ConsensusDocumentParser implements DocumentParser<ConsensusDocument
 		}
 	}
 	
+	public DocumentParsingResult<ConsensusDocument> parse() {
+		final BasicDocumentParsingResult<ConsensusDocument> result = new BasicDocumentParsingResult<ConsensusDocument>();
+		parse(result);
+		return result;
+	}
+
 	private DocumentParsingHandler createParsingHandler() {
 		return new DocumentParsingHandler() {
 

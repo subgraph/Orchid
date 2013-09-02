@@ -5,9 +5,11 @@ import com.subgraph.orchid.TorParsingException;
 import com.subgraph.orchid.crypto.TorPublicKey;
 import com.subgraph.orchid.crypto.TorSignature;
 import com.subgraph.orchid.data.IPv4Address;
+import com.subgraph.orchid.directory.parsing.BasicDocumentParsingResult;
 import com.subgraph.orchid.directory.parsing.DocumentFieldParser;
 import com.subgraph.orchid.directory.parsing.DocumentParser;
 import com.subgraph.orchid.directory.parsing.DocumentParsingHandler;
+import com.subgraph.orchid.directory.parsing.DocumentParsingResult;
 import com.subgraph.orchid.directory.parsing.DocumentParsingResultHandler;
 
 public class KeyCertificateParser implements DocumentParser<KeyCertificate> {
@@ -61,6 +63,12 @@ public class KeyCertificateParser implements DocumentParser<KeyCertificate> {
 		}
 	}
 	
+	public DocumentParsingResult<KeyCertificate> parse() {
+		final BasicDocumentParsingResult<KeyCertificate> result = new BasicDocumentParsingResult<KeyCertificate>();
+		parse(result);
+		return result;
+	}
+
 	private void processKeyword(KeyCertificateKeyword keyword) {
 		switch(keyword) {
 		case DIR_KEY_CERTIFICATE_VERSION:

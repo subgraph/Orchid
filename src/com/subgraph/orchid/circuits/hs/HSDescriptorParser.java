@@ -7,10 +7,12 @@ import java.util.logging.Logger;
 import com.subgraph.orchid.TorParsingException;
 import com.subgraph.orchid.crypto.TorSignature;
 import com.subgraph.orchid.directory.DocumentFieldParserImpl;
+import com.subgraph.orchid.directory.parsing.BasicDocumentParsingResult;
 import com.subgraph.orchid.directory.parsing.DocumentFieldParser;
 import com.subgraph.orchid.directory.parsing.DocumentObject;
 import com.subgraph.orchid.directory.parsing.DocumentParser;
 import com.subgraph.orchid.directory.parsing.DocumentParsingHandler;
+import com.subgraph.orchid.directory.parsing.DocumentParsingResult;
 import com.subgraph.orchid.directory.parsing.DocumentParsingResultHandler;
 import com.subgraph.orchid.encoders.Base64;
 
@@ -59,6 +61,12 @@ public class HSDescriptorParser implements DocumentParser<HSDescriptor>{
 	}
 	
 	
+	public DocumentParsingResult<HSDescriptor> parse() {
+		final BasicDocumentParsingResult<HSDescriptor> result = new BasicDocumentParsingResult<HSDescriptor>();
+		parse(result);
+		return result;
+	}
+
 	private void processKeywordLine() {
 		final HSDescriptorKeyword keyword = HSDescriptorKeyword.findKeyword(fieldParser.getCurrentKeyword());
 		if(!keyword.equals(HSDescriptorKeyword.UNKNOWN_KEYWORD)) {

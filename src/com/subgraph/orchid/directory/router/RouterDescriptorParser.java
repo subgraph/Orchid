@@ -5,9 +5,11 @@ import com.subgraph.orchid.TorParsingException;
 import com.subgraph.orchid.crypto.TorSignature;
 import com.subgraph.orchid.data.BandwidthHistory;
 import com.subgraph.orchid.data.Timestamp;
+import com.subgraph.orchid.directory.parsing.BasicDocumentParsingResult;
 import com.subgraph.orchid.directory.parsing.DocumentFieldParser;
 import com.subgraph.orchid.directory.parsing.DocumentParser;
 import com.subgraph.orchid.directory.parsing.DocumentParsingHandler;
+import com.subgraph.orchid.directory.parsing.DocumentParsingResult;
 import com.subgraph.orchid.directory.parsing.DocumentParsingResultHandler;
 
 public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> {
@@ -63,6 +65,12 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 		}
 	}
 	
+	public DocumentParsingResult<RouterDescriptor> parse() {
+		final BasicDocumentParsingResult<RouterDescriptor> result = new BasicDocumentParsingResult<RouterDescriptor>();
+		parse(result);
+		return result;
+	}
+
 	private void processKeyword(RouterDescriptorKeyword keyword) {
 		fieldParser.verifyExpectedArgumentCount(keyword.getKeyword(), keyword.getArgumentCount());
 

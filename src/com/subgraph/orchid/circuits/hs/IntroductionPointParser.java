@@ -2,9 +2,11 @@ package com.subgraph.orchid.circuits.hs;
 
 import com.subgraph.orchid.TorParsingException;
 import com.subgraph.orchid.data.HexDigest;
+import com.subgraph.orchid.directory.parsing.BasicDocumentParsingResult;
 import com.subgraph.orchid.directory.parsing.DocumentFieldParser;
 import com.subgraph.orchid.directory.parsing.DocumentParser;
 import com.subgraph.orchid.directory.parsing.DocumentParsingHandler;
+import com.subgraph.orchid.directory.parsing.DocumentParsingResult;
 import com.subgraph.orchid.directory.parsing.DocumentParsingResultHandler;
 
 public class IntroductionPointParser implements DocumentParser<IntroductionPoint>{
@@ -28,6 +30,12 @@ public class IntroductionPointParser implements DocumentParser<IntroductionPoint
 			resultHandler.parsingError(e.getMessage());
 			return false;
 		}
+	}
+
+	public DocumentParsingResult<IntroductionPoint> parse() {
+		final BasicDocumentParsingResult<IntroductionPoint> result = new BasicDocumentParsingResult<IntroductionPoint>();
+		parse(result);
+		return result;
 	}
 
 	private DocumentParsingHandler createParsingHandler() {
