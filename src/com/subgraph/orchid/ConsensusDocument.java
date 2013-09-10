@@ -36,4 +36,6 @@ public interface ConsensusDocument extends Document {
 	int getWeightScaleParameter();
 	
 	int getBandwidthWeight(String tag);
+	
+	boolean getUseNTorHandshake();
 }

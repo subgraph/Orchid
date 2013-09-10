@@ -36,6 +36,8 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	private final static int CIRCWINDOW_MIN = 100;
 	private final static int CIRCWINDOW_MAX = 1000;
 	
+	private final static String USE_NTOR_HANDSHAKE_PARAM = "UseNTorHandshake";
+	
 	private Set<RequiredCertificate> requiredCertificates = new HashSet<RequiredCertificate>();
 	
 	
@@ -289,6 +291,14 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 		}
 	}
 	
+	private boolean getBooleanParameterValue(String name, boolean defaultValue) {
+		if(!parameters.containsKey(name)) {
+			return defaultValue;
+		}
+		final int value = parameters.get(name);
+		return value != 0;
+	}
+	
 	public int getCircWindowParameter() {
 		return getParameterValue(CIRCWINDOW_PARAM, CIRCWINDOW_DEFAULT, CIRCWINDOW_MIN, CIRCWINDOW_MAX);
 	}
@@ -303,5 +313,9 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 		} else {
 			return -1;
 		}
+	}
+	
+	public boolean getUseNTorHandshake() {
+		return getBooleanParameterValue(USE_NTOR_HANDSHAKE_PARAM, false);
 	}
 }
