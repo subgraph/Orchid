@@ -99,6 +99,9 @@ public class RouterDescriptorParser implements DocumentParser<RouterDescriptor> 
 		case ONION_KEY:
 			currentDescriptor.setOnionKey(fieldParser.parsePublicKey());
 			break;
+		case NTOR_ONION_KEY:
+			currentDescriptor.setNtorOnionKey(fieldParser.parseNtorPublicKey());
+			break;
 		case SIGNING_KEY:
 			currentDescriptor.setIdentityKey(fieldParser.parsePublicKey());
 			break;			

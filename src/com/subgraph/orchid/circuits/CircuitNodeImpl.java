@@ -1,45 +1,41 @@
 package com.subgraph.orchid.circuits;
 
-import java.math.BigInteger;
-
 import com.subgraph.orchid.Cell;
 import com.subgraph.orchid.CircuitNode;
 import com.subgraph.orchid.RelayCell;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.TorException;
-import com.subgraph.orchid.crypto.HybridEncryption;
-import com.subgraph.orchid.crypto.TorCreateFastKeyAgreement;
-import com.subgraph.orchid.crypto.TorKeyAgreement;
-import com.subgraph.orchid.crypto.TorMessageDigest;
-import com.subgraph.orchid.data.HexDigest;
 
 public class CircuitNodeImpl implements CircuitNode {
 	
-	public static CircuitNodeImpl createAnonymous(CircuitNode previous) {
-		return new CircuitNodeImpl(previous);
+	public static CircuitNode createAnonymous(CircuitNode previous, byte[] keyMaterial, byte[] verifyDigest) {
+		return createNode(null, previous, keyMaterial, verifyDigest);
+	}
+	
+	public static CircuitNode createFirstHop(Router r, byte[] keyMaterial, byte[] verifyDigest) {
+		return createNode(r, null, keyMaterial, verifyDigest);
+	}
+	
+	public static CircuitNode createNode(Router r, CircuitNode previous, byte[] keyMaterial, byte[] verifyDigest) {
+		final CircuitNodeCryptoState cs = CircuitNodeCryptoState.createFromKeyMaterial(keyMaterial, verifyDigest);
+		return new CircuitNodeImpl(r, previous, cs);
 	}
 
 	private final static int CIRCWINDOW_START = 1000;
 	private final static int CIRCWINDOW_INCREMENT = 100;
-	private final TorKeyAgreement dhContext;
+
 	private final Router router;
-	private CircuitNodeCryptoState cryptoState;
+	private final CircuitNodeCryptoState cryptoState;
 	private final CircuitNode previousNode;
 
 	private final Object windowLock;
 	private int packageWindow;
 	private int deliverWindow;
 	
-	private TorCreateFastKeyAgreement createFastContext;
-
-	private CircuitNodeImpl(CircuitNode previous) {
-		this(null, previous);
-	}
-
-	CircuitNodeImpl(Router router, CircuitNode previous) {
+	private CircuitNodeImpl(Router router, CircuitNode previous, CircuitNodeCryptoState cryptoState) {
 		previousNode = previous;
 		this.router = router;
-		this.dhContext = new TorKeyAgreement();
+		this.cryptoState = cryptoState;
 		windowLock = new Object();
 		packageWindow = CIRCWINDOW_START;
 		deliverWindow = CIRCWINDOW_START;
@@ -47,24 +43,6 @@ public class CircuitNodeImpl implements CircuitNode {
 
 	public Router getRouter() {
 		return router;
-	}
-
-	void setCreatedFastValue(byte[] value, HexDigest packetDigest) {
-		createFastContext.setOtherValue(value);
-		deriveKeys(createFastContext.getDerivedValue());
-		if(!cryptoState.verifyPacketDigest(packetDigest)) {
-			throw new TorException("Digest verification failed");
-		}
-	}
-	
-	public void setSharedSecret(BigInteger peerPublic, HexDigest packetDigest) {
-		if(!TorKeyAgreement.isValidPublicValue(peerPublic))
-			throw new TorException("Illegal DH public value");
-
-		final byte[] sharedSecret = dhContext.getSharedSecret(peerPublic);
-		deriveKeys(sharedSecret);
-		if(!cryptoState.verifyPacketDigest(packetDigest))
-			throw new TorException("Digest verification failed!");
 	}
 
 	public CircuitNode getPreviousNode() {
@@ -85,43 +63,6 @@ public class CircuitNodeImpl implements CircuitNode {
 
 	public byte[] getForwardDigestBytes() {
 		return cryptoState.getForwardDigestBytes();
-	}
-
-	protected TorKeyAgreement getKeyAgreement() {
-		return dhContext;
-	}
-	
-	public byte[] getPublicKeyBytes() {
-		return dhContext.getPublicKeyBytes();
-	}
-	
-	byte[] createOnionSkin() {
-		final byte[] yBytes = dhContext.getPublicKeyBytes();
-		final HybridEncryption hybrid = new HybridEncryption();
-		return hybrid.encrypt(yBytes, router.getOnionKey());
-	}
-
-	byte [] getCreateFastPublicValue() {
-		if(createFastContext == null) {
-			createFastContext = new TorCreateFastKeyAgreement();
-		}
-		return createFastContext.getPublicValue();
-	}
-
-	private void deriveKeys(byte[] sharedSecret) {
-		byte[] keyMaterial = new byte[TorMessageDigest.TOR_DIGEST_SIZE * 5];
-		int offset = 0;
-		byte[] buffer = new byte[sharedSecret.length + 1];
-		System.arraycopy(sharedSecret, 0, buffer, 0, sharedSecret.length);
-		for(int i = 0; i < 5; i++) {
-			final TorMessageDigest md = new TorMessageDigest();
-			buffer[sharedSecret.length] = (byte)i;
-			md.update(buffer);
-			System.arraycopy(md.getDigestBytes(), 0, keyMaterial, offset, TorMessageDigest.TOR_DIGEST_SIZE);
-			offset += TorMessageDigest.TOR_DIGEST_SIZE;
-		}
-
-		cryptoState = CircuitNodeCryptoState.createFromKeyMaterial(keyMaterial);
 	}
 
 	public String toString() {

@@ -7,8 +7,10 @@ import com.subgraph.orchid.crypto.TorStreamCipher;
 import com.subgraph.orchid.data.HexDigest;
 
 public class CircuitNodeCryptoState {
-	public static CircuitNodeCryptoState createFromKeyMaterial(byte[] keyMaterial) {
-		return new CircuitNodeCryptoState(keyMaterial);
+	public final static int KEY_MATERIAL_SIZE = TorMessageDigest.TOR_DIGEST_SIZE * 2 + TorStreamCipher.KEY_LEN * 2;
+	
+	public static CircuitNodeCryptoState createFromKeyMaterial(byte[] keyMaterial, byte[] verifyDigest) {
+		return new CircuitNodeCryptoState(keyMaterial, verifyDigest);
 	}
 	
 	private final HexDigest checksumDigest;
@@ -29,10 +31,9 @@ public class CircuitNodeCryptoState {
 		return keyBytes;
 	}
 	
-	private CircuitNodeCryptoState(byte[] keyMaterial) {
+	private CircuitNodeCryptoState(byte[] keyMaterial, byte[] verifyDigest) {
+		checksumDigest = HexDigest.createFromDigestBytes(verifyDigest);
 		int offset = 0;
-		checksumDigest = HexDigest.createFromDigestBytes(extractDigestBytes(keyMaterial, offset));
-		offset += TorMessageDigest.TOR_DIGEST_SIZE;
 		
 		forwardDigest = new TorMessageDigest();
 		forwardDigest.update(extractDigestBytes(keyMaterial, offset));
@@ -98,7 +99,4 @@ public class CircuitNodeCryptoState {
 		for(int i = 0; i < 4; i++)
 			cell.putByteAt(i + RelayCell.DIGEST_OFFSET, digest[i] & 0xFF);	
 	}
-	
-	
-
 }

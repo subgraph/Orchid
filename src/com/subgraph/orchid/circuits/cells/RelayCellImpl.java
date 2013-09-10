@@ -169,6 +169,10 @@ public class RelayCellImpl extends CellImpl implements RelayCell {
 			return "RELAY_RESOLVED";
 		case RELAY_BEGIN_DIR:
 			return "RELAY_BEGIN_DIR";
+		case RELAY_EXTEND2:
+			return "RELAY_EXTEND2";
+		case RELAY_EXTENDED2:
+			return "RELAY_EXTENDED2";
 		default:
 			return "Relay command = "+ command;
 		}

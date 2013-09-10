@@ -109,6 +109,8 @@ public interface RouterDescriptor extends Document {
 	 */
 	TorPublicKey getOnionKey();
 	
+	byte[] getNTorOnionKey();
+	
 	/**
 	 * Return the long-term identity and signing public key for this
 	 * router.

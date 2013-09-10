@@ -187,6 +187,7 @@ public interface DocumentFieldParser {
 	 */
 	TorPublicKey parsePublicKey();
 	
+	byte[] parseNtorPublicKey();
 	/**
 	 * Extract a document object following the current keyword line and interpret it as a 
 	 * Base64 encoded PKCS1 signature object.

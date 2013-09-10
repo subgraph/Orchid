@@ -19,10 +19,12 @@ public class InternalCircuitImpl extends CircuitImpl implements InternalCircuit,
 	private enum InternalType { UNUSED, HS_INTRODUCTION, HS_DIRECTORY, HS_CIRCUIT }
 	
 	private InternalType type;
+	private boolean ntorEnabled;
 	
 	protected InternalCircuitImpl(CircuitManagerImpl circuitManager) {
 		super(circuitManager);
 		this.type = InternalType.UNUSED;
+		this.ntorEnabled = circuitManager.isNtorEnabled();
 	}
 
 	
@@ -44,7 +46,7 @@ public class InternalCircuitImpl extends CircuitImpl implements InternalCircuit,
 			throw new IllegalStateException("Cannot cannibalize internal circuit with type "+ type);
 			
 		}
-		final CircuitExtender extender = new CircuitExtender(this);
+		final CircuitExtender extender = new CircuitExtender(this, ntorEnabled);
 		extender.extendTo(target);
 	}
 	

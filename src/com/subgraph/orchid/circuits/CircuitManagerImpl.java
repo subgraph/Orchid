@@ -241,7 +241,7 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	private boolean tryOpenDirectoryCircuit(Circuit circuit) {
 		final DirectoryCircuitResult result = new DirectoryCircuitResult();
 		final CircuitCreationRequest req = new CircuitCreationRequest(pathChooser, circuit, result, true);
-		final CircuitBuildTask task = new CircuitBuildTask(req, connectionCache, initializationTracker);
+		final CircuitBuildTask task = new CircuitBuildTask(req, connectionCache, isNtorEnabled(), initializationTracker);
 		task.run();
 		return result.isSuccessful();
 	}
@@ -339,5 +339,9 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		}
 	}
 
+	boolean isNtorEnabled() {
+		// XXX
+		return true;
+	}
 	
 }

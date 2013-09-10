@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.TorParsingException;
 import com.subgraph.orchid.crypto.TorMessageDigest;
+import com.subgraph.orchid.crypto.TorNTorKeyAgreement;
 import com.subgraph.orchid.crypto.TorPublicKey;
 import com.subgraph.orchid.crypto.TorSignature;
 import com.subgraph.orchid.data.HexDigest;
@@ -223,6 +224,15 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 	public TorPublicKey parsePublicKey() {
 		final DocumentObject documentObject = parseObject();
 		return TorPublicKey.createFromPEMBuffer(documentObject.getContent());
+	}
+
+	
+	public byte[] parseNtorPublicKey() {
+		final byte[] key = parseBase64Data();
+		if(key.length != TorNTorKeyAgreement.CURVE25519_PUBKEY_LEN) {
+			throw new TorParsingException("NTor public key was not expected length after base64 decoding.  Length is "+ key.length);
+		}
+		return key;
 	}
 
 	public TorSignature parseSignature() {

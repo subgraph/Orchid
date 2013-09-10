@@ -13,6 +13,7 @@ public enum RouterDescriptorKeyword {
 	HIBERNATING("hibernating", 1),
 	UPTIME("uptime", 1),
 	ONION_KEY("onion-key", 0),
+	NTOR_ONION_KEY("ntor-onion-key", 1),
 	SIGNING_KEY("signing-key", 0),
 	ACCEPT("accept", 1),
 	REJECT("reject", 1),

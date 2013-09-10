@@ -4,15 +4,15 @@ import java.math.BigInteger;
 import java.util.logging.Logger;
 
 import com.subgraph.orchid.Cell;
-import com.subgraph.orchid.CircuitNode;
 import com.subgraph.orchid.HiddenServiceCircuit;
 import com.subgraph.orchid.InternalCircuit;
 import com.subgraph.orchid.RelayCell;
 import com.subgraph.orchid.Router;
+import com.subgraph.orchid.circuits.CircuitNodeCryptoState;
 import com.subgraph.orchid.circuits.CircuitNodeImpl;
-import com.subgraph.orchid.crypto.TorKeyAgreement;
 import com.subgraph.orchid.crypto.TorMessageDigest;
 import com.subgraph.orchid.crypto.TorRandom;
+import com.subgraph.orchid.crypto.TorTapKeyAgreement;
 import com.subgraph.orchid.data.HexDigest;
 
 public class RendezvousProcessor {
@@ -21,7 +21,6 @@ public class RendezvousProcessor {
 	private final static int RENDEZVOUS_COOKIE_LEN = 20;
 	private final static TorRandom random = new TorRandom();
 	
-	private CircuitNode node;
 	private final InternalCircuit circuit;
 	private final byte[] cookie;
 	
@@ -42,15 +41,11 @@ public class RendezvousProcessor {
 			logger.info("Response received from Rendezvous establish was not expected acknowledgement, Relay Command: "+ response.getRelayCommand());
 			return false;
 		} else {
-			node = CircuitNodeImpl.createAnonymous(circuit.getFinalCircuitNode());
 			return true;
 		}
 	}
 	
-	HiddenServiceCircuit processRendezvous2() {
-		if(node == null) {
-			throw new IllegalStateException("Can only be called after successful rendezvous establishment");
-		}
+	HiddenServiceCircuit processRendezvous2(TorTapKeyAgreement kex) {
 		final RelayCell cell = circuit.receiveRelayCell();
 		if(cell == null) {
 			logger.info("Timeout waiting for RENDEZVOUS2");
@@ -64,28 +59,26 @@ public class RendezvousProcessor {
 		if(peerPublic == null || handshakeDigest == null) {
 			return null;
 		}
-		node.setSharedSecret(peerPublic, handshakeDigest);
-		return circuit.connectHiddenService(node);
+		final byte[] verifyHash = new byte[TorMessageDigest.TOR_DIGEST_SIZE];
+		final byte[] keyMaterial = new byte[CircuitNodeCryptoState.KEY_MATERIAL_SIZE];
+		if(!kex.deriveKeysFromDHPublicAndHash(peerPublic, handshakeDigest.getRawBytes(), keyMaterial, verifyHash)) {
+			logger.info("Error deriving session keys while extending to hidden service");
+			return null;
+		}
+		return circuit.connectHiddenService(CircuitNodeImpl.createAnonymous(circuit.getFinalCircuitNode(), keyMaterial, verifyHash));
 	}
 	
 	private BigInteger readPeerPublic(Cell cell) {
-		final byte[] dhPublic = new byte[TorKeyAgreement.DH_LEN];
+		final byte[] dhPublic = new byte[TorTapKeyAgreement.DH_LEN];
 		cell.getByteArray(dhPublic);
 		final BigInteger peerPublic = new BigInteger(1, dhPublic);
-		if(!TorKeyAgreement.isValidPublicValue(peerPublic)) {
+		if(!TorTapKeyAgreement.isValidPublicValue(peerPublic)) {
 			logger.warning("Illegal DH public value received: "+ peerPublic);
 			return null;
 		}
 		return peerPublic;
 	}
 	
-	byte[] getPublicKeyBytes() {
-		if(node == null) {
-			throw new IllegalStateException("Can only be called after successful rendezvous establish");
-		}
-		return node.getPublicKeyBytes();
-	}
-
 	HexDigest readHandshakeDigest(Cell cell) {
 		final byte[] digestBytes = new byte[TorMessageDigest.TOR_DIGEST_SIZE];
 		cell.getByteArray(digestBytes);

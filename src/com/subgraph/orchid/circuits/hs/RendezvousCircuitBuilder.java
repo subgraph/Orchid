@@ -10,6 +10,7 @@ import com.subgraph.orchid.InternalCircuit;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.circuits.CircuitManagerImpl;
+import com.subgraph.orchid.crypto.TorTapKeyAgreement;
 
 public class RendezvousCircuitBuilder implements Callable<HiddenServiceCircuit>{
 	private final Logger logger = Logger.getLogger(RendezvousCircuitBuilder.class.getName());
@@ -46,15 +47,15 @@ public class RendezvousCircuitBuilder implements Callable<HiddenServiceCircuit>{
 			return null;
 		}
 		logger.fine("Sending introduce cell for "+ logServiceName());
-		
-		final boolean icResult = introductionProcessor.sendIntroduce(introductionProcessor.getServiceKey(), rp.getPublicKeyBytes(), rp.getCookie(), rp.getRendezvousRouter());
+		final TorTapKeyAgreement kex = new TorTapKeyAgreement();
+		final boolean icResult = introductionProcessor.sendIntroduce(introductionProcessor.getServiceKey(), kex.getPublicKeyBytes(), rp.getCookie(), rp.getRendezvousRouter());
 		introductionProcessor.markCircuitForClose();
 		if(!icResult) {
 			rendezvous.markForClose();
 			return null;
 		}
 		logger.fine("Processing RV2 for "+ logServiceName());
-		HiddenServiceCircuit hsc = rp.processRendezvous2();
+		HiddenServiceCircuit hsc = rp.processRendezvous2(kex);
 		if(hsc == null) {
 			rendezvous.markForClose();
 		}

@@ -1,8 +1,5 @@
 package com.subgraph.orchid;
 
-import java.math.BigInteger;
-
-import com.subgraph.orchid.data.HexDigest;
 
 
 /**
@@ -90,8 +87,4 @@ public interface CircuitNode {
 	boolean considerSendingSendme();
 	
 	boolean decryptBackwardCell(Cell cell);
-	byte[] getPublicKeyBytes();
-	void setSharedSecret(BigInteger peerPublic, HexDigest packetDigest);
-
-
 }

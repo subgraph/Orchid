@@ -21,6 +21,7 @@ public interface Router {
 	RouterDescriptor getCurrentDescriptor();
 	HexDigest getDescriptorDigest();
 	TorPublicKey getOnionKey();
+	byte[] getNTorOnionKey();
 	
 	boolean hasBandwidth();
 	int getEstimatedBandwidth();

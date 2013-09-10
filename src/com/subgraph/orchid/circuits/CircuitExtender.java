@@ -1,6 +1,5 @@
 package com.subgraph.orchid.circuits;
 
-import java.math.BigInteger;
 import java.util.logging.Logger;
 
 import com.subgraph.orchid.Cell;
@@ -10,110 +9,87 @@ import com.subgraph.orchid.Router;
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.circuits.cells.CellImpl;
 import com.subgraph.orchid.circuits.cells.RelayCellImpl;
+import com.subgraph.orchid.crypto.TorCreateFastKeyAgreement;
 import com.subgraph.orchid.crypto.TorKeyAgreement;
 import com.subgraph.orchid.crypto.TorMessageDigest;
-import com.subgraph.orchid.data.HexDigest;
+import com.subgraph.orchid.crypto.TorStreamCipher;
 
 public class CircuitExtender {
 	private final static Logger logger = Logger.getLogger(CircuitExtender.class.getName());
 	
-	private final CircuitImpl circuit;
+	private final static int DH_BYTES = 1024 / 8;
+	private final static int PKCS1_OAEP_PADDING_OVERHEAD = 42;
+	private final static int CIPHER_KEY_LEN = TorStreamCipher.KEY_LEN;
+	final static int TAP_ONIONSKIN_LEN = PKCS1_OAEP_PADDING_OVERHEAD + CIPHER_KEY_LEN + DH_BYTES;
+	final static int TAP_ONIONSKIN_REPLY_LEN = DH_BYTES + TorMessageDigest.TOR_DIGEST_SIZE;
 	
-	CircuitExtender(CircuitImpl circuit) {
+	
+	private final CircuitImpl circuit;
+	private final boolean ntorEnabled;
+	
+	
+	CircuitExtender(CircuitImpl circuit, boolean ntorEnabled) {
 		this.circuit = circuit;
+		this.ntorEnabled = ntorEnabled;
 	}
 	
 	
 	CircuitNode createFastTo(Router targetRouter) {
-		final CircuitNodeImpl newNode = new CircuitNodeImpl(targetRouter, null);
-		sendCreateFastCell(newNode);
-		receiveAndProcessCreateFastResponse(newNode);
-		return newNode;
+		final TorCreateFastKeyAgreement kex = new TorCreateFastKeyAgreement();
+		sendCreateFastCell(kex);
+		return receiveAndProcessCreateFastResponse(targetRouter, kex);
 	}
 
-	private void sendCreateFastCell(CircuitNodeImpl node) {
+	private void sendCreateFastCell(TorCreateFastKeyAgreement kex) {
 		final Cell cell = CellImpl.createCell(circuit.getCircuitId(), Cell.CREATE_FAST);
-		cell.putByteArray(node.getCreateFastPublicValue());
+		cell.putByteArray(kex.createOnionSkin());
 		circuit.sendCell(cell);
 	}
 	
-	private void receiveAndProcessCreateFastResponse(CircuitNodeImpl node) {
+	private CircuitNode receiveAndProcessCreateFastResponse(Router targetRouter, TorKeyAgreement kex) {
 		final Cell cell = circuit.receiveControlCellResponse();
 		if(cell == null) {
 			throw new TorException("Timeout building circuit");
 		}
 
-		processCreatedFastCell(node, cell);
-		circuit.appendNode(node);
+		return processCreatedFastCell(targetRouter, cell, kex);
 	}
 	
-	private void processCreatedFastCell(CircuitNodeImpl node, Cell cell) {
-		final byte[] cellBytes = cell.getCellBytes();
-		final byte[] yValue = new byte[TorMessageDigest.TOR_DIGEST_SIZE];
-		final byte[] hash = new byte[TorMessageDigest.TOR_DIGEST_SIZE];
-		int offset = Cell.CELL_HEADER_LEN;
-		System.arraycopy(cellBytes, offset, yValue, 0, TorMessageDigest.TOR_DIGEST_SIZE);
-		offset += TorMessageDigest.TOR_DIGEST_SIZE;
-		System.arraycopy(cellBytes, offset, hash, 0, TorMessageDigest.TOR_DIGEST_SIZE);
-		node.setCreatedFastValue(yValue, HexDigest.createFromDigestBytes(hash));
+	private CircuitNode processCreatedFastCell(Router targetRouter, Cell cell, TorKeyAgreement kex) {
+		final byte[] payload = new byte[TorMessageDigest.TOR_DIGEST_SIZE * 2];
+		final byte[] keyMaterial = new byte[CircuitNodeCryptoState.KEY_MATERIAL_SIZE];
+		final byte[] verifyHash = new byte[TorMessageDigest.TOR_DIGEST_SIZE];
+		cell.getByteArray(payload);
+		if(!kex.deriveKeysFromHandshakeResponse(payload, keyMaterial, verifyHash)) {
+			// XXX
+			return null;
+		}
+		final CircuitNode node = CircuitNodeImpl.createFirstHop(targetRouter, keyMaterial, verifyHash);
+		circuit.appendNode(node);
+		return node;
 	}
 	
 	CircuitNode extendTo(Router targetRouter) {
-		if(circuit.getCircuitLength() == 0)
+		if(circuit.getCircuitLength() == 0) {
 			throw new TorException("Cannot EXTEND an empty circuit");
-		final CircuitNodeImpl newNode = createExtendNode(targetRouter);
-		final RelayCell cell = createRelayExtendCell(newNode);
-		circuit.sendRelayCellToFinalNode(cell);
-
-		receiveExtendResponse(newNode);
-		circuit.appendNode(newNode);
-		return newNode;
-	}
-
-	private CircuitNodeImpl createExtendNode(Router router) {
-		return new CircuitNodeImpl(router, circuit.getFinalCircuitNode());
-	}
-
-	private RelayCell createRelayExtendCell(CircuitNodeImpl newNode) {
-		final RelayCell cell = new RelayCellImpl(circuit.getFinalCircuitNode(), circuit.getCircuitId(), 0, RelayCell.RELAY_EXTEND, true);
-		final Router router = newNode.getRouter();
-		cell.putByteArray(router.getAddress().getAddressDataBytes());
-		cell.putShort(router.getOnionPort());
-		cell.putByteArray( newNode.createOnionSkin());
-		cell.putByteArray(router.getIdentityKey().getFingerprint().getRawBytes());
-		return cell;
-	}
-
-	private void receiveExtendResponse(CircuitNodeImpl newNode) {
-		final RelayCell cell = circuit.receiveRelayCell();
-		if(cell == null)
-			throw new TorException("Timeout building circuit");
-
-		final int command = cell.getRelayCommand();
-		if(command == RelayCell.RELAY_TRUNCATED) {
-			final int code = cell.getByte() & 0xFF;
-			final String msg = CellImpl.errorToDescription(code);
-			final String source = nodeToName(cell.getCircuitNode());
-			final String extendTarget = nodeToName(newNode);
-			if(code == Cell.ERROR_PROTOCOL) {
-				logProtocolViolation(source, extendTarget, newNode.getRouter());
-			}
-			throw new TorException("Error from ("+ source + ") while extending to ("+ extendTarget +"): "+ msg);
-		} else if (command != RelayCell.RELAY_EXTENDED) {
-			throw new TorException("Unexpected response to RELAY_EXTEND.  Command = "+ command);
 		}
+		
+		if(useNtor(targetRouter)) {
+			final NTorCircuitExtender nce = new NTorCircuitExtender(this, targetRouter);
+			return nce.extendTo();
+		} else {
+			final TapCircuitExtender tce = new TapCircuitExtender(this, targetRouter);
+			return tce.extendTo();
+		}
+	}
 
-		byte[] dhPublic = new byte[TorKeyAgreement.DH_LEN];
-		cell.getByteArray(dhPublic);
-		byte[] keyHash = new byte[TorMessageDigest.TOR_DIGEST_SIZE];
-		cell.getByteArray(keyHash);
-		HexDigest packetDigest = HexDigest.createFromDigestBytes(keyHash);
-		BigInteger peerPublic = new BigInteger(1, dhPublic);
-		newNode.setSharedSecret(peerPublic, packetDigest);
+	private boolean useNtor(Router targetRouter) {
+		return ntorEnabled && targetRouter.getNTorOnionKey() != null;
 	}
 	
-	private void logProtocolViolation(String sourceName, String targetName, Router targetRouter) {
+	private void logProtocolViolation(String sourceName, Router targetRouter) {
 		final String version = (targetRouter == null) ? "(none)" : targetRouter.getVersion();
+		final String targetName = (targetRouter == null) ? "(none)" : targetRouter.getNickname();
 		logger.warning("Protocol error extending circuit from ("+ sourceName +") to ("+ targetName +") [version: "+ version +"]");
 	}
 
@@ -123,5 +99,56 @@ public class CircuitExtender {
 		}
 		final Router router = node.getRouter();
 		return router.getNickname();
+	}
+
+
+	public void sendRelayCell(RelayCell cell) {
+		circuit.sendRelayCell(cell);
+	}
+
+
+	public RelayCell receiveRelayResponse(int expectedCommand, Router extendTarget) {
+		final RelayCell cell = circuit.receiveRelayCell();
+		if(cell == null) {
+			throw new TorException("Timeout building circuit");
+		}
+		final int command = cell.getRelayCommand();
+		if(command == RelayCell.RELAY_TRUNCATED) {
+			final int code = cell.getByte() & 0xFF;
+			final String msg = CellImpl.errorToDescription(code);
+			final String source = nodeToName(cell.getCircuitNode());
+			if(code == Cell.ERROR_PROTOCOL) {
+				logProtocolViolation(source, extendTarget);
+			}
+			throw new TorException("Error from ("+ source +") while extending to ("+ extendTarget.getNickname() + "): "+ msg);
+		} else if(command != expectedCommand) {
+			final String expected = RelayCellImpl.commandToDescription(expectedCommand);
+			final String received = RelayCellImpl.commandToDescription(command);
+			throw new TorException("Received incorrect extend response, expecting "+ expected + " but received "+ received);
+		} else {
+			return cell;
+		}
+	}
+
+
+	public CircuitNode createNewNode(Router r, byte[] keyMaterial, byte[] verifyDigest) {
+		final CircuitNode node = CircuitNodeImpl.createNode(r, circuit.getFinalCircuitNode(), keyMaterial, verifyDigest);
+		logger.fine("Adding new circuit nodd for "+ r.getNickname());
+		circuit.appendNode(node);
+		return node;
+
+	}
+
+	public RelayCell createRelayCell(int command) {
+		return new RelayCellImpl(circuit.getFinalCircuitNode(), circuit.getCircuitId(), 0, command, true);
+	}
+	
+	Router getFinalRouter() {
+		final CircuitNode node = circuit.getFinalCircuitNode();
+		if(node != null) {
+			return node.getRouter();
+		} else {
+			return null;
+		}
 	}
 }

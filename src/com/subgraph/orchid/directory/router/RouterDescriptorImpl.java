@@ -33,6 +33,7 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 	private int uptime;
 
 	private TorPublicKey onionKey;
+	private byte[] ntorOnionKey;
 	private TorPublicKey identityKey;
 	private ExitPolicy exitPolicy = new ExitPolicy();
 
@@ -64,6 +65,7 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 	void setHibernating(boolean flag) { this.hibernating = flag; }
 	void setUptime(int uptime) { this.uptime = uptime; }
 	public void setOnionKey(TorPublicKey key) { this.onionKey = key; }
+	void setNtorOnionKey(byte[] key) { this.ntorOnionKey = key; }
 	void setIdentityKey(TorPublicKey key) { this.identityKey = key; }
 	void setContact(String contact) { this.contact = contact; }
 	void setEventDNS() { eventDNS = true; }
@@ -160,6 +162,10 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 
 	public TorPublicKey getOnionKey() {
 		return onionKey;
+	}
+
+	public byte[] getNTorOnionKey() {
+		return ntorOnionKey;
 	}
 
 	public TorPublicKey getIdentityKey() {

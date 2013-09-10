@@ -170,7 +170,7 @@ public class CircuitCreationTask implements Runnable {
 		logger.fine("Launching new internal circuit");
 		final InternalCircuitImpl circuit = new InternalCircuitImpl(circuitManager);
 		final CircuitCreationRequest request = new CircuitCreationRequest(pathChooser, circuit, internalBuildHandler, false);
-		final CircuitBuildTask task = new CircuitBuildTask(request, connectionCache);
+		final CircuitBuildTask task = new CircuitBuildTask(request, connectionCache, circuitManager.isNtorEnabled());
 		executor.execute(task);
 		circuitManager.incrementPendingInternalCircuitCount();
 	}
@@ -215,7 +215,7 @@ public class CircuitCreationTask implements Runnable {
 		
 		final Circuit circuit = circuitManager.createNewExitCircuit(exitRouter);
 		final CircuitCreationRequest request = new CircuitCreationRequest(pathChooser, circuit, buildHandler, false);
-		final CircuitBuildTask task = new  CircuitBuildTask(request, connectionCache, initializationTracker);
+		final CircuitBuildTask task = new  CircuitBuildTask(request, connectionCache, circuitManager.isNtorEnabled(), initializationTracker);
 		executor.execute(task);
 	}
 

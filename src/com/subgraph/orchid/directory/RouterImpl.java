@@ -149,6 +149,14 @@ public class RouterImpl implements Router {
 		}
 	}
 
+	public byte[] getNTorOnionKey() {
+		if(descriptor != null) {
+			return descriptor.getNTorOnionKey();
+		} else {
+			return null;
+		}
+	}
+
 	public boolean hasBandwidth() {
 		return status.hasBandwidth();
 	}

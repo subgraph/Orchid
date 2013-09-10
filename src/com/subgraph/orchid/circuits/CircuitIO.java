@@ -129,6 +129,7 @@ public class CircuitIO implements DashboardRenderable {
 		logRelayCell("Dispatching: ", relayCell);
 		switch(relayCell.getRelayCommand()) {
 		case RelayCell.RELAY_EXTENDED:
+		case RelayCell.RELAY_EXTENDED2:
 		case RelayCell.RELAY_RESOLVED:
 		case RelayCell.RELAY_TRUNCATED:
 		case RelayCell.RELAY_COMMAND_RENDEZVOUS_ESTABLISHED:

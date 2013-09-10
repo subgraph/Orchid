@@ -1,8 +1,9 @@
 package com.subgraph.orchid.crypto;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class TorCreateFastKeyAgreement {
+public class TorCreateFastKeyAgreement implements TorKeyAgreement {
 	
 	private final byte[] xValue;
 	private byte[] yValue;
@@ -31,5 +32,23 @@ public class TorCreateFastKeyAgreement {
 		System.arraycopy(xValue, 0, result, 0, TorMessageDigest.TOR_DIGEST_SIZE);
 		System.arraycopy(yValue, 0, result, TorMessageDigest.TOR_DIGEST_SIZE, TorMessageDigest.TOR_DIGEST_SIZE);
 		return result;
+	}
+
+	public byte[] createOnionSkin() {
+		return getPublicValue();
+	}
+
+	public boolean deriveKeysFromHandshakeResponse(byte[] handshakeResponse,
+			byte[] keyMaterialOut, byte[] verifyHashOut) {
+		final ByteBuffer bb = ByteBuffer.wrap(handshakeResponse);
+		final byte[] peerValue = new byte[TorMessageDigest.TOR_DIGEST_SIZE];
+		final byte[] keyHash = new byte[TorMessageDigest.TOR_DIGEST_SIZE];
+		bb.get(peerValue);
+		bb.get(keyHash);
+		setOtherValue(peerValue);
+		final byte[] seed = getDerivedValue();
+		final TorKeyDerivation kdf = new TorKeyDerivation(seed);
+		kdf.deriveKeys(keyMaterialOut, verifyHashOut);
+		return Arrays.equals(verifyHashOut, keyHash);
 	}
 }

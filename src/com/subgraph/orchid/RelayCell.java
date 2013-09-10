@@ -24,7 +24,9 @@ public interface RelayCell extends Cell {
 	final static int RELAY_RESOLVE = 11;
 	final static int RELAY_RESOLVED = 12;
 	final static int RELAY_BEGIN_DIR = 13;
-
+	final static int RELAY_EXTEND2 = 14;
+	final static int RELAY_EXTENDED2 = 15;
+	
     final static int RELAY_COMMAND_ESTABLISH_INTRO = 32;
     final static int RELAY_COMMAND_ESTABLISH_RENDEZVOUS = 33;
     final static int RELAY_COMMAND_INTRODUCE1 = 34;
