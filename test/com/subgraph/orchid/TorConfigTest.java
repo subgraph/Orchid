@@ -80,4 +80,13 @@ public class TorConfigTest {
 		assertEquals(hex, new String(Hex.encode(cookie.getValue())));
 		assertSame(cookie, config.getHidServAuth(address));
 	}
+	
+	@Test
+	public void testAutoBool() {
+		assertEquals(TorConfig.AutoBoolValue.AUTO, config.getUseNTorHandshake());
+		config.setUseNTorHandshake(TorConfig.AutoBoolValue.TRUE);
+		assertEquals(TorConfig.AutoBoolValue.TRUE, config.getUseNTorHandshake());
+		config.setUseNTorHandshake(TorConfig.AutoBoolValue.AUTO);
+		assertEquals(TorConfig.AutoBoolValue.AUTO, config.getUseNTorHandshake());
+	}
 }

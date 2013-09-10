@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.subgraph.orchid.TorConfig;
+import com.subgraph.orchid.TorConfig.AutoBoolValue;
 import com.subgraph.orchid.TorConfig.ConfigVarType;
 
 public class TorConfigParser {
@@ -24,6 +26,8 @@ public class TorConfigParser {
 			return value;
 		case STRINGLIST:
 			return parseCSV(value);
+		case AUTOBOOL:
+			return parseAutoBool(value);
 		case HS_AUTH:
 		default:
 			throw new IllegalArgumentException();
@@ -55,5 +59,17 @@ public class TorConfigParser {
 			list.add(s);
 		}
 		return list;
+	}
+	
+	private TorConfig.AutoBoolValue parseAutoBool(String value) {
+		if("auto".equalsIgnoreCase(value)) {
+			return AutoBoolValue.AUTO;
+		} else if("true".equalsIgnoreCase(value)) {
+			return AutoBoolValue.TRUE;
+		} else if("false".equalsIgnoreCase(value)) {
+			return AutoBoolValue.FALSE;
+		} else {
+			throw new IllegalArgumentException("Could not parse AutoBool value "+ value);
+		}
 	}
 }

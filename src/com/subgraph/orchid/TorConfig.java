@@ -118,8 +118,13 @@ public interface TorConfig {
 	@ConfigVar(type=ConfigVarType.HS_AUTH)
 	HSDescriptorCookie getHidServAuth(String key);
 	void addHidServAuth(String key, String value);
+	
+	@ConfigVar(type=ConfigVarType.AUTOBOOL, defaultValue="auto")
+	AutoBoolValue getUseNTorHandshake();
+	void setUseNTorHandshake(AutoBoolValue value);
 
-	enum ConfigVarType { INTEGER, STRING, HS_AUTH, BOOLEAN, INTERVAL, PORTLIST, STRINGLIST, PATH };
+	enum ConfigVarType { INTEGER, STRING, HS_AUTH, BOOLEAN, INTERVAL, PORTLIST, STRINGLIST, PATH, AUTOBOOL };
+	enum AutoBoolValue { TRUE, FALSE, AUTO }
 	
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.METHOD)
