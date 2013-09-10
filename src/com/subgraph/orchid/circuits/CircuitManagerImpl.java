@@ -20,6 +20,7 @@ import com.subgraph.orchid.CircuitManager;
 import com.subgraph.orchid.CircuitNode;
 import com.subgraph.orchid.Connection;
 import com.subgraph.orchid.ConnectionCache;
+import com.subgraph.orchid.ConsensusDocument;
 import com.subgraph.orchid.Directory;
 import com.subgraph.orchid.DirectoryCircuit;
 import com.subgraph.orchid.ExitCircuit;
@@ -47,6 +48,7 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	}
 
 	private final TorConfig config;
+	private final Directory directory;
 	private final ConnectionCache connectionCache;
 	private final Set<CircuitImpl> activeCircuits;
 	private final Queue<InternalCircuit> cleanInternalCircuits;
@@ -62,6 +64,7 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 
 	public CircuitManagerImpl(TorConfig config, Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.config = config;
+		this.directory = directory;
 		this.connectionCache = connectionCache;
 		this.pathChooser = CircuitPathChooser.create(config, directory);
 		if(config.getUseEntryGuards()) {
@@ -340,8 +343,21 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	}
 
 	boolean isNtorEnabled() {
-		// XXX
-		return true;
+		switch(config.getUseNTorHandshake()) {
+		case AUTO:
+			return isNtorEnabledInConsensus();
+		case FALSE:
+			return false;
+		case TRUE:
+			return true;
+		default:
+			throw new IllegalArgumentException("getUseNTorHandshake() returned "+ config.getUseNTorHandshake());
+		}
+	}
+	
+	boolean isNtorEnabledInConsensus() {
+		ConsensusDocument consensus = directory.getCurrentConsensusDocument();
+		return (consensus != null) && (consensus.getUseNTorHandshake());
 	}
 	
 }
