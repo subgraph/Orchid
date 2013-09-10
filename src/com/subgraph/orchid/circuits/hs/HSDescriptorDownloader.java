@@ -12,6 +12,7 @@ import com.subgraph.orchid.OpenFailedException;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.Stream;
 import com.subgraph.orchid.StreamConnectFailedException;
+import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.circuits.CircuitManagerImpl;
 import com.subgraph.orchid.directory.DocumentFieldParserImpl;
 import com.subgraph.orchid.directory.downloader.HttpConnection;
@@ -84,13 +85,16 @@ public class HSDescriptorDownloader {
 	private Stream openHSDirectoryStream(Router directory) throws TimeoutException, InterruptedException, OpenFailedException {
 
 		final InternalCircuit circuit = circuitManager.getCleanInternalCircuit();
-		final DirectoryCircuit dc = circuit.cannibalizeToDirectory(directory);
 		
 		try {
+			final DirectoryCircuit dc = circuit.cannibalizeToDirectory(directory);
 			return dc.openDirectoryStream(10000);
 		} catch (StreamConnectFailedException e) {
 			circuit.markForClose();
 			throw new OpenFailedException("Failed to open directory stream");
+		} catch (TorException e) {
+			circuit.markForClose();
+			throw new OpenFailedException("Failed to extend circuit to HS directory: "+ e.getMessage());
 		}
 	}
 
