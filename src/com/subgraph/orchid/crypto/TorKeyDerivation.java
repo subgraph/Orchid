@@ -13,8 +13,8 @@ public class TorKeyDerivation {
 	}
 	public void deriveKeys(byte[] keyMaterialOut, byte[] verifyHashOut) {
 		final ByteBuffer keyData = deriveKeys(keyMaterialOut.length + verifyHashOut.length);
-		keyData.get(keyMaterialOut);
 		keyData.get(verifyHashOut);
+		keyData.get(keyMaterialOut);
 	}
 	
 	public ByteBuffer deriveKeys(int length) {
