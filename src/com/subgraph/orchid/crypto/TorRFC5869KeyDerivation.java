@@ -21,8 +21,14 @@ public class TorRFC5869KeyDerivation {
 	}
 	
 	public void deriveKeys(byte[] keyMaterialOut, byte[] verifyHashOut) {
+		final ByteBuffer keyData = deriveKeys(keyMaterialOut.length + verifyHashOut.length);
+		keyData.get(keyMaterialOut);
+		keyData.get(verifyHashOut);
+	}
+	
+	public ByteBuffer deriveKeys(int length) {
 		int round = 1;
-		ByteBuffer bb = makeBuffer(keyMaterialOut.length + verifyHashOut.length);
+		final ByteBuffer bb = makeBuffer(length);
 		byte[] macOutput = null;
 		while(bb.hasRemaining()) {
 			macOutput = expandRound(round, macOutput);
@@ -34,8 +40,7 @@ public class TorRFC5869KeyDerivation {
 			round += 1;
 		}
 		bb.flip();
-		bb.get(keyMaterialOut);
-		bb.get(verifyHashOut);
+		return bb;
 	}
 	
 	private byte[] expandRound(int round, byte[] priorMac) {
@@ -48,6 +53,7 @@ public class TorRFC5869KeyDerivation {
 		}
 		bb.put(M_EXPAND_BYTES);
 		bb.put((byte) round);
+
 		final Mac mac = createMacInstance();
 		return mac.doFinal(bb.array());
 	}

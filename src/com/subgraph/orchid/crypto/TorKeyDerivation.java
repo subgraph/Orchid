@@ -11,9 +11,14 @@ public class TorKeyDerivation {
 		this.kdfBuffer = new byte[seed.length + 1];
 		System.arraycopy(seed, 0, kdfBuffer, 0, seed.length);
 	}
-
 	public void deriveKeys(byte[] keyMaterialOut, byte[] verifyHashOut) {
-		final ByteBuffer outputBuffer = ByteBuffer.allocate(keyMaterialOut.length + verifyHashOut.length);
+		final ByteBuffer keyData = deriveKeys(keyMaterialOut.length + verifyHashOut.length);
+		keyData.get(keyMaterialOut);
+		keyData.get(verifyHashOut);
+	}
+	
+	public ByteBuffer deriveKeys(int length) {
+		final ByteBuffer outputBuffer = ByteBuffer.allocate(length);
 		round = 0;
 		while(outputBuffer.hasRemaining()) {
 			byte[] bs = calculateRoundData();
@@ -22,8 +27,7 @@ public class TorKeyDerivation {
 		}
 		
 		outputBuffer.flip();
-		outputBuffer.get(verifyHashOut);
-		outputBuffer.get(keyMaterialOut);
+		return outputBuffer;
 	}
 	
 	private byte[] calculateRoundData() {
