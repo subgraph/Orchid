@@ -82,13 +82,10 @@ public class TorNTorKeyAgreement implements TorKeyAgreement {
 		isBad |= !constantTimeArrayEquals(auth, authCandidate);
 		final byte[] seed = tweak("key_extract", secretInput);
 		
-		final int keyBytesLength = keyMaterialOut.length + verifyHashOut.length;
-		final byte[] keyBytes = expandKey(seed, keyBytesLength);
-		System.arraycopy(keyBytes, 0, keyMaterialOut, 0, keyMaterialOut.length);
-		System.arraycopy(keyBytes, keyMaterialOut.length, verifyHashOut, 0, verifyHashOut.length);
+		final TorRFC5869KeyDerivation kdf = new TorRFC5869KeyDerivation(seed);
+		kdf.deriveKeys(keyMaterialOut, verifyHashOut);
 		
 		return !isBad;
-
 	}
 	
 	public byte[] getNtorCreateMagic() {
@@ -144,44 +141,11 @@ public class TorNTorKeyAgreement implements TorKeyAgreement {
 		return result == 0;
 		
 	}
+
 	byte[] tweak(String suffix, byte[] input) {
 		return hmac256(input, getStringConstant(suffix));
 	}
-	
-	byte[] expandKey(byte[] seed, int len) {
-		ByteBuffer out = makeBuffer(len);
-		int i = 1;
-		byte[] mac = null;
-		while(out.hasRemaining()) {
-			mac = getKeyExpansionMac(i, mac, seed);
-			if(out.remaining() >= DIGEST256_LEN) {
-				out.put(mac);
-			} else {
-				out.put(mac, 0, out.remaining());
-			}
-			i += 1;
-		}
-		return out.array();
-	}
-	
-	private byte[] getKeyExpansionMac(int round, byte[] priorMac, byte[] key) {
-		return hmac256(getKeyExpansionMacInput(round, priorMac), key);
-	}
-	
-	private byte[] getKeyExpansionMacInput(int round, byte[] priorMac) {
-		final byte[] expand = getStringConstant("key_expand");
-		final ByteBuffer bb;
-		if(round == 1) {
-			bb = makeBuffer(expand.length + 1);
-		} else {
-			bb = makeBuffer(expand.length + DIGEST256_LEN + 1);
-			bb.put(priorMac);
-		}
-		bb.put(expand);
-		bb.put((byte) round);
-		return bb.array();
-	}
-	
+
 	byte[] hmac256(byte[] input, byte[] key) {
 		final SecretKeySpec keyspec = new SecretKeySpec(key, "HmacSHA256");
 		try {
@@ -189,13 +153,9 @@ public class TorNTorKeyAgreement implements TorKeyAgreement {
 			mac.init(keyspec);
 			return mac.doFinal(input);
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
+			throw new IllegalStateException("Failed to create HmacSHA256 instance: "+ e);
 		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
+			throw new IllegalStateException("Failed to create HmacSHA256 instance: "+ e);
 		}
 	}
 	
