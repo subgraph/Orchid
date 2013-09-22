@@ -3,8 +3,10 @@ package com.subgraph.orchid.data;
 import java.util.Arrays;
 import java.util.List;
 
+import com.subgraph.orchid.Tor;
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.crypto.TorMessageDigest;
+import com.subgraph.orchid.encoders.Base64;
 import com.subgraph.orchid.encoders.Hex;
 
 /**
@@ -54,13 +56,20 @@ public class HexDigest {
 		return new HexDigest(digest.getDigestBytes());
 	}
 
-	private final byte[] digestBytes = new byte[TorMessageDigest.TOR_DIGEST_SIZE];
+	private final byte[] digestBytes;
+	private final boolean isDigest256;
 
 	private HexDigest(byte[] data) {
-		if(data.length != TorMessageDigest.TOR_DIGEST_SIZE) {
-			throw new TorException("Digest data is not the correct length "+ data.length +" != " + TorMessageDigest.TOR_DIGEST_SIZE);
+		if(data.length != TorMessageDigest.TOR_DIGEST_SIZE && data.length != TorMessageDigest.TOR_DIGEST256_SIZE) {
+			throw new TorException("Digest data is not the correct length "+ data.length +" != (" + TorMessageDigest.TOR_DIGEST_SIZE + " or "+ TorMessageDigest.TOR_DIGEST256_SIZE +")");
 		}
-		System.arraycopy(data, 0, digestBytes, 0, TorMessageDigest.TOR_DIGEST_SIZE);
+		digestBytes = new byte[data.length];
+		isDigest256 = digestBytes.length == TorMessageDigest.TOR_DIGEST256_SIZE;
+		System.arraycopy(data, 0, digestBytes, 0, data.length);
+	}
+
+	public boolean isDigest256() {
+		return isDigest256;
 	}
 
 	public byte[] getRawBytes() {
@@ -93,6 +102,23 @@ public class HexDigest {
 
 	public String toBase32() {
 		return Base32.base32Encode(digestBytes);
+	}
+
+	public String toBase64(boolean stripTrailingEquals) {
+		final String b64 = new String(Base64.encode(digestBytes), Tor.getDefaultCharset());
+		if(stripTrailingEquals) {
+			return stripTrailingEquals(b64);
+		} else {
+			return b64;
+		}
+	}
+		
+	private String stripTrailingEquals(String s) {
+		int idx = s.length();
+		while(idx > 0 && s.charAt(idx - 1) == '=') {
+			idx -= 1;
+		}
+		return s.substring(0, idx);
 	}
 
 	public boolean equals(Object o) {

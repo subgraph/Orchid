@@ -1,6 +1,8 @@
 package com.subgraph.orchid.directory.consensus;
 
+import com.subgraph.orchid.ConsensusDocument.ConsensusFlavor;
 import com.subgraph.orchid.TorParsingException;
+import com.subgraph.orchid.crypto.TorMessageDigest;
 import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.directory.consensus.ConsensusDocumentParser.DocumentSection;
 import com.subgraph.orchid.directory.parsing.DocumentFieldParser;
@@ -33,6 +35,9 @@ public class RouterStatusSectionParser extends ConsensusDocumentSectionParser {
 		case P:
 			parsePortList();
 			break;
+		case M:
+			parseMicrodescriptorHash();
+			break;
 		default:
 			break;
 		}
@@ -55,7 +60,9 @@ public class RouterStatusSectionParser extends ConsensusDocumentSectionParser {
 		currentEntry = new RouterStatusImpl();
 		currentEntry.setNickname(fieldParser.parseNickname());
 		currentEntry.setIdentity(parseBase64Digest());
-		currentEntry.setDigest(parseBase64Digest());
+		if(document.getFlavor() != ConsensusFlavor.MICRODESC) {
+			currentEntry.setDigest(parseBase64Digest());
+		}
 		currentEntry.setPublicationTime(fieldParser.parseTimestamp());
 		currentEntry.setAddress(fieldParser.parseAddress());
 		currentEntry.setRouterPort(fieldParser.parsePort());
@@ -81,6 +88,9 @@ public class RouterStatusSectionParser extends ConsensusDocumentSectionParser {
 			if(parts.length == 2)
 				parseBandwidthItem(parts[0], fieldParser.parseInteger(parts[1]));
 		}
+		if(document.getFlavor() == ConsensusFlavor.MICRODESC) {
+			addCurrentEntry();
+		}
 	}
 	
 	private void parseBandwidthItem(String key, int value) {
@@ -91,6 +101,9 @@ public class RouterStatusSectionParser extends ConsensusDocumentSectionParser {
 	}
 	
 	private void parsePortList() {
+		if(document.getFlavor() == ConsensusFlavor.MICRODESC) {
+			throw new TorParsingException("'p' line does not appear in consensus flavor 'microdesc'");
+		}
 		final String arg = fieldParser.parseString();
 		if(arg.equals("accept")) {
 			currentEntry.setAcceptedPorts(fieldParser.parseString());
@@ -100,6 +113,17 @@ public class RouterStatusSectionParser extends ConsensusDocumentSectionParser {
 		addCurrentEntry();
 	}
 	
+	private void parseMicrodescriptorHash() {
+		if(document.getFlavor() != ConsensusFlavor.MICRODESC) {
+			throw new TorParsingException("'m' line is invalid unless consensus flavor is microdesc");
+		}
+		final byte[] hashBytes = fieldParser.parseBase64Data();
+		if(hashBytes.length != TorMessageDigest.TOR_DIGEST256_SIZE) {
+			throw new TorParsingException("'m' line has incorrect digest size "+ hashBytes.length +" != "+ TorMessageDigest.TOR_DIGEST256_SIZE);
+		}
+		currentEntry.setMicrodescriptorDigest(HexDigest.createFromDigestBytes(hashBytes));
+	}
+
 	@Override
 	String getNextStateKeyword() {
 		return "directory-footer";

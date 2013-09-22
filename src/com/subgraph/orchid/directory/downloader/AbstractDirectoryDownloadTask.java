@@ -100,13 +100,29 @@ public abstract class AbstractDirectoryDownloadTask implements Runnable {
 				connection.getStatusCode() + " "+ connection.getStatusMessage());
 	}
 	
-	protected String fingerprintsToRequestString(List<HexDigest> fingerprints) {
+	protected String fingerprintsToRequestString(List<HexDigest> fingerprints, boolean useMicrodescriptors) {
 		final StringBuilder sb = new StringBuilder();
 		for(HexDigest fp: fingerprints) {
-			if(sb.length() > 0)
-				sb.append("+");
-			sb.append(fp.toString());
+			if(useMicrodescriptors) {
+				appendMicrodescriptor(sb, fp);
+			} else {
+				appendFingerprint(sb, fp);
+			}
 		}
 		return sb.toString();
+	}
+	
+	private void appendFingerprint(StringBuilder sb, HexDigest fp) {
+		if(sb.length() > 0) {
+			sb.append("+");
+		}
+		sb.append(fp.toString());
+	}
+	
+	private void appendMicrodescriptor(StringBuilder sb, HexDigest md) {
+		if(sb.length() > 0) {
+			sb.append("-");
+		}
+		sb.append(md.toBase64(true));
 	}
 }

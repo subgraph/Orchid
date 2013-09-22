@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import com.subgraph.orchid.ConsensusDocument;
+import com.subgraph.orchid.ConsensusDocument.ConsensusFlavor;
 import com.subgraph.orchid.ConsensusDocument.RequiredCertificate;
 import com.subgraph.orchid.Directory;
 import com.subgraph.orchid.DirectoryServer;
@@ -18,8 +19,10 @@ import com.subgraph.orchid.GuardEntry;
 import com.subgraph.orchid.KeyCertificate;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.RouterDescriptor;
+import com.subgraph.orchid.RouterMicrodescriptor;
 import com.subgraph.orchid.RouterStatus;
 import com.subgraph.orchid.TorConfig;
+import com.subgraph.orchid.TorConfig.AutoBoolValue;
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.crypto.TorRandom;
 import com.subgraph.orchid.data.HexDigest;
@@ -35,7 +38,9 @@ public class DirectoryImpl implements Directory {
 	private boolean isLoaded = false;
 	
 	private final DirectoryStoreImpl store;
+	private final boolean useMicrodescriptors;
 	private final StateFile stateFile;
+	private final MicrodescriptorCache microdescriptorCache;
 	private final Map<HexDigest, RouterImpl> routersByIdentity;
 	private final Map<String, RouterImpl> routersByNickname;
 	private final RandomSet<RouterImpl> directoryCaches;
@@ -50,7 +55,9 @@ public class DirectoryImpl implements Directory {
 
 	public DirectoryImpl(TorConfig config) {
 		store = new DirectoryStoreImpl(config);
+		useMicrodescriptors = config.getUseMicrodescriptors() != AutoBoolValue.FALSE;
 		stateFile = new StateFile(store, this);
+		microdescriptorCache = new MicrodescriptorCache(store);
 		routersByIdentity = new HashMap<HexDigest, RouterImpl>();
 		routersByNickname = new HashMap<String, RouterImpl>();
 		directoryCaches = new RandomSet<RouterImpl>();
@@ -100,10 +107,16 @@ public class DirectoryImpl implements Directory {
 			store.loadConsensus(this);
 			logElapsed();
 			
-			logger.info("Loading descriptors");
-			store.loadRouterDescriptors(this);
-			logElapsed();
-			
+			if(!useMicrodescriptors) {
+				logger.info("Loading descriptors");
+				store.loadRouterDescriptors(this);
+				logElapsed();
+			} else {
+				logger.info("Loading microdescriptor cache");
+				microdescriptorCache.initialLoad();
+				logElapsed();
+			}
+
 			logger.info("loading state file");
 			store.loadStateFile(stateFile);
 			logElapsed();
@@ -222,7 +235,7 @@ public class DirectoryImpl implements Directory {
 		store.saveRouterDescriptors(descriptors);
 		descriptorsDirty = false;
 	}
-
+	
 	public synchronized void addConsensusDocument(ConsensusDocument consensus, boolean fromCache) {
 		if(consensus.equals(currentConsensus))
 			return;
@@ -266,15 +279,16 @@ public class DirectoryImpl implements Directory {
 		if(!fromCache) {
 			store.saveConsensus(consensus);
 		}
-		
-		storeDescriptors();
+		if(currentConsensus.getFlavor() != ConsensusFlavor.MICRODESC) {
+			storeDescriptors();
+		}
 		consensusChangedManager.fireEvent(new Event() {});
 	}
 
 	private RouterImpl updateOrCreateRouter(RouterStatus status, Map<HexDigest, RouterImpl> knownRouters) {
 		final RouterImpl router = knownRouters.get(status.getIdentity());
 		if(router == null)
-			return RouterImpl.createFromRouterStatus(status);
+			return RouterImpl.createFromRouterStatus(this, status);
 		descriptorsDirty = true;
 		router.updateStatus(status);
 		return router;
@@ -341,6 +355,11 @@ public class DirectoryImpl implements Directory {
 		needRecalculateMinimumRouterInfo = true;
 	}
 
+	public synchronized void addRouterMicrodescriptors(List<RouterMicrodescriptor> microdescriptors) {
+		microdescriptorCache.addMicrodescriptors(microdescriptors);
+		needRecalculateMinimumRouterInfo = true;
+	}
+
 	synchronized public List<Router> getRoutersWithDownloadableDescriptors() {
 		waitUntilLoaded();
 		final List<Router> routers = new ArrayList<Router>();
@@ -361,7 +380,6 @@ public class DirectoryImpl implements Directory {
 	}
 
 	synchronized public void markDescriptorInvalid(RouterDescriptor descriptor) {
-		waitUntilLoaded();
 		removeRouterByIdentity(descriptor.getIdentityKey().getFingerprint());
 	}
 
@@ -454,5 +472,9 @@ public class DirectoryImpl implements Directory {
 	public void addGuardEntry(GuardEntry entry) {
 		waitUntilLoaded();
 		stateFile.addGuardEntry(entry);
+	}
+
+	public RouterMicrodescriptor getMicrodescriptorFromCache(HexDigest descriptorDigest) {
+		return microdescriptorCache.getDescriptor(descriptorDigest);
 	}
 }

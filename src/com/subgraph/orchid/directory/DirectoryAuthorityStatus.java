@@ -96,4 +96,7 @@ public class DirectoryAuthorityStatus implements RouterStatus {
 	HexDigest getV3Ident() {
 		return v3Ident;
 	}
+	public HexDigest getMicrodescriptorDigest() {
+		return null;
+	}
 }

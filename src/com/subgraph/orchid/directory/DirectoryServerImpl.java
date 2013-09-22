@@ -20,7 +20,7 @@ public class DirectoryServerImpl extends RouterImpl implements DirectoryServer {
 	private HexDigest v3Ident;
 	
 	DirectoryServerImpl(RouterStatus status) {
-		super(status);
+		super(null, status);
 	}
 	
 	void setHiddenServiceAuthority() { isHiddenServiceAuthority = true; }

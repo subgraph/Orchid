@@ -26,6 +26,7 @@ public class DirectoryDownloader implements Runnable {
 	private final DescriptorProcessor descriptorProcessor;
 	private final TorRandom random;
 	private final Executor executor = Executors.newCachedThreadPool();
+	private final boolean useMicrodescriptors;
 
 	private volatile boolean isDownloadingCertificates;
 	private volatile boolean isDownloadingConsensus;
@@ -35,11 +36,12 @@ public class DirectoryDownloader implements Runnable {
 	private Date consensusDownloadTime;
 
 	public DirectoryDownloader(Directory directory,
-			CircuitManager circuitManager) {
+			CircuitManager circuitManager, boolean useMicrodescriptors) {
 		this.directory = directory;
 		this.circuitManager = circuitManager;
+		this.useMicrodescriptors = useMicrodescriptors;
 		this.parserFactory = new DocumentParserFactoryImpl();
-		this.descriptorProcessor = new DescriptorProcessor(directory);
+		this.descriptorProcessor = new DescriptorProcessor(directory, useMicrodescriptors);
 		this.outstandingDescriptorTasks = new AtomicInteger();
 		this.thread = new Thread(this);
 		this.random = new TorRandom();
@@ -163,7 +165,7 @@ public class DirectoryDownloader implements Runnable {
 		if (isDownloadingConsensus || !needConsensusDownload()) {
 			return;
 		}
-		ConsensusDownloadTask task = new ConsensusDownloadTask(this);
+		ConsensusDownloadTask task = new ConsensusDownloadTask(this, useMicrodescriptors);
 		isDownloadingConsensus = true;
 		executor.execute(task);
 	}
@@ -178,8 +180,7 @@ public class DirectoryDownloader implements Runnable {
 			return;
 		}
 		for (List<HexDigest> dlist : ds) {
-			DescriptorDownloadTask task = new DescriptorDownloadTask(dlist,
-					this);
+			DescriptorDownloadTask task = new DescriptorDownloadTask(dlist, this, useMicrodescriptors);
 			outstandingDescriptorTasks.incrementAndGet();
 			executor.execute(task);
 		}

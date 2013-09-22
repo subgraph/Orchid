@@ -45,6 +45,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
  	private String signatureIgnoreToken;
 	private boolean isProcessingSignedEntity = false;
 	private TorMessageDigest signatureDigest;
+	private TorMessageDigest signatureDigest256;
 	private StringBuilder rawDocumentBuffer;
 
 	private DocumentParsingHandler callbackHandler;
@@ -328,6 +329,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 	public void startSignedEntity() {
 		isProcessingSignedEntity = true;
 		signatureDigest = new TorMessageDigest();
+		signatureDigest256 = new TorMessageDigest(true);
 	}
 
 	public void endSignedEntity() {
@@ -342,6 +344,10 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 		return signatureDigest;
 	}
 
+	public TorMessageDigest getSignatureMessageDigest256() {
+		return signatureDigest256;
+	}
+
 	private void updateRawDocument(String line) {
 		rawDocumentBuffer.append(line);
 		rawDocumentBuffer.append('\n');
@@ -353,6 +359,11 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 
 	public void resetRawDocument() {
 		rawDocumentBuffer = new StringBuilder();
+	}
+
+	public void resetRawDocument(String initialContent) {
+		rawDocumentBuffer = new StringBuilder();
+		rawDocumentBuffer.append(initialContent);
 	}
 
 	public boolean verifySignedEntity(TorPublicKey publicKey, TorSignature signature) {
@@ -379,6 +390,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 		if(signatureIgnoreToken != null && line.startsWith(signatureIgnoreToken))
 			return;
 		signatureDigest.update(line + "\n");
+		signatureDigest256.update(line + "\n");
 	}
 
 	private boolean processLine(String line) {

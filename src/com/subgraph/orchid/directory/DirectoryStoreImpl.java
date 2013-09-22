@@ -8,22 +8,32 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.subgraph.orchid.ConsensusDocument;
+import com.subgraph.orchid.ConsensusDocument.ConsensusFlavor;
 import com.subgraph.orchid.Directory;
 import com.subgraph.orchid.DirectoryStore;
 import com.subgraph.orchid.KeyCertificate;
 import com.subgraph.orchid.RouterDescriptor;
+import com.subgraph.orchid.RouterMicrodescriptor;
+import com.subgraph.orchid.RouterMicrodescriptor.CacheLocation;
 import com.subgraph.orchid.TorConfig;
+import com.subgraph.orchid.TorConfig.AutoBoolValue;
 import com.subgraph.orchid.crypto.TorRandom;
 import com.subgraph.orchid.directory.parsing.DocumentParser;
 import com.subgraph.orchid.directory.parsing.DocumentParserFactory;
+import com.subgraph.orchid.directory.parsing.DocumentParsingResult;
 import com.subgraph.orchid.directory.parsing.DocumentParsingResultHandler;
 
 public class DirectoryStoreImpl implements DirectoryStore {
@@ -32,13 +42,15 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	private final TorConfig config;
 	private final DocumentParserFactory parserFactory;
 	private final TorRandom random;
-
+	private final Object microdescriptorLock;
+	
 	private boolean directoryCreationFailed;
 	
 	DirectoryStoreImpl(TorConfig config) {
 		this.config = config;
 		this.parserFactory = new DocumentParserFactoryImpl();
 		this.random = new TorRandom();
+		this.microdescriptorLock = new Object();
 	}
 
 	public void saveCertificates(List<KeyCertificate> certificates) {
@@ -86,7 +98,8 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	}
 	
 	public void saveConsensus(ConsensusDocument consensus) {
-		final File tempFile = createTempFile("consensus");
+		final String baseName = getBaseNameForConsensus(consensus.getFlavor() == ConsensusFlavor.MICRODESC);
+		final File tempFile = createTempFile(baseName);
 		final Writer writer = openWriterFor(tempFile);
 		if(writer == null) {
 			return;
@@ -94,16 +107,24 @@ public class DirectoryStoreImpl implements DirectoryStore {
 		try {
 			writer.write(consensus.getRawDocumentData());
 			quietClose(writer);
-			installTempFile("consensus", tempFile);
+			installTempFile(baseName, tempFile);
 		} catch(IOException e) {
 			logger.warning("IO error writing consensus file: "+ e);
 		} finally {
 			quietClose(writer);
 		}
 	}
+	
+	private String getBaseNameForConsensus(boolean isMicrodescriptorFlavor) {
+		if(isMicrodescriptorFlavor) {
+			return "consensus-microdesc";
+		} else {
+			return "consensus";
+		}
+	}
 
 	public void loadConsensus(final Directory directory) {
-		final Reader reader = openReaderFor("consensus");
+		final Reader reader = openReaderFor(getBaseNameForConsensus(isUsingMicrodescriptors()));
 		if(reader == null) {
 			return;
 		}
@@ -172,7 +193,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			quietClose(reader);
 		}
 	}
-	
+
 	void loadStateFile(StateFile stateFile) {
 		final Reader reader = openReaderFor("state");
 		if(reader == null) {
@@ -222,10 +243,18 @@ public class DirectoryStoreImpl implements DirectoryStore {
 		tempFile.delete();
 	}
 
+	private Writer openAppenderFor(File file) {
+		return openOutputFile(file, true);
+	}
+
 	private Writer openWriterFor(File file) {
+		return openOutputFile(file, false);
+	}
+	
+	private Writer openOutputFile(File file, boolean isAppend) {
 		createDirectoryIfAbsent(config.getDataDirectory());
 		try {
-			FileOutputStream fos = new FileOutputStream(file);
+			FileOutputStream fos = new FileOutputStream(file, isAppend);
 			return new OutputStreamWriter(fos, getFileCharset());
 		} catch (FileNotFoundException e) {
 			logger.log(Level.WARNING, "Failed to open file "+ file + " for writing "+ e);
@@ -270,6 +299,159 @@ public class DirectoryStoreImpl implements DirectoryStore {
 		try {
 			closeable.close();
 		} catch (IOException e) {
+		}
+	}
+	
+	private boolean isUsingMicrodescriptors() {
+		return config.getUseMicrodescriptors() != AutoBoolValue.FALSE;
+	}
+
+	
+	
+	public void appendMicrodescriptorsToJournal(List<RouterMicrodescriptor> descriptors) {
+		synchronized(microdescriptorLock) {
+			final File targetFile = new File(config.getDataDirectory(), "cached-microdescs.new");
+			final Writer writer = openAppenderFor(targetFile);
+			if(writer == null) {
+				System.out.println("open appender failed");
+				return;
+			}
+			writeMicrodescriptorsToWriter(descriptors, writer);
+		}
+	}
+
+	private void writeMicrodescriptorsToWriter(List<RouterMicrodescriptor> descriptors, Writer writer) {
+		try {
+			for(RouterMicrodescriptor md: descriptors) {
+				md.setCacheLocation(CacheLocation.CACHED_JOURNAL);
+				writer.write(md.getRawDocumentData());
+			}
+		} catch (IOException e) {
+			logger.warning("I/O error writing to microdescriptor journal: "+ e);
+		} finally {
+			quietClose(writer);
+		}
+	}
+	
+	private ByteBuffer mapMicrodescriptorCache() {
+		final RandomAccessFile raf = openMicrodescriptorCacheFile();
+		if(raf == null) {
+			return ByteBuffer.allocate(0);
+		}
+		final FileChannel channel = raf.getChannel();
+		try {
+			return channel.map(MapMode.READ_ONLY, 0, channel.size());
+		} catch (IOException e) {
+			logger.warning("I/O error mapping microdescriptor cache "+ e);
+			return ByteBuffer.allocate(0);
+		} finally {
+			quietClose(raf);
+		}
+	}
+	
+	private RandomAccessFile openMicrodescriptorCacheFile() {
+		final File file = new File(config.getDataDirectory(), "cached-microdescs");
+		try {
+			return new RandomAccessFile(file, "r");
+		} catch (FileNotFoundException e) {
+			return null;
+		}
+	}
+
+	
+	public void writeMicrodescriptorCache(List<RouterMicrodescriptor> descriptors, boolean removeJournal) {
+		final File tempFile = createTempFile("cached-microdescs");
+		final Writer writer = openWriterFor(tempFile); 
+		if(writer == null) {
+			return;
+		}
+		try {
+			for(RouterMicrodescriptor md: descriptors) {
+				md.setCacheLocation(CacheLocation.CACHED_CACHEFILE);
+				writer.write(md.getRawDocumentData());
+			}
+			quietClose(writer);
+			synchronized (microdescriptorLock) {
+				installTempFile("cached-microdescs", tempFile);
+				if(removeJournal) {
+					File journalFile = new File(config.getDataDirectory(), "cached-microdescs.new");
+					journalFile.delete();
+				}
+			}
+			
+		} catch (IOException e) {
+			logger.warning("IO error writing to microdescriptor cache file: "+ e);
+		} finally {
+			quietClose(writer);
+		}
+	}
+	
+	public List<RouterMicrodescriptor> loadJournalMicrodescriptors() {
+		synchronized (microdescriptorLock) {
+			final Reader reader = openReaderFor("cached-microdescs.new");
+			if(reader == null) {
+				return Collections.emptyList();
+			}
+		
+			try {
+				final DocumentParser<RouterMicrodescriptor> parser = parserFactory.createRouterMicrodescriptorParser(reader);
+				DocumentParsingResult<RouterMicrodescriptor> result = parser.parse();
+				if(result.isOkay()) {
+					return result.getParsedDocuments();
+				}
+				return null;
+			
+						
+			} finally {
+				quietClose(reader);
+			}
+		}
+	}
+
+	private ByteBuffer loadMicrodescriptorJournal() {
+		final FileInputStream fis = openMicrodescriptorJournal();
+		if(fis == null) {
+			return ByteBuffer.allocate(0);
+		}
+		try {
+			final FileChannel channel = fis.getChannel();
+			final ByteBuffer buffer = ByteBuffer.allocate((int) channel.size());
+			while(buffer.hasRemaining()) {
+				if(channel.read(buffer) == -1) {
+					logger.warning("Unexpected EOF reading microdescriptor journal file");
+					return ByteBuffer.allocate(0);
+				}
+			}
+			return buffer;
+		} catch (IOException e) {
+			logger.warning("I/O error reading microdescriptor journal file");
+			return ByteBuffer.allocate(0);
+		} finally {
+			quietClose(fis);
+		}
+	}
+
+
+	
+	
+	private FileInputStream openMicrodescriptorJournal() {
+		final File journalFile = new File(config.getDataDirectory(), "cached-microdescs.new");
+		if(!journalFile.exists() || journalFile.length() == 0) {
+			return null;
+		}
+		try {
+			return new FileInputStream(journalFile);
+		} catch (FileNotFoundException e) {
+			return null;
+		}
+	}
+
+	public ByteBuffer[] loadMicrodescriptorCache() {
+		final ByteBuffer[] buffers = new ByteBuffer[2];
+		synchronized (microdescriptorLock) {
+			buffers[0] = mapMicrodescriptorCache();
+			buffers[1] = loadMicrodescriptorJournal();
+			return buffers;
 		}
 	}
 }

@@ -3,6 +3,7 @@ package com.subgraph.orchid.directory.consensus;
 import java.util.Arrays;
 import java.util.List;
 
+import com.subgraph.orchid.ConsensusDocument.ConsensusFlavor;
 import com.subgraph.orchid.TorParsingException;
 import com.subgraph.orchid.directory.consensus.ConsensusDocumentParser.DocumentSection;
 import com.subgraph.orchid.directory.parsing.DocumentFieldParser;
@@ -99,9 +100,23 @@ public class PreambleSectionParser extends ConsensusDocumentSectionParser {
 		if(documentVersion != CURRENT_DOCUMENT_VERSION)
 			throw new TorParsingException("Unexpected consensus document version number: " + documentVersion);
 		
+		if(fieldParser.argumentsRemaining() > 0) {
+			parseConsensusFlavor();
+		}
 		isFirstLine = false;
 	}
 	
+	private void parseConsensusFlavor() {
+		final String flavor = fieldParser.parseString();
+		if("ns".equals(flavor)) {
+			document.setConsensusFlavor(ConsensusFlavor.NS);
+		} else if("microdesc".equals(flavor)) {
+			document.setConsensusFlavor(ConsensusFlavor.MICRODESC);
+		} else {
+			fieldParser.logWarn("Unknown consensus flavor: "+ flavor);
+		}
+	}
+
 	private List<String> parseVersions(String versions) {		
 		return Arrays.asList(versions.split(","));
 	}

@@ -42,6 +42,7 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	
 	
 	private int consensusMethod;
+	private ConsensusFlavor flavor;
 	private Timestamp validAfter;
 	private Timestamp freshUntil;
 	private Timestamp validUntil;
@@ -51,6 +52,7 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	private Set<String> serverVersions;
 	private Set<String> knownFlags;
 	private HexDigest signingHash;
+	private HexDigest signingHash256;
 	private Map<HexDigest, VoteAuthorityEntry> voteAuthorityEntries;
 	private List<RouterStatus> routerStatusEntries;
 	private Map<String, Integer> bandwidthWeights;
@@ -59,6 +61,7 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	private boolean isFirstCallToVerifySignatures = true;
 	private String rawDocumentData;
 	
+	void setConsensusFlavor(ConsensusFlavor flavor) { this.flavor = flavor; }
 	void setConsensusMethod(int method) { consensusMethod = method; }
 	void setValidAfter(Timestamp ts) { validAfter = ts; }
 	void setFreshUntil(Timestamp ts) { freshUntil = ts; }
@@ -90,6 +93,7 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	}
 
 	void setSigningHash(HexDigest hash) { signingHash = hash; }
+	void setSigningHash256(HexDigest hash) { signingHash256 = hash; }
 	void setRawDocumentData(String rawData) { rawDocumentData = rawData; }
 	
 	ConsensusDocumentImpl() {
@@ -114,6 +118,10 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 		routerStatusEntries.add(entry);
 	}
 	
+	public ConsensusFlavor getFlavor() {
+		return flavor;
+	}
+
 	public Timestamp getValidAfterTime() {
 		return validAfter;
 	}
@@ -170,6 +178,10 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 	
 	public HexDigest getSigningHash() {
 		return signingHash;
+	}
+	
+	public HexDigest getSigningHash256() {
+		return signingHash256;
 	}
 	
 	public synchronized SignatureStatus verifySignatures() {
@@ -251,7 +263,8 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 		}
 		
 		final TorPublicKey signingKey = certificate.getAuthoritySigningKey();
-		if(!signingKey.verifySignature(signature.getSignature(), signingHash)) {
+		final HexDigest d = (signature.useSha256()) ? signingHash256 : signingHash;
+		if(!signingKey.verifySignature(signature.getSignature(), d)) {
 			logger.warning("Signature failed on consensus for signing key: "+ signature.getSigningKeyDigest());
 			return SignatureStatus.STATUS_FAILED;
 		}

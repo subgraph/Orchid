@@ -28,7 +28,6 @@ public class AuthoritySectionParser extends ConsensusDocumentSectionParser {
 		default:
 			break;
 		}
-		
 	}
 	
 	private void startEntry() {
@@ -39,6 +38,7 @@ public class AuthoritySectionParser extends ConsensusDocumentSectionParser {
 		document.addVoteAuthorityEntry(currentEntry);
 		startEntry();
 	}
+
 	private void parseDirSource() {
 		currentEntry.setNickname(fieldParser.parseNickname());
 		currentEntry.setIdentity(fieldParser.parseHexDigest());
@@ -61,5 +61,4 @@ public class AuthoritySectionParser extends ConsensusDocumentSectionParser {
 	DocumentSection nextSection() {
 		return DocumentSection.ROUTER_STATUS;
 	}
-
 }

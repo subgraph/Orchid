@@ -29,6 +29,7 @@ enum DocumentKeyword {
 	V("v", DocumentSection.ROUTER_STATUS),
 	W("w", DocumentSection.ROUTER_STATUS, 1),
 	P("p", DocumentSection.ROUTER_STATUS, 2),
+	M("m", DocumentSection.ROUTER_STATUS, 1),
 	
 	DIRECTORY_FOOTER("directory-footer", DocumentSection.FOOTER),
 	BANDWIDTH_WEIGHTS("bandwidth-weights", DocumentSection.FOOTER, 19),
@@ -85,6 +86,7 @@ enum DocumentKeyword {
 	public DocumentSection getSection() {
 		return section;
 	}
+
 	public int getArgumentCount() {
 		return argumentCount;
 	}

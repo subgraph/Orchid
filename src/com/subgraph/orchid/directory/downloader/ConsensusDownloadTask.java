@@ -9,15 +9,22 @@ import com.subgraph.orchid.directory.parsing.DocumentParsingResultHandler;
 
 public class ConsensusDownloadTask extends AbstractDirectoryDownloadTask {
 
-	private ConsensusDocument newConsensusDocument = null;
 	
-	ConsensusDownloadTask(DirectoryDownloader downloader) {
+	private ConsensusDocument newConsensusDocument = null;
+	private final boolean useMicrodescriptors;
+	
+	ConsensusDownloadTask(DirectoryDownloader downloader, boolean useMicrodescriptors) {
 		super(downloader, CircuitManager.DIRECTORY_PURPOSE_CONSENSUS);
+		this.useMicrodescriptors = useMicrodescriptors;
 	}
 
 	@Override
 	protected String getRequestPath() {
-		return "/tor/status-vote/current/consensus";
+		if(useMicrodescriptors) {
+			return "/tor/status-vote/current/consensus-microdesc";
+		} else {
+			return "/tor/status-vote/current/consensus";
+		}
 	}
 	
 	@Override

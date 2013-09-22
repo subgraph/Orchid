@@ -14,6 +14,7 @@ public class RouterStatusImpl implements RouterStatus {
 	private String nickname;
 	private HexDigest identity;
 	private HexDigest digest;
+	private HexDigest microdescriptorDigest;
 	private Timestamp publicationTime;
 	private IPv4Address address;
 	private int routerPort;
@@ -28,6 +29,7 @@ public class RouterStatusImpl implements RouterStatus {
 	void setNickname(String nickname) { this.nickname = nickname; }
 	void setIdentity(HexDigest identity) { this.identity = identity; }
 	void setDigest(HexDigest digest) { this.digest = digest; }
+	void setMicrodescriptorDigest(HexDigest digest) { this.microdescriptorDigest = digest; }
 	void setPublicationTime(Timestamp timestamp) { this.publicationTime = timestamp; }
 	void setAddress(IPv4Address address) { this.address = address; }
 	void setRouterPort(int port) { this.routerPort = port; }
@@ -54,7 +56,11 @@ public class RouterStatusImpl implements RouterStatus {
 	public HexDigest getDescriptorDigest() {
 		return digest;
 	}
-	
+
+	public HexDigest getMicrodescriptorDigest() {
+		return microdescriptorDigest;
+	}
+
 	public Timestamp getPublicationTime() {
 		return publicationTime;
 	}
@@ -97,5 +103,4 @@ public class RouterStatusImpl implements RouterStatus {
 	public ExitPorts getExitPorts() {
 		return exitPorts;
 	}
-
 }

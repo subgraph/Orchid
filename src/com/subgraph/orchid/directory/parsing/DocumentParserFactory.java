@@ -6,10 +6,14 @@ import java.io.Reader;
 import com.subgraph.orchid.ConsensusDocument;
 import com.subgraph.orchid.KeyCertificate;
 import com.subgraph.orchid.RouterDescriptor;
+import com.subgraph.orchid.RouterMicrodescriptor;
 
 public interface DocumentParserFactory {
 	DocumentParser<RouterDescriptor> createRouterDescriptorParser(InputStream input, boolean verifySignatures);
 	DocumentParser<RouterDescriptor> createRouterDescriptorParser(Reader reader, boolean verifySignature);
+	
+	DocumentParser<RouterMicrodescriptor> createRouterMicrodescriptorParser(InputStream input);
+	DocumentParser<RouterMicrodescriptor> createRouterMicrodescriptorParser(Reader reader);
 
 	DocumentParser<KeyCertificate> createKeyCertificateParser(InputStream input);
 	DocumentParser<KeyCertificate> createKeyCertificateParser(Reader reader);

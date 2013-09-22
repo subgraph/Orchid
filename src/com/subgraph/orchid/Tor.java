@@ -1,8 +1,10 @@
 package com.subgraph.orchid;
 
 import java.lang.reflect.Proxy;
+import java.nio.charset.Charset;
 import java.util.logging.Logger;
 
+import com.subgraph.orchid.TorConfig.AutoBoolValue;
 import com.subgraph.orchid.circuits.CircuitManagerImpl;
 import com.subgraph.orchid.circuits.TorInitializationTracker;
 import com.subgraph.orchid.config.TorConfigProxy;
@@ -37,6 +39,16 @@ public class Tor {
 	private final static String implementation = "Orchid";
 	private final static String version = "0.9.1";
 	
+	private final static Charset defaultCharset = createDefaultCharset();
+
+	private static Charset createDefaultCharset() {
+		return Charset.forName("ISO-8859-1");
+	}
+
+	public static Charset getDefaultCharset() {
+		return defaultCharset;
+	}
+
 	public static String getBuildRevision() {
 		return Revision.getBuildRevision();
 	}
@@ -150,7 +162,8 @@ public class Tor {
 	 * @return A new <code>DirectoryDownloader</code> instance.
 	 * @see DirectoryDownloader
 	 */
-	static public DirectoryDownloader createDirectoryDownloader(Directory directory, CircuitManager circuitManager) {
-		return new DirectoryDownloader(directory, circuitManager);
+	static public DirectoryDownloader createDirectoryDownloader(TorConfig config, Directory directory, CircuitManager circuitManager) {
+		final boolean useMicrodescriptors = config.getUseMicrodescriptors() != AutoBoolValue.FALSE;
+		return new DirectoryDownloader(directory, circuitManager, useMicrodescriptors);
 	}
 }

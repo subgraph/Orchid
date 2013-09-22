@@ -13,26 +13,46 @@ import com.subgraph.orchid.data.HexDigest;
  */
 public class TorMessageDigest {
 
+	
 	public static final int TOR_DIGEST_SIZE = 20;
+	public static final int TOR_DIGEST256_SIZE = 32;
+	
 	private static final String TOR_DIGEST_ALGORITHM = "SHA-1";
+	private static final String TOR_DIGEST256_ALGORITHM = "SHA-256";
 
 	private final MessageDigest digestInstance;
-
-	public TorMessageDigest() {
-		digestInstance = createDigestInstance();
+	private final boolean isDigest256;
+	
+	public TorMessageDigest(boolean isDigest256) {
+		digestInstance = createDigestInstance(isDigest256);
+		this.isDigest256 = isDigest256;
 	}
 
-	private MessageDigest createDigestInstance() {
+	public TorMessageDigest() {
+		this(false);
+	}
+
+	private MessageDigest createDigestInstance(boolean isDigest256) {
 		try {
-			return MessageDigest.getInstance(TOR_DIGEST_ALGORITHM);
+			final String algorithm = (isDigest256) ? TOR_DIGEST256_ALGORITHM : TOR_DIGEST_ALGORITHM;
+			return MessageDigest.getInstance(algorithm);
 		} catch (NoSuchAlgorithmException e) {
 			throw new TorException(e);
 		}
 	}
 
 	/**
+	 * Return <tt>true</tt> if this is a 256 bit digest instance.
+	 * 
+	 * @return <tt>true</tt> if this is a 256 bit digest instance.
+	 */
+	public boolean isDigest256() {
+		return isDigest256;
+	}
+
+	/**
 	 * Return the digest value of all data processed up until this point.
-	 * @return The digest value as an array of <code>TOR_DIGEST_SIZE<code> bytes.
+	 * @return The digest value as an array of <code>TOR_DIGEST_SIZE<code> or <code>TOR_DIGEST256_SIZE</code> bytes.
 	 */
 	public byte[] getDigestBytes() {
 		try {

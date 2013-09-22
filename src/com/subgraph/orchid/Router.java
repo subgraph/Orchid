@@ -19,7 +19,10 @@ public interface Router {
 
 	String getVersion();
 	RouterDescriptor getCurrentDescriptor();
+	RouterMicrodescriptor getCurrentMicrodescriptor();
 	HexDigest getDescriptorDigest();
+	HexDigest getMicrodescriptorDigest();
+
 	TorPublicKey getOnionKey();
 	byte[] getNTorOnionKey();
 	

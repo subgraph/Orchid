@@ -149,6 +149,7 @@ public interface DocumentFieldParser {
 	 */
 	HexDigest parseHexDigest();
 	
+	
 	/**
 	 * Extract the next argument and interpret it as a base 32 encoded digest string.
 	 * 
@@ -236,6 +237,13 @@ public interface DocumentFieldParser {
 	void resetRawDocument();
 	
 	/**
+	 * Empty the internal buffer which is capturing raw data from document being parsed and set buffer contents to <tt>initalContent</tt>.
+	 * 
+	 * @param initialContent Initial raw document content.
+	 */
+	void resetRawDocument(String initialContent);
+	
+	/**
 	 * Reset the document signing state.  Any lines read after calling this method will be included 
 	 * in the current signature hash.
 	 */
@@ -263,6 +271,7 @@ public interface DocumentFieldParser {
 	 *         a signature is not being actively calculated.
 	 */
 	TorMessageDigest getSignatureMessageDigest();
+	TorMessageDigest getSignatureMessageDigest256();
 	
 	/**
 	 * Verify that current signature hash matches the specified <code>signature</code> signed

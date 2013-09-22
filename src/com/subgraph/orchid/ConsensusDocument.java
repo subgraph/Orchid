@@ -7,6 +7,7 @@ import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.data.Timestamp;
 
 public interface ConsensusDocument extends Document {
+	enum ConsensusFlavor { NS, MICRODESC };
 	enum SignatureStatus { STATUS_VERIFIED, STATUS_FAILED, STATUS_NEED_CERTS };
 	
 	interface RequiredCertificate {
@@ -16,6 +17,7 @@ public interface ConsensusDocument extends Document {
 		HexDigest getSigningKey();
 	}
 	
+	ConsensusFlavor getFlavor();
 	Timestamp getValidAfterTime();
 	Timestamp getFreshUntilTime();
 	Timestamp getValidUntilTime();
@@ -31,6 +33,7 @@ public interface ConsensusDocument extends Document {
 	Set<RequiredCertificate> getRequiredCertificates();
 	
 	HexDigest getSigningHash();
+	HexDigest getSigningHash256();
 	
 	int getCircWindowParameter();
 	int getWeightScaleParameter();

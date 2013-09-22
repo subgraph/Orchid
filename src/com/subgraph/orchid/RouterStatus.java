@@ -9,6 +9,7 @@ public interface RouterStatus {
 	String getNickname();
 	HexDigest getIdentity();
 	HexDigest getDescriptorDigest();
+	HexDigest getMicrodescriptorDigest();
 	Timestamp getPublicationTime();
 	IPv4Address getAddress();
 	int getRouterPort();

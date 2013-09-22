@@ -51,16 +51,28 @@ public class FooterSectionParser extends ConsensusDocumentSectionParser {
 		final TorMessageDigest messageDigest = fieldParser.getSignatureMessageDigest();
 		messageDigest.update("directory-signature ");
 		document.setSigningHash(messageDigest.getHexDigest());
+		
+		TorMessageDigest messageDigest256 = fieldParser.getSignatureMessageDigest256();
+		messageDigest256.update("directory-signature ");
+		document.setSigningHash256(messageDigest256.getHexDigest());
 	}
 	
 	private void processSignature() {
 		if(!seenFirstSignature) {
 			doFirstSignature();
 		}
-		HexDigest identity = fieldParser.parseHexDigest();
+		final String s = fieldParser.parseString();
+		final HexDigest identity;
+		boolean useSha256 = false;
+		if(s.length() < TorMessageDigest.TOR_DIGEST_SIZE) {
+			useSha256 = ("sha256".equals(s));
+			identity = fieldParser.parseHexDigest();
+		} else {
+			identity = HexDigest.createFromString(s);
+		}
 		HexDigest signingKey = fieldParser.parseHexDigest();
 		TorSignature signature = fieldParser.parseSignature();
-		document.addSignature(new DirectorySignature(identity, signingKey, signature));
+		document.addSignature(new DirectorySignature(identity, signingKey, signature, useSha256));
 	}
 	
 	private void processBandwidthWeights() {

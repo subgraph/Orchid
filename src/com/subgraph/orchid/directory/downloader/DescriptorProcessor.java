@@ -17,12 +17,14 @@ public class DescriptorProcessor {
 	private final static int MAX_CLIENT_INTERVAL_WITHOUT_REQUEST = 10 * 60 * 1000;
 
 	private final Directory directory;
+	private final boolean useMicrodescriptors;
 	
 	private Date lastDescriptorDownload;
 	
 	
-	DescriptorProcessor(Directory directory) {
+	DescriptorProcessor(Directory directory, boolean useMicrodescriptors) {
 		this.directory = directory;
+		this.useMicrodescriptors = useMicrodescriptors;
 	}
 
 	private boolean canDownloadDescriptors(int downloadableCount) {
@@ -74,9 +76,18 @@ public class DescriptorProcessor {
 	private List<HexDigest> createPartitionList(List<Router> descriptors, int offset, int size) {
 		final List<HexDigest> newList = new ArrayList<HexDigest>();
 		for(int i = offset; i < (offset + size) && i < descriptors.size(); i++) {
-			newList.add(descriptors.get(i).getDescriptorDigest());
+			final HexDigest digest = getDescriptorDigestForRouter(descriptors.get(i));
+			newList.add(digest);
 		}
 		return newList;
+	}
+
+	private HexDigest getDescriptorDigestForRouter(Router r) {
+		if(useMicrodescriptors) {
+			return r.getMicrodescriptorDigest();
+		} else {
+			return r.getDescriptorDigest();
+		}
 	}
 
 	List< List<HexDigest> > getDescriptorDigestsToDownload() {

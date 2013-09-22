@@ -6,12 +6,14 @@ import java.io.Reader;
 import com.subgraph.orchid.ConsensusDocument;
 import com.subgraph.orchid.KeyCertificate;
 import com.subgraph.orchid.RouterDescriptor;
+import com.subgraph.orchid.RouterMicrodescriptor;
 import com.subgraph.orchid.directory.certificate.KeyCertificateParser;
 import com.subgraph.orchid.directory.consensus.ConsensusDocumentParser;
 import com.subgraph.orchid.directory.parsing.DocumentFieldParser;
 import com.subgraph.orchid.directory.parsing.DocumentParser;
 import com.subgraph.orchid.directory.parsing.DocumentParserFactory;
 import com.subgraph.orchid.directory.router.RouterDescriptorParser;
+import com.subgraph.orchid.directory.router.RouterMicrodescriptorParser;
 
 public class DocumentParserFactoryImpl implements DocumentParserFactory {
 	
@@ -29,6 +31,14 @@ public class DocumentParserFactoryImpl implements DocumentParserFactory {
 
 	public DocumentParser<RouterDescriptor> createRouterDescriptorParser(Reader reader, boolean verifySignatures) {
 		return new RouterDescriptorParser(createDocumentFieldParser(reader), verifySignatures);
+	}
+
+	public DocumentParser<RouterMicrodescriptor> createRouterMicrodescriptorParser(InputStream input) {
+		return new RouterMicrodescriptorParser(createDocumentFieldParser(input));
+	}
+
+	public DocumentParser<RouterMicrodescriptor> createRouterMicrodescriptorParser(Reader reader) {
+		return new RouterMicrodescriptorParser(createDocumentFieldParser(reader));
 	}
 
 	public DocumentParser<ConsensusDocument> createConsensusDocumentParser(InputStream input) {

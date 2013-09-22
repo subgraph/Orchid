@@ -3,8 +3,10 @@ package com.subgraph.orchid.directory;
 import java.util.Collections;
 import java.util.Set;
 
+import com.subgraph.orchid.Directory;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.RouterDescriptor;
+import com.subgraph.orchid.RouterMicrodescriptor;
 import com.subgraph.orchid.RouterStatus;
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.crypto.TorPublicKey;
@@ -13,21 +15,25 @@ import com.subgraph.orchid.data.IPv4Address;
 import com.subgraph.orchid.geoip.CountryCodeService;
 
 public class RouterImpl implements Router {
-	static RouterImpl createFromRouterStatus(RouterStatus status) {
-		return new RouterImpl(status);
+	static RouterImpl createFromRouterStatus(Directory directory, RouterStatus status) {
+		return new RouterImpl(directory, status);
 	}
 
+	private final Directory directory;
 	private final HexDigest identityHash;
 	protected RouterStatus status;
 	private RouterDescriptor descriptor;
+	private RouterMicrodescriptor microdescriptor;
 	
 	private boolean descriptorMatchesConsensus;
 	
 	private volatile String cachedCountryCode;
 	
-	protected RouterImpl(RouterStatus status) {
-		identityHash = status.getIdentity();
+	protected RouterImpl(Directory directory, RouterStatus status) {
+		this.directory = directory;
+		this.identityHash = status.getIdentity();
 		this.status = status;
+		refreshMicrodescriptor();
 	}
 
 	void updateStatus(RouterStatus status) {
@@ -35,6 +41,8 @@ public class RouterImpl implements Router {
 			throw new TorException("Identity hash does not match status update");
 		this.status = status;
 		this.cachedCountryCode = null;
+		this.microdescriptor = null;
+		refreshMicrodescriptor();
 		this.descriptorMatchesConsensus = doesDescriptorMatchStatus();
 	}
 
@@ -44,16 +52,19 @@ public class RouterImpl implements Router {
 	}
 
 	private boolean doesDescriptorMatchStatus() {
-		if(descriptor == null || status == null) {
+		if(status != null && status.getDescriptorDigest() != null && 
+				descriptor != null && descriptor.getDescriptorDigest() != null) {
+			return descriptor.getDescriptorDigest().equals(status.getDescriptorDigest());
+		} else {
 			return false;
 		}
-		return descriptor.getDescriptorDigest().equals(status.getDescriptorDigest());
 	}
 	
 	public boolean isDescriptorDownloadable() {
-		if(descriptorMatchesConsensus) {
+		if(getCurrentMicrodescriptor() != null || descriptorMatchesConsensus) {
 			return false;
 		}
+	
 		final long now = System.currentTimeMillis();
 		final long diff = now - status.getPublicationTime().getDate().getTime();
 		return diff > (1000 * 60 * 10);	
@@ -73,6 +84,21 @@ public class RouterImpl implements Router {
 
 	public RouterDescriptor getCurrentDescriptor() {
 		return descriptor;
+	}
+
+	private synchronized void refreshMicrodescriptor() {
+		if(microdescriptor == null && status.getMicrodescriptorDigest() != null && directory != null) {
+			microdescriptor = directory.getMicrodescriptorFromCache(status.getMicrodescriptorDigest());
+		}
+	}
+	
+	public RouterMicrodescriptor getCurrentMicrodescriptor() {
+		refreshMicrodescriptor();
+		return microdescriptor;
+	}
+
+	public HexDigest getMicrodescriptorDigest() {
+		return status.getMicrodescriptorDigest();
 	}
 
 	public boolean hasFlag(String flag) {
@@ -145,6 +171,10 @@ public class RouterImpl implements Router {
 		if(descriptor != null) {
 			return descriptor.getOnionKey();
 		} else {
+			final RouterMicrodescriptor md = getCurrentMicrodescriptor();
+			if(md != null) {
+				return md.getOnionKey();
+			}
 			return null;
 		}
 	}
@@ -153,6 +183,10 @@ public class RouterImpl implements Router {
 		if(descriptor != null) {
 			return descriptor.getNTorOnionKey();
 		} else {
+			final RouterMicrodescriptor md = getCurrentMicrodescriptor();
+			if(md != null) {
+				return md.getNTorOnionKey();
+			}
 			return null;
 		}
 	}
@@ -170,10 +204,15 @@ public class RouterImpl implements Router {
 	}
 
 	public Set<String> getFamilyMembers() {
-		if(descriptor == null) {
+		if(descriptor != null) {
+			return descriptor.getFamilyMembers();
+		} else {
+			final RouterMicrodescriptor md = getCurrentMicrodescriptor();
+			if(md != null) {
+				return md.getFamilyMembers();
+			}
 			return Collections.emptySet();
 		}
-		return descriptor.getFamilyMembers();
 	}
 	
 	public int getAverageBandwidth() {
@@ -195,6 +234,15 @@ public class RouterImpl implements Router {
 	}
 
 	public boolean exitPolicyAccepts(IPv4Address address, int port) {
+		final RouterMicrodescriptor md = getCurrentMicrodescriptor();
+		if(md != null) {
+			if(address != null) {
+				return md.exitPolicyAccepts(address, port);
+			} else {
+				return md.exitPolicyAccepts(port);
+			}
+		}
+		
 		if(descriptor == null)
 			return false;
 
