@@ -4,7 +4,6 @@ import java.lang.reflect.Proxy;
 import java.nio.charset.Charset;
 import java.util.logging.Logger;
 
-import com.subgraph.orchid.TorConfig.AutoBoolValue;
 import com.subgraph.orchid.circuits.CircuitManagerImpl;
 import com.subgraph.orchid.circuits.TorInitializationTracker;
 import com.subgraph.orchid.config.TorConfigProxy;
@@ -163,7 +162,6 @@ public class Tor {
 	 * @see DirectoryDownloader
 	 */
 	static public DirectoryDownloader createDirectoryDownloader(TorConfig config, Directory directory, CircuitManager circuitManager) {
-		final boolean useMicrodescriptors = config.getUseMicrodescriptors() != AutoBoolValue.FALSE;
-		return new DirectoryDownloader(directory, circuitManager, useMicrodescriptors);
+		return new DirectoryDownloader(config, directory, circuitManager);
 	}
 }

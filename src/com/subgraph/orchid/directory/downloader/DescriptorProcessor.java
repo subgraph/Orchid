@@ -8,6 +8,8 @@ import java.util.List;
 import com.subgraph.orchid.ConsensusDocument;
 import com.subgraph.orchid.Directory;
 import com.subgraph.orchid.Router;
+import com.subgraph.orchid.TorConfig;
+import com.subgraph.orchid.TorConfig.AutoBoolValue;
 import com.subgraph.orchid.data.HexDigest;
 
 public class DescriptorProcessor {
@@ -16,15 +18,15 @@ public class DescriptorProcessor {
 	private final static int MIN_DL_REQUESTS = 3;
 	private final static int MAX_CLIENT_INTERVAL_WITHOUT_REQUEST = 10 * 60 * 1000;
 
+	private final TorConfig config;
 	private final Directory directory;
-	private final boolean useMicrodescriptors;
 	
 	private Date lastDescriptorDownload;
 	
 	
-	DescriptorProcessor(Directory directory, boolean useMicrodescriptors) {
+	DescriptorProcessor(TorConfig config, Directory directory) {
+		this.config = config;
 		this.directory = directory;
-		this.useMicrodescriptors = useMicrodescriptors;
 	}
 
 	private boolean canDownloadDescriptors(int downloadableCount) {
@@ -83,11 +85,15 @@ public class DescriptorProcessor {
 	}
 
 	private HexDigest getDescriptorDigestForRouter(Router r) {
-		if(useMicrodescriptors) {
+		if(useMicrodescriptors()) {
 			return r.getMicrodescriptorDigest();
 		} else {
 			return r.getDescriptorDigest();
 		}
+	}
+	
+	private boolean useMicrodescriptors() {
+		return config.getUseMicrodescriptors() != AutoBoolValue.FALSE;
 	}
 
 	List< List<HexDigest> > getDescriptorDigestsToDownload() {

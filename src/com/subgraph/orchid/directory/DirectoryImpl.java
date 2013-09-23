@@ -38,7 +38,7 @@ public class DirectoryImpl implements Directory {
 	private boolean isLoaded = false;
 	
 	private final DirectoryStoreImpl store;
-	private final boolean useMicrodescriptors;
+	private final TorConfig config;
 	private final StateFile stateFile;
 	private final MicrodescriptorCache microdescriptorCache;
 	private final Map<HexDigest, RouterImpl> routersByIdentity;
@@ -55,7 +55,7 @@ public class DirectoryImpl implements Directory {
 
 	public DirectoryImpl(TorConfig config) {
 		store = new DirectoryStoreImpl(config);
-		useMicrodescriptors = config.getUseMicrodescriptors() != AutoBoolValue.FALSE;
+		this.config = config;
 		stateFile = new StateFile(store, this);
 		microdescriptorCache = new MicrodescriptorCache(store);
 		routersByIdentity = new HashMap<HexDigest, RouterImpl>();
@@ -93,11 +93,12 @@ public class DirectoryImpl implements Directory {
 
 	public void loadFromStore() {
 		logger.info("Loading cached network information from disk");
+		
 		synchronized(loadLock) {
 			if(isLoaded) {
 				return;
 			}
-	
+			boolean useMicrodescriptors = config.getUseMicrodescriptors() != AutoBoolValue.FALSE;
 			last = System.currentTimeMillis();
 			logger.info("Loading certificates");
 			store.loadCertificates(this);

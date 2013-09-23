@@ -10,6 +10,8 @@ import java.util.logging.Logger;
 import com.subgraph.orchid.CircuitManager;
 import com.subgraph.orchid.ConsensusDocument;
 import com.subgraph.orchid.Directory;
+import com.subgraph.orchid.TorConfig;
+import com.subgraph.orchid.TorConfig.AutoBoolValue;
 import com.subgraph.orchid.crypto.TorRandom;
 import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.data.Timestamp;
@@ -20,13 +22,13 @@ public class DirectoryDownloader implements Runnable {
 	private final static Logger logger = Logger.getLogger(DirectoryDownloader.class.getName());
 	
 	private final Thread thread;
+	private final TorConfig config;
 	private final Directory directory;
 	private final CircuitManager circuitManager;
 	private final DocumentParserFactory parserFactory;
 	private final DescriptorProcessor descriptorProcessor;
 	private final TorRandom random;
 	private final Executor executor = Executors.newCachedThreadPool();
-	private final boolean useMicrodescriptors;
 
 	private volatile boolean isDownloadingCertificates;
 	private volatile boolean isDownloadingConsensus;
@@ -35,13 +37,12 @@ public class DirectoryDownloader implements Runnable {
 	private ConsensusDocument currentConsensus;
 	private Date consensusDownloadTime;
 
-	public DirectoryDownloader(Directory directory,
-			CircuitManager circuitManager, boolean useMicrodescriptors) {
+	public DirectoryDownloader(TorConfig config, Directory directory, CircuitManager circuitManager) {
+		this.config = config;
 		this.directory = directory;
 		this.circuitManager = circuitManager;
-		this.useMicrodescriptors = useMicrodescriptors;
 		this.parserFactory = new DocumentParserFactoryImpl();
-		this.descriptorProcessor = new DescriptorProcessor(directory, useMicrodescriptors);
+		this.descriptorProcessor = new DescriptorProcessor(config, directory);
 		this.outstandingDescriptorTasks = new AtomicInteger();
 		this.thread = new Thread(this);
 		this.random = new TorRandom();
@@ -165,7 +166,7 @@ public class DirectoryDownloader implements Runnable {
 		if (isDownloadingConsensus || !needConsensusDownload()) {
 			return;
 		}
-		ConsensusDownloadTask task = new ConsensusDownloadTask(this, useMicrodescriptors);
+		ConsensusDownloadTask task = new ConsensusDownloadTask(this, useMicrodescriptors());
 		isDownloadingConsensus = true;
 		executor.execute(task);
 	}
@@ -180,9 +181,13 @@ public class DirectoryDownloader implements Runnable {
 			return;
 		}
 		for (List<HexDigest> dlist : ds) {
-			DescriptorDownloadTask task = new DescriptorDownloadTask(dlist, this, useMicrodescriptors);
+			DescriptorDownloadTask task = new DescriptorDownloadTask(dlist, this, useMicrodescriptors());
 			outstandingDescriptorTasks.incrementAndGet();
 			executor.execute(task);
 		}
+	}
+	
+	private boolean useMicrodescriptors() {
+		return config.getUseMicrodescriptors() != AutoBoolValue.FALSE;
 	}
 }
