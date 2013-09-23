@@ -18,6 +18,7 @@ public class TorRFC5869KeyDerivation {
 	
 	public TorRFC5869KeyDerivation(byte[] seed) {
 		this.seed = new byte[seed.length];
+		System.arraycopy(seed, 0, this.seed, 0, seed.length);
 	}
 	
 	public void deriveKeys(byte[] keyMaterialOut, byte[] verifyHashOut) {
