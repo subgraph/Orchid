@@ -57,10 +57,11 @@ public class RouterMicrodescriptorParser implements DocumentParser<RouterMicrode
 		final RouterMicrodescriptorKeyword keyword = RouterMicrodescriptorKeyword.findKeyword(fieldParser.getCurrentKeyword());
 		if(!keyword.equals(RouterMicrodescriptorKeyword.UNKNOWN_KEYWORD)) {
 			processKeyword(keyword);
-			if(currentDescriptor != null) {
-				currentDescriptor.setRawDocumentData(fieldParser.getRawDocument());
-			}
 		}
+		if(currentDescriptor != null) {
+			currentDescriptor.setRawDocumentData(fieldParser.getRawDocument());
+		}
+
 	}
 	
 
