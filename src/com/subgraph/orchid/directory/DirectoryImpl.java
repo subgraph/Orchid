@@ -115,6 +115,7 @@ public class DirectoryImpl implements Directory {
 			} else {
 				logger.info("Loading microdescriptor cache");
 				microdescriptorCache.initialLoad();
+				needRecalculateMinimumRouterInfo = true;
 				logElapsed();
 			}
 
