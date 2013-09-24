@@ -2,6 +2,7 @@ package com.subgraph.orchid.directory.parsing;
 
 import java.io.InputStream;
 import java.io.Reader;
+import java.nio.ByteBuffer;
 
 import com.subgraph.orchid.ConsensusDocument;
 import com.subgraph.orchid.KeyCertificate;
@@ -12,6 +13,7 @@ public interface DocumentParserFactory {
 	DocumentParser<RouterDescriptor> createRouterDescriptorParser(InputStream input, boolean verifySignatures);
 	DocumentParser<RouterDescriptor> createRouterDescriptorParser(Reader reader, boolean verifySignature);
 	
+	DocumentParser<RouterMicrodescriptor> createRouterMicrodescriptorParser(ByteBuffer buffer);
 	DocumentParser<RouterMicrodescriptor> createRouterMicrodescriptorParser(InputStream input);
 	DocumentParser<RouterMicrodescriptor> createRouterMicrodescriptorParser(Reader reader);
 

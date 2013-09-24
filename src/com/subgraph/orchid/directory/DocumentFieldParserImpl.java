@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -34,6 +35,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 	private final static String END_TAG = "-----END";
 	private final static String TAG_DELIMITER = "-----";
 	private final static String DEFAULT_DELIMITER = " ";
+	private final ByteBuffer inputBuffer;
 	private final BufferedReader reader;
 	private final SimpleDateFormat dateFormat;
 	private String delimiter = DEFAULT_DELIMITER;
@@ -50,6 +52,13 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 
 	private DocumentParsingHandler callbackHandler;
 
+	public DocumentFieldParserImpl(ByteBuffer buffer) {
+		this.inputBuffer = buffer;
+		this.reader = null;
+		rawDocumentBuffer = new StringBuilder();
+		dateFormat = createDateFormat();
+	}
+	
 	public DocumentFieldParserImpl(InputStream input) {
 		try {
 			reader = new BufferedReader(new InputStreamReader(input, "ISO-8859-1"));
@@ -58,6 +67,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 		}
 		rawDocumentBuffer = new StringBuilder();
 		dateFormat = createDateFormat();
+		inputBuffer = null;
 	}
 
 	public DocumentFieldParserImpl(Reader reader) {
@@ -68,6 +78,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 		}
 		rawDocumentBuffer = new StringBuilder();
 		dateFormat = createDateFormat();
+		inputBuffer = null;
 	}
 
 	private static SimpleDateFormat createDateFormat() {
@@ -373,7 +384,7 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 
 	private String readLine() {
 		try {
-			final String line = reader.readLine();
+			final String line = nextLine();
 			if(line != null) {
 				updateCurrentSignature(line);
 				updateRawDocument(line);
@@ -382,6 +393,30 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 		} catch (IOException e) {
 			throw new TorParsingException("I/O error parsing document: " + e.getMessage(), e);
 		}
+	}
+
+	private String nextLine() throws IOException {
+		if(inputBuffer != null) {
+			return nextLineFromInputBuffer();
+		} else {
+			return reader.readLine();
+		}
+	}
+	
+	private String nextLineFromInputBuffer() {
+		if(!inputBuffer.hasRemaining()) {
+			return null;
+		}
+		final StringBuilder sb = new StringBuilder();
+		while(inputBuffer.hasRemaining()) {
+			char c = (char) (inputBuffer.get() & 0xFF);
+			if(c == '\n') {
+				return sb.toString();
+			} else if(c != '\r') {
+				sb.append(c);
+			}
+		}
+		return sb.toString();
 	}
 
 	private void updateCurrentSignature(String line) {
