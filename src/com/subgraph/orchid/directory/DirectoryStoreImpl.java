@@ -15,7 +15,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.charset.Charset;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,12 +32,30 @@ import com.subgraph.orchid.TorConfig.AutoBoolValue;
 import com.subgraph.orchid.crypto.TorRandom;
 import com.subgraph.orchid.directory.parsing.DocumentParser;
 import com.subgraph.orchid.directory.parsing.DocumentParserFactory;
-import com.subgraph.orchid.directory.parsing.DocumentParsingResult;
 import com.subgraph.orchid.directory.parsing.DocumentParsingResultHandler;
 
 public class DirectoryStoreImpl implements DirectoryStore {
 	private final static Logger logger = Logger.getLogger(DirectoryStoreImpl.class.getName());
 
+	private enum CacheFile {
+		CERTIFICATES("certificates"),
+		CONSENSUS("consensus"),
+		CONSENSUS_MICRODESC("consensus-microdesc"),
+		MICRODESCRIPTOR_CACHE("cached-microdescs"),
+		MICRODESCRIPTOR_JOURNAL("cached-microdescs.new"),
+		DESCRIPTORS("routers"),
+		STATE("state");
+		
+		final private String baseName;
+		CacheFile(String baseName) {
+			this.baseName = baseName;
+		}
+		
+		String getBaseName() {
+			return baseName;
+		}
+	}
+	
 	private final TorConfig config;
 	private final DocumentParserFactory parserFactory;
 	private final TorRandom random;
@@ -54,7 +71,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	}
 
 	public void saveCertificates(List<KeyCertificate> certificates) {
-		final File tempFile = createTempFile("certificates");
+		final File tempFile = createTempFile(CacheFile.CERTIFICATES);
 		final Writer writer = openWriterFor(tempFile);
 		if(writer == null) {
 			return;
@@ -64,7 +81,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 				writer.write(cert.getRawDocumentData());
 			}
 			quietClose(writer);
-			installTempFile("certificates", tempFile);
+			installTempFile(CacheFile.CERTIFICATES, tempFile);
 		} catch(IOException e) {
 			logger.warning("IO Error writing certificates file: "+ e);
 		} finally {
@@ -73,7 +90,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	}
 
 	public void loadCertificates(final Directory directory) {
-		final Reader reader = openReaderFor("certificates");
+		final Reader reader = openReaderFor(CacheFile.CERTIFICATES);
 		if(reader == null) {
 			return;
 		}
@@ -98,8 +115,8 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	}
 	
 	public void saveConsensus(ConsensusDocument consensus) {
-		final String baseName = getBaseNameForConsensus(consensus.getFlavor() == ConsensusFlavor.MICRODESC);
-		final File tempFile = createTempFile(baseName);
+		final CacheFile cacheFile = getConsensusCacheFile(consensus.getFlavor() == ConsensusFlavor.MICRODESC); 
+		final File tempFile = createTempFile(cacheFile);
 		final Writer writer = openWriterFor(tempFile);
 		if(writer == null) {
 			return;
@@ -107,7 +124,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 		try {
 			writer.write(consensus.getRawDocumentData());
 			quietClose(writer);
-			installTempFile(baseName, tempFile);
+			installTempFile(cacheFile, tempFile);
 		} catch(IOException e) {
 			logger.warning("IO error writing consensus file: "+ e);
 		} finally {
@@ -115,16 +132,16 @@ public class DirectoryStoreImpl implements DirectoryStore {
 		}
 	}
 	
-	private String getBaseNameForConsensus(boolean isMicrodescriptorFlavor) {
+	private CacheFile getConsensusCacheFile(boolean isMicrodescriptorFlavor) {
 		if(isMicrodescriptorFlavor) {
-			return "consensus-microdesc";
+			return CacheFile.CONSENSUS_MICRODESC;
 		} else {
-			return "consensus";
+			return CacheFile.CONSENSUS;
 		}
 	}
 
 	public void loadConsensus(final Directory directory) {
-		final Reader reader = openReaderFor(getBaseNameForConsensus(isUsingMicrodescriptors()));
+		final Reader reader = openReaderFor(getConsensusCacheFile(isUsingMicrodescriptors()));
 		if(reader == null) {
 			return;
 		}
@@ -149,7 +166,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	}
 	
 	public void saveRouterDescriptors(List<RouterDescriptor> descriptors) {
-		final File tempFile = createTempFile("routers");
+		final File tempFile = createTempFile(CacheFile.DESCRIPTORS);
 		final Writer writer = openWriterFor(tempFile);
 		if(writer == null) {
 			return;
@@ -159,7 +176,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 				writer.write(router.getRawDocumentData());
 			}
 			quietClose(writer);
-			installTempFile("routers", tempFile);
+			installTempFile(CacheFile.DESCRIPTORS, tempFile);
 		} catch(IOException e) {
 			logger.warning("IO error writing to routers file");
 		} finally {
@@ -168,7 +185,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	}
 
 	public void loadRouterDescriptors(final Directory directory) {
-		final Reader reader = openReaderFor("routers");
+		final Reader reader = openReaderFor(CacheFile.DESCRIPTORS);
 		if(reader == null) {
 			return;
 		}
@@ -195,7 +212,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	}
 
 	void loadStateFile(StateFile stateFile) {
-		final Reader reader = openReaderFor("state");
+		final Reader reader = openReaderFor(CacheFile.STATE);
 		if(reader == null) {
 			return;
 		}
@@ -209,7 +226,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	}
 	
 	void saveStateFile(StateFile stateFile) {
-		final File tempFile = createTempFile("state");
+		final File tempFile = createTempFile(CacheFile.STATE);
 		final Writer writer = openWriterFor(tempFile); 
 		if(writer == null) {
 			return;
@@ -217,7 +234,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 		try {
 			stateFile.writeFile(writer);
 			quietClose(writer);
-			installTempFile("state", tempFile);
+			installTempFile(CacheFile.STATE, tempFile);
 		} catch (IOException e) {
 			logger.warning("IO error writing to state file: "+ e);
 		} finally {
@@ -227,15 +244,15 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	}
 	
 	
-	private File createTempFile(String baseName) {
+	private File createTempFile(CacheFile cacheFile) {
 		final long n = random.nextLong();
-		final File f = new File(config.getDataDirectory(), baseName + Long.toString(n));
+		final File f = new File(config.getDataDirectory(), cacheFile.getBaseName() + Long.toString(n));
 		f.deleteOnExit();
 		return f;
 	}
 
-	private void installTempFile(String baseName, File tempFile) {
-		final File target = new File(config.getDataDirectory(), baseName);
+	private void installTempFile(CacheFile cacheFile, File tempFile) {
+		final File target = new File(config.getDataDirectory(), cacheFile.getBaseName());
 		target.delete();
 		if(!tempFile.renameTo(target)) {
 			logger.warning("Failed to rename temp file "+ tempFile + " to "+ target);
@@ -273,8 +290,8 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			}
 		}
 	}
-	private Reader openReaderFor(String fileName) {
-		final File file = new File(config.getDataDirectory(), fileName);
+	private Reader openReaderFor(CacheFile cacheFile) {
+		final File file = new File(config.getDataDirectory(), cacheFile.getBaseName());
 		if(!file.exists()) {
 			return null;
 		}
@@ -350,7 +367,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 	}
 	
 	private RandomAccessFile openMicrodescriptorCacheFile() {
-		final File file = new File(config.getDataDirectory(), "cached-microdescs");
+		final File file = new File(config.getDataDirectory(), CacheFile.MICRODESCRIPTOR_CACHE.getBaseName());
 		try {
 			return new RandomAccessFile(file, "r");
 		} catch (FileNotFoundException e) {
@@ -360,7 +377,7 @@ public class DirectoryStoreImpl implements DirectoryStore {
 
 	
 	public void writeMicrodescriptorCache(List<RouterMicrodescriptor> descriptors, boolean removeJournal) {
-		final File tempFile = createTempFile("cached-microdescs");
+		final File tempFile = createTempFile(CacheFile.MICRODESCRIPTOR_CACHE);
 		final Writer writer = openWriterFor(tempFile); 
 		if(writer == null) {
 			return;
@@ -372,9 +389,9 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			}
 			quietClose(writer);
 			synchronized (microdescriptorLock) {
-				installTempFile("cached-microdescs", tempFile);
+				installTempFile(CacheFile.MICRODESCRIPTOR_CACHE, tempFile);
 				if(removeJournal) {
-					File journalFile = new File(config.getDataDirectory(), "cached-microdescs.new");
+					File journalFile = new File(config.getDataDirectory(), CacheFile.MICRODESCRIPTOR_JOURNAL.getBaseName());
 					journalFile.delete();
 				}
 			}
@@ -383,28 +400,6 @@ public class DirectoryStoreImpl implements DirectoryStore {
 			logger.warning("IO error writing to microdescriptor cache file: "+ e);
 		} finally {
 			quietClose(writer);
-		}
-	}
-	
-	public List<RouterMicrodescriptor> loadJournalMicrodescriptors() {
-		synchronized (microdescriptorLock) {
-			final Reader reader = openReaderFor("cached-microdescs.new");
-			if(reader == null) {
-				return Collections.emptyList();
-			}
-		
-			try {
-				final DocumentParser<RouterMicrodescriptor> parser = parserFactory.createRouterMicrodescriptorParser(reader);
-				DocumentParsingResult<RouterMicrodescriptor> result = parser.parse();
-				if(result.isOkay()) {
-					return result.getParsedDocuments();
-				}
-				return null;
-			
-						
-			} finally {
-				quietClose(reader);
-			}
 		}
 	}
 
