@@ -13,6 +13,7 @@ import javax.crypto.NoSuchPaddingException;
 
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.data.HexDigest;
+import com.subgraph.orchid.misc.Utils;
 
 /**
  * This class wraps the RSA public keys used in the Tor protocol.
@@ -79,22 +80,12 @@ public class TorPublicKey {
 		final Cipher cipher = createCipherInstance();
 		try {
 			byte[] decrypted = cipher.doFinal(signature.getSignatureBytes());
-			return constantTimeArrayEquals(decrypted, digestBytes);
+			return Utils.constantTimeArrayEquals(decrypted, digestBytes);
 		} catch (IllegalBlockSizeException e) {
 			throw new TorException(e);
 		} catch (BadPaddingException e) {
 			throw new TorException(e);
 		}
-	}
-
-	private boolean constantTimeArrayEquals(byte[] a1, byte[] a2) {
-		if(a1.length != a2.length)
-			return false;
-		int result = 0;
-		for(int i = 0; i < a1.length; i++)
-			result += (a1[i] & 0xFF) ^ (a2[i] & 0xFF);
-		return result == 0;
-		
 	}
 
 	private Cipher createCipherInstance() {

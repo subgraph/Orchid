@@ -9,6 +9,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.subgraph.orchid.data.HexDigest;
+import com.subgraph.orchid.misc.Utils;
 
 public class TorNTorKeyAgreement implements TorKeyAgreement {
 	public final static int CURVE25519_PUBKEY_LEN = 32;
@@ -79,7 +80,7 @@ public class TorNTorKeyAgreement implements TorKeyAgreement {
 		final byte[] verify = tweak("verify", secretInput);
 		final byte[] authInput = buildAuthInput(verify, serverPub);
 		final byte[] auth = tweak("mac", authInput);
-		isBad |= !constantTimeArrayEquals(auth, authCandidate);
+		isBad |= !Utils.constantTimeArrayEquals(auth, authCandidate);
 		final byte[] seed = tweak("key_extract", secretInput);
 		
 		final TorRFC5869KeyDerivation kdf = new TorRFC5869KeyDerivation(seed);
@@ -129,17 +130,6 @@ public class TorNTorKeyAgreement implements TorKeyAgreement {
 			result &= (b == 0);
 		}
 		return result;
-	}
-	
-	// XXX should be in util class
-	private boolean constantTimeArrayEquals(byte[] a1, byte[] a2) {
-		if(a1.length != a2.length)
-			return false;
-		int result = 0;
-		for(int i = 0; i < a1.length; i++)
-			result += (a1[i] & 0xFF) ^ (a2[i] & 0xFF);
-		return result == 0;
-		
 	}
 
 	byte[] tweak(String suffix, byte[] input) {
