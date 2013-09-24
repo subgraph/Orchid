@@ -1,7 +1,5 @@
 package com.subgraph.orchid.directory;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +11,6 @@ import com.subgraph.orchid.Tor;
 import com.subgraph.orchid.directory.parsing.DocumentParser;
 import com.subgraph.orchid.directory.parsing.DocumentParserFactory;
 import com.subgraph.orchid.directory.parsing.DocumentParsingResult;
-import com.subgraph.orchid.directory.router.MicrodescriptorCacheLocation;
 
 public class MicrodescriptorCacheLoader {
 	private final static Logger logger = Logger.getLogger(MicrodescriptorCacheLoader.class.getName());
@@ -29,53 +26,43 @@ public class MicrodescriptorCacheLoader {
 	}
 
 	public List<RouterMicrodescriptor> reload() {
-		final List<MicrodescriptorCacheLocation> locations = createLocationList();
+		final List<ByteBuffer> buffers = createBufferList();
 		final List<RouterMicrodescriptor> descriptors = new ArrayList<RouterMicrodescriptor>();
 		warningCount = 0;
-		for(MicrodescriptorCacheLocation loc: locations) {
-			RouterMicrodescriptor md = parseDescriptorFromLocation(loc);
+		logger.fine("parsing descriptors from "+ buffers.size() +" buffers");
+		for(ByteBuffer bb: buffers) {
+			RouterMicrodescriptor md = parseDescriptorFromBuffer(bb);
 			if(md != null) {
 				descriptors.add(md);
 			}
 		}
 		return descriptors;
 	}
-	
-	private List<MicrodescriptorCacheLocation> createLocationList() {
-		final List<MicrodescriptorCacheLocation> locations = new ArrayList<MicrodescriptorCacheLocation>();
-		for(MicrodescriptorCacheLocation loc = extractLocation(null); loc != null; loc = extractLocation(loc)) {
-			locations.add(loc);
+
+	private List<ByteBuffer> createBufferList() {
+		final List<ByteBuffer> buffers = new ArrayList<ByteBuffer>();
+		for(ByteBuffer bb = extractBuffer(); bb != null; bb = extractBuffer()) {
+			buffers.add(bb);
 		}
-		return locations;
+		return buffers;
 	}
 
-	private MicrodescriptorCacheLocation extractLocation(MicrodescriptorCacheLocation lastLocation) {
-		if(lastLocation == null) {
-			return extractFirstLocation();
-		}
-		final int next = findOffsetOfNextDescriptor();
-		final int offset = lastLocation.getOffset() + lastLocation.getLength();
-		if(offset == buffer.limit() || next == -1) {
+	private ByteBuffer extractBuffer() {
+		if(buffer.position() == 0 && seekToFirstDescriptor() == buffer.limit()) {
 			return null;
-		} else {
-			return new MicrodescriptorCacheLocation(offset, next - offset);
 		}
+		
+		final int start = buffer.position();
+		if(start == buffer.limit()) {
+			return null;
+		}
+		final int length = seekToNextDescriptor() - start;
+		return extractSlice(start, length);
 	}
 	
-	private MicrodescriptorCacheLocation extractFirstLocation() {
-		final int start = findOffsetOfNextDescriptor();
-		final int next = findOffsetOfNextDescriptor();
-		if(start == -1) {
-			return null;
-		} else if(next == -1) {
-			return new MicrodescriptorCacheLocation(start, buffer.limit() - start);
-		} else {
-			return new MicrodescriptorCacheLocation(start, next - start);
-		}
-	}
-
-	private RouterMicrodescriptor parseDescriptorFromLocation(MicrodescriptorCacheLocation location) {
-		final DocumentParsingResult<RouterMicrodescriptor> result = parseFromLocation(location);
+	private RouterMicrodescriptor parseDescriptorFromBuffer(ByteBuffer bb) {
+		final DocumentParser<RouterMicrodescriptor> parser = parserFactory.createRouterMicrodescriptorParser(bb);
+		final DocumentParsingResult<RouterMicrodescriptor> result = parser.parse();
 		if(result.isOkay()) {
 			result.getDocument().setCacheLocation(CacheLocation.CACHED_CACHEFILE);
 			return result.getDocument();
@@ -94,22 +81,39 @@ public class MicrodescriptorCacheLoader {
 		}
 	}
 	
-	private DocumentParsingResult<RouterMicrodescriptor> parseFromLocation(MicrodescriptorCacheLocation location) {
-		final byte[] data = extractBufferBytes(location);
-		final InputStream in = new ByteArrayInputStream(data);
-		final DocumentParser<RouterMicrodescriptor> parser = parserFactory.createRouterMicrodescriptorParser(in);
-		return parser.parse();
-	}
-
-	private byte[] extractBufferBytes(MicrodescriptorCacheLocation location) {
-		final byte[] bs = new byte[location.getLength()];
+	private ByteBuffer extractSlice(int position, int length) {
 		final int savedPosition = buffer.position();
-		buffer.position(location.getOffset());
-		buffer.get(bs);
+		final int savedLimit = buffer.limit();
+		buffer.position(position);
+		buffer.limit(position + length);
+		final ByteBuffer slice = buffer.slice();
+		buffer.limit(savedLimit);
 		buffer.position(savedPosition);
-		return bs;
+		return slice;
+	}
+	
+	private int seekToFirstDescriptor() {
+		buffer.position(0);
+		int off = findOffsetOfNextDescriptor();
+		if(off == -1) {
+			return buffer.limit();
+		} else {
+			buffer.position(off);
+			return off;
+		}
 	}
 
+	private int seekToNextDescriptor() {
+		buffer.position(buffer.position() + FIRST_DESCRIPTOR_KEYWORD.length);
+		int offset = findOffsetOfNextDescriptor();
+		if(offset == -1) {
+			return buffer.limit();
+		} else {
+			buffer.position(offset);
+			return offset;
+		}
+	}
+	
 	private int findOffsetOfNextDescriptor() {
 		while(buffer.hasRemaining()) {
 			int lineStart = buffer.position();

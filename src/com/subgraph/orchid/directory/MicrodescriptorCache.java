@@ -1,7 +1,5 @@
 package com.subgraph.orchid.directory;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,6 +64,7 @@ public class MicrodescriptorCache {
 		for(RouterMicrodescriptor md: mds) {
 			if(data.addDescriptor(md)) {
 				if(md.getCacheLocation() == CacheLocation.NOT_CACHED) {
+					journalLength += md.getBodyLength();
 					journalDescriptors.add(md);
 				}
 			}
@@ -129,23 +128,9 @@ public class MicrodescriptorCache {
 	}
 	
 	private DocumentParsingResult<RouterMicrodescriptor> parseByteBuffer(ByteBuffer buffer) {
-		final byte[] bs = getBufferBytes(buffer);
-		final InputStream in = new ByteArrayInputStream(bs);
-		final DocumentParser<RouterMicrodescriptor> parser = factory.createRouterMicrodescriptorParser(in);
+		final DocumentParser<RouterMicrodescriptor> parser = factory.createRouterMicrodescriptorParser(buffer);
 		return parser.parse();
 	}
-	
-	private byte[] getBufferBytes(ByteBuffer buffer) {
-		if(buffer.hasArray()) {
-			return buffer.array();
-		} else {
-			final byte[] out = new byte[buffer.limit()];
-			buffer.rewind();
-			buffer.get(out);
-			return out;
-		}
-	}
-	
 	
 	private ScheduledFuture<?> startRebuildTask() {
 		return rebuildExecutor.scheduleAtFixedRate(new Runnable() {
