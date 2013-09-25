@@ -10,6 +10,7 @@ import com.subgraph.orchid.RouterDescriptor;
 import com.subgraph.orchid.RouterMicrodescriptor;
 
 public interface DocumentParserFactory {
+	DocumentParser<RouterDescriptor> createRouterDescriptorParser(ByteBuffer buffer, boolean verifySignatures);
 	DocumentParser<RouterDescriptor> createRouterDescriptorParser(InputStream input, boolean verifySignatures);
 	DocumentParser<RouterDescriptor> createRouterDescriptorParser(Reader reader, boolean verifySignature);
 	
@@ -17,9 +18,11 @@ public interface DocumentParserFactory {
 	DocumentParser<RouterMicrodescriptor> createRouterMicrodescriptorParser(InputStream input);
 	DocumentParser<RouterMicrodescriptor> createRouterMicrodescriptorParser(Reader reader);
 
+	DocumentParser<KeyCertificate> createKeyCertificateParser(ByteBuffer buffer);
 	DocumentParser<KeyCertificate> createKeyCertificateParser(InputStream input);
 	DocumentParser<KeyCertificate> createKeyCertificateParser(Reader reader);
 
+	DocumentParser<ConsensusDocument> createConsensusDocumentParser(ByteBuffer buffer);
 	DocumentParser<ConsensusDocument> createConsensusDocumentParser(InputStream input);
 	DocumentParser<ConsensusDocument> createConsensusDocumentParser(Reader reader);
 

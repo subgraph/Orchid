@@ -18,12 +18,20 @@ import com.subgraph.orchid.directory.router.RouterMicrodescriptorParser;
 
 public class DocumentParserFactoryImpl implements DocumentParserFactory {
 	
+	public DocumentParser<KeyCertificate> createKeyCertificateParser(ByteBuffer buffer) {
+		return new KeyCertificateParser(new DocumentFieldParserImpl(buffer));
+	}
+
 	public DocumentParser<KeyCertificate> createKeyCertificateParser(InputStream input) {
 		return new KeyCertificateParser(createDocumentFieldParser(input));
 	}
 
 	public DocumentParser<KeyCertificate> createKeyCertificateParser(Reader reader) {
 		return new KeyCertificateParser(createDocumentFieldParser(reader));
+	}
+
+	public DocumentParser<RouterDescriptor> createRouterDescriptorParser(ByteBuffer buffer, boolean verifySignatures) {
+		return new RouterDescriptorParser(new DocumentFieldParserImpl(buffer), verifySignatures);
 	}
 
 	public DocumentParser<RouterDescriptor> createRouterDescriptorParser(InputStream input, boolean verifySignatures) {
@@ -35,6 +43,7 @@ public class DocumentParserFactoryImpl implements DocumentParserFactory {
 	}
 
 	public DocumentParser<RouterMicrodescriptor> createRouterMicrodescriptorParser(ByteBuffer buffer) {
+		buffer.rewind();
 		DocumentFieldParser dfp = new DocumentFieldParserImpl(buffer);
 		return new RouterMicrodescriptorParser(dfp);
 	}
@@ -45,6 +54,10 @@ public class DocumentParserFactoryImpl implements DocumentParserFactory {
 
 	public DocumentParser<RouterMicrodescriptor> createRouterMicrodescriptorParser(Reader reader) {
 		return new RouterMicrodescriptorParser(createDocumentFieldParser(reader));
+	}
+
+	public DocumentParser<ConsensusDocument> createConsensusDocumentParser(ByteBuffer buffer) {
+		return new ConsensusDocumentParser(new DocumentFieldParserImpl(buffer));
 	}
 
 	public DocumentParser<ConsensusDocument> createConsensusDocumentParser(InputStream input) {
