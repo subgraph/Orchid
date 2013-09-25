@@ -1,10 +1,12 @@
 package com.subgraph.orchid.directory.router;
 
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 import com.subgraph.orchid.RouterDescriptor;
+import com.subgraph.orchid.Tor;
 import com.subgraph.orchid.crypto.TorPublicKey;
 import com.subgraph.orchid.data.BandwidthHistory;
 import com.subgraph.orchid.data.HexDigest;
@@ -264,6 +266,14 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 		return rawDocumentData;
 	}
 	
+	public ByteBuffer getRawDocumentBytes() {
+		if(getRawDocumentData() == null) {
+			return ByteBuffer.allocate(0);
+		} else {
+			return ByteBuffer.wrap(getRawDocumentData().getBytes(Tor.getDefaultCharset()));
+		}
+	}
+
 	public boolean equals(Object o) {
 		if(!(o instanceof RouterDescriptorImpl)) 
 			return false;

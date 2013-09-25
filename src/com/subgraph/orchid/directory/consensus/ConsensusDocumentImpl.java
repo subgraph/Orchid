@@ -1,5 +1,6 @@
 package com.subgraph.orchid.directory.consensus;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,6 +14,7 @@ import com.subgraph.orchid.ConsensusDocument;
 import com.subgraph.orchid.DirectoryServer;
 import com.subgraph.orchid.KeyCertificate;
 import com.subgraph.orchid.RouterStatus;
+import com.subgraph.orchid.Tor;
 import com.subgraph.orchid.VoteAuthorityEntry;
 import com.subgraph.orchid.crypto.TorPublicKey;
 import com.subgraph.orchid.crypto.TorSignature.DigestAlgorithm;
@@ -170,6 +172,14 @@ public class ConsensusDocumentImpl implements ConsensusDocument {
 		return rawDocumentData;
 	}
 	
+	public ByteBuffer getRawDocumentBytes() {
+		if(getRawDocumentData() == null) {
+			return ByteBuffer.allocate(0);
+		} else {
+			return ByteBuffer.wrap(getRawDocumentData().getBytes(Tor.getDefaultCharset()));
+		}
+	}
+
 	public boolean isValidDocument() {
 		return (validAfter != null) && (freshUntil != null) && (validUntil != null) &&
 		(voteDelaySeconds > 0) && (distDelaySeconds > 0) && (signingHash != null) &&

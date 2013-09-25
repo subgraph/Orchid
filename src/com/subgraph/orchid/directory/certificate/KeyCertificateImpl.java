@@ -1,6 +1,9 @@
 package com.subgraph.orchid.directory.certificate;
 
+import java.nio.ByteBuffer;
+
 import com.subgraph.orchid.KeyCertificate;
+import com.subgraph.orchid.Tor;
 import com.subgraph.orchid.crypto.TorPublicKey;
 import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.data.IPv4Address;
@@ -72,6 +75,14 @@ public class KeyCertificateImpl implements KeyCertificate {
 	
 	public String getRawDocumentData() {
 		return rawDocumentData;
+	}
+	
+	public ByteBuffer getRawDocumentBytes() {
+		if(getRawDocumentData() == null) {
+			return ByteBuffer.allocate(0);
+		} else {
+			return ByteBuffer.wrap(getRawDocumentData().getBytes(Tor.getDefaultCharset()));
+		}
 	}
 	
 	public String toString() {
