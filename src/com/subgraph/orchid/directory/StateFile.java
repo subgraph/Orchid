@@ -1,9 +1,6 @@
 package com.subgraph.orchid.directory;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
+import java.nio.ByteBuffer;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -155,26 +152,27 @@ public class StateFile {
 		directoryStore.saveStateFile(this);
 	}
 	
-	void writeFile(Writer writer) throws IOException {
-		synchronized(guardEntries) {
-			for(GuardEntryImpl entry : guardEntries) {
-				writer.write(entry.writeToString());
+	ByteBuffer getFileContents() {
+		final StringBuilder sb = new StringBuilder();
+		synchronized (guardEntries) {
+			for(GuardEntryImpl entry: guardEntries) {
+				sb.append(entry.writeToString());
 			}
 		}
+		return ByteBuffer.wrap(sb.toString().getBytes(Tor.getDefaultCharset()));
 	}
 
-	void parseFile(Reader reader) throws IOException {
-		final BufferedReader br = new BufferedReader(reader);
+	void parseBuffer(ByteBuffer buffer) {
 		synchronized (guardEntries) {
 			guardEntries.clear();
-			loadGuardEntries(br);
+			loadGuardEntries(buffer);
 		}
 	}
 
-	private void loadGuardEntries(BufferedReader reader) throws IOException {
+	private void loadGuardEntries(ByteBuffer buffer) {
 		GuardEntryImpl currentEntry = null;
 		while(true) {
-			Line line = readLine(reader);
+			Line line = readLine(buffer);
 			if(line == null) {
 				addEntryIfValid(currentEntry);
 				return;
@@ -277,11 +275,20 @@ public class StateFile {
 				entry.getCreatedTime() != null;
 	}
 
-	private Line readLine(BufferedReader reader) throws IOException {
-		final String str = reader.readLine();
-		if(str == null) {
+	private Line readLine(ByteBuffer buffer) {
+		if(!buffer.hasRemaining()) {
 			return null;
 		}
-		return new Line(str);
+		
+		final StringBuilder sb = new StringBuilder();
+		while(buffer.hasRemaining()) {
+			char c = (char) (buffer.get() & 0xFF);
+			if(c == '\n') {
+				return new Line(sb.toString());
+			} else if(c != '\r') {
+				sb.append(c);
+			}
+		}
+		return new Line(sb.toString());
 	}
 }

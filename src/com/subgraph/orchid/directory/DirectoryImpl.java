@@ -1,5 +1,6 @@
 package com.subgraph.orchid.directory;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,6 +28,9 @@ import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.crypto.TorRandom;
 import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.data.RandomSet;
+import com.subgraph.orchid.directory.parsing.DocumentParser;
+import com.subgraph.orchid.directory.parsing.DocumentParserFactory;
+import com.subgraph.orchid.directory.parsing.DocumentParsingResult;
 import com.subgraph.orchid.events.Event;
 import com.subgraph.orchid.events.EventHandler;
 import com.subgraph.orchid.events.EventManager;
@@ -49,6 +53,8 @@ public class DirectoryImpl implements Directory {
 	private boolean needRecalculateMinimumRouterInfo;
 	private final EventManager consensusChangedManager;
 	private final TorRandom random;
+	private final DocumentParserFactory parserFactory = new DocumentParserFactoryImpl();
+	
 	private ConsensusDocument currentConsensus;
 	private ConsensusDocument consensusWaitingForCertificates;
 	private boolean descriptorsDirty;
@@ -101,16 +107,16 @@ public class DirectoryImpl implements Directory {
 			boolean useMicrodescriptors = config.getUseMicrodescriptors() != AutoBoolValue.FALSE;
 			last = System.currentTimeMillis();
 			logger.info("Loading certificates");
-			store.loadCertificates(this);
+			loadCertificates(store.loadCertificates());
 			logElapsed();
 			
 			logger.info("Loading consensus");
-			store.loadConsensus(this);
+			loadConsensus(store.loadConsensus());
 			logElapsed();
 			
 			if(!useMicrodescriptors) {
 				logger.info("Loading descriptors");
-				store.loadRouterDescriptors(this);
+				loadRouterDescriptors(store.loadRouterDescriptors());
 				logElapsed();
 			} else {
 				logger.info("Loading microdescriptor cache");
@@ -120,7 +126,7 @@ public class DirectoryImpl implements Directory {
 			}
 
 			logger.info("loading state file");
-			store.loadStateFile(stateFile);
+			stateFile.parseBuffer(store.loadStateFile());
 			logElapsed();
 			
 			isLoaded = true;
@@ -136,6 +142,47 @@ public class DirectoryImpl implements Directory {
 		logger.fine("Loaded in "+ elapsed + " ms.");
 	}
 
+	private void loadCertificates(ByteBuffer buffer) {
+		final DocumentParser<KeyCertificate> parser = parserFactory.createKeyCertificateParser(buffer);
+		final DocumentParsingResult<KeyCertificate> result = parser.parse();
+		if(testResult(result, "certificates")) {
+			for(KeyCertificate cert: result.getParsedDocuments()) {
+				addCertificate(cert);
+			}
+		}
+	}
+	
+	private void loadConsensus(ByteBuffer buffer) {
+		final DocumentParser<ConsensusDocument> parser = parserFactory.createConsensusDocumentParser(buffer);
+		final DocumentParsingResult<ConsensusDocument> result = parser.parse();
+		if(testResult(result, "consensus")) {
+			addConsensusDocument(result.getDocument(), true);
+		}
+	}
+	
+	private void loadRouterDescriptors(ByteBuffer buffer) {
+		final DocumentParser<RouterDescriptor> parser = parserFactory.createRouterDescriptorParser(buffer, false);
+		final DocumentParsingResult<RouterDescriptor> result = parser.parse();
+		if(testResult(result, "router descriptors")) {
+			for(RouterDescriptor descriptor: result.getParsedDocuments()) {
+				addRouterDescriptor(descriptor);
+			}
+		}
+	}
+
+	private boolean testResult(DocumentParsingResult<?> result, String type) {
+		if(result.isOkay()) {
+			return true;
+		} else if(result.isError()) {
+			logger.warning("Parsing error loading "+ type + " : "+ result.getMessage());
+		} else if(result.isInvalid()) {
+			logger.warning("Problem loading "+ type + " : "+ result.getMessage());
+		} else {
+			logger.warning("Unknown problem loading "+ type);
+		}
+		return false;
+	}
+	
 	public void waitUntilLoaded() {
 		synchronized (loadLock) {
 			while(!isLoaded) {

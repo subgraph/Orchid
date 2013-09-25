@@ -4,12 +4,12 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 public interface DirectoryStore {
-	void loadCertificates(Directory directory);
+	ByteBuffer loadCertificates();
 	void saveCertificates(List<KeyCertificate> certificates);
-	void loadConsensus(Directory directory);
+	ByteBuffer loadConsensus();
 	void saveConsensus(ConsensusDocument consensus);
 	void saveRouterDescriptors(List<RouterDescriptor> descriptors);
-	void loadRouterDescriptors(Directory directory);
+	ByteBuffer loadRouterDescriptors();
 
 	void writeMicrodescriptorCache(List<RouterMicrodescriptor> descriptors, boolean removeJournal);
 	void appendMicrodescriptorsToJournal(List<RouterMicrodescriptor> descriptors);

@@ -59,19 +59,25 @@ public class MicrodescriptorCache {
 	}
 
 
-	public void addMicrodescriptors(List<RouterMicrodescriptor> mds) {
+	public synchronized void addMicrodescriptors(List<RouterMicrodescriptor> mds) {
 		final List<RouterMicrodescriptor> journalDescriptors = new ArrayList<RouterMicrodescriptor>();
+		int duplicateCount = 0;
 		for(RouterMicrodescriptor md: mds) {
 			if(data.addDescriptor(md)) {
 				if(md.getCacheLocation() == CacheLocation.NOT_CACHED) {
 					journalLength += md.getBodyLength();
 					journalDescriptors.add(md);
 				}
+			} else {
+				duplicateCount += 1;
 			}
 		}
 
 		if(!journalDescriptors.isEmpty()) {
 			store.appendMicrodescriptorsToJournal(journalDescriptors);
+		}
+		if(duplicateCount > 0) {
+			logger.info("Duplicate descriptors added to journal, count = "+ duplicateCount);
 		}
 	}
 
@@ -97,16 +103,19 @@ public class MicrodescriptorCache {
 		}
 	}
 
-	
 	private void loadCacheFileBuffer(ByteBuffer buffer) {
 		cacheLength = buffer.limit();
 		if(cacheLength == 0) {
 			return;
 		}
-		final MicrodescriptorCacheLoader loader = new MicrodescriptorCacheLoader(buffer);
-		for(RouterMicrodescriptor md: loader.reload()) {
-			data.addDescriptor(md);
+		final DocumentParsingResult<RouterMicrodescriptor> result = parseByteBuffer(buffer);
+		if(result.isOkay()) {
+			for(RouterMicrodescriptor md: result.getParsedDocuments()) {
+				md.setCacheLocation(CacheLocation.CACHED_CACHEFILE);
+				data.addDescriptor(md);
+			}
 		}
+
 	}
 	
 	private void loadJournalFileBuffer(ByteBuffer buffer) {
@@ -116,9 +125,16 @@ public class MicrodescriptorCache {
 		}
 		final DocumentParsingResult<RouterMicrodescriptor> result = parseByteBuffer(buffer);
 		if(result.isOkay()) {
+			int duplicateCount = 0;
+			logger.fine("Loaded "+ result.getParsedDocuments().size() + " microdescriptors from journal");
 			for(RouterMicrodescriptor md: result.getParsedDocuments()) {
 				md.setCacheLocation(CacheLocation.CACHED_JOURNAL);
-				data.addDescriptor(md);
+				if(!data.addDescriptor(md)) {
+					duplicateCount += 1;
+				}
+			} 
+			if(duplicateCount > 0) {
+				logger.info("Found "+ duplicateCount + " duplicate descriptors in journal file");
 			}
 		} else if(result.isInvalid()) {
 			logger.warning("Invalid microdescriptor data parsing from journal file : "+ result.getMessage());
