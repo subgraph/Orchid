@@ -133,7 +133,7 @@ public class CircuitExtender {
 
 	public CircuitNode createNewNode(Router r, byte[] keyMaterial, byte[] verifyDigest) {
 		final CircuitNode node = CircuitNodeImpl.createNode(r, circuit.getFinalCircuitNode(), keyMaterial, verifyDigest);
-		logger.fine("Adding new circuit nodd for "+ r.getNickname());
+		logger.fine("Adding new circuit node for "+ r.getNickname());
 		circuit.appendNode(node);
 		return node;
 
