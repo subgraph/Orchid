@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 import com.subgraph.orchid.ConsensusDocument;
 import com.subgraph.orchid.ConsensusDocument.ConsensusFlavor;
 import com.subgraph.orchid.ConsensusDocument.RequiredCertificate;
+import com.subgraph.orchid.DirectoryStore;
 import com.subgraph.orchid.DirectoryStore.CacheFile;
 import com.subgraph.orchid.Directory;
 import com.subgraph.orchid.DirectoryServer;
@@ -42,7 +43,7 @@ public class DirectoryImpl implements Directory {
 	private final Object loadLock = new Object();
 	private boolean isLoaded = false;
 	
-	private final DirectoryStoreImpl store;
+	private DirectoryStore store;
 	private final TorConfig config;
 	private final StateFile stateFile;
 	private final MicrodescriptorCache microdescriptorCache;
@@ -73,6 +74,7 @@ public class DirectoryImpl implements Directory {
 		random = new TorRandom();
 	}
 
+	
 	public synchronized boolean haveMinimumRouterInfo() {
 		if(needRecalculateMinimumRouterInfo) {
 			checkMinimumRouterInfo();
@@ -535,5 +537,16 @@ public class DirectoryImpl implements Directory {
 
 	public RouterMicrodescriptor getMicrodescriptorFromCache(HexDigest descriptorDigest) {
 		return microdescriptorCache.getDescriptor(descriptorDigest);
+	}
+
+
+	public void setDirectoryStore(DirectoryStore store) {
+		synchronized (loadLock) {
+			if(isLoaded) {
+				throw new IllegalStateException("Directory store implementation cannot be changed after loading directory cache");
+			}
+			this.store = store;
+			
+		}
 	}
 }

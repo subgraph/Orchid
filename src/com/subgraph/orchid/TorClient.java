@@ -51,6 +51,10 @@ public class TorClient {
 		return config;
 	}
 
+	public void setDirectoryStore(DirectoryStore store) {
+		directory.setDirectoryStore(store);
+	}
+
 	/**
 	 * Start running the Tor client service.
 	 */

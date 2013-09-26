@@ -46,4 +46,6 @@ public interface Directory {
 	List<GuardEntry> getGuardEntries();
 	void removeGuardEntry(GuardEntry entry);
 	void addGuardEntry(GuardEntry entry);
+	
+	void setDirectoryStore(DirectoryStore store);
 }

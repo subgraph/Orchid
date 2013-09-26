@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import com.subgraph.orchid.Directory;
+import com.subgraph.orchid.DirectoryStore;
 import com.subgraph.orchid.GuardEntry;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.Tor;
@@ -93,10 +94,10 @@ public class StateFile {
 		return dateFormat.format(date);
 	}
 
-	private final DirectoryStoreImpl directoryStore;
+	private final DirectoryStore directoryStore;
 	private final Directory directory;
 	
-	StateFile(DirectoryStoreImpl store, Directory directory) {
+	StateFile(DirectoryStore store, Directory directory) {
 		this.directoryStore = store;
 		this.directory = directory;
 	}
