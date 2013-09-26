@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 import com.subgraph.orchid.ConsensusDocument;
 import com.subgraph.orchid.ConsensusDocument.ConsensusFlavor;
 import com.subgraph.orchid.ConsensusDocument.RequiredCertificate;
+import com.subgraph.orchid.DirectoryStore.CacheFile;
 import com.subgraph.orchid.Directory;
 import com.subgraph.orchid.DirectoryServer;
 import com.subgraph.orchid.GuardEntry;
@@ -107,16 +108,16 @@ public class DirectoryImpl implements Directory {
 			boolean useMicrodescriptors = config.getUseMicrodescriptors() != AutoBoolValue.FALSE;
 			last = System.currentTimeMillis();
 			logger.info("Loading certificates");
-			loadCertificates(store.loadCertificates());
+			loadCertificates(store.loadCacheFile(CacheFile.CERTIFICATES));
 			logElapsed();
 			
 			logger.info("Loading consensus");
-			loadConsensus(store.loadConsensus());
+			loadConsensus(store.loadCacheFile(useMicrodescriptors ? CacheFile.CONSENSUS_MICRODESC : CacheFile.CONSENSUS));
 			logElapsed();
 			
 			if(!useMicrodescriptors) {
 				logger.info("Loading descriptors");
-				loadRouterDescriptors(store.loadRouterDescriptors());
+				loadRouterDescriptors(store.loadCacheFile(CacheFile.DESCRIPTORS));
 				logElapsed();
 			} else {
 				logger.info("Loading microdescriptor cache");
@@ -126,7 +127,7 @@ public class DirectoryImpl implements Directory {
 			}
 
 			logger.info("loading state file");
-			stateFile.parseBuffer(store.loadStateFile());
+			stateFile.parseBuffer(store.loadCacheFile(CacheFile.STATE));
 			logElapsed();
 			
 			isLoaded = true;
@@ -258,7 +259,7 @@ public class DirectoryImpl implements Directory {
 			for(DirectoryServer ds: TrustedAuthorities.getInstance().getAuthorityServers()) {
 				certs.addAll(ds.getCertificates());
 			}
-			store.saveCertificates(certs);
+			store.writeDocumentList(CacheFile.CERTIFICATES, certs);
 		}
 	}
 
@@ -267,8 +268,13 @@ public class DirectoryImpl implements Directory {
 	}
 
 	public void storeConsensus() {
-		if(currentConsensus != null)
-			store.saveConsensus(currentConsensus);
+		if(currentConsensus != null) {
+			if(currentConsensus.getFlavor() == ConsensusFlavor.MICRODESC) {
+				store.writeDocument(CacheFile.CONSENSUS_MICRODESC, currentConsensus);
+			} else {
+				store.writeDocument(CacheFile.CONSENSUS, currentConsensus);
+			}
+		}
 	}
 
 	public synchronized void storeDescriptors() {
@@ -281,7 +287,7 @@ public class DirectoryImpl implements Directory {
 				descriptors.add(descriptor);
 			}
 		}
-		store.saveRouterDescriptors(descriptors);
+		store.writeDocumentList(CacheFile.DESCRIPTORS, descriptors);
 		descriptorsDirty = false;
 	}
 	
@@ -326,7 +332,11 @@ public class DirectoryImpl implements Directory {
 		currentConsensus = consensus;
 		
 		if(!fromCache) {
-			store.saveConsensus(consensus);
+			if(consensus.getFlavor() == ConsensusFlavor.MICRODESC) {
+				store.writeDocument(CacheFile.CONSENSUS_MICRODESC, consensus);
+			} else {
+				store.writeDocument(CacheFile.CONSENSUS, consensus);
+			}
 		}
 		if(currentConsensus.getFlavor() != ConsensusFlavor.MICRODESC) {
 			storeDescriptors();

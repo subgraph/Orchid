@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 
 import com.subgraph.orchid.DirectoryStore;
 import com.subgraph.orchid.RouterMicrodescriptor;
+import com.subgraph.orchid.DirectoryStore.CacheFile;
 import com.subgraph.orchid.RouterMicrodescriptor.CacheLocation;
 import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.directory.parsing.DocumentParser;
@@ -46,7 +47,6 @@ public class MicrodescriptorCache {
 		startRebuildTask();
 	}
 
-	
 	public synchronized void initialLoad() {
 		if(initiallyLoaded) {
 			return;
@@ -57,7 +57,6 @@ public class MicrodescriptorCache {
 	public RouterMicrodescriptor getDescriptor(HexDigest digest) {
 		return data.findByDigest(digest);
 	}
-
 
 	public synchronized void addMicrodescriptors(List<RouterMicrodescriptor> mds) {
 		final List<RouterMicrodescriptor> journalDescriptors = new ArrayList<RouterMicrodescriptor>();
@@ -74,7 +73,7 @@ public class MicrodescriptorCache {
 		}
 
 		if(!journalDescriptors.isEmpty()) {
-			store.appendMicrodescriptorsToJournal(journalDescriptors);
+			store.appendDocumentList(CacheFile.MICRODESCRIPTOR_JOURNAL, journalDescriptors);
 		}
 		if(duplicateCount > 0) {
 			logger.info("Duplicate descriptors added to journal, count = "+ duplicateCount);
@@ -95,11 +94,20 @@ public class MicrodescriptorCache {
 
 	private synchronized void reloadCache() {
 		clearMemoryCache();
-		final ByteBuffer[] buffers = store.loadMicrodescriptorCache();
+		final ByteBuffer[] buffers = loadCacheBuffers();
 		loadCacheFileBuffer(buffers[0]);
 		loadJournalFileBuffer(buffers[1]);
 		if(!initiallyLoaded) {
 			initiallyLoaded = true;
+		}
+	}
+
+	private ByteBuffer[] loadCacheBuffers() {
+		synchronized (store) {
+			final ByteBuffer[] buffers = new ByteBuffer[2];
+			buffers[0] = store.loadCacheFile(CacheFile.MICRODESCRIPTOR_CACHE);
+			buffers[1] = store.loadCacheFile(CacheFile.MICRODESCRIPTOR_JOURNAL);
+			return buffers;
 		}
 	}
 
@@ -183,7 +191,10 @@ public class MicrodescriptorCache {
 	}
 	
 	private void rebuildCache() {
-		store.writeMicrodescriptorCache(data.getAllDescriptors(), true);
+		synchronized(store) {
+			store.writeDocumentList(CacheFile.MICRODESCRIPTOR_CACHE, data.getAllDescriptors());
+			store.removeCacheFile(CacheFile.MICRODESCRIPTOR_JOURNAL);
+		}
 		reloadCache();
 	}
 }

@@ -13,6 +13,7 @@ import com.subgraph.orchid.Directory;
 import com.subgraph.orchid.GuardEntry;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.Tor;
+import com.subgraph.orchid.DirectoryStore.CacheFile;
 import com.subgraph.orchid.crypto.TorRandom;
 
 public class StateFile {
@@ -149,7 +150,7 @@ public class StateFile {
 	}
 
 	void writeFile() {
-		directoryStore.saveStateFile(this);
+		directoryStore.writeData(CacheFile.STATE, getFileContents());
 	}
 	
 	ByteBuffer getFileContents() {
