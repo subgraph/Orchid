@@ -1,7 +1,6 @@
 package com.subgraph.orchid.circuits.hs;
 
-import java.io.Reader;
-import java.io.StringReader;
+import java.nio.ByteBuffer;
 import java.util.logging.Logger;
 
 import com.subgraph.orchid.TorParsingException;
@@ -115,8 +114,8 @@ public class HSDescriptorParser implements DocumentParser<HSDescriptor>{
 	
 	private void processIntroductionPoints() {
 		final DocumentObject ob = fieldParser.parseObject();
-		final Reader reader = createIntroductionPointReader(ob);
-		final IntroductionPointParser parser = new IntroductionPointParser(new DocumentFieldParserImpl(reader));
+		final ByteBuffer buffer = createIntroductionPointBuffer(ob);
+		final IntroductionPointParser parser = new IntroductionPointParser(new DocumentFieldParserImpl(buffer));
 		parser.parse(new DocumentParsingResultHandler<IntroductionPoint>() {
 
 			public void documentParsed(IntroductionPoint document) {
@@ -134,19 +133,18 @@ public class HSDescriptorParser implements DocumentParser<HSDescriptor>{
 		});
 	}
 
-	private Reader createIntroductionPointReader(DocumentObject ob) {
+	private ByteBuffer createIntroductionPointBuffer(DocumentObject ob) {
 		final byte[] content = Base64.decode(ob.getContent(false));
-		final String decoded;
 		if(content[0] == 'i') {
-			decoded = new String(content);
+			return ByteBuffer.wrap(content);
 		} else {
 			try {
-				decoded = authentication.decryptIntroductionPoints(content);
+				byte[] decrypted = authentication.decryptIntroductionPoints(content);
+				return ByteBuffer.wrap(decrypted);
 			} catch (HSAuthenticationException e) {
 				throw new TorParsingException("Failed to decrypt introduction points: "+ e.getMessage());
 			}
 		}
-		return new StringReader(decoded);
 	}
 
 	private void processSignature() {

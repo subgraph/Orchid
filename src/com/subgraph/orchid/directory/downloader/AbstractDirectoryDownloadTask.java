@@ -1,10 +1,9 @@
 package com.subgraph.orchid.directory.downloader;
 
 import java.io.IOException;
-import java.io.Reader;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.subgraph.orchid.Directory;
@@ -59,7 +58,7 @@ public abstract class AbstractDirectoryDownloadTask implements Runnable {
 	private void makeRequest() throws InterruptedException, TimeoutException, OpenFailedException {
 		final HttpConnection http = openDirectoryConnection();
 		final String request = getRequestPath();
-		Reader response = null;
+		ByteBuffer response = null;
 		try {
 			logger.fine("request to "+ http.getHost() + " : "+ request);
 			response = requestDocument(http, request);
@@ -67,33 +66,22 @@ public abstract class AbstractDirectoryDownloadTask implements Runnable {
 		} catch(IOException e) {
 			logger.warning("IO error making request "+ request +" to host ["+ http.getHost() + "]: "+ e);
 		} finally {
-			closeReader(response);
 			http.close();
 		}
 	}
 	
-	private void closeReader(Reader r) {
-		try {
-			if(r != null) {
-				r.close();
-			}
-		} catch (IOException e) {
-			logger.log(Level.WARNING, "Error closing directory reader "+ e.getMessage(), e);
-		}
-	}
-	
 	abstract protected String getRequestPath();
-	abstract protected void processResponse(Reader response, HttpConnection http);
+	abstract protected void processResponse(ByteBuffer response, HttpConnection http);
 	abstract protected void finishRequest(DirectoryDownloader downloader);
 	
-	protected Reader requestDocument(HttpConnection connection, String request) throws IOException {
+	protected ByteBuffer requestDocument(HttpConnection connection, String request) throws IOException {
 		if(USE_COMPRESSION) {
 			request += ".z";
 		}
 		connection.sendGetRequest(request);
 		connection.readResponse();
 		if(connection.getStatusCode() == 200) {
-			return connection.getBodyReader();
+			return connection.getMessageBody();
 		}
 		throw new TorException("Request "+ request +" to directory "+ 
 				connection.getHost() +" returned error code: "+ 

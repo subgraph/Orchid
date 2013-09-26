@@ -1,7 +1,7 @@
 package com.subgraph.orchid.circuits.hs;
 
 import java.io.IOException;
-import java.io.Reader;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
@@ -54,7 +54,7 @@ public class HSDescriptorDownloader {
 			http.sendGetRequest("/tor/rendezvous2/"+ dd.getDescriptorId().toBase32());
 			http.readResponse();
 			if(http.getStatusCode() == 200) {
-				return readDocument(dd, http.getBodyReader());
+				return readDocument(dd, http.getMessageBody());
 			} else {
 				logger.fine("HS descriptor download for "+ hiddenService.getOnionAddressForLogging() + " failed with status "+ http.getStatusCode());
 			}
@@ -98,8 +98,8 @@ public class HSDescriptorDownloader {
 		}
 	}
 
-	private HSDescriptor readDocument(HSDescriptorDirectory dd, Reader reader) {
-		DocumentFieldParserImpl fieldParser = new DocumentFieldParserImpl(reader);
+	private HSDescriptor readDocument(HSDescriptorDirectory dd, ByteBuffer body) {
+		DocumentFieldParserImpl fieldParser = new DocumentFieldParserImpl(body);
 		HSDescriptorParser parser = new HSDescriptorParser(hiddenService, fieldParser, hiddenService.getAuthenticationCookie());
 		DescriptorParseResult result = new DescriptorParseResult(dd);
 		parser.parse(result);

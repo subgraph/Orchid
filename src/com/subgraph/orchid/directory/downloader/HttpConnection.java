@@ -1,12 +1,10 @@
 package com.subgraph.orchid.directory.downloader;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.Reader;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,9 +31,8 @@ public class HttpConnection {
 	private int responseCode;
 	private boolean bodyCompressed;
 	private String responseMessage;
-	private Reader bodyReader;
+	private ByteBuffer messageBody;
 	
-
 	public HttpConnection(Stream stream) {
 		this.hostname = getHostnameFromStream(stream);
 		this.stream = stream;
@@ -95,8 +92,8 @@ public class HttpConnection {
 		return responseMessage;
 	}
 
-	public Reader getBodyReader() {
-		return bodyReader;
+	public ByteBuffer getMessageBody() {
+		return messageBody;
 	}
 	
 	public void close() {
@@ -172,20 +169,20 @@ public class HttpConnection {
 		int bodyLength = Integer.parseInt(headers.get(CONTENT_LENGTH_HEADER));
 		byte[] bodyBuffer = new byte[bodyLength];
 		readAll(bodyBuffer);
-		bodyReader = byteBufferToReader(bodyBuffer);
+		messageBody = bytesToBody(bodyBuffer);
 	}
 	
 	private void readBodyUntilEOF() throws IOException {
 		final byte[] bodyBuffer = readToEOF();
-		bodyReader = byteBufferToReader(bodyBuffer);
+		messageBody = bytesToBody(bodyBuffer);
 	}
 	
-	private Reader byteBufferToReader(byte[] buffer) throws IOException {
+	private ByteBuffer bytesToBody(byte[] bs) throws IOException {
 		if(bodyCompressed) {
-			buffer = decompressBuffer(buffer);
+			return ByteBuffer.wrap(decompressBuffer(bs));
+		} else {
+			return ByteBuffer.wrap(bs);
 		}
-		final ByteArrayInputStream byteStream = new ByteArrayInputStream(buffer);
-		return new InputStreamReader(byteStream, CHARSET);
 	}
 	
 	private byte[] decompressBuffer(byte[] buffer) throws IOException {

@@ -1,6 +1,6 @@
 package com.subgraph.orchid.directory.downloader;
 
-import java.io.Reader;
+import java.nio.ByteBuffer;
 
 import com.subgraph.orchid.CircuitManager;
 import com.subgraph.orchid.ConsensusDocument;
@@ -28,7 +28,7 @@ public class ConsensusDownloadTask extends AbstractDirectoryDownloadTask {
 	}
 	
 	@Override
-	protected void processResponse(Reader response, final HttpConnection http) {
+	protected void processResponse(ByteBuffer response, final HttpConnection http) {
 		final DocumentParser<ConsensusDocument> parser = getParserFactory().createConsensusDocumentParser(response);
 		final boolean success = parser.parse(new DocumentParsingResultHandler<ConsensusDocument>() {
 			

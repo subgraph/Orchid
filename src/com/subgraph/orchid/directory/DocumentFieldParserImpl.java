@@ -1,10 +1,5 @@
 package com.subgraph.orchid.directory;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.text.ParseException;
@@ -36,7 +31,6 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 	private final static String TAG_DELIMITER = "-----";
 	private final static String DEFAULT_DELIMITER = " ";
 	private final ByteBuffer inputBuffer;
-	private final BufferedReader reader;
 	private final SimpleDateFormat dateFormat;
 	private String delimiter = DEFAULT_DELIMITER;
 	private String currentKeyword;
@@ -53,32 +47,10 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 	private DocumentParsingHandler callbackHandler;
 
 	public DocumentFieldParserImpl(ByteBuffer buffer) {
+		buffer.rewind();
 		this.inputBuffer = buffer;
-		this.reader = null;
 		rawDocumentBuffer = new StringBuilder();
 		dateFormat = createDateFormat();
-	}
-	
-	public DocumentFieldParserImpl(InputStream input) {
-		try {
-			reader = new BufferedReader(new InputStreamReader(input, "ISO-8859-1"));
-		} catch (UnsupportedEncodingException e) {
-			throw new TorException(e);
-		}
-		rawDocumentBuffer = new StringBuilder();
-		dateFormat = createDateFormat();
-		inputBuffer = null;
-	}
-
-	public DocumentFieldParserImpl(Reader reader) {
-		if(reader instanceof BufferedReader) {
-			this.reader = (BufferedReader) reader;
-		} else {
-			this.reader = new BufferedReader(reader);
-		}
-		rawDocumentBuffer = new StringBuilder();
-		dateFormat = createDateFormat();
-		inputBuffer = null;
 	}
 
 	private static SimpleDateFormat createDateFormat() {
@@ -383,24 +355,12 @@ public class DocumentFieldParserImpl implements DocumentFieldParser {
 	}
 
 	private String readLine() {
-		try {
-			final String line = nextLine();
-			if(line != null) {
-				updateCurrentSignature(line);
-				updateRawDocument(line);
-			}
-			return line;
-		} catch (IOException e) {
-			throw new TorParsingException("I/O error parsing document: " + e.getMessage(), e);
+		final String line = nextLineFromInputBuffer();
+		if(line != null) {
+			updateCurrentSignature(line);
+			updateRawDocument(line);
 		}
-	}
-
-	private String nextLine() throws IOException {
-		if(inputBuffer != null) {
-			return nextLineFromInputBuffer();
-		} else {
-			return reader.readLine();
-		}
+		return line;
 	}
 	
 	private String nextLineFromInputBuffer() {

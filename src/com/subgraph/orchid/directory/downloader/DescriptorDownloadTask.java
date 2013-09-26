@@ -1,6 +1,6 @@
 package com.subgraph.orchid.directory.downloader;
 
-import java.io.Reader;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +35,7 @@ public class DescriptorDownloadTask extends AbstractDirectoryDownloadTask{
 	}
 	
 	@Override
-	protected void processResponse(Reader response, final HttpConnection http) {
+	protected void processResponse(ByteBuffer response, final HttpConnection http) {
 		if(useMicrodescriptors) {
 			processMicrodescriptorResponse(response, http);
 		} else {
@@ -43,7 +43,7 @@ public class DescriptorDownloadTask extends AbstractDirectoryDownloadTask{
 		}
 	}
 	
-	private void processDescriptorResponse(Reader response, final HttpConnection http) {
+	private void processDescriptorResponse(ByteBuffer response, final HttpConnection http) {
 		final Set<HexDigest> requested = new HashSet<HexDigest>();
 		requested.addAll(fingerprints);
 		
@@ -73,7 +73,7 @@ public class DescriptorDownloadTask extends AbstractDirectoryDownloadTask{
 		}	
 	}
 	
-	private void processMicrodescriptorResponse(Reader response, final HttpConnection http) {
+	private void processMicrodescriptorResponse(ByteBuffer response, final HttpConnection http) {
 		final Set<HexDigest> requested = new HashSet<HexDigest>();
 		requested.addAll(fingerprints);
 		final DocumentParser<RouterMicrodescriptor> parser = getParserFactory().createRouterMicrodescriptorParser(response);

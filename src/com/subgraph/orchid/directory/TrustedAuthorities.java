@@ -1,10 +1,11 @@
 package com.subgraph.orchid.directory;
 
-import java.io.StringReader;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.subgraph.orchid.DirectoryServer;
+import com.subgraph.orchid.Tor;
 import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.data.IPv4Address;
 import com.subgraph.orchid.directory.parsing.DocumentFieldParser;
@@ -59,8 +60,8 @@ public class TrustedAuthorities {
 			builder.append(entry);
 			builder.append('\n');
 		}
-		final StringReader reader = new StringReader(builder.toString());
-		final DocumentFieldParser parser = new DocumentFieldParserImpl(reader);
+		final ByteBuffer buffer = ByteBuffer.wrap(builder.toString().getBytes(Tor.getDefaultCharset()));
+		final DocumentFieldParser parser = new DocumentFieldParserImpl(buffer);
 		
 		parser.setHandler(new DocumentParsingHandler() {
 			public void endOfDocument() {}

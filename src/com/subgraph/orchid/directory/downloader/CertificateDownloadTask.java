@@ -1,6 +1,6 @@
 package com.subgraph.orchid.directory.downloader;
 
-import java.io.Reader;
+import java.nio.ByteBuffer;
 import java.util.Set;
 
 import com.subgraph.orchid.CircuitManager;
@@ -37,7 +37,7 @@ public class CertificateDownloadTask extends AbstractDirectoryDownloadTask{
 	}
 
 	@Override
-	protected void processResponse(Reader response, final HttpConnection http) {
+	protected void processResponse(ByteBuffer response, final HttpConnection http) {
 		final DocumentParser<KeyCertificate> parser = getParserFactory().createKeyCertificateParser(response);
 		final boolean success = parser.parse(new DocumentParsingResultHandler<KeyCertificate>() {
 			

@@ -3,11 +3,12 @@ package com.subgraph.orchid.circuits.hs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.StringReader;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.junit.Test;
 
+import com.subgraph.orchid.Tor;
 import com.subgraph.orchid.directory.DocumentFieldParserImpl;
 import com.subgraph.orchid.directory.parsing.DocumentFieldParser;
 import com.subgraph.orchid.directory.parsing.DocumentParsingResult;
@@ -159,6 +160,7 @@ public class HSDescriptorParserTest {
 	}
 	
 	private DocumentFieldParser createFieldParser(String s) {
-		return new DocumentFieldParserImpl(new StringReader(s));
+		ByteBuffer buffer = ByteBuffer.wrap(s.getBytes(Tor.getDefaultCharset()));
+		return new DocumentFieldParserImpl(buffer);
 	}
 }

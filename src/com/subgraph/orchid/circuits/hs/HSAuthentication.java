@@ -18,7 +18,7 @@ public class HSAuthentication {
 		this.cookie = cookie;
 	}
 	
-	public String decryptIntroductionPoints(byte[] content) throws HSAuthenticationException {
+	public byte[] decryptIntroductionPoints(byte[] content) throws HSAuthenticationException {
 		final ByteBuffer buffer = ByteBuffer.wrap(content);
 		final int firstByte = buffer.get() & 0xFF;
 		if(firstByte == 1) {
@@ -47,7 +47,7 @@ public class HSAuthentication {
 		return new BasicAuthEntry(id, skey);
 	}
 	
-	private String decryptIntroductionPointsWithBasicAuth(ByteBuffer buffer) throws HSAuthenticationException {
+	private byte[] decryptIntroductionPointsWithBasicAuth(ByteBuffer buffer) throws HSAuthenticationException {
 		if(cookie == null || cookie.getType() != CookieType.COOKIE_BASIC) {
 			throw new TorParsingException("Introduction points encrypted with 'basic' authentication and no cookie available to decrypt");
 		}
@@ -102,15 +102,15 @@ public class HSAuthentication {
 		return entry.skey;
 	}
 	
-	private String decryptRemaining(ByteBuffer buffer, byte[] key, byte[] iv) {
+	private byte[] decryptRemaining(ByteBuffer buffer, byte[] key, byte[] iv) {
 		TorStreamCipher streamCipher = TorStreamCipher.createFromKeyBytesWithIV(key, iv);
 		final byte[] remaining = new byte[buffer.remaining()];
 		buffer.get(remaining);
 		streamCipher.encrypt(remaining);
-		return new String(remaining);
+		return remaining;
 	}
 	
-	private String decryptIntroductionPointsWithStealthAuth(ByteBuffer buffer) {
+	private byte[] decryptIntroductionPointsWithStealthAuth(ByteBuffer buffer) {
 		if(cookie == null || cookie.getType() != CookieType.COOKIE_STEALTH) {
 			throw new TorParsingException("Introduction points encrypted with 'stealth' authentication and no cookie available to descrypt");
 		}
