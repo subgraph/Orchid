@@ -74,6 +74,7 @@ public class DirectoryStoreFile {
 	
 	private FileOutputStream openFileOutputStream(File file) {
 		try {
+			createDirectoryIfMissing();
 			return new FileOutputStream(file);
 		} catch (FileNotFoundException e) {
 			logger.warning("Failed to open file "+ file + " : "+ e);
