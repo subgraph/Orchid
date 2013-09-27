@@ -2,7 +2,6 @@ package com.subgraph.orchid.directory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -10,24 +9,23 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import com.subgraph.orchid.Descriptor;
 import com.subgraph.orchid.DirectoryStore;
-import com.subgraph.orchid.RouterMicrodescriptor;
 import com.subgraph.orchid.DirectoryStore.CacheFile;
-import com.subgraph.orchid.RouterMicrodescriptor.CacheLocation;
 import com.subgraph.orchid.data.HexDigest;
 import com.subgraph.orchid.directory.parsing.DocumentParser;
-import com.subgraph.orchid.directory.parsing.DocumentParserFactory;
 import com.subgraph.orchid.directory.parsing.DocumentParsingResult;
 import com.subgraph.orchid.misc.GuardedBy;
 
-public class MicrodescriptorCache {
-	private final static Logger logger = Logger.getLogger(MicrodescriptorCache.class.getName());
+public abstract class DescriptorCache <T extends Descriptor> {
+	private final static Logger logger = Logger.getLogger(DescriptorCache.class.getName());
 	
-	private final MicrodescriptorCacheData data;
+	private final DescriptorCacheData<T> data;
 
 	private final DirectoryStore store;
-	private final DocumentParserFactory factory = new DocumentParserFactoryImpl();
 	private final ScheduledExecutorService rebuildExecutor = Executors.newScheduledThreadPool(1);
+	private final CacheFile cacheFile;
+	private final CacheFile journalFile;
 	
 	@GuardedBy("this")
 	private int droppedBytes;
@@ -41,9 +39,11 @@ public class MicrodescriptorCache {
 	@GuardedBy("this")
 	private boolean initiallyLoaded;
 
-	MicrodescriptorCache(DirectoryStore store) {
-		this.data = new MicrodescriptorCacheData();
+	DescriptorCache(DirectoryStore store, CacheFile cacheFile, CacheFile journalFile) {
+		this.data = new DescriptorCacheData<T>();
 		this.store = store;
+		this.cacheFile = cacheFile;
+		this.journalFile = journalFile;
 		startRebuildTask();
 	}
 
@@ -54,18 +54,18 @@ public class MicrodescriptorCache {
 		reloadCache();
 	}
 
-	public RouterMicrodescriptor getDescriptor(HexDigest digest) {
+	public T getDescriptor(HexDigest digest) {
 		return data.findByDigest(digest);
 	}
 
-	public synchronized void addMicrodescriptors(List<RouterMicrodescriptor> mds) {
-		final List<RouterMicrodescriptor> journalDescriptors = new ArrayList<RouterMicrodescriptor>();
+	public synchronized void addDescriptors(List<T> descriptors) {
+		final List<T> journalDescriptors = new ArrayList<T>();
 		int duplicateCount = 0;
-		for(RouterMicrodescriptor md: mds) {
-			if(data.addDescriptor(md)) {
-				if(md.getCacheLocation() == CacheLocation.NOT_CACHED) {
-					journalLength += md.getBodyLength();
-					journalDescriptors.add(md);
+		for(T d: descriptors) {
+			if(data.addDescriptor(d)) {
+				if(d.getCacheLocation() == Descriptor.CacheLocation.NOT_CACHED) {
+					journalLength += d.getBodyLength();
+					journalDescriptors.add(d);
 				}
 			} else {
 				duplicateCount += 1;
@@ -73,16 +73,17 @@ public class MicrodescriptorCache {
 		}
 
 		if(!journalDescriptors.isEmpty()) {
-			store.appendDocumentList(CacheFile.MICRODESCRIPTOR_JOURNAL, journalDescriptors);
+			store.appendDocumentList(journalFile, journalDescriptors);
 		}
 		if(duplicateCount > 0) {
 			logger.info("Duplicate descriptors added to journal, count = "+ duplicateCount);
 		}
 	}
 
-	public void addMicrodescriptor(RouterMicrodescriptor md) {
-		final List<RouterMicrodescriptor> mds = Arrays.asList(new RouterMicrodescriptor[] { md });
-		addMicrodescriptors(mds);
+	public void addDescriptor(T d) {
+		final List<T> descriptors = new ArrayList<T>();
+		descriptors.add(d);
+		addDescriptors(descriptors);
 	}
 	
 	private synchronized void clearMemoryCache() {
@@ -105,8 +106,8 @@ public class MicrodescriptorCache {
 	private ByteBuffer[] loadCacheBuffers() {
 		synchronized (store) {
 			final ByteBuffer[] buffers = new ByteBuffer[2];
-			buffers[0] = store.loadCacheFile(CacheFile.MICRODESCRIPTOR_CACHE);
-			buffers[1] = store.loadCacheFile(CacheFile.MICRODESCRIPTOR_JOURNAL);
+			buffers[0] = store.loadCacheFile(cacheFile);
+			buffers[1] = store.loadCacheFile(journalFile);
 			return buffers;
 		}
 	}
@@ -116,11 +117,12 @@ public class MicrodescriptorCache {
 		if(cacheLength == 0) {
 			return;
 		}
-		final DocumentParsingResult<RouterMicrodescriptor> result = parseByteBuffer(buffer);
+		final DocumentParser<T> parser = createDocumentParser(buffer);
+		final DocumentParsingResult<T> result = parser.parse();
 		if(result.isOkay()) {
-			for(RouterMicrodescriptor md: result.getParsedDocuments()) {
-				md.setCacheLocation(CacheLocation.CACHED_CACHEFILE);
-				data.addDescriptor(md);
+			for(T d: result.getParsedDocuments()) {
+				d.setCacheLocation(Descriptor.CacheLocation.CACHED_CACHEFILE);
+				data.addDescriptor(d);
 			}
 		}
 
@@ -131,13 +133,14 @@ public class MicrodescriptorCache {
 		if(journalLength == 0) {
 			return;
 		}
-		final DocumentParsingResult<RouterMicrodescriptor> result = parseByteBuffer(buffer);
+		final DocumentParser<T> parser = createDocumentParser(buffer);
+		final DocumentParsingResult<T> result = parser.parse();
 		if(result.isOkay()) {
 			int duplicateCount = 0;
-			logger.fine("Loaded "+ result.getParsedDocuments().size() + " microdescriptors from journal");
-			for(RouterMicrodescriptor md: result.getParsedDocuments()) {
-				md.setCacheLocation(CacheLocation.CACHED_JOURNAL);
-				if(!data.addDescriptor(md)) {
+			logger.fine("Loaded "+ result.getParsedDocuments().size() + " descriptors from journal");
+			for(T d: result.getParsedDocuments()) {
+				d.setCacheLocation(Descriptor.CacheLocation.CACHED_JOURNAL);
+				if(!data.addDescriptor(d)) {
 					duplicateCount += 1;
 				}
 			} 
@@ -145,16 +148,13 @@ public class MicrodescriptorCache {
 				logger.info("Found "+ duplicateCount + " duplicate descriptors in journal file");
 			}
 		} else if(result.isInvalid()) {
-			logger.warning("Invalid microdescriptor data parsing from journal file : "+ result.getMessage());
+			logger.warning("Invalid descriptor data parsing from journal file : "+ result.getMessage());
 		} else if(result.isError()) {
-			logger.warning("Error parsing microdescriptors from journal file : "+ result.getMessage());			
+			logger.warning("Error parsing descriptors from journal file : "+ result.getMessage());			
 		}
 	}
 	
-	private DocumentParsingResult<RouterMicrodescriptor> parseByteBuffer(ByteBuffer buffer) {
-		final DocumentParser<RouterMicrodescriptor> parser = factory.createRouterMicrodescriptorParser(buffer);
-		return parser.parse();
-	}
+	abstract protected DocumentParser<T> createDocumentParser(ByteBuffer buffer);
 	
 	private ScheduledFuture<?> startRebuildTask() {
 		return rebuildExecutor.scheduleAtFixedRate(new Runnable() {
@@ -192,8 +192,8 @@ public class MicrodescriptorCache {
 	
 	private void rebuildCache() {
 		synchronized(store) {
-			store.writeDocumentList(CacheFile.MICRODESCRIPTOR_CACHE, data.getAllDescriptors());
-			store.removeCacheFile(CacheFile.MICRODESCRIPTOR_JOURNAL);
+			store.writeDocumentList(cacheFile, data.getAllDescriptors());
+			store.removeCacheFile(journalFile);
 		}
 		reloadCache();
 	}

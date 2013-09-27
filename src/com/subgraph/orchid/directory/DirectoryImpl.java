@@ -46,7 +46,8 @@ public class DirectoryImpl implements Directory {
 	private DirectoryStore store;
 	private final TorConfig config;
 	private final StateFile stateFile;
-	private final MicrodescriptorCache microdescriptorCache;
+	private final DescriptorCache<RouterMicrodescriptor> microdescriptorCache;
+
 	private final Map<HexDigest, RouterImpl> routersByIdentity;
 	private final Map<String, RouterImpl> routersByNickname;
 	private final RandomSet<RouterImpl> directoryCaches;
@@ -65,7 +66,15 @@ public class DirectoryImpl implements Directory {
 		store = new DirectoryStoreImpl(config);
 		this.config = config;
 		stateFile = new StateFile(store, this);
-		microdescriptorCache = new MicrodescriptorCache(store);
+		microdescriptorCache = new DescriptorCache<RouterMicrodescriptor>(store, CacheFile.MICRODESCRIPTOR_CACHE, CacheFile.MICRODESCRIPTOR_JOURNAL) {
+			@Override
+			protected DocumentParser<RouterMicrodescriptor> createDocumentParser(
+					ByteBuffer buffer) {
+				return parserFactory.createRouterMicrodescriptorParser(buffer);
+			}
+		};
+			
+		
 		routersByIdentity = new HashMap<HexDigest, RouterImpl>();
 		routersByNickname = new HashMap<String, RouterImpl>();
 		directoryCaches = new RandomSet<RouterImpl>();
@@ -119,7 +128,7 @@ public class DirectoryImpl implements Directory {
 			
 			if(!useMicrodescriptors) {
 				logger.info("Loading descriptors");
-				loadRouterDescriptors(store.loadCacheFile(CacheFile.DESCRIPTORS));
+				loadRouterDescriptors(store.loadCacheFile(CacheFile.DESCRIPTORS_CACHE));
 				logElapsed();
 			} else {
 				logger.info("Loading microdescriptor cache");
@@ -289,7 +298,7 @@ public class DirectoryImpl implements Directory {
 				descriptors.add(descriptor);
 			}
 		}
-		store.writeDocumentList(CacheFile.DESCRIPTORS, descriptors);
+		store.writeDocumentList(CacheFile.DESCRIPTORS_CACHE, descriptors);
 		descriptorsDirty = false;
 	}
 	
@@ -328,6 +337,12 @@ public class DirectoryImpl implements Directory {
 				final RouterImpl router = updateOrCreateRouter(status, oldRouterByIdentity);
 				addRouter(router);
 				classifyRouter(router);
+			}
+			if(consensus.getFlavor() == ConsensusFlavor.MICRODESC && status.getMicrodescriptorDigest() != null) {
+				RouterMicrodescriptor md = microdescriptorCache.getDescriptor(status.getMicrodescriptorDigest());
+				if(md != null) {
+					md.setLastListed(consensus.getValidAfterTime().getTime());
+				}
 			}
 		}
 		logger.fine("Loaded "+ routersByIdentity.size() +" routers from consensus document");
@@ -417,7 +432,7 @@ public class DirectoryImpl implements Directory {
 	}
 
 	public synchronized void addRouterMicrodescriptors(List<RouterMicrodescriptor> microdescriptors) {
-		microdescriptorCache.addMicrodescriptors(microdescriptors);
+		microdescriptorCache.addDescriptors(microdescriptors);
 		needRecalculateMinimumRouterInfo = true;
 	}
 
