@@ -8,11 +8,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.crypto.Cipher;
+import javax.net.SocketFactory;
 
 import com.subgraph.orchid.circuits.TorInitializationTracker;
 import com.subgraph.orchid.crypto.PRNGFixes;
 import com.subgraph.orchid.dashboard.Dashboard;
 import com.subgraph.orchid.directory.downloader.DirectoryDownloader;
+import com.subgraph.orchid.sockets.OrchidSocketFactory;
 
 /**
  * This class is the main entry-point for running a Tor proxy
@@ -57,6 +59,10 @@ public class TorClient {
 
 	public void setDirectoryStore(DirectoryStore store) {
 		directory.setDirectoryStore(store);
+	}
+
+	public SocketFactory getSocketFactory() {
+		return new OrchidSocketFactory(this);
 	}
 
 	/**
