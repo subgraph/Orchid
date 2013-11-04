@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.subgraph.orchid.circuits.hs.HSDescriptorCookie;
+import com.subgraph.orchid.config.TorConfigBridgeLine;
+import com.subgraph.orchid.data.HexDigest;
+import com.subgraph.orchid.data.IPv4Address;
 
 
 public interface TorConfig {
@@ -127,7 +130,16 @@ public interface TorConfig {
 	AutoBoolValue getUseMicrodescriptors();
 	void setUseMicrodescriptors(AutoBoolValue value);
 
-	enum ConfigVarType { INTEGER, STRING, HS_AUTH, BOOLEAN, INTERVAL, PORTLIST, STRINGLIST, PATH, AUTOBOOL };
+	@ConfigVar(type=ConfigVarType.BOOLEAN, defaultValue="false")
+	boolean getUseBridges();
+	void setUseBridges(boolean value);
+	
+	@ConfigVar(type=ConfigVarType.BRIDGE_LINE)
+	List<TorConfigBridgeLine> getBridges();
+	void addBridge(IPv4Address address, int port);
+	void addBridge(IPv4Address address, int port, HexDigest fingerprint);
+	
+	enum ConfigVarType { INTEGER, STRING, HS_AUTH, BOOLEAN, INTERVAL, PORTLIST, STRINGLIST, PATH, AUTOBOOL, BRIDGE_LINE };
 	enum AutoBoolValue { TRUE, FALSE, AUTO }
 	
 	@Retention(RetentionPolicy.RUNTIME)

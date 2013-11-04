@@ -7,12 +7,16 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.subgraph.orchid.circuits.hs.HSDescriptorCookie;
+import com.subgraph.orchid.config.TorConfigBridgeLine;
+import com.subgraph.orchid.data.HexDigest;
+import com.subgraph.orchid.data.IPv4Address;
 import com.subgraph.orchid.encoders.Hex;
 
 public class TorConfigTest {
@@ -88,5 +92,25 @@ public class TorConfigTest {
 		assertEquals(TorConfig.AutoBoolValue.TRUE, config.getUseNTorHandshake());
 		config.setUseNTorHandshake(TorConfig.AutoBoolValue.AUTO);
 		assertEquals(TorConfig.AutoBoolValue.AUTO, config.getUseNTorHandshake());
+	}
+	
+	@Test
+	public void testBridges() {
+		final IPv4Address a1 = IPv4Address.createFromString("1.2.3.4");
+		final IPv4Address a2 = IPv4Address.createFromString("4.4.4.4");
+		final HexDigest fp = HexDigest.createFromString("0EA20CAA3CE696E561BC08B15E00106700E8F682");
+		config.addBridge(a1, 88);
+		config.addBridge(a2, 101, fp);
+		List<TorConfigBridgeLine> bs = config.getBridges();
+		assertEquals(2, bs.size());
+		final TorConfigBridgeLine b1 = bs.get(0);
+		final TorConfigBridgeLine b2 = bs.get(1);
+		
+		assertEquals(a1, b1.getAddress());
+		assertEquals(a2, b2.getAddress());
+		assertEquals(88, b1.getPort());
+		assertEquals(101, b2.getPort());
+		assertNull(b1.getFingerprint());
+		assertSame(b2.getFingerprint(), fp);
 	}
 }
