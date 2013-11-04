@@ -95,8 +95,10 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 		synchronized(circuitMap) {
 			while(circuitMap.containsKey(currentId)) 
 				incrementNextId();
-			circuitMap.put(currentId, circuit);
-			return currentId;
+			final int id = currentId;
+			incrementNextId();
+			circuitMap.put(id, circuit);
+			return id;
 		}
 	}
 
@@ -253,6 +255,7 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 			processRelayCell(cell);
 			return;
 		}
+
 		switch(command) {
 		case Cell.NETINFO:
 		case Cell.VERSIONS:
