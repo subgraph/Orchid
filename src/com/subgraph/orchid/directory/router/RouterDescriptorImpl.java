@@ -57,6 +57,9 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 	private HexDigest descriptorDigest;
 	private String rawDocumentData;
 	
+	private long lastListed;
+	private CacheLocation cacheLocation = CacheLocation.NOT_CACHED;
+	
 	public void setNickname(String nickname) { this.nickname = nickname; }
 	public void setAddress(IPv4Address address) { this.address = address; }
 	public void setRouterPort(int port) { this.routerPort = port; }
@@ -289,7 +292,26 @@ public class RouterDescriptorImpl implements RouterDescriptor {
 			return 0;
 		return descriptorDigest.hashCode();
 	}
+	
 	public ExitPolicy getExitPolicy() {
 		return exitPolicy;
+	}
+
+	public void setLastListed(long timestamp) {
+		this.lastListed = timestamp;
+	}
+
+	public long getLastListed() {
+		return lastListed;
+	}
+	public void setCacheLocation(CacheLocation location) {
+		this.cacheLocation = location;
+	}
+	public CacheLocation getCacheLocation() {
+		return cacheLocation;
+	}
+
+	public int getBodyLength() {
+		return rawDocumentData.length();
 	}
 }

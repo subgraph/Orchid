@@ -14,10 +14,11 @@ import java.util.logging.Logger;
 import com.subgraph.orchid.ConsensusDocument;
 import com.subgraph.orchid.ConsensusDocument.ConsensusFlavor;
 import com.subgraph.orchid.ConsensusDocument.RequiredCertificate;
-import com.subgraph.orchid.DirectoryStore;
-import com.subgraph.orchid.DirectoryStore.CacheFile;
+import com.subgraph.orchid.Descriptor;
 import com.subgraph.orchid.Directory;
 import com.subgraph.orchid.DirectoryServer;
+import com.subgraph.orchid.DirectoryStore;
+import com.subgraph.orchid.DirectoryStore.CacheFile;
 import com.subgraph.orchid.GuardEntry;
 import com.subgraph.orchid.KeyCertificate;
 import com.subgraph.orchid.Router;
@@ -47,7 +48,8 @@ public class DirectoryImpl implements Directory {
 	private final TorConfig config;
 	private final StateFile stateFile;
 	private final DescriptorCache<RouterMicrodescriptor> microdescriptorCache;
-
+	private final DescriptorCache<RouterDescriptor> basicDescriptorCache;
+	
 	private final Map<HexDigest, RouterImpl> routersByIdentity;
 	private final Map<String, RouterImpl> routersByNickname;
 	private final RandomSet<RouterImpl> directoryCaches;
@@ -56,25 +58,17 @@ public class DirectoryImpl implements Directory {
 	private boolean needRecalculateMinimumRouterInfo;
 	private final EventManager consensusChangedManager;
 	private final TorRandom random;
-	private final DocumentParserFactory parserFactory = new DocumentParserFactoryImpl();
+	private final static DocumentParserFactory parserFactory = new DocumentParserFactoryImpl();
 	
 	private ConsensusDocument currentConsensus;
 	private ConsensusDocument consensusWaitingForCertificates;
-	private boolean descriptorsDirty;
 
 	public DirectoryImpl(TorConfig config) {
 		store = new DirectoryStoreImpl(config);
 		this.config = config;
 		stateFile = new StateFile(store, this);
-		microdescriptorCache = new DescriptorCache<RouterMicrodescriptor>(store, CacheFile.MICRODESCRIPTOR_CACHE, CacheFile.MICRODESCRIPTOR_JOURNAL) {
-			@Override
-			protected DocumentParser<RouterMicrodescriptor> createDocumentParser(
-					ByteBuffer buffer) {
-				return parserFactory.createRouterMicrodescriptorParser(buffer);
-			}
-		};
-			
-		
+		microdescriptorCache = createMicrodescriptorCache(store);
+		basicDescriptorCache = createBasicDescriptorCache(store);	
 		routersByIdentity = new HashMap<HexDigest, RouterImpl>();
 		routersByNickname = new HashMap<String, RouterImpl>();
 		directoryCaches = new RandomSet<RouterImpl>();
@@ -83,7 +77,24 @@ public class DirectoryImpl implements Directory {
 		random = new TorRandom();
 	}
 
-	
+	private static DescriptorCache<RouterMicrodescriptor> createMicrodescriptorCache(DirectoryStore store) {
+		return new DescriptorCache<RouterMicrodescriptor>(store, CacheFile.MICRODESCRIPTOR_CACHE, CacheFile.MICRODESCRIPTOR_JOURNAL) {
+			@Override
+			protected DocumentParser<RouterMicrodescriptor> createDocumentParser(ByteBuffer buffer) {
+				return parserFactory.createRouterMicrodescriptorParser(buffer);
+			}
+		};
+	}
+
+	private static DescriptorCache<RouterDescriptor> createBasicDescriptorCache(DirectoryStore store) {
+		return new DescriptorCache<RouterDescriptor>(store, CacheFile.DESCRIPTOR_CACHE, CacheFile.DESCRIPTOR_JOURNAL) {
+			@Override
+			protected DocumentParser<RouterDescriptor> createDocumentParser(ByteBuffer buffer) {
+				return parserFactory.createRouterDescriptorParser(buffer, false);
+			}
+		};
+	}
+
 	public synchronized boolean haveMinimumRouterInfo() {
 		if(needRecalculateMinimumRouterInfo) {
 			checkMinimumRouterInfo();
@@ -128,15 +139,14 @@ public class DirectoryImpl implements Directory {
 			
 			if(!useMicrodescriptors) {
 				logger.info("Loading descriptors");
-				loadRouterDescriptors(store.loadCacheFile(CacheFile.DESCRIPTORS_CACHE));
-				logElapsed();
+				basicDescriptorCache.initialLoad();
 			} else {
 				logger.info("Loading microdescriptor cache");
 				microdescriptorCache.initialLoad();
-				needRecalculateMinimumRouterInfo = true;
-				logElapsed();
 			}
-
+			needRecalculateMinimumRouterInfo = true;
+			logElapsed();
+			
 			logger.info("loading state file");
 			stateFile.parseBuffer(store.loadCacheFile(CacheFile.STATE));
 			logElapsed();
@@ -169,16 +179,6 @@ public class DirectoryImpl implements Directory {
 		final DocumentParsingResult<ConsensusDocument> result = parser.parse();
 		if(testResult(result, "consensus")) {
 			addConsensusDocument(result.getDocument(), true);
-		}
-	}
-	
-	private void loadRouterDescriptors(ByteBuffer buffer) {
-		final DocumentParser<RouterDescriptor> parser = parserFactory.createRouterDescriptorParser(buffer, false);
-		final DocumentParsingResult<RouterDescriptor> result = parser.parse();
-		if(testResult(result, "router descriptors")) {
-			for(RouterDescriptor descriptor: result.getParsedDocuments()) {
-				addRouterDescriptor(descriptor);
-			}
 		}
 	}
 
@@ -218,7 +218,6 @@ public class DirectoryImpl implements Directory {
 	}
 
 	public Set<ConsensusDocument.RequiredCertificate> getRequiredCertificates() {
-		
 		return new HashSet<ConsensusDocument.RequiredCertificate>(requiredCertificates);
 	}
 	
@@ -274,8 +273,9 @@ public class DirectoryImpl implements Directory {
 		}
 	}
 
-	public void addRouterDescriptor(RouterDescriptor router) {
-		addDescriptor(router);
+	public void addRouterDescriptors(List<RouterDescriptor> descriptors) {
+		basicDescriptorCache.addDescriptors(descriptors);
+		needRecalculateMinimumRouterInfo = true;
 	}
 
 	public void storeConsensus() {
@@ -286,20 +286,6 @@ public class DirectoryImpl implements Directory {
 				store.writeDocument(CacheFile.CONSENSUS, currentConsensus);
 			}
 		}
-	}
-
-	public synchronized void storeDescriptors() {
-		if(!descriptorsDirty)
-			return;
-		final List<RouterDescriptor> descriptors = new ArrayList<RouterDescriptor>();
-		for(Router router: routersByIdentity.values()) {
-			final RouterDescriptor descriptor = router.getCurrentDescriptor();
-			if(descriptor != null) {
-				descriptors.add(descriptor);
-			}
-		}
-		store.writeDocumentList(CacheFile.DESCRIPTORS_CACHE, descriptors);
-		descriptorsDirty = false;
 	}
 	
 	public synchronized void addConsensusDocument(ConsensusDocument consensus, boolean fromCache) {
@@ -338,13 +324,12 @@ public class DirectoryImpl implements Directory {
 				addRouter(router);
 				classifyRouter(router);
 			}
-			if(consensus.getFlavor() == ConsensusFlavor.MICRODESC && status.getMicrodescriptorDigest() != null) {
-				RouterMicrodescriptor md = microdescriptorCache.getDescriptor(status.getMicrodescriptorDigest());
-				if(md != null) {
-					md.setLastListed(consensus.getValidAfterTime().getTime());
-				}
+			final Descriptor d = getDescriptorForRouterStatus(status, consensus.getFlavor() == ConsensusFlavor.MICRODESC);
+			if(d != null) {
+				d.setLastListed(consensus.getValidAfterTime().getTime());
 			}
 		}
+		
 		logger.fine("Loaded "+ routersByIdentity.size() +" routers from consensus document");
 		currentConsensus = consensus;
 		
@@ -355,17 +340,22 @@ public class DirectoryImpl implements Directory {
 				store.writeDocument(CacheFile.CONSENSUS, consensus);
 			}
 		}
-		if(currentConsensus.getFlavor() != ConsensusFlavor.MICRODESC) {
-			storeDescriptors();
-		}
+	
 		consensusChangedManager.fireEvent(new Event() {});
 	}
 
+	private Descriptor getDescriptorForRouterStatus(RouterStatus rs, boolean isMicrodescriptor) {
+		if(isMicrodescriptor) {
+			return microdescriptorCache.getDescriptor(rs.getMicrodescriptorDigest());
+		} else {
+			return basicDescriptorCache.getDescriptor(rs.getDescriptorDigest());
+		}
+	}
+	
 	private RouterImpl updateOrCreateRouter(RouterStatus status, Map<HexDigest, RouterImpl> knownRouters) {
 		final RouterImpl router = knownRouters.get(status.getIdentity());
 		if(router == null)
 			return RouterImpl.createFromRouterStatus(this, status);
-		descriptorsDirty = true;
 		router.updateStatus(status);
 		return router;
 	}
@@ -406,29 +396,6 @@ public class DirectoryImpl implements Directory {
 			return;
 		}
 		routersByNickname.put(name, router);
-	}
-
-	synchronized void addDescriptor(RouterDescriptor descriptor) {
-		final HexDigest identity = descriptor.getIdentityKey().getFingerprint();
-		if(!routersByIdentity.containsKey(identity)) {
-			if(currentConsensus != null && currentConsensus.isLive()) {
-				logger.warning("Could not find router for descriptor: "+ descriptor.getIdentityKey().getFingerprint());
-			}
-			return;
-		}
-		final RouterImpl router = routersByIdentity.get(identity);
-		final RouterDescriptor oldDescriptor = router.getCurrentDescriptor();
-		if(descriptor.equals(oldDescriptor))
-			return;
-		
-		if(oldDescriptor != null && oldDescriptor.isNewerThan(descriptor)) {
-			logger.warning("Attempting to add descriptor to router which is older than the descriptor we already have");
-			return;
-		}
-		descriptorsDirty = true;
-		router.updateDescriptor(descriptor);
-		classifyRouter(router);
-		needRecalculateMinimumRouterInfo = true;
 	}
 
 	public synchronized void addRouterMicrodescriptors(List<RouterMicrodescriptor> microdescriptors) {
@@ -552,6 +519,11 @@ public class DirectoryImpl implements Directory {
 
 	public RouterMicrodescriptor getMicrodescriptorFromCache(HexDigest descriptorDigest) {
 		return microdescriptorCache.getDescriptor(descriptorDigest);
+	}
+
+
+	public RouterDescriptor getBasicDescriptorFromCache(HexDigest descriptorDigest) {
+		return basicDescriptorCache.getDescriptor(descriptorDigest);
 	}
 
 

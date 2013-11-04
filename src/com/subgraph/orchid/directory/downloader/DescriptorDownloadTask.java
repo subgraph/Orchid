@@ -18,7 +18,7 @@ public class DescriptorDownloadTask extends AbstractDirectoryDownloadTask{
 	private final List<HexDigest> fingerprints;
 	private final boolean useMicrodescriptors;
 	
-	DescriptorDownloadTask(List<HexDigest> fingerprints, DirectoryDownloader downloader, boolean useMicrodescriptors) {
+	DescriptorDownloadTask(List<HexDigest> fingerprints, DirectoryDownloadTask downloader, boolean useMicrodescriptors) {
 		super(downloader, CircuitManager.DIRECTORY_PURPOSE_DESCRIPTORS);
 		this.fingerprints = fingerprints;
 		this.useMicrodescriptors = useMicrodescriptors;
@@ -48,6 +48,7 @@ public class DescriptorDownloadTask extends AbstractDirectoryDownloadTask{
 		requested.addAll(fingerprints);
 		
 		final DocumentParser<RouterDescriptor> parser = getParserFactory().createRouterDescriptorParser(response, true);
+		final List<RouterDescriptor> descriptors = new ArrayList<RouterDescriptor>();
 		final boolean success = parser.parse(new DocumentParsingResultHandler<RouterDescriptor>() {
 			
 			public void parsingError(String message) {
@@ -59,7 +60,7 @@ public class DescriptorDownloadTask extends AbstractDirectoryDownloadTask{
 					logger.warning("Server returned a router descriptor that was not requested.  Ignoring.");
 					return;
 				}
-				getDirectory().addRouterDescriptor(document);
+				descriptors.add(document);
 			}
 			
 			public void documentInvalid(RouterDescriptor document, String message) {
@@ -69,7 +70,7 @@ public class DescriptorDownloadTask extends AbstractDirectoryDownloadTask{
 		});
 		
 		if(success) {
-			getDirectory().storeDescriptors();
+			getDirectory().addRouterDescriptors(descriptors);
 		}	
 	}
 	
@@ -103,7 +104,7 @@ public class DescriptorDownloadTask extends AbstractDirectoryDownloadTask{
 	}
 
 	@Override
-	protected void finishRequest(DirectoryDownloader downloader) {
+	protected void finishRequest(DirectoryDownloadTask downloader) {
 		downloader.clearDownloadingDescriptors();
 	}
 }

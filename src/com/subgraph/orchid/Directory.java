@@ -20,14 +20,13 @@ public interface Directory {
 	void waitUntilLoaded();
 	void storeCertificates();
 	void storeConsensus();
-	void storeDescriptors();
 	
 	Collection<DirectoryServer> getDirectoryAuthorities();
 	DirectoryServer getRandomDirectoryAuthority();
 	void addCertificate(KeyCertificate certificate);
 	Set<RequiredCertificate> getRequiredCertificates();
-	void addRouterDescriptor(RouterDescriptor router);
 	void addRouterMicrodescriptors(List<RouterMicrodescriptor> microdescriptors);
+	void addRouterDescriptors(List<RouterDescriptor> descriptors);
 	void addConsensusDocument(ConsensusDocument consensus, boolean fromCache);
 	ConsensusDocument getCurrentConsensusDocument();
 	boolean hasPendingConsensus();
@@ -41,6 +40,7 @@ public interface Directory {
 	void markDescriptorInvalid(RouterDescriptor descriptor);
 	
 	RouterMicrodescriptor getMicrodescriptorFromCache(HexDigest descriptorDigest);
+	RouterDescriptor getBasicDescriptorFromCache(HexDigest descriptorDigest);
 	
 	GuardEntry createGuardEntryFor(Router router);
 	List<GuardEntry> getGuardEntries();

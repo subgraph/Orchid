@@ -18,8 +18,7 @@ public interface Router {
 	boolean isDescriptorDownloadable();
 
 	String getVersion();
-	RouterDescriptor getCurrentDescriptor();
-	RouterMicrodescriptor getCurrentMicrodescriptor();
+	Descriptor getCurrentDescriptor();
 	HexDigest getDescriptorDigest();
 	HexDigest getMicrodescriptorDigest();
 

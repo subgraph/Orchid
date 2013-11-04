@@ -1,10 +1,7 @@
 package com.subgraph.orchid;
 
-import java.util.Set;
-
 import com.subgraph.orchid.crypto.TorPublicKey;
 import com.subgraph.orchid.data.HexDigest;
-import com.subgraph.orchid.data.IPv4Address;
 import com.subgraph.orchid.data.Timestamp;
 import com.subgraph.orchid.data.exitpolicy.ExitPolicy;
 
@@ -13,7 +10,7 @@ import com.subgraph.orchid.data.exitpolicy.ExitPolicy;
  * provides access to the fields of a router descriptor document which
  * has been published through to Tor directory system.  
  */
-public interface RouterDescriptor extends Document {
+public interface RouterDescriptor extends Descriptor {
 	/**
 	 * Returns the nickname of this router.
 	 * 
@@ -21,20 +18,6 @@ public interface RouterDescriptor extends Document {
 	 */
 	String getNickname();
 	
-	/**
-	 * Return the IPv4 address of this router.
-	 * 
-	 * @return The IPv4 address of this router.
-	 */
-	IPv4Address getAddress();
-	
-	/**
-	 * Return the port on which this node accepts TLS connections
-	 * for the main OR protocol, or 0 if no router service is advertised.
-	 * 
-	 * @return The onion routing port, or 0 if not a router.
-	 */
-	int getRouterPort();
 	
 	/**
 	 * Return the port on which this router provides directory related
@@ -102,16 +85,6 @@ public interface RouterDescriptor extends Document {
 	int getUptime();
 	
 	/**
-	 * Return the public key used to encrypt EXTEND cells while establishing
-	 * a circuit through this router.
-	 * 
-	 * @return The onion routing protocol key for this router.
-	 */
-	TorPublicKey getOnionKey();
-	
-	byte[] getNTorOnionKey();
-	
-	/**
 	 * Return the long-term identity and signing public key for this
 	 * router.
 	 * 
@@ -127,36 +100,6 @@ public interface RouterDescriptor extends Document {
 	 * @return The contact information for this router, or null if not available.
 	 */
 	String getContact();
-	
-	/**
-	 * Return true if the exit policy of this router permits connections
-	 * to the specified destination endpoint.
-	 * 
-	 * @param address The IPv4 address of the destination.
-	 * @param port The destination port.
-	 * 
-	 * @return True if an exit connection to the specified destination is allowed
-	 *         or false otherwise.
-	 */
-	boolean exitPolicyAccepts(IPv4Address address, int port);
-	
-	/**
-	 * Return true if the exit policy of this router accepts most connections
-	 * to the specified destination port.
-	 *
-	 * @param port The destination port.
-	 * @return True if an exit connection to the specified destination port is generally allowed
-	 *         or false otherwise.
-	 */
-	boolean exitPolicyAccepts(int port);
-
-
-	/**
-	 * 
-	 * @return
-	 */
-	Set<String> getFamilyMembers();
-	
 	
 	/**
 	 * Return true if this router is currently hibernating and not suitable for
@@ -214,9 +157,7 @@ public interface RouterDescriptor extends Document {
 	 * @return True if this descriptor was published later than <code>other</code>
 	 */
 	boolean isNewerThan(RouterDescriptor other);
-	
-	HexDigest getDescriptorDigest();
-	
+		
 	ExitPolicy getExitPolicy();
 	
 
