@@ -80,6 +80,7 @@
   <target name="source">
     <zip destfile="${orchid.sourcefile}">
       <zipfileset dir="src" prefix="${orchid.basename}/src" />
+      <zipfileset dir="opt/xmlrpc" prefix="${orchid.basename}/src" />
     </zip>
   </target>
 
