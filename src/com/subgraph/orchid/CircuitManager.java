@@ -1,5 +1,6 @@
 package com.subgraph.orchid;
 
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import com.subgraph.orchid.data.IPv4Address;
@@ -42,4 +43,8 @@ public interface CircuitManager {
 	Stream openDirectoryStream() throws InterruptedException, TimeoutException, OpenFailedException;
 	
 	Circuit getCleanInternalCircuit() throws InterruptedException;
+	
+	ExitCircuit openExitCircuitTo(List<Router> path) throws OpenFailedException;
+	InternalCircuit openInternalCircuitTo(List<Router> path) throws OpenFailedException;
+	DirectoryCircuit openDirectoryCircuitTo(List<Router> path) throws OpenFailedException;
 }

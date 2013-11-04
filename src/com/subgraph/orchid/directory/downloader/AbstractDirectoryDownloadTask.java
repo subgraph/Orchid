@@ -18,10 +18,10 @@ public abstract class AbstractDirectoryDownloadTask implements Runnable {
 	protected final static Logger logger = Logger.getLogger(AbstractDirectoryDownloadTask.class.getName());
 	private final static boolean USE_COMPRESSION = true;
 	
-	private final DirectoryDownloader downloader;
+	private final DirectoryDownloadTask downloader;
 	private final int purposeCode;
 	
-	protected AbstractDirectoryDownloadTask(DirectoryDownloader downloader, int purposeCode) {
+	protected AbstractDirectoryDownloadTask(DirectoryDownloadTask downloader, int purposeCode) {
 		this.downloader = downloader;
 		this.purposeCode = purposeCode;
 	}
@@ -72,7 +72,7 @@ public abstract class AbstractDirectoryDownloadTask implements Runnable {
 	
 	abstract protected String getRequestPath();
 	abstract protected void processResponse(ByteBuffer response, HttpConnection http);
-	abstract protected void finishRequest(DirectoryDownloader downloader);
+	abstract protected void finishRequest(DirectoryDownloadTask downloader);
 	
 	protected ByteBuffer requestDocument(HttpConnection connection, String request) throws IOException {
 		if(USE_COMPRESSION) {

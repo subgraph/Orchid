@@ -13,7 +13,7 @@ public class ConsensusDownloadTask extends AbstractDirectoryDownloadTask {
 	private ConsensusDocument newConsensusDocument = null;
 	private final boolean useMicrodescriptors;
 	
-	ConsensusDownloadTask(DirectoryDownloader downloader, boolean useMicrodescriptors) {
+	ConsensusDownloadTask(DirectoryDownloadTask downloader, boolean useMicrodescriptors) {
 		super(downloader, CircuitManager.DIRECTORY_PURPOSE_CONSENSUS);
 		this.useMicrodescriptors = useMicrodescriptors;
 	}
@@ -52,7 +52,7 @@ public class ConsensusDownloadTask extends AbstractDirectoryDownloadTask {
 	}
 
 	@Override
-	protected void finishRequest(DirectoryDownloader downloader) {
+	protected void finishRequest(DirectoryDownloadTask downloader) {
 		if(newConsensusDocument != null) {
 			downloader.setCurrentConsensus(newConsensusDocument);
 		}

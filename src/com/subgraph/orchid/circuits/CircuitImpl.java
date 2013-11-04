@@ -14,6 +14,7 @@ import com.subgraph.orchid.CircuitNode;
 import com.subgraph.orchid.Connection;
 import com.subgraph.orchid.DirectoryCircuit;
 import com.subgraph.orchid.ExitCircuit;
+import com.subgraph.orchid.InternalCircuit;
 import com.subgraph.orchid.RelayCell;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.Stream;
@@ -35,25 +36,55 @@ public abstract class CircuitImpl implements Circuit, DashboardRenderable {
 		return new ExitCircuitImpl(circuitManager, exitRouter);
 	}
 	
-	static DirectoryCircuit createDirectoryCircuit(CircuitManagerImpl circuitManager) {
-		return new DirectoryCircuitImpl(circuitManager);
+	static ExitCircuit createExitCircuitTo(CircuitManagerImpl circuitManager, List<Router> prechosenPath) {
+		return new ExitCircuitImpl(circuitManager, prechosenPath);
 	}
 	
+	static DirectoryCircuit createDirectoryCircuit(CircuitManagerImpl circuitManager) {
+		return new DirectoryCircuitImpl(circuitManager, null);
+	}
+	
+	static DirectoryCircuit createDirectoryCircuitTo(CircuitManagerImpl circuitManager, List<Router> prechosenPath) {
+		return new DirectoryCircuitImpl(circuitManager, prechosenPath);
+	}
+	
+	static InternalCircuit createInternalCircuitTo(CircuitManagerImpl circuitManager, List<Router> prechosenPath) {
+		return new InternalCircuitImpl(circuitManager, prechosenPath);
+	}
 
 	private final CircuitManagerImpl circuitManager;
+	protected final List<Router> prechosenPath;
+	
 	private final List<CircuitNode> nodeList;
 	private final CircuitStatus status;
 
 	private CircuitIO io;
 
 
+	
+		
+	
+	
 	protected CircuitImpl(CircuitManagerImpl circuitManager) {
+		this(circuitManager, null);
+	}
+	
+	protected CircuitImpl(CircuitManagerImpl circuitManager, List<Router> prechosenPath) {
 		nodeList = new ArrayList<CircuitNode>();
 		this.circuitManager = circuitManager;
+		this.prechosenPath = prechosenPath;
 		status = new CircuitStatus();
 	}
 
-	protected abstract List<Router> choosePath(CircuitPathChooser pathChooser) throws InterruptedException, PathSelectionFailedException;
+	List<Router> choosePath(CircuitPathChooser pathChooser) throws InterruptedException, PathSelectionFailedException {
+		if(prechosenPath != null) {
+			return new ArrayList<Router>(prechosenPath);
+		} else {
+			return choosePathForCircuit(pathChooser);
+		}
+	}
+
+	protected abstract List<Router> choosePathForCircuit(CircuitPathChooser pathChooser) throws InterruptedException, PathSelectionFailedException;
 
 	void bindToConnection(Connection connection) {
 		if(io != null) {

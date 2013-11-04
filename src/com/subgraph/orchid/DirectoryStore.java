@@ -10,8 +10,8 @@ public interface DirectoryStore {
 		CONSENSUS_MICRODESC("consensus-microdesc"),
 		MICRODESCRIPTOR_CACHE("cached-microdescs"),
 		MICRODESCRIPTOR_JOURNAL("cached-microdescs.new"),
-		DESCRIPTORS_CACHE("cached-descriptors"),
-		DESCRIPTORS_JOURNAL("cached-descriptors.new"),
+		DESCRIPTOR_CACHE("cached-descriptors"),
+		DESCRIPTOR_JOURNAL("cached-descriptors.new"),
 		STATE("state");
 
 		final private String filename;

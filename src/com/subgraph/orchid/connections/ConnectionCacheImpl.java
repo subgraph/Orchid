@@ -103,7 +103,7 @@ public class ConnectionCacheImpl implements ConnectionCache, DashboardRenderable
 			}
 		}
 	}
-	
+
 	private Future<ConnectionImpl> getFutureFor(Router router, boolean isDirectoryConnection) {
 		Future<ConnectionImpl> f = activeConnections.get(router);
 		if(f != null) {

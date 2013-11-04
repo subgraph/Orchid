@@ -12,8 +12,8 @@ import com.subgraph.orchid.circuits.path.PathSelectionFailedException;
 
 public class DirectoryCircuitImpl extends CircuitImpl implements DirectoryCircuit {
 	
-	protected DirectoryCircuitImpl(CircuitManagerImpl circuitManager) {
-		super(circuitManager);
+	protected DirectoryCircuitImpl(CircuitManagerImpl circuitManager, List<Router> prechosenPath) {
+		super(circuitManager, prechosenPath);
 	}
 	
 	public Stream openDirectoryStream(long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException {
@@ -28,7 +28,10 @@ public class DirectoryCircuitImpl extends CircuitImpl implements DirectoryCircui
 	}
 
 	@Override
-	protected List<Router> choosePath(CircuitPathChooser pathChooser) throws InterruptedException, PathSelectionFailedException {
+	protected List<Router> choosePathForCircuit(CircuitPathChooser pathChooser) throws InterruptedException, PathSelectionFailedException {
+		if(prechosenPath != null) {
+			return prechosenPath;
+		}
 		return pathChooser.chooseDirectoryPath();
 	}
 

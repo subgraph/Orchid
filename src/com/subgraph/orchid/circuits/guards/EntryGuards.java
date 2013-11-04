@@ -16,9 +16,10 @@ import com.subgraph.orchid.GuardEntry;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.circuits.path.CircuitNodeChooser;
-import com.subgraph.orchid.circuits.path.RouterFilter;
 import com.subgraph.orchid.circuits.path.CircuitNodeChooser.WeightRule;
+import com.subgraph.orchid.circuits.path.RouterFilter;
 import com.subgraph.orchid.crypto.TorRandom;
+import com.subgraph.orchid.directory.downloader.DirectoryDownloader;
 
 public class EntryGuards {
 	private final static Logger logger = Logger.getLogger(EntryGuards.class.getName());
@@ -26,25 +27,38 @@ public class EntryGuards {
 	private final static int MIN_USABLE_GUARDS = 2;
 	private final static int NUM_ENTRY_GUARDS = 3;
 	
+	private final TorConfig config;
 	private final TorRandom random;
 	private final CircuitNodeChooser nodeChooser;
 	private final ConnectionCache connectionCache;
 	private final Directory directory;
 	private final Set<GuardEntry> pendingProbes;
+	
+	private final Bridges bridges;
 	private final Object lock;
 	private final Executor executor;
 	
-	public EntryGuards(TorConfig config, ConnectionCache connectionCache, Directory directory) {
+	public EntryGuards(TorConfig config, ConnectionCache connectionCache, DirectoryDownloader directoryDownloader, Directory directory) {
+		this.config = config;
 		this.random = new TorRandom();
 		this.nodeChooser = new CircuitNodeChooser(config, directory);
 		this.connectionCache = connectionCache;
 		this.directory = directory;
 		this.pendingProbes = new HashSet<GuardEntry>();
+		this.bridges = new Bridges(config, directoryDownloader);
 		this.lock = new Object();
 		this.executor = Executors.newCachedThreadPool();
 	}
-	
+
+	public boolean isUsingBridges() {
+		return config.getUseBridges();
+	}
+
 	public Router chooseRandomGuard(Set<Router> excluded) throws InterruptedException {
+		if(config.getUseBridges()) {
+			return bridges.chooseRandomBridge(excluded);
+		}
+		
 		/*
 		 * path-spec 5.
 		 * 

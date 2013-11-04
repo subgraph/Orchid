@@ -3,7 +3,6 @@ package com.subgraph.orchid.connections;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
-import java.security.interfaces.RSAPublicKey;
 
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
@@ -15,8 +14,6 @@ import javax.security.cert.X509Certificate;
 
 import com.subgraph.orchid.ConnectionHandshakeException;
 import com.subgraph.orchid.ConnectionIOException;
-import com.subgraph.orchid.Router;
-import com.subgraph.orchid.crypto.TorPublicKey;
 
 /**
  * This class performs a Version 2 handshake as described in section 2 of
@@ -61,25 +58,19 @@ public class ConnectionHandshakeV2 extends ConnectionHandshake {
 		socket.startHandshake();
 		monitor.waitFinished();
 		socket.removeHandshakeCompletedListener(monitor);
-		verifyIdentity(connection.getRouter(), socket.getSession());
+		
+		verifyIdentityKey(getIdentityKey());
 		sendVersions(2);
 		receiveVersions();
 		sendNetinfo();
 		recvNetinfo();
 	}
 	
-	private void verifyIdentity(Router router, SSLSession session) throws ConnectionHandshakeException {
-		final X509Certificate c = getIdentityCertificateFromSession(session);
-		final PublicKey publicKey = c.getPublicKey();
-		if(!(publicKey instanceof RSAPublicKey)) {
-			throw new ConnectionHandshakeException("Certificate public key is not an RSA key as expected");
-		}
-		final TorPublicKey certKey = new TorPublicKey((RSAPublicKey) publicKey);
-		if(!certKey.getFingerprint().equals(router.getIdentityHash())) {
-			throw new ConnectionHandshakeException("Router identity key does not match certicate key");
-		}
+	private PublicKey getIdentityKey() throws ConnectionHandshakeException {
+		final X509Certificate identityCertificate = getIdentityCertificateFromSession(socket.getSession());
+		return identityCertificate.getPublicKey();
 	}
-	
+
 	private X509Certificate getIdentityCertificateFromSession(SSLSession session) throws ConnectionHandshakeException {
 		try {
 			X509Certificate[] chain = session.getPeerCertificateChain();

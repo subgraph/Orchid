@@ -43,13 +43,11 @@ public class TorClient {
 		initializationTracker = Tor.createInitalizationTracker();
 		initializationTracker.addListener(createReadyFlagInitializationListener());
 		connectionCache = Tor.createConnectionCache(config, initializationTracker);
-		circuitManager = Tor.createCircuitManager(config, directory, connectionCache, initializationTracker);
-		directoryDownloader = Tor.createDirectoryDownloader(config, directory, circuitManager);
+		directoryDownloader = Tor.createDirectoryDownloader(config);
+		circuitManager = Tor.createCircuitManager(config, directoryDownloader, directory, connectionCache, initializationTracker);
 		socksListener = Tor.createSocksPortListener(config, circuitManager);
-		
 		readyLatch = new CountDownLatch(1);
-		
-		dashboard = new Dashboard(); 
+		dashboard = new Dashboard();
 		dashboard.addRenderables(circuitManager, directoryDownloader, socksListener);
 	}
 
@@ -74,7 +72,7 @@ public class TorClient {
 		}
 		logger.info("Starting Orchid (version: "+ Tor.getFullVersion() +")");
 		verifyUnlimitedStrengthPolicyInstalled();
-		directoryDownloader.start();
+		directoryDownloader.start(directory);
 		circuitManager.startBuildingCircuits();
 		if(dashboard.isEnabledByProperty()) {
 			dashboard.startListening();

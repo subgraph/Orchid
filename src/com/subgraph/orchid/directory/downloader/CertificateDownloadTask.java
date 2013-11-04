@@ -13,7 +13,7 @@ public class CertificateDownloadTask extends AbstractDirectoryDownloadTask{
 
 	private final Set<RequiredCertificate> requiredCertificates;
 	
-	CertificateDownloadTask(Set<RequiredCertificate> requiredCertificates, DirectoryDownloader downloader) {
+	CertificateDownloadTask(Set<RequiredCertificate> requiredCertificates, DirectoryDownloadTask downloader) {
 		super(downloader, CircuitManager.DIRECTORY_PURPOSE_CERTIFICATES);
 		this.requiredCertificates = requiredCertificates;
 	}
@@ -60,7 +60,7 @@ public class CertificateDownloadTask extends AbstractDirectoryDownloadTask{
 	}
 
 	@Override
-	protected void finishRequest(DirectoryDownloader downloader) {
+	protected void finishRequest(DirectoryDownloadTask downloader) {
 		downloader.clearDownloadingCertificates();
 	}
 }

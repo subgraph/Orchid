@@ -19,6 +19,12 @@ public class ExitCircuitImpl extends CircuitImpl implements ExitCircuit {
 	private final Router exitRouter;
 	private final Set<ExitTarget> failedExitRequests;
 
+	ExitCircuitImpl(CircuitManagerImpl circuitManager, List<Router> prechosenPath) {
+		super(circuitManager, prechosenPath);
+		this.exitRouter = prechosenPath.get(prechosenPath.size() - 1);
+		this.failedExitRequests = new HashSet<ExitTarget>();
+	}
+
 	ExitCircuitImpl(CircuitManagerImpl circuitManager, Router exitRouter) {
 		super(circuitManager);
 		this.exitRouter = exitRouter;
@@ -70,7 +76,7 @@ public class ExitCircuitImpl extends CircuitImpl implements ExitCircuit {
 
 	
 	@Override
-	protected List<Router> choosePath(CircuitPathChooser pathChooser) throws InterruptedException, PathSelectionFailedException {
+	protected List<Router> choosePathForCircuit(CircuitPathChooser pathChooser) throws InterruptedException, PathSelectionFailedException {
 		return pathChooser.choosePathWithExit(exitRouter);
 	}
 	

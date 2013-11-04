@@ -82,7 +82,7 @@ public class CircuitNodeChooser {
 			if(r.isRunning() && 
 					r.isValid() && 
 					!r.isHibernating() && 
-					!(needDescriptor && r.getCurrentDescriptor() == null && r.getCurrentMicrodescriptor() == null)) {
+					!(needDescriptor && r.getCurrentDescriptor() == null)) {
 				
 				routers.add(r);
 			}

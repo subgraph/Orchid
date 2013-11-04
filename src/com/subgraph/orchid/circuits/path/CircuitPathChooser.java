@@ -40,7 +40,15 @@ public class CircuitPathChooser {
 		this.useEntryGuards = true;
 	}
 
-	public List<Router> chooseDirectoryPath() {
+	public List<Router> chooseDirectoryPath() throws InterruptedException {
+		if(useEntryGuards && entryGuards.isUsingBridges()) {
+			final Set<Router> empty = Collections.emptySet();
+			final Router bridge = entryGuards.chooseRandomGuard(empty);
+			if(bridge == null) {
+				throw new IllegalStateException("Failed to choose bridge for directory request");
+			}
+			return Arrays.asList(bridge);
+		}
 		final Router dir = nodeChooser.chooseDirectory();
 		return Arrays.asList(dir);
 	}

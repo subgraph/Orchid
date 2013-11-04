@@ -38,6 +38,7 @@ import com.subgraph.orchid.crypto.TorRandom;
 import com.subgraph.orchid.dashboard.DashboardRenderable;
 import com.subgraph.orchid.dashboard.DashboardRenderer;
 import com.subgraph.orchid.data.IPv4Address;
+import com.subgraph.orchid.directory.downloader.DirectoryDownloader;
 
 public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	private final static int OPEN_DIRECTORY_STREAM_RETRY_COUNT = 5;
@@ -62,13 +63,13 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	private final CircuitPathChooser pathChooser;
 	private final HiddenServiceManager hiddenServiceManager;
 
-	public CircuitManagerImpl(TorConfig config, Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
+	public CircuitManagerImpl(TorConfig config, DirectoryDownloader directoryDownloader, Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.config = config;
 		this.directory = directory;
 		this.connectionCache = connectionCache;
 		this.pathChooser = CircuitPathChooser.create(config, directory);
-		if(config.getUseEntryGuards()) {
-			this.pathChooser.enableEntryGuards(new EntryGuards(config, connectionCache, directory));
+		if(config.getUseEntryGuards() || config.getUseBridges()) {
+			this.pathChooser.enableEntryGuards(new EntryGuards(config, connectionCache, directoryDownloader, directory));
 		}
 		this.pendingExitStreams = new PendingExitStreams(config);
 		this.circuitCreationTask = new CircuitCreationTask(config, directory, connectionCache, pathChooser, this, initializationTracker);
@@ -78,6 +79,8 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		
 		this.initializationTracker = initializationTracker;
 		this.hiddenServiceManager = new HiddenServiceManager(config, directory, this);
+		
+		directoryDownloader.setCircuitManager(this);
 	}
 
 	public void notifyInitializationEvent(int eventCode) {
@@ -233,20 +236,12 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		int failCount = 0;
 		while(failCount < OPEN_DIRECTORY_STREAM_RETRY_COUNT) {
 			final DirectoryCircuit circuit = CircuitImpl.createDirectoryCircuit(this);
-			if(tryOpenDirectoryCircuit(circuit)) {
+			if(tryOpenCircuit(circuit, true, true)) {
 				return circuit;
 			}
 			failCount += 1;
 		}
 		throw new OpenFailedException("Could not create circuit for directory stream");
-	}
-
-	private boolean tryOpenDirectoryCircuit(Circuit circuit) {
-		final DirectoryCircuitResult result = new DirectoryCircuitResult();
-		final CircuitCreationRequest req = new CircuitCreationRequest(pathChooser, circuit, result, true);
-		final CircuitBuildTask task = new CircuitBuildTask(req, connectionCache, isNtorEnabled(), initializationTracker);
-		task.run();
-		return result.isSuccessful();
 	}
 	
 	private int purposeToEventCode(int purpose, boolean getLoadingEvent) {
@@ -359,5 +354,36 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		ConsensusDocument consensus = directory.getCurrentConsensusDocument();
 		return (consensus != null) && (consensus.getUseNTorHandshake());
 	}
+
+	public DirectoryCircuit openDirectoryCircuitTo(List<Router> path) throws OpenFailedException {
+		final DirectoryCircuit circuit = CircuitImpl.createDirectoryCircuitTo(this, path);
+		if(!tryOpenCircuit(circuit, true, false)) {
+			throw new OpenFailedException("Could not create directory circuit for path");
+		}
+		return circuit;
+	}
+
+	public ExitCircuit openExitCircuitTo(List<Router> path)	throws OpenFailedException {
+		final ExitCircuit circuit = CircuitImpl.createExitCircuitTo(this, path);
+		if(!tryOpenCircuit(circuit, false, false)) {
+			throw new OpenFailedException("Could not create exit circuit for path");
+		}
+		return circuit;
+	}
+
+	public InternalCircuit openInternalCircuitTo(List<Router> path) throws OpenFailedException {
+		final InternalCircuit circuit = CircuitImpl.createInternalCircuitTo(this, path);
+		if(!tryOpenCircuit(circuit, false, false)) {
+			throw new OpenFailedException("Could not create internal circuit for path");
+		}
+		return circuit;
+	}
 	
+	private boolean tryOpenCircuit(Circuit circuit, boolean isDirectory, boolean trackInitialization) {
+		final DirectoryCircuitResult result = new DirectoryCircuitResult();
+		final CircuitCreationRequest req = new CircuitCreationRequest(pathChooser, circuit, result, isDirectory);
+		final CircuitBuildTask task = new CircuitBuildTask(req, connectionCache, isNtorEnabled(), (trackInitialization) ? (initializationTracker) : (null));
+		task.run();
+		return result.isSuccessful();
+	}
 }

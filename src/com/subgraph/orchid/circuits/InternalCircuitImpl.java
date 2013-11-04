@@ -21,15 +21,18 @@ public class InternalCircuitImpl extends CircuitImpl implements InternalCircuit,
 	private InternalType type;
 	private boolean ntorEnabled;
 	
-	protected InternalCircuitImpl(CircuitManagerImpl circuitManager) {
-		super(circuitManager);
+	InternalCircuitImpl(CircuitManagerImpl circuitManager, List<Router> prechosenPath) {
+		super(circuitManager, prechosenPath);
 		this.type = InternalType.UNUSED;
 		this.ntorEnabled = circuitManager.isNtorEnabled();
 	}
-
+	
+	protected InternalCircuitImpl(CircuitManagerImpl circuitManager) {
+		this(circuitManager, null);
+	}
 	
 	@Override
-	protected List<Router> choosePath(CircuitPathChooser pathChooser)
+	protected List<Router> choosePathForCircuit(CircuitPathChooser pathChooser)
 			throws InterruptedException, PathSelectionFailedException {
 		return pathChooser.chooseInternalPath();
 	}

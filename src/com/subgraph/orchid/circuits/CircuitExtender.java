@@ -35,6 +35,7 @@ public class CircuitExtender {
 	
 	
 	CircuitNode createFastTo(Router targetRouter) {
+		logger.fine("Creating 'fast' to "+ targetRouter);
 		final TorCreateFastKeyAgreement kex = new TorCreateFastKeyAgreement();
 		sendCreateFastCell(kex);
 		return receiveAndProcessCreateFastResponse(targetRouter, kex);
@@ -49,7 +50,7 @@ public class CircuitExtender {
 	private CircuitNode receiveAndProcessCreateFastResponse(Router targetRouter, TorKeyAgreement kex) {
 		final Cell cell = circuit.receiveControlCellResponse();
 		if(cell == null) {
-			throw new TorException("Timeout building circuit");
+			throw new TorException("Timeout building circuit waiting for CREATE_FAST response from "+ targetRouter);
 		}
 
 		return processCreatedFastCell(targetRouter, cell, kex);

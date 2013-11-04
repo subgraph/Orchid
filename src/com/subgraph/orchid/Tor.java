@@ -128,8 +128,8 @@ public class Tor {
 	 * @return A new <code>CircuitManager</code> instance.
 	 * @see CircuitManager
 	 */
-	static public CircuitManager createCircuitManager(TorConfig config, Directory directory, ConnectionCache connectionCache, TorInitializationTracker tracker) {
-		return new CircuitManagerImpl(config, directory, connectionCache, tracker);
+	static public CircuitManager createCircuitManager(TorConfig config, DirectoryDownloader directoryDownloader, Directory directory, ConnectionCache connectionCache, TorInitializationTracker tracker) {
+		return new CircuitManagerImpl(config, directoryDownloader, directory, connectionCache, tracker);
 	}
 
 	/**
@@ -161,7 +161,7 @@ public class Tor {
 	 * @return A new <code>DirectoryDownloader</code> instance.
 	 * @see DirectoryDownloader
 	 */
-	static public DirectoryDownloader createDirectoryDownloader(TorConfig config, Directory directory, CircuitManager circuitManager) {
-		return new DirectoryDownloader(config, directory, circuitManager);
+	static public DirectoryDownloader createDirectoryDownloader(TorConfig config) {
+		return new DirectoryDownloader(config);
 	}
 }

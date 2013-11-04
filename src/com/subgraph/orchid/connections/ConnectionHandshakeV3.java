@@ -32,8 +32,7 @@ public class ConnectionHandshakeV3 extends ConnectionHandshake {
 		sendVersions(3);
 		receiveVersions();
 		recvCerts();
-		recvAuthChallenge();
-		recvNetinfo();
+		recvAuthChallengeAndNetinfo();
 		verifyCertificates();
 		sendNetinfo();
 	}
@@ -95,7 +94,9 @@ public class ConnectionHandshakeV3 extends ConnectionHandshake {
 	
 	void verifyCertificates() throws ConnectionHandshakeException {
 		PublicKey publicKey = identityCertificate.getPublicKey();
+		verifyIdentityKey(publicKey);
 		RSAPublicKey rsaPublicKey = (RSAPublicKey) publicKey;
+		
 		if(rsaPublicKey.getModulus().bitLength() != 1024) {
 			throw new ConnectionHandshakeException("Invalid RSA modulus length in router identity key");
 		}
@@ -115,8 +116,14 @@ public class ConnectionHandshakeV3 extends ConnectionHandshake {
 		}
 	}
 
-	void recvAuthChallenge() throws ConnectionHandshakeException {
-		expectCell(Cell.AUTH_CHALLENGE);
+	void recvAuthChallengeAndNetinfo() throws ConnectionHandshakeException {
+		final Cell cell = expectCell(Cell.AUTH_CHALLENGE, Cell.NETINFO);
+		if(cell.getCommand() == Cell.NETINFO) {
+			processNetInfo(cell);
+			return;
+		}
+		final Cell netinfo = expectCell(Cell.NETINFO);
+		processNetInfo(netinfo);
 	}
 	
 	public static boolean sessionSupportsHandshake(SSLSession session) {
