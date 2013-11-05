@@ -8,14 +8,15 @@ import java.util.logging.Logger;
 
 import com.subgraph.orchid.CircuitManager;
 import com.subgraph.orchid.Directory;
+import com.subgraph.orchid.DirectoryDownloader;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.RouterDescriptor;
 import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.directory.DocumentParserFactoryImpl;
 import com.subgraph.orchid.directory.parsing.DocumentParserFactory;
 
-public class DirectoryDownloader {
-	private final static Logger logger = Logger.getLogger(DirectoryDownloader.class.getName());
+public class DirectoryDownloaderImpl implements DirectoryDownloader {
+	private final static Logger logger = Logger.getLogger(DirectoryDownloaderImpl.class.getName());
 	private final static DocumentParserFactory parserFactory = new DocumentParserFactoryImpl();
 	
 	private final TorConfig config;
@@ -25,7 +26,7 @@ public class DirectoryDownloader {
 	private Thread downloadTaskThread;
 	
 
-	public DirectoryDownloader(TorConfig config) {
+	public DirectoryDownloaderImpl(TorConfig config) {
 		this.config = config;
 		this.executor = Executors.newCachedThreadPool();
 	}

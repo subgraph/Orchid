@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 
 import com.subgraph.orchid.ConnectionCache;
 import com.subgraph.orchid.Directory;
+import com.subgraph.orchid.DirectoryDownloader;
 import com.subgraph.orchid.GuardEntry;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.TorConfig;
@@ -19,7 +20,6 @@ import com.subgraph.orchid.circuits.path.CircuitNodeChooser;
 import com.subgraph.orchid.circuits.path.CircuitNodeChooser.WeightRule;
 import com.subgraph.orchid.circuits.path.RouterFilter;
 import com.subgraph.orchid.crypto.TorRandom;
-import com.subgraph.orchid.directory.downloader.DirectoryDownloader;
 
 public class EntryGuards {
 	private final static Logger logger = Logger.getLogger(EntryGuards.class.getName());

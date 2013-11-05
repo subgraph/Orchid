@@ -9,7 +9,7 @@ import com.subgraph.orchid.circuits.TorInitializationTracker;
 import com.subgraph.orchid.config.TorConfigProxy;
 import com.subgraph.orchid.connections.ConnectionCacheImpl;
 import com.subgraph.orchid.directory.DirectoryImpl;
-import com.subgraph.orchid.directory.downloader.DirectoryDownloader;
+import com.subgraph.orchid.directory.downloader.DirectoryDownloaderImpl;
 import com.subgraph.orchid.socks.SocksPortListenerImpl;
 
 /**
@@ -128,7 +128,7 @@ public class Tor {
 	 * @return A new <code>CircuitManager</code> instance.
 	 * @see CircuitManager
 	 */
-	static public CircuitManager createCircuitManager(TorConfig config, DirectoryDownloader directoryDownloader, Directory directory, ConnectionCache connectionCache, TorInitializationTracker tracker) {
+	static public CircuitManager createCircuitManager(TorConfig config, DirectoryDownloaderImpl directoryDownloader, Directory directory, ConnectionCache connectionCache, TorInitializationTracker tracker) {
 		return new CircuitManagerImpl(config, directoryDownloader, directory, connectionCache, tracker);
 	}
 
@@ -159,9 +159,9 @@ public class Tor {
 	 *                       before calling this method to create a <code>DirectoryDownloader</code>.
 	 *                       
 	 * @return A new <code>DirectoryDownloader</code> instance.
-	 * @see DirectoryDownloader
+	 * @see DirectoryDownloaderImpl
 	 */
-	static public DirectoryDownloader createDirectoryDownloader(TorConfig config) {
-		return new DirectoryDownloader(config);
+	static public DirectoryDownloaderImpl createDirectoryDownloader(TorConfig config) {
+		return new DirectoryDownloaderImpl(config);
 	}
 }

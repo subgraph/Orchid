@@ -13,7 +13,7 @@ import javax.net.SocketFactory;
 import com.subgraph.orchid.circuits.TorInitializationTracker;
 import com.subgraph.orchid.crypto.PRNGFixes;
 import com.subgraph.orchid.dashboard.Dashboard;
-import com.subgraph.orchid.directory.downloader.DirectoryDownloader;
+import com.subgraph.orchid.directory.downloader.DirectoryDownloaderImpl;
 import com.subgraph.orchid.sockets.OrchidSocketFactory;
 
 /**
@@ -28,7 +28,7 @@ public class TorClient {
 	private final ConnectionCache connectionCache;
 	private final CircuitManager circuitManager;
 	private final SocksPortListener socksListener;
-	private final DirectoryDownloader directoryDownloader;
+	private final DirectoryDownloaderImpl directoryDownloader;
 	private final Dashboard dashboard;
 
 	private boolean isStarted = false;

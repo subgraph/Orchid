@@ -38,7 +38,7 @@ import com.subgraph.orchid.crypto.TorRandom;
 import com.subgraph.orchid.dashboard.DashboardRenderable;
 import com.subgraph.orchid.dashboard.DashboardRenderer;
 import com.subgraph.orchid.data.IPv4Address;
-import com.subgraph.orchid.directory.downloader.DirectoryDownloader;
+import com.subgraph.orchid.directory.downloader.DirectoryDownloaderImpl;
 
 public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	private final static int OPEN_DIRECTORY_STREAM_RETRY_COUNT = 5;
@@ -63,7 +63,7 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	private final CircuitPathChooser pathChooser;
 	private final HiddenServiceManager hiddenServiceManager;
 
-	public CircuitManagerImpl(TorConfig config, DirectoryDownloader directoryDownloader, Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
+	public CircuitManagerImpl(TorConfig config, DirectoryDownloaderImpl directoryDownloader, Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.config = config;
 		this.directory = directory;
 		this.connectionCache = connectionCache;
