@@ -161,7 +161,7 @@ public class Tor {
 	 * @return A new <code>DirectoryDownloader</code> instance.
 	 * @see DirectoryDownloaderImpl
 	 */
-	static public DirectoryDownloaderImpl createDirectoryDownloader(TorConfig config) {
-		return new DirectoryDownloaderImpl(config);
+	static public DirectoryDownloaderImpl createDirectoryDownloader(TorConfig config, TorInitializationTracker initializationTracker) {
+		return new DirectoryDownloaderImpl(config, initializationTracker);
 	}
 }

@@ -15,6 +15,7 @@ import com.subgraph.orchid.RouterDescriptor;
 import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.config.TorConfigBridgeLine;
 import com.subgraph.orchid.crypto.TorRandom;
+import com.subgraph.orchid.directory.downloader.DirectoryRequestFailedException;
 
 public class Bridges {
 	private static final Logger logger = Logger.getLogger(Bridges.class.getName());
@@ -37,14 +38,18 @@ public class Bridges {
 		
 		private void downloadDescriptor() {
 			logger.fine("Downloading descriptor for bridge: "+ target);
-			final RouterDescriptor descriptor = directoryDownloader.downloadBridgeDescriptor(target);
-			if(descriptor != null) {
-				logger.fine("Descriptor received for bridge "+ target +". Adding to list of usable bridges");
-				target.setDescriptor(descriptor);
-				synchronized(lock) {
-					bridgeRouters.add(target);
-					lock.notifyAll();
+			try {
+				final RouterDescriptor descriptor = directoryDownloader.downloadBridgeDescriptor(target);
+				if(descriptor != null) {
+					logger.fine("Descriptor received for bridge "+ target +". Adding to list of usable bridges");
+					target.setDescriptor(descriptor);
+					synchronized(lock) {
+						bridgeRouters.add(target);
+						lock.notifyAll();
+					}
 				}
+			} catch (DirectoryRequestFailedException e) {
+				logger.warning("Failed to download descriptor for bridge: "+ e.getMessage());
 			}
 		}
 		

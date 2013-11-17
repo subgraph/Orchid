@@ -15,7 +15,6 @@ import java.util.zip.Inflater;
 
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.Stream;
-import com.subgraph.orchid.TorException;
 
 public class HttpConnection {
 	private final static Charset CHARSET = Charset.forName("ISO-8859-1");
@@ -23,22 +22,29 @@ public class HttpConnection {
 	private final static String HTTP_RESPONSE_REGEX = "HTTP/1\\.(\\d) (\\d+) (.*)";
 	private final static String CONTENT_LENGTH_HEADER = "Content-Length";
 	private final static String CONTENT_ENCODING_HEADER = "Content-Encoding";
+	private final static String COMPRESSION_SUFFIX = ".z";
 	private final String hostname;
 	private final Stream stream;
 	private final InputStream input;
 	private final OutputStream output;
 	private final Map<String, String> headers;
+	private final boolean useCompression;
 	private int responseCode;
 	private boolean bodyCompressed;
 	private String responseMessage;
 	private ByteBuffer messageBody;
 	
 	public HttpConnection(Stream stream) {
+		this(stream, true);
+	}
+
+	public HttpConnection(Stream stream, boolean useCompression) {
 		this.hostname = getHostnameFromStream(stream);
 		this.stream = stream;
 		this.headers = new HashMap<String, String>();
 		this.input = stream.getInputStream();
 		this.output = stream.getOutputStream();
+		this.useCompression = useCompression;
 	}
 	
 	private static String getHostnameFromStream(Stream stream) {
@@ -59,6 +65,9 @@ public class HttpConnection {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("GET ");
 		sb.append(request);
+		if(useCompression && !request.endsWith(COMPRESSION_SUFFIX)) {
+			sb.append(COMPRESSION_SUFFIX);
+		}
 		sb.append(" HTTP/1.0\r\n");
 		if(hostname != null) {
 			sb.append("Host: "+ hostname +"\r\n");
@@ -78,7 +87,7 @@ public class HttpConnection {
 		}
 	}
 
-	public void readResponse() throws IOException {
+	public void readResponse() throws IOException, DirectoryRequestFailedException {
 		readStatusLine();
 		readHeaders();
 		readBody();
@@ -101,30 +110,29 @@ public class HttpConnection {
 			return;
 		}
 		stream.close();
-		stream.getCircuit().destroyCircuit();
 	}
 	
-	private void readStatusLine() throws IOException {
+	private void readStatusLine() throws IOException, DirectoryRequestFailedException {
 		final String line = nextResponseLine();	
 		final Pattern p = Pattern.compile(HTTP_RESPONSE_REGEX);
 		final Matcher m = p.matcher(line);
 		if(!m.find() || m.groupCount() != 3) 
-			throw new TorException("Error parsing HTTP response line: "+ line);
+			throw new DirectoryRequestFailedException("Error parsing HTTP response line: "+ line);
 		
 		try {
 			int n1 = Integer.parseInt(m.group(1));
 			int n2 = Integer.parseInt(m.group(2));
 			if( (n1 != 0 && n1 != 1) ||
 					(n2 < 100 || n2 >= 600))
-				throw new TorException("Failed to parse header: "+ line);
+				throw new DirectoryRequestFailedException("Failed to parse header: "+ line);
 			responseCode = n2;
 			responseMessage = m.group(3);
 		} catch(NumberFormatException e) {
-			throw new TorException("Failed to parse header: "+ line);
+			throw new DirectoryRequestFailedException("Failed to parse header: "+ line);
 		}
 	}
 	
-	private void readHeaders() throws IOException {
+	private void readHeaders() throws IOException, DirectoryRequestFailedException {
 		headers.clear();
 		while(true) {
 			final String line = nextResponseLine();
@@ -132,20 +140,20 @@ public class HttpConnection {
 				return;
 			final String[] args = line.split(": ", 2);
 			if(args.length != 2)
-				throw new TorException("Failed to parse HTTP header: "+ line);
+				throw new DirectoryRequestFailedException("Failed to parse HTTP header: "+ line);
 			headers.put(args[0], args[1]);
 		}
 	}
 	
-	private String nextResponseLine() throws IOException {
+	private String nextResponseLine() throws IOException, DirectoryRequestFailedException {
 		final String line = readInputLine();
 		if(line == null) {
-			throw new TorException("Unexpected EOF reading HTTP response");
+			throw new DirectoryRequestFailedException("Unexpected EOF reading HTTP response");
 		}
 		return line;
 	}
 	
-	private void readBody() throws IOException {
+	private void readBody() throws IOException, DirectoryRequestFailedException {
 		processContentEncodingHeader();
 		
 		if(headers.containsKey(CONTENT_LENGTH_HEADER)) { 
@@ -155,14 +163,14 @@ public class HttpConnection {
 		}
 	}
 	
-	private void processContentEncodingHeader() {
+	private void processContentEncodingHeader() throws DirectoryRequestFailedException {
 		final String encoding = headers.get(CONTENT_ENCODING_HEADER);
 		if(encoding == null || encoding.equals("identity")) 
 			bodyCompressed = false;
 		else if(encoding.equals("deflate") || encoding.equals("x-deflate"))
 			bodyCompressed = true;
 		else
-			throw new TorException("Unrecognized content encoding: "+ encoding);
+			throw new DirectoryRequestFailedException("Unrecognized content encoding: "+ encoding);
 	}
 	
 	private void readBodyFromContentLength() throws IOException {

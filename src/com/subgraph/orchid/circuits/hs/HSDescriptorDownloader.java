@@ -15,6 +15,7 @@ import com.subgraph.orchid.StreamConnectFailedException;
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.circuits.CircuitManagerImpl;
 import com.subgraph.orchid.directory.DocumentFieldParserImpl;
+import com.subgraph.orchid.directory.downloader.DirectoryRequestFailedException;
 import com.subgraph.orchid.directory.downloader.HttpConnection;
 import com.subgraph.orchid.directory.parsing.DocumentParsingResultHandler;
 
@@ -48,7 +49,6 @@ public class HSDescriptorDownloader {
 		
 		Stream stream = null;
 		try {
-			//stream = circuitManager.openDirectoryStreamTo(dd.getDirectory());
 			stream = openHSDirectoryStream(dd.getDirectory());
 			HttpConnection http = new HttpConnection(stream);
 			http.sendGetRequest("/tor/rendezvous2/"+ dd.getDescriptorId().toBase32());
@@ -71,6 +71,9 @@ public class HSDescriptorDownloader {
 		} catch (OpenFailedException e) {
 			logger.info("Failed to open stream to HS directory "+ dd.getDirectory() +" : "+ e.getMessage());
 			return null;
+		} catch (DirectoryRequestFailedException e) {
+			logger.info("Directory request to HS directory "+ dd.getDirectory() + " failed "+ e.getMessage());
+			return null;
 		} finally {
 			if(stream != null) {
 				stream.close();
@@ -88,7 +91,7 @@ public class HSDescriptorDownloader {
 		
 		try {
 			final DirectoryCircuit dc = circuit.cannibalizeToDirectory(directory);
-			return dc.openDirectoryStream(10000);
+			return dc.openDirectoryStream(10000, true);
 		} catch (StreamConnectFailedException e) {
 			circuit.markForClose();
 			throw new OpenFailedException("Failed to open directory stream");
