@@ -42,6 +42,7 @@ public interface CircuitManager {
 	
 	Stream openDirectoryStream() throws InterruptedException, TimeoutException, OpenFailedException;
 	
+	DirectoryCircuit openDirectoryCircuit() throws OpenFailedException;
 	Circuit getCleanInternalCircuit() throws InterruptedException;
 	
 	ExitCircuit openExitCircuitTo(List<Router> path) throws OpenFailedException;

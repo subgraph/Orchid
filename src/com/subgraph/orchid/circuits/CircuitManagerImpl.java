@@ -83,10 +83,6 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		directoryDownloader.setCircuitManager(this);
 	}
 
-	public void notifyInitializationEvent(int eventCode) {
-		initializationTracker.notifyEvent(eventCode);
-	}
-
 	public void startBuildingCircuits() {
 		scheduledExecutor.scheduleAtFixedRate(circuitCreationTask, 0, 1000, TimeUnit.MILLISECONDS);
 	}
@@ -217,7 +213,7 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 				initializationTracker.notifyEvent(requestEventCode);
 			}
 			try {
-				final Stream stream = circuit.openDirectoryStream(OPEN_DIRECTORY_STREAM_TIMEOUT);
+				final Stream stream = circuit.openDirectoryStream(OPEN_DIRECTORY_STREAM_TIMEOUT, true);
 				if(loadingEventCode > 0) {
 					initializationTracker.notifyEvent(loadingEventCode);
 				}
@@ -232,7 +228,7 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		throw new OpenFailedException("Retry count exceeded opening directory stream");
 	}
 
-	private DirectoryCircuit openDirectoryCircuit() throws OpenFailedException {
+	public DirectoryCircuit openDirectoryCircuit() throws OpenFailedException {
 		int failCount = 0;
 		while(failCount < OPEN_DIRECTORY_STREAM_RETRY_COUNT) {
 			final DirectoryCircuit circuit = CircuitImpl.createDirectoryCircuit(this);
