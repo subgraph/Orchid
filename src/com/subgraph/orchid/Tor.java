@@ -115,8 +115,8 @@ public class Tor {
 	 * @return A new <code>Directory</code> instance.
 	 * @see Directory
 	 */
-	static public Directory createDirectory(TorConfig config) {
-		return new DirectoryImpl(config);
+	static public Directory createDirectory(TorConfig config, DirectoryStore customDirectoryStore) {
+		return new DirectoryImpl(config, customDirectoryStore);
 	}
 
 	static public ConnectionCache createConnectionCache(TorConfig config, TorInitializationTracker tracker) {

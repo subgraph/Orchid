@@ -44,7 +44,7 @@ public class DirectoryImpl implements Directory {
 	private final Object loadLock = new Object();
 	private boolean isLoaded = false;
 	
-	private DirectoryStore store;
+	private final DirectoryStore store;
 	private final TorConfig config;
 	private final StateFile stateFile;
 	private final DescriptorCache<RouterMicrodescriptor> microdescriptorCache;
@@ -63,8 +63,8 @@ public class DirectoryImpl implements Directory {
 	private ConsensusDocument currentConsensus;
 	private ConsensusDocument consensusWaitingForCertificates;
 
-	public DirectoryImpl(TorConfig config) {
-		store = new DirectoryStoreImpl(config);
+	public DirectoryImpl(TorConfig config, DirectoryStore customDirectoryStore) {
+		store = (customDirectoryStore == null) ? (new DirectoryStoreImpl(config)) : (customDirectoryStore);
 		this.config = config;
 		stateFile = new StateFile(store, this);
 		microdescriptorCache = createMicrodescriptorCache(store);
@@ -504,16 +504,5 @@ public class DirectoryImpl implements Directory {
 
 	public RouterDescriptor getBasicDescriptorFromCache(HexDigest descriptorDigest) {
 		return basicDescriptorCache.getDescriptor(descriptorDigest);
-	}
-
-
-	public void setDirectoryStore(DirectoryStore store) {
-		synchronized (loadLock) {
-			if(isLoaded) {
-				throw new IllegalStateException("Directory store implementation cannot be changed after loading directory cache");
-			}
-			this.store = store;
-			
-		}
 	}
 }

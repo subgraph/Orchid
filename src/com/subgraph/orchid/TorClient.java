@@ -35,11 +35,15 @@ public class TorClient {
 	private final CountDownLatch readyLatch;
 	
 	public TorClient() {
+		this(null);
+	}
+
+	public TorClient(DirectoryStore customDirectoryStore) {
 		if(Tor.isAndroidRuntime()) {
 			PRNGFixes.apply();
 		}
 		config = Tor.createConfig();
-		directory = Tor.createDirectory(config);
+		directory = Tor.createDirectory(config, customDirectoryStore);
 		initializationTracker = Tor.createInitalizationTracker();
 		initializationTracker.addListener(createReadyFlagInitializationListener());
 		connectionCache = Tor.createConnectionCache(config, initializationTracker);
@@ -53,10 +57,6 @@ public class TorClient {
 
 	public TorConfig getConfig() {
 		return config;
-	}
-
-	public void setDirectoryStore(DirectoryStore store) {
-		directory.setDirectoryStore(store);
 	}
 
 	public SocketFactory getSocketFactory() {
