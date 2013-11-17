@@ -16,8 +16,8 @@ public class DirectoryCircuitImpl extends CircuitImpl implements DirectoryCircui
 		super(circuitManager, prechosenPath);
 	}
 	
-	public Stream openDirectoryStream(long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException {
-		final StreamImpl stream = createNewStream();
+	public Stream openDirectoryStream(long timeout, boolean autoclose) throws InterruptedException, TimeoutException, StreamConnectFailedException {
+		final StreamImpl stream = createNewStream(autoclose);
 		try {
 			stream.openDirectory(timeout);
 			return stream;

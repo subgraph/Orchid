@@ -25,10 +25,14 @@ public class StreamImpl implements Stream, DashboardRenderable {
 	private final static int STREAMWINDOW_MAX_UNFLUSHED = 10;
 	
 	private final CircuitImpl circuit;
+	
 	private final int streamId;
+	private final boolean autoclose;
+	
 	private final CircuitNode targetNode;
 	private final TorInputStream inputStream;
 	private final TorOutputStream outputStream;
+	
 	private boolean isClosed;
 	private boolean relayEndReceived;
 	private int relayEndReason;
@@ -40,10 +44,11 @@ public class StreamImpl implements Stream, DashboardRenderable {
 
 	private String streamTarget = "";
 	
-	StreamImpl(CircuitImpl circuit, CircuitNode targetNode, int streamId) {
+	StreamImpl(CircuitImpl circuit, CircuitNode targetNode, int streamId, boolean autoclose) {
 		this.circuit = circuit;
 		this.targetNode = targetNode;
 		this.streamId = streamId;
+		this.autoclose = autoclose;
 		this.inputStream = new TorInputStream(this);
 		this.outputStream = new TorOutputStream(this);
 		packageWindow = STREAMWINDOW_START;
@@ -118,7 +123,10 @@ public class StreamImpl implements Stream, DashboardRenderable {
 		inputStream.close();
 		outputStream.close();
 		circuit.removeStream(this);
-
+		if(autoclose) {
+			circuit.markForClose();
+		}
+		
 		if(!relayEndReceived) {
 			final RelayCell cell = new RelayCellImpl(circuit.getFinalCircuitNode(), circuit.getCircuitId(), streamId, RelayCell.RELAY_END);
 			cell.putByte(RelayCell.REASON_DONE);

@@ -53,7 +53,7 @@ public class InternalCircuitImpl extends CircuitImpl implements InternalCircuit,
 		extender.extendTo(target);
 	}
 	
-	public Stream openDirectoryStream(long timeout) throws InterruptedException, TimeoutException, StreamConnectFailedException {
+	public Stream openDirectoryStream(long timeout, boolean autoclose) throws InterruptedException, TimeoutException, StreamConnectFailedException {
 		if(type != InternalType.HS_DIRECTORY) {
 			throw new IllegalStateException("Cannot open directory stream on internal circuit with type "+ type);
 		}

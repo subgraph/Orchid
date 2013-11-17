@@ -285,10 +285,10 @@ public class CircuitIO implements DashboardRenderable {
 		}
 	}
 	
-	StreamImpl createNewStream() {
+	StreamImpl createNewStream(boolean autoclose) {
 		synchronized(streamMap) {
 			final int streamId = circuit.getStatus().nextStreamId();
-			final StreamImpl stream = new StreamImpl(circuit, circuit.getFinalCircuitNode(), streamId);
+			final StreamImpl stream = new StreamImpl(circuit, circuit.getFinalCircuitNode(), streamId, autoclose);
 			streamMap.put(streamId, stream);
 			return stream;
 		}

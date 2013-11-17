@@ -216,8 +216,11 @@ public abstract class CircuitImpl implements Circuit, DashboardRenderable {
 		io.deliverRelayCell(cell);
 	}
 
+	protected StreamImpl createNewStream(boolean autoclose) {
+		return io.createNewStream(autoclose);
+	}
 	protected StreamImpl createNewStream() {
-		return io.createNewStream();
+		return createNewStream(false);
 	}
 
 	void setStateDestroyed() {
