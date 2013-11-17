@@ -278,16 +278,6 @@ public class DirectoryImpl implements Directory {
 		needRecalculateMinimumRouterInfo = true;
 	}
 
-	public void storeConsensus() {
-		if(currentConsensus != null) {
-			if(currentConsensus.getFlavor() == ConsensusFlavor.MICRODESC) {
-				store.writeDocument(CacheFile.CONSENSUS_MICRODESC, currentConsensus);
-			} else {
-				store.writeDocument(CacheFile.CONSENSUS, currentConsensus);
-			}
-		}
-	}
-	
 	public synchronized void addConsensusDocument(ConsensusDocument consensus, boolean fromCache) {
 		if(consensus.equals(currentConsensus))
 			return;
@@ -334,14 +324,19 @@ public class DirectoryImpl implements Directory {
 		currentConsensus = consensus;
 		
 		if(!fromCache) {
-			if(consensus.getFlavor() == ConsensusFlavor.MICRODESC) {
-				store.writeDocument(CacheFile.CONSENSUS_MICRODESC, consensus);
+			storeCurrentConsensus();
+		}
+		consensusChangedManager.fireEvent(new Event() {});
+	}
+
+	private void storeCurrentConsensus() {
+		if(currentConsensus != null) {
+			if(currentConsensus.getFlavor() == ConsensusFlavor.MICRODESC) {
+				store.writeDocument(CacheFile.CONSENSUS_MICRODESC, currentConsensus);
 			} else {
-				store.writeDocument(CacheFile.CONSENSUS, consensus);
+				store.writeDocument(CacheFile.CONSENSUS, currentConsensus);
 			}
 		}
-	
-		consensusChangedManager.fireEvent(new Event() {});
 	}
 
 	private Descriptor getDescriptorForRouterStatus(RouterStatus rs, boolean isMicrodescriptor) {
@@ -420,21 +415,6 @@ public class DirectoryImpl implements Directory {
 		}
 
 		return routers;
-	}
-
-	synchronized public void markDescriptorInvalid(RouterDescriptor descriptor) {
-		removeRouterByIdentity(descriptor.getIdentityKey().getFingerprint());
-	}
-
-	private void removeRouterByIdentity(HexDigest identity) {
-		logger.fine("Removing: "+ identity);
-		final RouterImpl router = routersByIdentity.remove(identity);
-		if(router == null)
-			return;
-		final RouterImpl routerByName = routersByNickname.get(router.getNickname());
-		if(routerByName.equals(router))
-			routersByNickname.remove(router.getNickname());
-		directoryCaches.remove(router);
 	}
 
 	public ConsensusDocument getCurrentConsensusDocument() {

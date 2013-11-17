@@ -19,7 +19,6 @@ public interface Directory {
 	void loadFromStore();
 	void waitUntilLoaded();
 	void storeCertificates();
-	void storeConsensus();
 	
 	Collection<DirectoryServer> getDirectoryAuthorities();
 	DirectoryServer getRandomDirectoryAuthority();
@@ -37,7 +36,6 @@ public interface Directory {
 	List<Router> getRouterListByNames(List<String> names);
 	List<Router> getRoutersWithDownloadableDescriptors();
 	List<Router> getAllRouters();
-	void markDescriptorInvalid(RouterDescriptor descriptor);
 	
 	RouterMicrodescriptor getMicrodescriptorFromCache(HexDigest descriptorDigest);
 	RouterDescriptor getBasicDescriptorFromCache(HexDigest descriptorDigest);
