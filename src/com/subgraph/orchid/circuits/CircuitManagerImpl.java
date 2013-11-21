@@ -87,6 +87,16 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		scheduledExecutor.scheduleAtFixedRate(circuitCreationTask, 0, 1000, TimeUnit.MILLISECONDS);
 	}
 
+	public synchronized void stopBuildingCircuits(boolean killCircuits) {
+		scheduledExecutor.shutdownNow();
+		if(killCircuits) {
+			List<CircuitImpl> circuits = new ArrayList<CircuitImpl>(activeCircuits);
+			for(CircuitImpl c: circuits) {
+				c.destroyCircuit();
+			}
+		}
+	}
+
 	public ExitCircuit createNewExitCircuit(Router exitRouter) {
 		return CircuitImpl.createExitCircuit(this, exitRouter);
 	}

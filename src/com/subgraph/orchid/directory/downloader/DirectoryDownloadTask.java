@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -31,7 +32,7 @@ public class DirectoryDownloadTask implements Runnable {
 	private final TorRandom random;
 	private final DescriptorProcessor descriptorProcessor;
 
-	private final Executor executor = Executors.newCachedThreadPool();
+	private final ExecutorService executor = Executors.newCachedThreadPool();
 
 	private volatile boolean isDownloadingCertificates;
 	private volatile boolean isDownloadingConsensus;
@@ -39,6 +40,8 @@ public class DirectoryDownloadTask implements Runnable {
 
 	private ConsensusDocument currentConsensus;
 	private Date consensusDownloadTime;
+
+	private volatile boolean isStopped;
 	
 	DirectoryDownloadTask(TorConfig config, Directory directory, DirectoryDownloader downloader) {
 		this.config = config;
@@ -49,12 +52,19 @@ public class DirectoryDownloadTask implements Runnable {
 		this.descriptorProcessor = new DescriptorProcessor(config, directory);
 	}
 	
-	
+	public synchronized void stop() {
+		if(isStopped) {
+			return;
+		}
+		executor.shutdownNow();
+		isStopped = true;
+	}
+
 	public void run() {
 		directory.loadFromStore();
 		directory.waitUntilLoaded();
 		setCurrentConsensus(directory.getCurrentConsensusDocument());
-		while (true) {
+		while (!isStopped) {
 			checkCertificates();
 			checkConsensus();
 			checkDescriptors();

@@ -9,6 +9,7 @@ import com.subgraph.orchid.directory.downloader.DirectoryRequestFailedException;
 
 public interface DirectoryDownloader {
 	void start(Directory directory);
+	void stop();
 	
 	RouterDescriptor downloadBridgeDescriptor(Router bridge) throws DirectoryRequestFailedException;
 	

@@ -16,4 +16,6 @@ public interface ConnectionCache {
 	 * @throws ConnectionHandshakeException if connection fails because an error occurred during handshake phase
 	 */
 	Connection getConnectionTo(Router router, boolean isDirectoryConnection) throws InterruptedException, ConnectionTimeoutException, ConnectionFailedException, ConnectionHandshakeException;
+	
+	void close();
 }

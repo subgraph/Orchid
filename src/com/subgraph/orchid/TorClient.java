@@ -32,6 +32,8 @@ public class TorClient {
 	private final Dashboard dashboard;
 
 	private boolean isStarted = false;
+	private boolean isStopped = false;
+	
 	private final CountDownLatch readyLatch;
 	
 	public TorClient() {
@@ -70,6 +72,9 @@ public class TorClient {
 		if(isStarted) {
 			return;
 		}
+		if(isStopped) {
+			throw new IllegalStateException("Cannot restart a TorClient instance.  Create a new instance instead.");
+		}
 		logger.info("Starting Orchid (version: "+ Tor.getFullVersion() +")");
 		verifyUnlimitedStrengthPolicyInstalled();
 		directoryDownloader.start(directory);
@@ -78,6 +83,26 @@ public class TorClient {
 			dashboard.startListening();
 		}
 		isStarted = true;
+	}
+	
+	public synchronized void stop() {
+		if(!isStarted || isStopped) {
+			return;
+		}
+		try {
+			socksListener.stop();
+			if(dashboard.isListening()) {
+				dashboard.stopListening();
+			}
+			directoryDownloader.stop();
+			circuitManager.stopBuildingCircuits(true);
+			directory.close();
+			connectionCache.close();
+		} catch (Exception e) {
+			logger.log(Level.WARNING, "Unexpected exception while shutting down TorClient instance: "+ e, e);
+		} finally {
+			isStopped = true;
+		}
 	}
 	
 	public Directory getDirectory() {

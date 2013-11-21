@@ -197,7 +197,7 @@ public class ConnectionImpl implements Connection, DashboardRenderable {
 		}
 	}
 
-	private void closeSocket() {
+	void closeSocket() {
 		try {
 			logger.fine("Closing connection to "+ this);
 			isClosed = true;

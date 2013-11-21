@@ -16,7 +16,7 @@ public interface CircuitManager {
 	 * Begin automatically building new circuits in the background.
 	 */
 	void startBuildingCircuits();
-
+	void stopBuildingCircuits(boolean killCircuits);
 	/**
 	 * Attempt to open an exit stream to the specified destination <code>hostname</code> and
 	 * <code>port</code>.

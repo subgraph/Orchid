@@ -29,6 +29,8 @@ public class DirectoryDownloaderImpl implements DirectoryDownloader {
 	private final TorInitializationTracker initializationTracker;
 	private CircuitManager circuitManager;
 	private boolean isStarted;
+	private boolean isStopped;
+	private DirectoryDownloadTask downloadTask;
 	private Thread downloadTaskThread;
 	
 
@@ -50,10 +52,18 @@ public class DirectoryDownloaderImpl implements DirectoryDownloader {
 			throw new IllegalStateException("Must set CircuitManager instance with setCircuitManager() before starting.");
 		}
 	
-		final DirectoryDownloadTask task = new DirectoryDownloadTask(config, directory, this);
-		downloadTaskThread = new Thread(task);
+		downloadTask = new DirectoryDownloadTask(config, directory, this);
+		downloadTaskThread = new Thread(downloadTask);
 		downloadTaskThread.start();
 		isStarted = true;
+	}
+	
+	public synchronized void stop() {
+		if(!isStarted || isStopped) {
+			return;
+		}
+		downloadTask.stop();
+		downloadTaskThread.interrupt();
 	}
 
 	public RouterDescriptor downloadBridgeDescriptor(Router bridge) throws DirectoryRequestFailedException {

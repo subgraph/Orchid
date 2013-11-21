@@ -53,6 +53,10 @@ public abstract class DescriptorCache <T extends Descriptor> {
 		}
 		reloadCache();
 	}
+	
+	public void shutdown() {
+		rebuildExecutor.shutdownNow();
+	}
 
 	public T getDescriptor(HexDigest digest) {
 		return data.findByDigest(digest);

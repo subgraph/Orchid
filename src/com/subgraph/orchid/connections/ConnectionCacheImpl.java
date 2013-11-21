@@ -69,6 +69,8 @@ public class ConnectionCacheImpl implements ConnectionCache, DashboardRenderable
 
 	private final TorConfig config;
 	private final TorInitializationTracker initializationTracker;
+	private volatile boolean isClosed;
+
 	
 	public ConnectionCacheImpl(TorConfig config, TorInitializationTracker tracker) {
 		this.config = config;
@@ -76,7 +78,33 @@ public class ConnectionCacheImpl implements ConnectionCache, DashboardRenderable
 		scheduledExecutor.scheduleAtFixedRate(new CloseIdleConnectionCheckTask(), 5000, 5000, TimeUnit.MILLISECONDS);
 	}
 
+	public void close() {
+		if(isClosed) {
+			return;
+		}
+		isClosed = true;
+		for(Future<ConnectionImpl> f: activeConnections.values()) {
+			if(f.isDone()) {
+				try {
+					ConnectionImpl conn = f.get();
+					conn.closeSocket();
+				} catch (InterruptedException e) {
+					logger.warning("Unexpected interruption while closing connection");
+				} catch (ExecutionException e) {
+					logger.warning("Exception closing connection: "+ e.getCause());
+				}
+			} else {
+				f.cancel(true);
+			}
+		}
+		activeConnections.clear();
+		scheduledExecutor.shutdownNow();
+	}
+
 	public Connection getConnectionTo(Router router, boolean isDirectoryConnection) throws InterruptedException, ConnectionTimeoutException, ConnectionFailedException, ConnectionHandshakeException {
+		if(isClosed) {
+			throw new IllegalStateException("ConnectionCache has been closed");
+		}
 		logger.fine("Get connection to "+ router.getAddress() + " "+ router.getOnionPort() + " " + router.getNickname());
 		while(true) {
 			Future<ConnectionImpl> f = getFutureFor(router, isDirectoryConnection);

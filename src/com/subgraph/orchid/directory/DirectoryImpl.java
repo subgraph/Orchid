@@ -156,6 +156,11 @@ public class DirectoryImpl implements Directory {
 		}
 	}
 
+	public void close() {
+		basicDescriptorCache.shutdown();
+		microdescriptorCache.shutdown();
+	}
+
 	private long last = 0;
 	private void logElapsed() {
 		final long now = System.currentTimeMillis();
