@@ -6,7 +6,7 @@
     <arg value="HEAD"/>
   </exec>
 
-  <property name="orchid.version" value="0.9.1" />
+  <property name="orchid.version" value="1.0.0" />
 
   <condition property="orchid.basename" value="orchid-${orchid.version}.${orchid.gittag}">
     <isset property="orchid.gittag"/>

@@ -36,7 +36,7 @@ public class Tor {
 	
 	
 	private final static String implementation = "Orchid";
-	private final static String version = "0.9.1";
+	private final static String version = "1.0.0";
 	
 	private final static Charset defaultCharset = createDefaultCharset();
 
