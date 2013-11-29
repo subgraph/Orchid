@@ -1,5 +1,4 @@
-bin/
-orchid-*.jar
-orchid-*.zip
-build-revision
-lib/xmlrpc-*
+.classpath
+.project
+.settings
+target
