@@ -197,6 +197,15 @@
 
 	<profiles>
 		<profile>
+			<id>BcProv-JDK-1.8</id>
+			<activation>
+				<jdk>1.8</jdk>
+			</activation>
+			<properties>
+				<bcprov.postfix>jdk16</bcprov.postfix>
+			</properties>
+		</profile>
+		<profile>
 			<id>BcProv-JDK-1.7</id>
 			<activation>
 				<jdk>1.7</jdk>
