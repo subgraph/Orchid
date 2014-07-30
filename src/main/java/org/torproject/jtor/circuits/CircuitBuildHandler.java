@@ -14,8 +14,7 @@ package org.torproject.jtor.circuits;
  * circuit {@link #circuitBuildCompleted(Circuit)} is called and passed the
  * newly constructed circuit.
  *
- * @see Circuit#openCircuit()
- *
+ * @see Circuit#openCircuit
  */
 public interface CircuitBuildHandler {
 	/**
