@@ -55,6 +55,11 @@ public class OrchidSocketFactory extends SocketFactory {
 		return createSocket(address, port);
 	}
 
+	@Override
+	public Socket createSocket() throws SocketException {
+		return createSocketInstance();
+	}
+
 	private Socket createOrchidSocket(String host, int port) throws IOException {
 		final Socket s = createSocketInstance();
 		final SocketAddress endpoint = InetSocketAddress.createUnresolved(host, port);
