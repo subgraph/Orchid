@@ -40,7 +40,7 @@
     </and>
   </condition>
 
-  <target name="all" depends="write-revision,compile,compile-xmlrpc,package,source"/>
+  <target name="all" depends="write-revision,compile,compile-xmlrpc,package,proguard,source"/>
 			
   <target name="clean">
     <delete dir="${basedir}/bin" />
@@ -76,6 +76,27 @@
       <zipfileset dir="${basedir}" includes="build-revision" />
     </jar>
   </target>
+  <target name="proguard" depends="package">
+    <taskdef resource="proguard/ant/task.properties" classpath="lib/proguard.jar" />
+    <proguard>
+      -injars ${orchid.jarfile}
+      -injars lib/guava-18.0.jar (!META-INF/MANIFEST.MF)
+      -libraryjars "${java.home}/lib/rt.jar"
+      -libraryjars "${java.home}/lib/jce.jar"
+      -libraryjars lib/jsr305.jar
+      -libraryjars lib/testing/
+      -outjars ${orchid.basename}-full.jar
+      -dontoptimize
+      -dontobfuscate
+      -dontwarn sun.misc.Unsafe
+      -dontwarn com.google.common.collect.MinMaxPriorityQueue
+      -keepclasseswithmembers public class * {
+        public static void main(java.lang.String[]);
+      }
+    </proguard>
+
+  </target>
+
 
   <target name="source">
     <zip destfile="${orchid.sourcefile}">
