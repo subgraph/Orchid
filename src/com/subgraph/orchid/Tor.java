@@ -6,7 +6,7 @@ import java.util.logging.Logger;
 
 import com.subgraph.orchid.circuits.CircuitManagerImpl;
 import com.subgraph.orchid.circuits.TorInitializationTracker;
-import com.subgraph.orchid.config.TorConfigProxy;
+import com.subgraph.orchid.config.TorConfigImpl;
 import com.subgraph.orchid.connections.ConnectionCacheImpl;
 import com.subgraph.orchid.directory.DirectoryImpl;
 import com.subgraph.orchid.directory.downloader.DirectoryDownloaderImpl;
@@ -93,7 +93,7 @@ public class Tor {
 	 * @see TorConfig
 	 */
 	static public TorConfig createConfig() {
-		final TorConfig config = (TorConfig) Proxy.newProxyInstance(TorConfigProxy.class.getClassLoader(), new Class[] { TorConfig.class }, new TorConfigProxy());
+		final TorConfig config = new TorConfigImpl();
 		if(isAndroidRuntime()) {
 			logger.warning("Android Runtime detected, disabling V2 Link protocol");
 			config.setHandshakeV2Enabled(false);
