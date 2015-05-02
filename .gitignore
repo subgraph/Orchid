@@ -3,3 +3,5 @@ orchid-*.jar
 orchid-*.zip
 build-revision
 lib/xmlrpc-*
+.idea/
+Orchid.iml
