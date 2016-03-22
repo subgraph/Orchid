@@ -147,7 +147,7 @@ public class ConfigNodeFilter implements RouterFilter {
 	}
 	
 	private static RouterFilter createIdentityFilter(String s) {
-		if(isIdentityString(s)) {
+		if(!isIdentityString(s)) {
 			throw new IllegalArgumentException();
 		}
 		final HexDigest identity = HexDigest.createFromString(s);
