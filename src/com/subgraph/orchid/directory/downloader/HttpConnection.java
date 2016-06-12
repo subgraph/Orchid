@@ -80,7 +80,7 @@ public class HttpConnection {
 	}
 	
 	public String getHost() {
-		if(hostname == null) {
+		if(hostname != null) {
 			return hostname;
 		} else {
 			return "(none)";
