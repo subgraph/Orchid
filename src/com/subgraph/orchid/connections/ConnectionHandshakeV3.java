@@ -40,9 +40,6 @@ public class ConnectionHandshakeV3 extends ConnectionHandshake {
 	void recvCerts() throws ConnectionHandshakeException  {
 		final Cell cell = expectCell(Cell.CERTS);
 		final int ncerts = cell.getByte();
-		if(ncerts != 2) {
-			throw new ConnectionHandshakeException("Expecting 2 certificates and got "+ ncerts);
-		}
 
 		linkCertificate = null;
 		identityCertificate = null;
@@ -53,8 +50,6 @@ public class ConnectionHandshakeV3 extends ConnectionHandshake {
 				linkCertificate = testAndReadCertificate(cell, linkCertificate, "Link (type = 1)");
 			} else if(type == 2) {
 				identityCertificate = testAndReadCertificate(cell, identityCertificate, "Identity (type = 2)");
-			} else {
-				throw new ConnectionHandshakeException("Unexpected certificate type = "+ type + " in CERTS cell");
 			}
 		}
 		
